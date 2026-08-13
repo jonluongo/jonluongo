@@ -52,8 +52,13 @@ final class PlannedExercise {
         setLogs.sorted { $0.setIndex < $1.setIndex }
     }
 
-    /// Considered complete once the lifter has logged at least the prescribed number of sets.
-    var isComplete: Bool { setLogs.count >= targetSets }
+    /// Completed working sets, in order — the ones that count toward progression.
+    var completedWorkingSets: [SetLog] {
+        orderedSetLogs.filter(\.countsForProgression)
+    }
+
+    /// Considered complete once enough working sets are checked off.
+    var isComplete: Bool { completedWorkingSets.count >= targetSets }
 
     /// Lower bound of the rep range, parsed from `repRange` (e.g. "8-12" -> 8).
     var repTargetLowerBound: Int {
@@ -69,8 +74,8 @@ final class PlannedExercise {
         return numbers.last ?? repTargetLowerBound
     }
 
-    /// Heaviest weight ever logged for this exercise instance.
+    /// Heaviest completed working weight for this exercise instance.
     var bestLoggedWeight: Double? {
-        setLogs.compactMap(\.weight).max()
+        completedWorkingSets.compactMap(\.weight).max()
     }
 }

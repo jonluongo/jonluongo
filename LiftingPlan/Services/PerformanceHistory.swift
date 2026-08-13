@@ -10,7 +10,7 @@ enum PerformanceHistory {
         let loggedExercises = plans
             .flatMap(\.sessions)
             .flatMap(\.exercises)
-            .filter { !$0.setLogs.isEmpty }
+            .filter { !$0.completedWorkingSets.isEmpty }
             .sorted { latestLogDate($0) > latestLogDate($1) }
 
         var seen = Set<String>()
@@ -35,14 +35,14 @@ enum PerformanceHistory {
         let match = plans
             .flatMap(\.sessions)
             .flatMap(\.exercises)
-            .filter { $0.name.lowercased() == key && !$0.setLogs.isEmpty && $0 !== excluded }
+            .filter { $0.name.lowercased() == key && !$0.completedWorkingSets.isEmpty && $0 !== excluded }
             .sorted { latestLogDate($0) > latestLogDate($1) }
             .first
         return match.map(history(from:))
     }
 
     static func history(from exercise: PlannedExercise) -> ExerciseHistory {
-        let records = exercise.orderedSetLogs.map {
+        let records = exercise.completedWorkingSets.map {
             SetRecord(weight: $0.weight, reps: $0.reps, rpe: $0.rpe)
         }
         return ExerciseHistory(
@@ -53,6 +53,6 @@ enum PerformanceHistory {
     }
 
     private static func latestLogDate(_ exercise: PlannedExercise) -> Date {
-        exercise.setLogs.map(\.completedAt).max() ?? .distantPast
+        exercise.completedWorkingSets.map(\.completedAt).max() ?? .distantPast
     }
 }

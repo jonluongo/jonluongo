@@ -55,16 +55,19 @@ final class RestTimerModel {
         scheduleFinishNotification(after: seconds, context: context)
     }
 
-    /// Add time to a running (or just-finished) timer — the classic "+30s".
+    /// Adjust a running timer by ±seconds (e.g. "+15" / "−15"), never below 1s.
     func addTime(_ seconds: Int) {
-        guard let current = endDate, isRunning else {
+        guard isRunning, let current = endDate else {
             // Restart a short one if nothing is active.
             if seconds > 0 { start(seconds: seconds, context: contextLabel) }
             return
         }
-        endDate = current.addingTimeInterval(TimeInterval(seconds))
-        total += seconds
+        let minimumEnd = Date().addingTimeInterval(1)
+        let proposedEnd = current.addingTimeInterval(TimeInterval(seconds))
+        endDate = max(proposedEnd, minimumEnd)
         recomputeRemaining()
+        // Keep the ring's denominator consistent with the new length.
+        total = max(remaining, total + seconds)
         scheduleFinishNotification(after: remaining, context: contextLabel)
     }
 

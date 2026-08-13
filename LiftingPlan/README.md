@@ -16,8 +16,10 @@ weights, and pushes you to do more next time.
   set, with a progress ring, haptics, a sound, and a background local
   notification so the cue lands even with the screen locked. Optional per-rep
   tempo cues (e.g. `3-0-1-0`) are shown per exercise.
-- **Weight logging** — record weight, reps, and optional RPE for every set,
-  persisted with **SwiftData**.
+- **Spreadsheet-style logging** — every exercise in one scroll, each with an
+  editable table of sets (`SET · PREVIOUS · LBS · REPS · ✓`). The **PREVIOUS**
+  column shows last time's numbers, warmup rows are marked **W**, checking a set
+  off tints it green and kicks off the rest timer. Persisted with **SwiftData**.
 - **Progressive overload** — a pure, unit-tested `ProgressionEngine` reads your
   recent performance and recommends the next target (add load when reps are met
   at a manageable effort, hold when it was a grind). That summary is fed back to

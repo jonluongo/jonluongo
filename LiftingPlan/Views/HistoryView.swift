@@ -142,11 +142,11 @@ struct ExerciseTrend: Identifiable {
         let loggedExercises = plans
             .flatMap(\.sessions)
             .flatMap(\.exercises)
-            .filter { !$0.setLogs.isEmpty }
+            .filter { !$0.completedWorkingSets.isEmpty }
 
         var byName: [String: [TrendPoint]] = [:]
         for exercise in loggedExercises {
-            let logs = exercise.setLogs
+            let logs = exercise.completedWorkingSets
             let date = logs.map(\.completedAt).max() ?? Date()
             // The "top set" is the heaviest; ties fall back to most reps.
             let topSet = logs.max { lhs, rhs in
