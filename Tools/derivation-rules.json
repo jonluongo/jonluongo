@@ -107,6 +107,11 @@
     "leg-raise": ["abdominals"],
     "back-extension": ["lower back"],
     "face-pull": ["shoulders"],
-    "calf-raise": ["calves"]
+    "calf-raise": ["calves"],
+    "abduction": ["abductors"],
+    "adduction": ["adductors"],
+    "knee-raise": ["abdominals"],
+    "tibialis": ["calves"],
+    "calf-press": ["calves"]
   }
 }

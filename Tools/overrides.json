@@ -89,6 +89,7 @@
 
   "behind-the-neck-press": {
     "pattern": "vertical press", "primaryMuscles": ["shoulders"],
+    "secondaryMuscles": ["triceps"],
     "equipment": "barbell", "mechanic": "compound", "force": "push",
     "category": "strength"
   },
@@ -142,6 +143,11 @@
     "secondaryMuscles": ["middle back"], "equipment": "cardio machine",
     "category": "cardio", "force": null
   },
+  "rowing-machine-steady-state": {
+    "pattern": "cardio", "primaryMuscles": ["quadriceps"],
+    "secondaryMuscles": ["middle back"], "equipment": "cardio machine",
+    "category": "cardio", "force": null
+  },
   "rowing-sprint": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
     "secondaryMuscles": ["middle back"], "equipment": "cardio machine",
@@ -160,6 +166,10 @@
   "band-kneeling-pulldown": { "equipment": "band" },
   "band-leg-curl": { "equipment": "band" },
   "band-seated-pulldown": { "equipment": "band" },
+  "cable-hip-abduction": {
+    "primaryMuscles": ["abductors"], "secondaryMuscles": [],
+    "aliases": [], "instructions": [], "force": "push"
+  },
   "cable-chest-press": { "equipment": "cable" },
   "cable-standing-single-arm-chest-press": { "equipment": "cable" },
   "cable-single-leg-laying-leg-curl": { "equipment": "cable" },

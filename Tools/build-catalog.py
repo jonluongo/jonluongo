@@ -99,7 +99,7 @@ def build() -> int:
         key = normalize(words)
         match = fedb_index.get(key)
         if match is None:
-            close = difflib.get_close_matches(key, fedb_index.keys(), n=1, cutoff=0.87)
+            close = difflib.get_close_matches(key, fedb_index.keys(), n=1, cutoff=0.93)
             match = fedb_index[close[0]] if close else None
         if match is not None:
             enriched += 1
@@ -133,6 +133,12 @@ def build() -> int:
         if slug in overrides:
             overridden += 1
             entry.update(overrides[slug])
+            # An override may replace primaryMuscles after secondaryMuscles was
+            # already deduped against the pre-override list, so re-dedup here
+            # or a muscle can end up listed as both primary and secondary.
+            entry["secondaryMuscles"] = [
+                m for m in entry["secondaryMuscles"] if m not in entry["primaryMuscles"]
+            ]
 
         entry["aliases"] = sorted({a for a in entry["aliases"] if a and a != words})
         catalog.append(entry)
