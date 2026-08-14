@@ -60,7 +60,15 @@
     "hill-climb": "cardio", "swim-pull": "cardio",
     "external-rotation": "rotation", "windmill": "rotation",
     "push-downs": "extension", "clean-and-press": "olympic",
-    "press": "vertical press", "pull": "horizontal pull"
+    "press": "vertical press", "pull": "horizontal pull",
+
+    "dips": "horizontal press", "push-ups": "horizontal press",
+    "chin-ups": "vertical pull", "pull-ups": "vertical pull",
+    "lunges": "lunge", "deadlifts": "hinge", "good-mornings": "hinge",
+    "raises": "raise", "shrugs": "shrug", "supermans": "hinge",
+    "rows": "horizontal pull", "rowing": "horizontal pull",
+    "running": "cardio", "wood-chopper": "rotation",
+    "jumping-jack": "plyometric", "face-pulls": "horizontal pull"
   },
   "defaultPattern": "carry",
   "patternMuscles": {
@@ -124,10 +132,12 @@
     "leg-raise": ["abdominals"],
     "back-extension": ["lower back"],
     "face-pull": ["shoulders"],
+    "face-pulls": ["shoulders"],
     "calf-raise": ["calves"],
     "abduction": ["abductors"],
     "adduction": ["adductors"],
     "knee-raise": ["abdominals"],
+    "knee-raises": ["abdominals"],
     "tibialis": ["calves"],
     "calf-press": ["calves"]
   },

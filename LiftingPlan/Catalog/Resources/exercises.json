@@ -4603,22 +4603,20 @@
     },
     {
       "aliases": [],
-      "category": "strength",
-      "difficulty": "intermediate",
+      "category": "plyometrics",
+      "difficulty": "advanced",
       "displayName": "Jump Squats",
       "equipment": "bodyweight",
-      "force": "push",
       "id": "jump-squats",
       "instructions": [],
       "mechanic": "compound",
-      "pattern": "squat",
+      "pattern": "plyometric",
       "primaryMuscles": [
         "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes",
-        "hamstrings",
-        "lower back"
+        "calves"
       ]
     },
     {
@@ -8000,5 +7998,5 @@
       ]
     }
   ],
-  "version": 1
+  "version": 2
 }

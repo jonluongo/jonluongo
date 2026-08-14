@@ -33,7 +33,7 @@ FEDB_URL = ("https://raw.githubusercontent.com/yuhonas/"
 # version instead of silently changing what they mean. Bump this constant in
 # any change that alters catalog *data* (not the generator's mechanism), and
 # say so in the commit message.
-CATALOG_VERSION = 1
+CATALOG_VERSION = 2
 
 # free-exercise-db's `level` uses "expert" where our taxonomy uses "advanced".
 FEDB_LEVEL_TO_DIFFICULTY = {
@@ -53,12 +53,52 @@ def normalize(text: str) -> str:
 
 
 def longest_match(slug: str, table: dict[str, str]) -> str | None:
-    """The value whose key is the longest substring of slug, or None."""
-    best = None
+    """The value whose key matches slug on whole hyphen-separated tokens, or
+    None.
+
+    Slugs are token sequences ("plate-forward-lunge" -> ["plate", "forward",
+    "lunge"]); so are keys ("hip-thrust" -> ["hip", "thrust"]). A key matches
+    only when its full token sequence appears contiguously within slug's
+    tokens at some position - not merely as a character run. That is what
+    keeps "lat" out of "plate" (tokens ["plate", ...] never contain the
+    token "lat") and "ring" out of "hamstring" (tokens ["hamstring", "curl"]
+    never contain the token "ring"), while still letting "curl" match
+    "barbell-curl" and "hip-thrust" match "barbell-hip-thrust" as intended.
+
+    Preference among matching keys goes to more key tokens first (a
+    multi-word key is more specific than a single-word one), then more key
+    characters, then key text - so ties are broken the same way on every
+    run regardless of dict iteration order.
+
+    This does no stemming: "push-up" will not match "push-ups" and "row"
+    will not match "rowing". That is deliberate - a stemmer that trims a
+    trailing "s" or "ing" to catch plurals and gerunds would just as
+    happily trim "press" down to "pres" or turn "run" into "running" via
+    the wrong rule, and every such heuristic is another way to reopen the
+    exact substring-accident bug this function exists to close. Slugs that
+    are a plural or gerund of an existing key are instead listed as their
+    own explicit key in derivation-rules.json (see the entries following
+    "press": "vertical press" in the pattern table) - a handful of literal
+    entries, checked against the real slug list, beats a general rule that
+    would need re-auditing every time a new exercise is added.
+    """
+    tokens = slug.split("-")
+    best = None  # (token_count, char_len, key, value)
     for key, value in table.items():
-        if key in slug and (best is None or len(key) > len(best[0])):
-            best = (key, value)
-    return best[1] if best else None
+        key_tokens = key.split("-")
+        span = len(key_tokens)
+        if span > len(tokens):
+            continue
+        matched = any(
+            tokens[i:i + span] == key_tokens
+            for i in range(len(tokens) - span + 1)
+        )
+        if not matched:
+            continue
+        candidate = (span, len(key), key)
+        if best is None or candidate > (best[0], best[1], best[2]):
+            best = (span, len(key), key, value)
+    return best[3] if best else None
 
 
 def title_case(slug: str) -> str:
