@@ -180,4 +180,24 @@ struct CatalogIntegrityTests {
                     "\(exercise.id) lists a muscle as both primary and secondary")
         }
     }
+
+    @Test("Every exercise carries a difficulty this build recognizes")
+    func difficultyPresentAndKnown() throws {
+        for exercise in try ExerciseCatalog.bundled().all {
+            #expect(exercise.difficulty.isKnown,
+                    "\(exercise.id) has unrecognized difficulty \(exercise.difficulty)")
+        }
+    }
+
+    @Test("Difficulty matches what a lifter would expect for known movements")
+    func difficultyIsSensible() throws {
+        let catalog = try ExerciseCatalog.bundled()
+        func difficulty(_ id: String) throws -> Difficulty {
+            try #require(catalog.exercise(id: ExerciseID(rawValue: id))).difficulty
+        }
+        // An Olympic lift is not a beginner movement.
+        #expect(try difficulty("power-clean") == .advanced)
+        // A machine isolation is.
+        #expect(try difficulty("machine-hip-abduction") == .beginner)
+    }
 }

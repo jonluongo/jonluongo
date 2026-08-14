@@ -38,4 +38,12 @@ struct TaxonomyTests {
         #expect(EquipmentType.known.contains(EquipmentType.bodyweight))
         #expect(!MuscleGroup.known.contains(MuscleGroup(rawValue: "serratus")))
     }
+
+    @Test("Difficulty decodes known values and preserves unknown ones")
+    func difficultyTaxonomy() throws {
+        #expect(try JSONDecoder().decode(Difficulty.self, from: Data("\"advanced\"".utf8)) == .advanced)
+        let exotic = try JSONDecoder().decode(Difficulty.self, from: Data("\"elite\"".utf8))
+        #expect(exotic.rawValue == "elite")
+        #expect(!exotic.isKnown)
+    }
 }

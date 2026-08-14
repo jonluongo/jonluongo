@@ -54,6 +54,10 @@ struct Exercise: Codable, Hashable, Sendable, Identifiable {
     let instructions: [String]
     /// Bundle filename of a demonstration animation, or `nil` when none ships.
     let mediaAsset: String?
+    /// How much training experience the movement asks for. Defaults to
+    /// `.intermediate` so a catalog written before this field existed still
+    /// loads with a reasonable value rather than failing to decode.
+    let difficulty: Difficulty
 
     init(
         id: ExerciseID,
@@ -67,7 +71,8 @@ struct Exercise: Codable, Hashable, Sendable, Identifiable {
         mechanic: Mechanic? = nil,
         category: ExerciseCategory,
         instructions: [String] = [],
-        mediaAsset: String? = nil
+        mediaAsset: String? = nil,
+        difficulty: Difficulty = .intermediate
     ) {
         self.id = id
         self.displayName = displayName
@@ -81,6 +86,7 @@ struct Exercise: Codable, Hashable, Sendable, Identifiable {
         self.category = category
         self.instructions = instructions
         self.mediaAsset = mediaAsset
+        self.difficulty = difficulty
     }
 
     init(from decoder: any Decoder) throws {
@@ -97,7 +103,8 @@ struct Exercise: Codable, Hashable, Sendable, Identifiable {
             mechanic: try container.decodeIfPresent(Mechanic.self, forKey: .mechanic),
             category: try container.decode(ExerciseCategory.self, forKey: .category),
             instructions: try container.decodeIfPresent([String].self, forKey: .instructions) ?? [],
-            mediaAsset: try container.decodeIfPresent(String.self, forKey: .mediaAsset)
+            mediaAsset: try container.decodeIfPresent(String.self, forKey: .mediaAsset),
+            difficulty: try container.decodeIfPresent(Difficulty.self, forKey: .difficulty) ?? .intermediate
         )
     }
 

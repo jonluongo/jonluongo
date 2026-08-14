@@ -122,6 +122,22 @@ struct Mechanic: ExtensibleTaxonomy {
     static let known: [Mechanic] = [.compound, .isolation]
 }
 
+/// Roughly how much training experience a movement asks for.
+///
+/// Used to match exercise selection to the lifter's stated experience so a
+/// beginner is not handed a snatch. Derived from mechanic and equipment when
+/// the source data does not state it. Depends on: `ExtensibleTaxonomy`.
+struct Difficulty: ExtensibleTaxonomy {
+    let rawValue: String
+    init(rawValue: String) { self.rawValue = Self.canonicalized(rawValue) }
+
+    static let beginner = Difficulty(rawValue: "beginner")
+    static let intermediate = Difficulty(rawValue: "intermediate")
+    static let advanced = Difficulty(rawValue: "advanced")
+
+    static let known: [Difficulty] = [.beginner, .intermediate, .advanced]
+}
+
 /// The broad kind of work, used to keep cardio and stretching out of
 /// resistance-training slots. Depends on: `ExtensibleTaxonomy`.
 struct ExerciseCategory: ExtensibleTaxonomy {

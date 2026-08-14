@@ -13,7 +13,7 @@ Writes LiftingPlan/Catalog/Resources/exercises.json and prints a coverage
 report. Deterministic: the same inputs always produce byte-identical output.
 """
 from __future__ import annotations
-import argparse, difflib, json, re, sys, urllib.request
+import argparse, collections, difflib, json, re, sys, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -23,6 +23,11 @@ OVERRIDES = ROOT / "Tools/overrides.json"
 OUT = ROOT / "LiftingPlan/Catalog/Resources/exercises.json"
 FEDB_URL = ("https://raw.githubusercontent.com/yuhonas/"
             "free-exercise-db/main/dist/exercises.json")
+
+# free-exercise-db's `level` uses "expert" where our taxonomy uses "advanced".
+FEDB_LEVEL_TO_DIFFICULTY = {
+    "beginner": "beginner", "intermediate": "intermediate", "expert": "advanced",
+}
 
 
 def normalize(text: str) -> str:
@@ -69,7 +74,7 @@ def build() -> int:
     for entry in load_fedb(args.fedb):
         fedb_index.setdefault(normalize(entry["name"]), entry)
 
-    catalog, enriched, overridden = [], 0, 0
+    catalog, enriched, overridden, fedb_difficulty = [], 0, 0, 0
     pattern_fallthrough, equipment_fallthrough = [], []
 
     for slug in slugs:
@@ -145,6 +150,37 @@ def build() -> int:
                 m for m in entry["secondaryMuscles"] if m not in entry["primaryMuscles"]
             ]
 
+        # Difficulty: pattern > free-exercise-db level > equipment > mechanic > default.
+        #
+        # The brief's stated precedence puts free-exercise-db's `level` above
+        # everything, since it is real human-authored data. But `level` is
+        # inconsistent for Olympic lifts in that source: "Power Clean" and
+        # "Snatch" are marked "intermediate" there, while "Clean and Jerk" and
+        # "Power Snatch" are marked "expert" for what is materially the same
+        # skill level. Deferring to it here would make a power clean
+        # "intermediate", which is not a defensible answer for an app matching
+        # exercises to lifter experience. `difficultyByPattern` only ever
+        # assigns "advanced" (Olympic and plyometric movements), so letting
+        # pattern win first can only sharpen technical lifts to "advanced" —
+        # it never overrides fedb with something less accurate. Everywhere
+        # else, fedb's `level` still outranks our own equipment/mechanic
+        # heuristics, using entry's final (post-override) fields so a
+        # hand-authored correction to pattern/equipment/mechanic is honored.
+        fedb_difficulty_value = None
+        if match is not None:
+            fedb_difficulty_value = FEDB_LEVEL_TO_DIFFICULTY.get(match.get("level"))
+        if entry["pattern"] in rules["difficultyByPattern"]:
+            entry["difficulty"] = rules["difficultyByPattern"][entry["pattern"]]
+        elif fedb_difficulty_value is not None:
+            entry["difficulty"] = fedb_difficulty_value
+            fedb_difficulty += 1
+        elif entry["equipment"] in rules["difficultyByEquipment"]:
+            entry["difficulty"] = rules["difficultyByEquipment"][entry["equipment"]]
+        elif entry.get("mechanic") in rules["difficultyByMechanic"]:
+            entry["difficulty"] = rules["difficultyByMechanic"][entry["mechanic"]]
+        else:
+            entry["difficulty"] = rules["defaultDifficulty"]
+
         entry["aliases"] = sorted({a for a in entry["aliases"] if a and a != words})
         catalog.append(entry)
 
@@ -160,6 +196,9 @@ def build() -> int:
     print(f"wrote {len(catalog)} exercises to {OUT.relative_to(ROOT)}")
     print(f"  enriched from free-exercise-db: {enriched}")
     print(f"  hand-authored overrides:        {overridden}")
+    print(f"  difficulty from free-exercise-db level: {fedb_difficulty}")
+    difficulty_counts = collections.Counter(e["difficulty"] for e in catalog)
+    print(f"  difficulty distribution: {dict(sorted(difficulty_counts.items()))}")
     print(f"  fell through to defaultPattern ({rules['defaultPattern']!r}): "
           f"{len(pattern_fallthrough)}")
     if pattern_fallthrough:

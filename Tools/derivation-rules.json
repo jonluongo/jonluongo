@@ -130,5 +130,12 @@
     "knee-raise": ["abdominals"],
     "tibialis": ["calves"],
     "calf-press": ["calves"]
-  }
+  },
+  "difficultyByPattern": { "olympic": "advanced", "plyometric": "advanced" },
+  "difficultyByEquipment": {
+    "machine": "beginner", "cable": "beginner", "band": "beginner",
+    "cardio machine": "beginner"
+  },
+  "difficultyByMechanic": { "compound": "intermediate", "isolation": "beginner" },
+  "defaultDifficulty": "intermediate"
 }

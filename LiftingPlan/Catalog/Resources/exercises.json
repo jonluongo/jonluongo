@@ -2,6 +2,7 @@
   {
     "aliases": [],
     "category": "stretching",
+    "difficulty": "beginner",
     "displayName": "Abdominals Stretch Variation Four",
     "equipment": "bodyweight",
     "force": "static",
@@ -17,6 +18,7 @@
   {
     "aliases": [],
     "category": "stretching",
+    "difficulty": "beginner",
     "displayName": "Abdominals Stretch Variation One",
     "equipment": "bodyweight",
     "force": "static",
@@ -32,6 +34,7 @@
   {
     "aliases": [],
     "category": "stretching",
+    "difficulty": "beginner",
     "displayName": "Abdominals Stretch Variation Three",
     "equipment": "bodyweight",
     "force": "static",
@@ -47,6 +50,7 @@
   {
     "aliases": [],
     "category": "stretching",
+    "difficulty": "beginner",
     "displayName": "Abdominals Stretch Variation Two",
     "equipment": "bodyweight",
     "force": "static",
@@ -62,6 +66,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Arc Trainer",
     "equipment": "cardio machine",
     "id": "arc-trainer",
@@ -76,6 +81,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Arnold Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -93,6 +99,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Assault Bike",
     "equipment": "cardio machine",
     "id": "assault-bike",
@@ -107,6 +114,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "B Stance Hip Thrust",
     "equipment": "bodyweight",
     "force": "pull",
@@ -126,6 +134,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Back Extension",
     "equipment": "bodyweight",
     "force": "pull",
@@ -143,6 +152,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Backstroke Swim",
     "equipment": "bodyweight",
     "id": "backstroke-swim",
@@ -159,6 +169,7 @@
       "band assisted pull-up"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Assisted Pull Up",
     "equipment": "band",
     "force": "pull",
@@ -183,6 +194,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Curl",
     "equipment": "band",
     "force": "pull",
@@ -200,6 +212,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band External Rotation",
     "equipment": "band",
     "id": "band-external-rotation",
@@ -214,6 +227,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Glute Bridge",
     "equipment": "band",
     "force": "pull",
@@ -232,6 +246,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band High Face Pull",
     "equipment": "band",
     "force": "pull",
@@ -249,6 +264,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Hip Abduction",
     "equipment": "band",
     "force": "push",
@@ -264,6 +280,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Kneeling Pulldown",
     "equipment": "band",
     "force": "pull",
@@ -282,6 +299,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Lateral Raise",
     "equipment": "band",
     "force": "push",
@@ -297,6 +315,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Leg Curl",
     "equipment": "band",
     "force": "pull",
@@ -314,6 +333,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Overhead Press",
     "equipment": "band",
     "force": "push",
@@ -331,6 +351,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Pullover",
     "equipment": "band",
     "force": "pull",
@@ -349,6 +370,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Romanian Deadlift",
     "equipment": "band",
     "force": "pull",
@@ -368,6 +390,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Row",
     "equipment": "band",
     "force": "pull",
@@ -386,6 +409,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Seated Pulldown",
     "equipment": "band",
     "force": "pull",
@@ -404,6 +428,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Shrug",
     "equipment": "band",
     "force": "pull",
@@ -421,6 +446,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Single Arm Lateral Raise",
     "equipment": "band",
     "force": "push",
@@ -436,6 +462,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Squat",
     "equipment": "band",
     "force": "push",
@@ -455,6 +482,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Band Wood Chopper",
     "equipment": "band",
     "id": "band-wood-chopper",
@@ -469,6 +497,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Banded Back Squat",
     "equipment": "barbell",
     "force": "push",
@@ -488,6 +517,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Barbell Behind the Back 30 Degree Shrug",
     "equipment": "barbell",
     "force": "pull",
@@ -505,6 +535,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Bench Press",
     "equipment": "barbell",
     "force": "push",
@@ -525,6 +556,7 @@
       "bent over barbell row"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Barbell Bent Over Row",
     "equipment": "barbell",
     "force": "pull",
@@ -549,6 +581,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Bent Over Row Overhand",
     "equipment": "barbell",
     "force": "pull",
@@ -567,6 +600,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Barbell Clean and Press",
     "equipment": "barbell",
     "id": "barbell-clean-and-press",
@@ -588,6 +622,7 @@
       "close-grip barbell bench press"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Barbell Close Grip Bench Press",
     "equipment": "barbell",
     "force": "push",
@@ -612,6 +647,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Barbell Curl",
     "equipment": "barbell",
     "force": "pull",
@@ -635,6 +671,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Deadlift",
     "equipment": "barbell",
     "force": "pull",
@@ -665,6 +702,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Barbell Drag Curl",
     "equipment": "barbell",
     "force": "pull",
@@ -682,6 +720,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Floor Press",
     "equipment": "barbell",
     "force": "push",
@@ -700,6 +739,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Front Rack Step Up Knee Drive",
     "equipment": "barbell",
     "force": "push",
@@ -718,6 +758,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell High Incline Bench Press",
     "equipment": "barbell",
     "force": "push",
@@ -736,6 +777,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Hip Thrust",
     "equipment": "barbell",
     "force": "push",
@@ -758,6 +800,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Incline Bench Press",
     "equipment": "barbell",
     "force": "push",
@@ -776,6 +819,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Barbell Muscle Snatch",
     "equipment": "barbell",
     "id": "barbell-muscle-snatch",
@@ -795,6 +839,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Overhead Press",
     "equipment": "barbell",
     "force": "push",
@@ -812,6 +857,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Barbell Power Snatch",
     "equipment": "barbell",
     "id": "barbell-power-snatch",
@@ -831,6 +877,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Pullover",
     "equipment": "barbell",
     "force": "pull",
@@ -849,6 +896,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Rack Pull",
     "equipment": "barbell",
     "force": "pull",
@@ -868,6 +916,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Reverse Lunge",
     "equipment": "barbell",
     "force": "push",
@@ -886,6 +935,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Romanian Deadlift",
     "equipment": "barbell",
     "force": "pull",
@@ -905,6 +955,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Barbell Shrug",
     "equipment": "barbell",
     "force": "pull",
@@ -927,6 +978,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Barbell Snatch",
     "equipment": "barbell",
     "id": "barbell-snatch",
@@ -946,6 +998,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Barbell Spinal Jefferson Curl",
     "equipment": "barbell",
     "force": "pull",
@@ -963,6 +1016,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Split Squat",
     "equipment": "barbell",
     "force": "push",
@@ -981,6 +1035,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Barbell Squat",
     "equipment": "barbell",
     "force": "push",
@@ -1008,6 +1063,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Step Up Knee Drive",
     "equipment": "barbell",
     "force": "push",
@@ -1026,6 +1082,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Stiff Leg Deadlifts",
     "equipment": "barbell",
     "force": "pull",
@@ -1045,6 +1102,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Barbell Thruster",
     "equipment": "barbell",
     "force": "push",
@@ -1064,6 +1122,7 @@
       "upright barbell row"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Barbell Upright Row",
     "equipment": "barbell",
     "force": "pull",
@@ -1086,6 +1145,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Barbell Wrist Curl",
     "equipment": "barbell",
     "force": "pull",
@@ -1101,6 +1161,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "intermediate",
     "displayName": "Battle Ropes",
     "equipment": "other",
     "force": "static",
@@ -1118,6 +1179,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Bayesian Curl",
     "equipment": "cable",
     "force": "pull",
@@ -1135,6 +1197,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Behind the Neck Press",
     "equipment": "barbell",
     "force": "push",
@@ -1152,6 +1215,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Belt Squat",
     "equipment": "machine",
     "force": "push",
@@ -1171,6 +1235,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Bench Dips",
     "equipment": "bodyweight",
     "force": "push",
@@ -1196,6 +1261,7 @@
       "quadruped opposite arm leg reach"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Bird Dog",
     "equipment": "bodyweight",
     "force": "static",
@@ -1214,6 +1280,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Bodyweight Alternating Lateral Lunge",
     "equipment": "bodyweight",
     "force": "push",
@@ -1232,6 +1299,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Bodyweight Alternating Reverse Lunges",
     "equipment": "bodyweight",
     "force": "push",
@@ -1250,6 +1318,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Bodyweight Box Squat",
     "equipment": "bodyweight",
     "force": "push",
@@ -1269,6 +1338,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Bodyweight Deadlift",
     "equipment": "bodyweight",
     "force": "pull",
@@ -1288,6 +1358,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Bodyweight Donkey Calf Raise",
     "equipment": "bodyweight",
     "force": "push",
@@ -1303,6 +1374,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Bodyweight Elevated Push Up",
     "equipment": "bodyweight",
     "force": "push",
@@ -1321,6 +1393,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Bodyweight Hip Abduction",
     "equipment": "bodyweight",
     "force": "push",
@@ -1336,6 +1409,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Bodyweight Knee Push Ups",
     "equipment": "bodyweight",
     "force": "push",
@@ -1354,6 +1428,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Bodyweight Reverse Lunge",
     "equipment": "bodyweight",
     "force": "push",
@@ -1372,6 +1447,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Bodyweight Russian Twist",
     "equipment": "bodyweight",
     "id": "bodyweight-russian-twist",
@@ -1386,6 +1462,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Bodyweight Spinal Jefferson Curl",
     "equipment": "bodyweight",
     "force": "pull",
@@ -1403,6 +1480,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Bodyweight Squat",
     "equipment": "bodyweight",
     "force": "push",
@@ -1425,6 +1503,7 @@
   {
     "aliases": [],
     "category": "plyometrics",
+    "difficulty": "advanced",
     "displayName": "Box Jump",
     "equipment": "bodyweight",
     "id": "box-jump",
@@ -1442,6 +1521,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Breaststroke Swim",
     "equipment": "bodyweight",
     "id": "breaststroke-swim",
@@ -1456,6 +1536,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Bulgarian Split Squat",
     "equipment": "bodyweight",
     "force": "push",
@@ -1474,6 +1555,7 @@
   {
     "aliases": [],
     "category": "plyometrics",
+    "difficulty": "advanced",
     "displayName": "Burpee",
     "equipment": "bodyweight",
     "force": "push",
@@ -1492,6 +1574,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Butterfly Swim",
     "equipment": "bodyweight",
     "id": "butterfly-swim",
@@ -1506,6 +1589,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable 30 Degree Shrug",
     "equipment": "cable",
     "force": "pull",
@@ -1523,6 +1607,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Bar Curl",
     "equipment": "cable",
     "force": "pull",
@@ -1540,6 +1625,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Bar Face Pull",
     "equipment": "cable",
     "force": "pull",
@@ -1557,6 +1643,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Bar Pushdown",
     "equipment": "cable",
     "force": "push",
@@ -1572,6 +1659,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Bench Chest Fly",
     "equipment": "cable",
     "force": "push",
@@ -1589,6 +1677,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Bench Press",
     "equipment": "cable",
     "force": "push",
@@ -1607,6 +1696,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Bench Straight Leg Kickback",
     "equipment": "cable",
     "force": "push",
@@ -1622,6 +1712,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Chest Press",
     "equipment": "cable",
     "force": "push",
@@ -1645,6 +1736,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Decline Bench Press",
     "equipment": "cable",
     "force": "push",
@@ -1663,6 +1755,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable External Rotation",
     "equipment": "cable",
     "id": "cable-external-rotation",
@@ -1679,6 +1772,7 @@
       "front cable raise"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Front Raise",
     "equipment": "cable",
     "force": "push",
@@ -1700,6 +1794,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable High to Low Fly",
     "equipment": "cable",
     "force": "push",
@@ -1717,6 +1812,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Hip Abduction",
     "equipment": "cable",
     "force": "push",
@@ -1732,6 +1828,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Incline Bench Press",
     "equipment": "cable",
     "force": "push",
@@ -1750,6 +1847,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Kickback",
     "equipment": "cable",
     "force": "push",
@@ -1765,6 +1863,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Low Single Arm Lateral Raise",
     "equipment": "cable",
     "force": "push",
@@ -1780,6 +1879,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Low to High Fly",
     "equipment": "cable",
     "force": "push",
@@ -1797,6 +1897,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Overhead Press",
     "equipment": "cable",
     "force": "push",
@@ -1814,6 +1915,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Pec Fly",
     "equipment": "cable",
     "force": "push",
@@ -1831,6 +1933,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Pull Through",
     "equipment": "cable",
     "force": "pull",
@@ -1850,6 +1953,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Rope Hammer Curl",
     "equipment": "cable",
     "force": "pull",
@@ -1867,6 +1971,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Rope Kneeling Face Pull",
     "equipment": "cable",
     "force": "pull",
@@ -1886,6 +1991,7 @@
       "cable rope overhead triceps extension"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Rope Overhead Tricep Extension",
     "equipment": "cable",
     "force": "push",
@@ -1907,6 +2013,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Rope Pullover",
     "equipment": "cable",
     "force": "pull",
@@ -1925,6 +2032,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Rope Pushdown",
     "equipment": "cable",
     "force": "push",
@@ -1940,6 +2048,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Row Bar Standing Row",
     "equipment": "cable",
     "force": "pull",
@@ -1958,6 +2067,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Seated Rope Face Pull",
     "equipment": "cable",
     "force": "pull",
@@ -1975,6 +2085,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Side Bend",
     "equipment": "cable",
     "id": "cable-side-bend",
@@ -1989,6 +2100,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Single Arm Neutral Grip Row",
     "equipment": "cable",
     "force": "pull",
@@ -2007,6 +2119,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Single Arm Rope Pushdown",
     "equipment": "cable",
     "force": "push",
@@ -2022,6 +2135,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Single Arm Underhand Grip Row",
     "equipment": "cable",
     "force": "pull",
@@ -2040,6 +2154,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Single Leg Laying Leg Curl",
     "equipment": "cable",
     "force": "pull",
@@ -2057,6 +2172,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Standing Low to High Wood Chopper",
     "equipment": "cable",
     "id": "cable-standing-low-to-high-wood-chopper",
@@ -2071,6 +2187,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Standing Single Arm Chest Press",
     "equipment": "cable",
     "force": "push",
@@ -2089,6 +2206,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Supinating Row",
     "equipment": "cable",
     "force": "pull",
@@ -2107,6 +2225,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Wood Chopper",
     "equipment": "cable",
     "id": "cable-wood-chopper",
@@ -2121,6 +2240,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cable Wrist Curl",
     "equipment": "cable",
     "force": "pull",
@@ -2143,6 +2263,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Captains Chair Knee Raise",
     "equipment": "bodyweight",
     "force": "push",
@@ -2158,6 +2279,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Chest Supported Dumbbell Row",
     "equipment": "dumbbell",
     "force": "pull",
@@ -2176,6 +2298,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Chest Supported T Bar Row",
     "equipment": "machine",
     "force": "pull",
@@ -2196,6 +2319,7 @@
       "chin-up"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Chin Ups",
     "equipment": "bodyweight",
     "force": "pull",
@@ -2221,6 +2345,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Close Grip Barbell Curl",
     "equipment": "barbell",
     "force": "pull",
@@ -2238,6 +2363,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Cossack Squat",
     "equipment": "bodyweight",
     "force": "push",
@@ -2257,6 +2383,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Cross Body Hammer Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -2279,6 +2406,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Cuban Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -2302,6 +2430,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Cycling Cooldown",
     "equipment": "bodyweight",
     "id": "cycling-cooldown",
@@ -2316,6 +2445,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Cycling Intervals",
     "equipment": "bodyweight",
     "id": "cycling-intervals",
@@ -2330,6 +2460,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Cycling Sprint",
     "equipment": "bodyweight",
     "id": "cycling-sprint",
@@ -2344,6 +2475,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Cycling Warmup",
     "equipment": "bodyweight",
     "id": "cycling-warmup",
@@ -2358,6 +2490,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dead Bug",
     "equipment": "bodyweight",
     "force": "static",
@@ -2381,6 +2514,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dead Hang",
     "equipment": "bodyweight",
     "force": "static",
@@ -2398,6 +2532,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Decline Barbell Bench Press",
     "equipment": "barbell",
     "force": "push",
@@ -2423,6 +2558,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Decline Crunch",
     "equipment": "bodyweight",
     "force": "pull",
@@ -2445,6 +2581,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Decline Machine Chest Press",
     "equipment": "machine",
     "force": "push",
@@ -2465,6 +2602,7 @@
       "decline push-up"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Decline Push Up",
     "equipment": "bodyweight",
     "force": "push",
@@ -2488,6 +2626,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Decline Sit Up",
     "equipment": "bodyweight",
     "id": "decline-sit-up",
@@ -2502,6 +2641,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Deficit Deadlift",
     "equipment": "barbell",
     "force": "pull",
@@ -2528,6 +2668,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Deficit Dumbbell Romanian Deadlift",
     "equipment": "dumbbell",
     "force": "pull",
@@ -2547,6 +2688,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Diamond Push Ups",
     "equipment": "bodyweight",
     "force": "push",
@@ -2565,6 +2707,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Alternating Forward Lunge",
     "equipment": "dumbbell",
     "force": "push",
@@ -2583,6 +2726,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Back Extension",
     "equipment": "dumbbell",
     "force": "pull",
@@ -2600,6 +2744,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Bench Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -2624,6 +2769,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Bulgarian Split Squat",
     "equipment": "dumbbell",
     "force": "push",
@@ -2642,6 +2788,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Chest Fly",
     "equipment": "dumbbell",
     "force": "push",
@@ -2659,6 +2806,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Concentration Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -2676,6 +2824,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Cossack Squat",
     "equipment": "dumbbell",
     "force": "push",
@@ -2695,6 +2844,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Cross Body Romanian Deadlift",
     "equipment": "dumbbell",
     "force": "pull",
@@ -2714,6 +2864,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -2731,6 +2882,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Deadlift",
     "equipment": "dumbbell",
     "force": "pull",
@@ -2752,6 +2904,7 @@
       "decline dumbbell bench press"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Decline Bench Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -2777,6 +2930,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Decline Chest Fly",
     "equipment": "dumbbell",
     "force": "push",
@@ -2794,6 +2948,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Decline Skullcrusher",
     "equipment": "dumbbell",
     "force": "push",
@@ -2809,6 +2964,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Feet Elevated Glute Bridge",
     "equipment": "dumbbell",
     "force": "pull",
@@ -2827,6 +2983,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Figure Four Heels Elevated Hip Thrust",
     "equipment": "dumbbell",
     "force": "pull",
@@ -2848,6 +3005,7 @@
       "front dumbbell raise"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Front Raise",
     "equipment": "dumbbell",
     "force": "push",
@@ -2868,6 +3026,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Front Squat",
     "equipment": "dumbbell",
     "force": "push",
@@ -2887,6 +3046,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Front Squat Tempo",
     "equipment": "dumbbell",
     "force": "push",
@@ -2906,6 +3066,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Goblet Alternating Curtsy Lunge",
     "equipment": "dumbbell",
     "force": "push",
@@ -2924,6 +3085,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Goblet Bulgarian Split Squat",
     "equipment": "dumbbell",
     "force": "push",
@@ -2942,6 +3104,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Goblet Forward Lunge",
     "equipment": "dumbbell",
     "force": "push",
@@ -2960,6 +3123,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Goblet Reverse Lunge",
     "equipment": "dumbbell",
     "force": "push",
@@ -2978,6 +3142,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Goblet Split Squat",
     "equipment": "dumbbell",
     "force": "push",
@@ -2996,6 +3161,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Goblet Squat",
     "equipment": "dumbbell",
     "force": "push",
@@ -3015,6 +3181,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Hammer Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3032,6 +3199,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Heels Elevated Hip Thrust",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3051,6 +3219,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Incline Bench Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -3069,6 +3238,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Incline Chest Fly",
     "equipment": "dumbbell",
     "force": "push",
@@ -3088,6 +3258,7 @@
       "incline dumbbell curl"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Incline Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3112,6 +3283,7 @@
       "front incline dumbbell raise"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Incline Front Raise",
     "equipment": "dumbbell",
     "force": "push",
@@ -3133,6 +3305,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Incline Hammer Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3150,6 +3323,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Lateral Lunge",
     "equipment": "dumbbell",
     "force": "push",
@@ -3168,6 +3342,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Lateral Raise",
     "equipment": "dumbbell",
     "force": "push",
@@ -3183,6 +3358,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Laying Reverse Fly",
     "equipment": "dumbbell",
     "force": "push",
@@ -3200,6 +3376,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Leg Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3217,6 +3394,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Overhead Squat",
     "equipment": "dumbbell",
     "force": "push",
@@ -3236,6 +3414,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Preacher Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3253,6 +3432,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Push Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -3270,6 +3450,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Rear Delt Fly",
     "equipment": "dumbbell",
     "force": "push",
@@ -3285,6 +3466,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Row Bilateral",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3303,6 +3485,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Row Unilateral",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3321,6 +3504,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Russian Twist",
     "equipment": "dumbbell",
     "id": "dumbbell-russian-twist",
@@ -3335,6 +3519,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Seated Overhead Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -3352,6 +3537,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Seated Overhead Tricep Extension",
     "equipment": "dumbbell",
     "force": "push",
@@ -3367,6 +3553,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Seated Rear Delt Fly",
     "equipment": "dumbbell",
     "force": "push",
@@ -3382,6 +3569,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Seated Shrug",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3399,6 +3587,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Shrug",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3421,6 +3610,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Side Bend",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3441,6 +3631,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Single Arm Chest Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -3459,6 +3650,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Dumbbell Single Arm Clean and Press",
     "equipment": "dumbbell",
     "id": "dumbbell-single-arm-clean-and-press",
@@ -3478,6 +3670,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Single Arm Row",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3496,6 +3689,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Single Leg Calf Raise",
     "equipment": "dumbbell",
     "force": "push",
@@ -3511,6 +3705,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Single Leg Hip Thrust",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3530,6 +3725,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Situp",
     "equipment": "dumbbell",
     "id": "dumbbell-situp",
@@ -3544,6 +3740,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Skullcrusher",
     "equipment": "dumbbell",
     "force": "push",
@@ -3559,6 +3756,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Spinal Jefferson Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3576,6 +3774,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Standing Single Arm Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3593,6 +3792,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Standing Single Arm Hammer Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3610,6 +3810,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Step Up Low",
     "equipment": "dumbbell",
     "force": "push",
@@ -3628,6 +3829,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Sumo Squat",
     "equipment": "dumbbell",
     "force": "push",
@@ -3647,6 +3849,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Superman",
     "equipment": "dumbbell",
     "force": "static",
@@ -3664,6 +3867,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Thruster",
     "equipment": "dumbbell",
     "force": "push",
@@ -3683,6 +3887,7 @@
       "tricep dumbbell kickback"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Tricep Kickback",
     "equipment": "dumbbell",
     "force": "push",
@@ -3703,6 +3908,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Upright Row",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3720,6 +3926,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Wrist Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -3735,6 +3942,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Dumbbell Wrist Extension",
     "equipment": "dumbbell",
     "force": "push",
@@ -3750,6 +3958,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Elbow Side Plank",
     "equipment": "bodyweight",
     "force": "static",
@@ -3768,6 +3977,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Elliptical",
     "equipment": "cardio machine",
     "id": "elliptical",
@@ -3782,6 +3992,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Ez Bar Preacher Curl",
     "equipment": "ez bar",
     "force": "pull",
@@ -3799,6 +4010,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Ez Bar Reverse Preacher Curl",
     "equipment": "ez bar",
     "force": "pull",
@@ -3816,6 +4028,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Floor Press",
     "equipment": "barbell",
     "force": "push",
@@ -3838,6 +4051,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Forward Lunge",
     "equipment": "bodyweight",
     "force": "push",
@@ -3856,6 +4070,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Freestyle Swim",
     "equipment": "bodyweight",
     "id": "freestyle-swim",
@@ -3870,6 +4085,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Frog Pump",
     "equipment": "bodyweight",
     "force": "push",
@@ -3888,6 +4104,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Front Foot Elevated Split Squat",
     "equipment": "bodyweight",
     "force": "push",
@@ -3906,6 +4123,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Front Plank",
     "equipment": "bodyweight",
     "force": "static",
@@ -3924,6 +4142,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Front Squat",
     "equipment": "barbell",
     "force": "push",
@@ -3943,6 +4162,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Glute Bridge",
     "equipment": "bodyweight",
     "force": "pull",
@@ -3961,6 +4181,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Glute Kickback Machine",
     "equipment": "machine",
     "force": "push",
@@ -3978,6 +4199,7 @@
       "good morning"
     ],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Good Mornings",
     "equipment": "barbell",
     "force": "push",
@@ -4001,6 +4223,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Hammer Strength High Row",
     "equipment": "machine",
     "force": "pull",
@@ -4019,6 +4242,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Hammer Strength Iso Lateral Row",
     "equipment": "machine",
     "force": "pull",
@@ -4037,6 +4261,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Hamstring Curl",
     "equipment": "machine",
     "force": "pull",
@@ -4054,6 +4279,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Hand Plank",
     "equipment": "bodyweight",
     "force": "static",
@@ -4072,6 +4298,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Hang Clean",
     "equipment": "barbell",
     "force": "pull",
@@ -4099,6 +4326,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Hang Power Clean",
     "equipment": "barbell",
     "id": "hang-power-clean",
@@ -4118,6 +4346,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Hang Snatch",
     "equipment": "barbell",
     "force": "pull",
@@ -4147,6 +4376,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Hanging Knee Raises",
     "equipment": "bodyweight",
     "force": "push",
@@ -4162,6 +4392,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "intermediate",
     "displayName": "Hiking",
     "equipment": "bodyweight",
     "id": "hiking",
@@ -4176,6 +4407,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Hill Climb Repeats",
     "equipment": "bodyweight",
     "id": "hill-climb-repeats",
@@ -4190,6 +4422,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Hip Hinge Speed Romanian Deadlift",
     "equipment": "barbell",
     "force": "pull",
@@ -4209,6 +4442,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Horizontal Leg Press Calf Press",
     "equipment": "machine",
     "force": "push",
@@ -4228,6 +4462,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Incline Machine Chest Press",
     "equipment": "machine",
     "force": "push",
@@ -4248,6 +4483,7 @@
       "incline push-up"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Incline Push Up",
     "equipment": "bodyweight",
     "force": "push",
@@ -4270,6 +4506,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Incline Treadmill Walk",
     "equipment": "cardio machine",
     "id": "incline-treadmill-walk",
@@ -4284,6 +4521,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Indoor Cycling Spin",
     "equipment": "bodyweight",
     "id": "indoor-cycling-spin",
@@ -4298,6 +4536,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Inverted Row",
     "equipment": "bodyweight",
     "force": "pull",
@@ -4321,6 +4560,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Jm Press",
     "equipment": "barbell",
     "force": "push",
@@ -4345,6 +4585,7 @@
   {
     "aliases": [],
     "category": "plyometrics",
+    "difficulty": "advanced",
     "displayName": "Jump Rope",
     "equipment": "bodyweight",
     "id": "jump-rope",
@@ -4362,6 +4603,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Jump Squats",
     "equipment": "bodyweight",
     "force": "push",
@@ -4381,6 +4623,7 @@
   {
     "aliases": [],
     "category": "plyometrics",
+    "difficulty": "advanced",
     "displayName": "Jumping Jack",
     "equipment": "bodyweight",
     "id": "jumping-jack",
@@ -4398,6 +4641,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Alternating Curtsy Lunge",
     "equipment": "kettlebell",
     "force": "push",
@@ -4416,6 +4660,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Assisted Bulgarian Split Squat",
     "equipment": "kettlebell",
     "force": "push",
@@ -4434,6 +4679,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Bench Press",
     "equipment": "kettlebell",
     "force": "push",
@@ -4452,6 +4698,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Kettlebell Calf Raise",
     "equipment": "kettlebell",
     "force": "push",
@@ -4467,6 +4714,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Kettlebell Curl",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4484,6 +4732,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Kettlebell Farmers Carry",
     "equipment": "kettlebell",
     "force": "static",
@@ -4502,6 +4751,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Kettlebell Front Raise",
     "equipment": "kettlebell",
     "force": "push",
@@ -4517,6 +4767,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Kettlebell Goblet Curl",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4534,6 +4785,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Goblet Squat",
     "equipment": "kettlebell",
     "force": "push",
@@ -4553,6 +4805,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Gorilla Row",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4571,6 +4824,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Hip Thrust",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4590,6 +4844,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Incline Bench Press",
     "equipment": "kettlebell",
     "force": "push",
@@ -4608,6 +4863,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Push Press",
     "equipment": "kettlebell",
     "force": "push",
@@ -4625,6 +4881,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Romanian Deadlift",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4644,6 +4901,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Row",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4662,6 +4920,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Row Single",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4680,6 +4939,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Seated Overhead Press",
     "equipment": "kettlebell",
     "force": "push",
@@ -4697,6 +4957,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Kettlebell Shrug",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4714,6 +4975,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Single Arm Row",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4732,6 +4994,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Kettlebell Spinal Jefferson Curl",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4749,6 +5012,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Sumo Deadlift",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4768,6 +5032,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Swing",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4787,6 +5052,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Thruster",
     "equipment": "kettlebell",
     "force": "push",
@@ -4810,6 +5076,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Kettlebell Turkish Get Up",
     "equipment": "kettlebell",
     "force": "static",
@@ -4828,6 +5095,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kettlebell Windmill",
     "equipment": "kettlebell",
     "force": "pull",
@@ -4852,6 +5120,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Kickstand Dumbbell Romanian Deadlift",
     "equipment": "dumbbell",
     "force": "pull",
@@ -4871,6 +5140,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Kneeling Cable Crunch",
     "equipment": "cable",
     "id": "kneeling-cable-crunch",
@@ -4885,6 +5155,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Landmine Press",
     "equipment": "barbell",
     "force": "push",
@@ -4902,6 +5173,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Landmine T Bar Rows",
     "equipment": "barbell",
     "force": "pull",
@@ -4920,6 +5192,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Lat Pulldown",
     "equipment": "cable",
     "force": "pull",
@@ -4938,6 +5211,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Leaning Cable Lateral Raise",
     "equipment": "cable",
     "force": "push",
@@ -4953,6 +5227,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Long Run",
     "equipment": "bodyweight",
     "id": "long-run",
@@ -4967,6 +5242,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Lunge Walking",
     "equipment": "bodyweight",
     "force": "push",
@@ -4987,6 +5263,7 @@
       "lying leg curls"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Lying Leg Curl",
     "equipment": "machine",
     "force": "pull",
@@ -5009,6 +5286,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine 45 Degree Back Extension",
     "equipment": "machine",
     "force": "pull",
@@ -5026,6 +5304,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Assisted Pull Up",
     "equipment": "machine",
     "force": "pull",
@@ -5044,6 +5323,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Cable V Bar Push Downs",
     "equipment": "machine",
     "force": "push",
@@ -5059,6 +5339,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Chest Press",
     "equipment": "machine",
     "force": "push",
@@ -5077,6 +5358,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Crunch",
     "equipment": "machine",
     "id": "machine-crunch",
@@ -5093,6 +5375,7 @@
       "dip machine"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Dips",
     "equipment": "machine",
     "force": "push",
@@ -5117,6 +5400,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Face Pulls",
     "equipment": "machine",
     "force": "pull",
@@ -5134,6 +5418,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Front Military Press",
     "equipment": "machine",
     "force": "push",
@@ -5151,6 +5436,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Hack Squat",
     "equipment": "machine",
     "force": "push",
@@ -5170,6 +5456,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Hip Abduction",
     "equipment": "machine",
     "force": "push",
@@ -5185,6 +5472,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Hip Adduction",
     "equipment": "machine",
     "force": "push",
@@ -5200,6 +5488,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Hip Thrust",
     "equipment": "machine",
     "force": "pull",
@@ -5219,6 +5508,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Horizontal Leg Press",
     "equipment": "machine",
     "force": "push",
@@ -5238,6 +5528,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Lat Pullover",
     "equipment": "machine",
     "force": "pull",
@@ -5256,6 +5547,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Lateral Raise",
     "equipment": "machine",
     "force": "push",
@@ -5271,6 +5563,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Leg Extension",
     "equipment": "machine",
     "force": "push",
@@ -5286,6 +5579,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Leg Press",
     "equipment": "machine",
     "force": "push",
@@ -5305,6 +5599,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Neutral Row",
     "equipment": "machine",
     "force": "pull",
@@ -5323,6 +5618,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Pec Fly",
     "equipment": "machine",
     "force": "push",
@@ -5340,6 +5636,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Plate Loaded Leg Extension",
     "equipment": "machine",
     "force": "push",
@@ -5355,6 +5652,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Plate Loaded T Bar Row",
     "equipment": "machine",
     "force": "pull",
@@ -5375,6 +5673,7 @@
       "machine preacher curls"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Preacher Curl",
     "equipment": "machine",
     "force": "pull",
@@ -5398,6 +5697,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Pulldown",
     "equipment": "cable",
     "force": "pull",
@@ -5416,6 +5716,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Seated Cable Row",
     "equipment": "machine",
     "force": "pull",
@@ -5436,6 +5737,7 @@
       "machine triceps extension"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Tricep Extension",
     "equipment": "machine",
     "force": "push",
@@ -5456,6 +5758,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Machine Underhand Row",
     "equipment": "machine",
     "force": "pull",
@@ -5474,6 +5777,7 @@
   {
     "aliases": [],
     "category": "plyometrics",
+    "difficulty": "advanced",
     "displayName": "Man Maker",
     "equipment": "dumbbell",
     "force": "push",
@@ -5493,6 +5797,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Meadows Row",
     "equipment": "barbell",
     "force": "pull",
@@ -5513,6 +5818,7 @@
       "mountain climbers"
     ],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Mountain Climber",
     "equipment": "bodyweight",
     "force": "pull",
@@ -5535,6 +5841,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Narrow Pulldown",
     "equipment": "cable",
     "force": "pull",
@@ -5553,6 +5860,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Neck Curl",
     "equipment": "bodyweight",
     "force": "pull",
@@ -5570,6 +5878,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Neck Extension",
     "equipment": "bodyweight",
     "force": "push",
@@ -5585,6 +5894,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Neutral Grip Dumbbell Bench Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -5603,6 +5913,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Neutral Grip Lat Pulldown",
     "equipment": "cable",
     "force": "pull",
@@ -5621,6 +5932,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Neutral Grip Pull Up",
     "equipment": "bodyweight",
     "force": "pull",
@@ -5639,6 +5951,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Nordic Hamstring Curl",
     "equipment": "bodyweight",
     "force": "pull",
@@ -5656,6 +5969,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Pallof Press",
     "equipment": "cable",
     "force": "static",
@@ -5682,6 +5996,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Parralel Bar Dips",
     "equipment": "bodyweight",
     "force": "push",
@@ -5700,6 +6015,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Pause Squat",
     "equipment": "barbell",
     "force": "push",
@@ -5719,6 +6035,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Pendlay Row",
     "equipment": "barbell",
     "force": "pull",
@@ -5737,6 +6054,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Pendulum Squat V Squat",
     "equipment": "machine",
     "force": "push",
@@ -5756,6 +6074,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Plate Forward Lunge",
     "equipment": "plate",
     "force": "push",
@@ -5776,6 +6095,7 @@
       "front plate raise"
     ],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Plate Front Raise",
     "equipment": "plate",
     "force": "push",
@@ -5796,6 +6116,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Plate Pinch",
     "equipment": "plate",
     "force": "static",
@@ -5819,6 +6140,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Power Clean",
     "equipment": "barbell",
     "force": "pull",
@@ -5871,6 +6193,7 @@
       "pullups"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Pull Ups",
     "equipment": "bodyweight",
     "force": "pull",
@@ -5895,6 +6218,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Push Jerk",
     "equipment": "barbell",
     "id": "push-jerk",
@@ -5914,6 +6238,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Push Up",
     "equipment": "bodyweight",
     "force": "push",
@@ -5932,6 +6257,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Reverse Grip Barbell Bench Press",
     "equipment": "barbell",
     "force": "push",
@@ -5950,6 +6276,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Reverse Grip Barbell Curl",
     "equipment": "barbell",
     "force": "pull",
@@ -5969,6 +6296,7 @@
       "reverse grip triceps pushdown"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Reverse Grip Tricep Pushdown",
     "equipment": "cable",
     "force": "push",
@@ -5990,6 +6318,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Reverse Hack Squat",
     "equipment": "machine",
     "force": "push",
@@ -6009,6 +6338,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Reverse Hyperextension",
     "equipment": "machine",
     "force": "pull",
@@ -6033,6 +6363,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Reverse Pec Deck",
     "equipment": "machine",
     "force": "push",
@@ -6050,6 +6381,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Romanian Deadlift Hamstring Sweeps",
     "equipment": "barbell",
     "force": "pull",
@@ -6068,6 +6400,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Rowing Intervals",
     "equipment": "cardio machine",
     "force": null,
@@ -6085,6 +6418,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Rowing Machine Steady State",
     "equipment": "cardio machine",
     "force": null,
@@ -6102,6 +6436,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Rowing Sprint",
     "equipment": "cardio machine",
     "force": null,
@@ -6119,6 +6454,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Running Cooldown",
     "equipment": "bodyweight",
     "id": "running-cooldown",
@@ -6133,6 +6469,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Running Intervals",
     "equipment": "bodyweight",
     "id": "running-intervals",
@@ -6147,6 +6484,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Seal Row",
     "equipment": "barbell",
     "force": "pull",
@@ -6165,6 +6503,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Seated Calf Raise",
     "equipment": "machine",
     "force": "push",
@@ -6187,6 +6526,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Seated Dumbbell Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -6210,6 +6550,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Seated Leg Curl",
     "equipment": "machine",
     "force": "pull",
@@ -6233,6 +6574,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Shadow Boxing",
     "equipment": "bodyweight",
     "id": "shadow-boxing",
@@ -6247,6 +6589,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Single Arm Cable Fly",
     "equipment": "cable",
     "force": "push",
@@ -6264,6 +6607,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Single Arm Dumbbell Overhead Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -6281,6 +6625,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Single Arm Landmine Press",
     "equipment": "barbell",
     "force": "push",
@@ -6298,6 +6643,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Single Arm Lat Pulldown",
     "equipment": "cable",
     "force": "pull",
@@ -6316,6 +6662,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Single Arm Overhead Cable Extension",
     "equipment": "cable",
     "force": "push",
@@ -6331,6 +6678,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Single Arm Tricep Extension",
     "equipment": "dumbbell",
     "force": "push",
@@ -6346,6 +6694,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Single Leg Back Extension",
     "equipment": "bodyweight",
     "force": "pull",
@@ -6363,6 +6712,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Single Leg Dumbbell Romanian Deadlift",
     "equipment": "dumbbell",
     "force": "pull",
@@ -6382,6 +6732,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Single Leg Glute Bridge",
     "equipment": "bodyweight",
     "force": "push",
@@ -6404,6 +6755,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Single Leg Hip Thrust",
     "equipment": "bodyweight",
     "force": "pull",
@@ -6423,6 +6775,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Single Leg Kettlebell Romanian Deadlift Deficit",
     "equipment": "kettlebell",
     "force": "pull",
@@ -6442,6 +6795,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Single Leg Press",
     "equipment": "machine",
     "force": "push",
@@ -6461,6 +6815,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Single Leg Standing Calf Raise",
     "equipment": "bodyweight",
     "force": "push",
@@ -6476,6 +6831,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Single Leg Step Down",
     "equipment": "bodyweight",
     "force": "push",
@@ -6494,6 +6850,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Single Legged Romanian Deadlifts",
     "equipment": "bodyweight",
     "force": "pull",
@@ -6513,6 +6870,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Sissy Squat",
     "equipment": "bodyweight",
     "force": "push",
@@ -6532,6 +6890,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Ski Erg",
     "equipment": "cardio machine",
     "id": "ski-erg",
@@ -6546,6 +6905,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Sled Pull",
     "equipment": "sled",
     "force": "pull",
@@ -6564,6 +6924,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Sled Push",
     "equipment": "sled",
     "force": "push",
@@ -6588,6 +6949,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Smith Machine Bench Press",
     "equipment": "machine",
     "force": "push",
@@ -6612,6 +6974,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Smith Machine Bent Over Row",
     "equipment": "machine",
     "force": "pull",
@@ -6638,6 +7001,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Smith Machine Calf Raise",
     "equipment": "machine",
     "force": "push",
@@ -6661,6 +7025,7 @@
       "smith machine close-grip bench press"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Smith Machine Close Grip Bench Press",
     "equipment": "machine",
     "force": "push",
@@ -6685,6 +7050,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Smith Machine Front Squat",
     "equipment": "machine",
     "force": "push",
@@ -6704,6 +7070,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Smith Machine Incline Bench Press",
     "equipment": "machine",
     "force": "push",
@@ -6728,6 +7095,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Smith Machine Seated Overhead Press",
     "equipment": "machine",
     "force": "push",
@@ -6745,6 +7113,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Smith Machine Squat",
     "equipment": "machine",
     "force": "push",
@@ -6772,6 +7141,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Smith Machine Standing Shrugs",
     "equipment": "machine",
     "force": "pull",
@@ -6789,6 +7159,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Smith Machine Sumo Romanian Deadlift",
     "equipment": "machine",
     "force": "pull",
@@ -6808,6 +7179,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Snatch Grip Deadlift",
     "equipment": "barbell",
     "force": "pull",
@@ -6827,6 +7199,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Snatch Grip High Pull",
     "equipment": "barbell",
     "id": "snatch-grip-high-pull",
@@ -6846,6 +7219,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Snatch Pull",
     "equipment": "barbell",
     "force": "pull",
@@ -6872,6 +7246,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Spider Curl",
     "equipment": "dumbbell",
     "force": "pull",
@@ -6897,6 +7272,7 @@
   {
     "aliases": [],
     "category": "olympic weightlifting",
+    "difficulty": "advanced",
     "displayName": "Split Jerk",
     "equipment": "barbell",
     "force": "push",
@@ -6922,6 +7298,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Split Squat Isometric Hold",
     "equipment": "bodyweight",
     "force": "push",
@@ -6940,6 +7317,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Stability Ball Leg Curl",
     "equipment": "machine",
     "force": "pull",
@@ -6957,6 +7335,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Stair Climber",
     "equipment": "cardio machine",
     "force": null,
@@ -6975,6 +7354,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Standing Cable Hip Abduction",
     "equipment": "cable",
     "force": "push",
@@ -6990,6 +7370,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Standing Calf Raise Machine",
     "equipment": "machine",
     "force": "push",
@@ -7005,6 +7386,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Steady State Ride",
     "equipment": "bodyweight",
     "force": null,
@@ -7023,6 +7405,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Straight Arm Lat Pulldown",
     "equipment": "cable",
     "force": "pull",
@@ -7043,6 +7426,7 @@
       "superman"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Supermans",
     "equipment": "bodyweight",
     "force": "static",
@@ -7066,6 +7450,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Swim Kick Drill",
     "equipment": "bodyweight",
     "id": "swim-kick-drill",
@@ -7080,6 +7465,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Swim Pull Drill",
     "equipment": "bodyweight",
     "id": "swim-pull-drill",
@@ -7094,6 +7480,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Swim Sprint Intervals",
     "equipment": "bodyweight",
     "id": "swim-sprint-intervals",
@@ -7108,6 +7495,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Tate Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -7132,6 +7520,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Tempo Run",
     "equipment": "bodyweight",
     "id": "tempo-run",
@@ -7146,6 +7535,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Tibialis Raise",
     "equipment": "bodyweight",
     "force": "push",
@@ -7161,6 +7551,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Toes to Bar",
     "equipment": "bodyweight",
     "id": "toes-to-bar",
@@ -7175,6 +7566,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Towel Slide Leg Curl",
     "equipment": "machine",
     "force": "pull",
@@ -7192,6 +7584,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Trail Run",
     "equipment": "bodyweight",
     "id": "trail-run",
@@ -7206,6 +7599,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Trap Bar Deadlift",
     "equipment": "trap bar",
     "force": "pull",
@@ -7229,6 +7623,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Trap Bar Shrug",
     "equipment": "trap bar",
     "force": "pull",
@@ -7246,6 +7641,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Treadmill Run",
     "equipment": "cardio machine",
     "id": "treadmill-run",
@@ -7260,6 +7656,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Underhand Barbell Row",
     "equipment": "barbell",
     "force": "pull",
@@ -7278,6 +7675,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "V Up",
     "equipment": "bodyweight",
     "id": "v-up",
@@ -7292,6 +7690,7 @@
   {
     "aliases": [],
     "category": "cardio",
+    "difficulty": "beginner",
     "displayName": "Versaclimber",
     "equipment": "cardio machine",
     "force": null,
@@ -7310,6 +7709,7 @@
   {
     "aliases": [],
     "category": "plyometrics",
+    "difficulty": "advanced",
     "displayName": "Wall Ball",
     "equipment": "medicine ball",
     "force": "push",
@@ -7327,6 +7727,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Wall Sit",
     "equipment": "bodyweight",
     "force": "push",
@@ -7346,6 +7747,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Weighted Pull Ups",
     "equipment": "bodyweight",
     "force": "pull",
@@ -7371,6 +7773,7 @@
       "wide-grip barbell bench press"
     ],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Wide Grip Barbell Bench Press",
     "equipment": "barbell",
     "force": "push",
@@ -7394,6 +7797,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Wide Grip Barbell Curl",
     "equipment": "barbell",
     "force": "pull",
@@ -7413,6 +7817,7 @@
       "wide-grip lat pulldown"
     ],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Wide Grip Lat Pulldown",
     "equipment": "cable",
     "force": "pull",
@@ -7439,6 +7844,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Wide Grip Pull Up",
     "equipment": "bodyweight",
     "force": "pull",
@@ -7457,6 +7863,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Wide Grip Seated Cable Row",
     "equipment": "cable",
     "force": "pull",
@@ -7475,6 +7882,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "beginner",
     "displayName": "Wrist Roller",
     "equipment": "other",
     "force": "pull",
@@ -7501,6 +7909,7 @@
       "yates bent over row"
     ],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Yates Row",
     "equipment": "barbell",
     "force": "pull",
@@ -7519,6 +7928,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Z Press",
     "equipment": "barbell",
     "force": "push",
@@ -7538,6 +7948,7 @@
       "zercher squats"
     ],
     "category": "strength",
+    "difficulty": "advanced",
     "displayName": "Zercher Squat",
     "equipment": "barbell",
     "force": "push",
@@ -7563,6 +7974,7 @@
   {
     "aliases": [],
     "category": "strength",
+    "difficulty": "intermediate",
     "displayName": "Zottman Curl",
     "equipment": "dumbbell",
     "force": "pull",
