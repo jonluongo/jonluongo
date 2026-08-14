@@ -20,6 +20,8 @@ enum StoreContainer {
         PlannedExercise.self,
         LoggedSet.self,
         PlanMessage.self,
+        BodyMetric.self,
+        StrengthBaseline.self,
     ])
 
     /// The production container, backed by the user's private CloudKit database.
