@@ -55,11 +55,40 @@ Each entry needs more than a name. Fields: `id` (slug), `displayName`,
 (compound/isolation), `force` (push/pull/static), `category`, `instructions`,
 and `mediaAsset` (nil until animations are purchased).
 
-Muscle, equipment, and instruction data is seeded from
-[free-exercise-db](https://github.com/yuhonas/free-exercise-db) — public domain,
-800+ entries — matched to MoveKit slugs by normalized name, with unmatched
-entries filled by hand. The match rate will not be 100%; the gap is hand-authored
-and the seeding script is kept so the catalog can be rebuilt reproducibly.
+### Seeding the metadata — measured, not assumed
+
+[free-exercise-db](https://github.com/yuhonas/free-exercise-db) (public domain,
+873 entries) was tested against the 412 MoveKit slugs before committing to it:
+
+- Exact slug match: **53 of 412 (13%)**
+- Token-normalized plus fuzzy match at 0.87: **97 of 412 (24%)**
+
+The vocabularies genuinely diverge. MoveKit carries band, machine, and cardio
+variants that free-exercise-db lacks; free-exercise-db uses older bodybuilding
+names (`Arnold Dumbbell Press` against `arnold-press`). Hand-authoring the
+remaining 315 entries is not viable.
+
+The slugs themselves carry the metadata instead. Measured against all 412:
+
+- A recognizable movement-pattern token: **374 of 412 (91%)**
+- A recognizable equipment token: **275 of 412 (67%)** — absence of one is a
+  reliable signal for bodyweight
+
+So the catalog is built by a committed, deterministic script merging three
+data sources, in precedence order:
+
+1. **`derivation-rules.json`** — declarative keyword tables mapping slug tokens
+   to equipment, movement pattern, force, mechanic, and primary muscles.
+2. **free-exercise-db** — enriches matched entries with instructions and precise
+   secondary-muscle data.
+3. **`overrides.json`** — hand-authored entries and corrections, covering the
+   ~38 named movements with no pattern token (`burpee`, `bird-dog`, `dead-bug`)
+   and anything the rules get wrong.
+
+All three are data files. The rules are declarative, not Swift control flow, and
+the script is reproducible so the catalog can be regenerated when MoveKit adds
+releases. A catalog integrity test fails the build if any entry ends up without
+valid equipment, a primary muscle, or a category.
 
 ## The catalog is not in the database
 

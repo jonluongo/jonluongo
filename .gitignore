@@ -28,3 +28,6 @@ xcuserdata/
 # App-specific
 timeline.xctimeline
 playground.xcworkspace
+
+# Superpowers SDD scratch
+.superpowers/
