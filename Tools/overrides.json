@@ -99,6 +99,7 @@
   },
   "floor-press": {
     "pattern": "horizontal press", "primaryMuscles": ["chest"],
+    "secondaryMuscles": ["shoulders", "triceps"],
     "equipment": "barbell", "mechanic": "compound", "force": "push",
     "category": "strength"
   },
