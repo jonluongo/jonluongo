@@ -86,7 +86,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -116,7 +118,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -131,7 +136,9 @@
     "primaryMuscles": [
       "lower back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -186,7 +193,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -215,7 +224,10 @@
     "primaryMuscles": [
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -230,7 +242,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps"
+    ]
   },
   {
     "aliases": [],
@@ -260,7 +274,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -290,7 +307,9 @@
     "primaryMuscles": [
       "hamstrings"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -305,7 +324,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -320,7 +341,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -336,7 +360,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -351,7 +378,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -366,7 +396,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -381,7 +414,9 @@
     "primaryMuscles": [
       "traps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -411,7 +446,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -440,7 +479,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -455,7 +498,9 @@
     "primaryMuscles": [
       "traps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -470,7 +515,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [
@@ -511,7 +559,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -525,7 +576,12 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "traps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [
@@ -619,7 +675,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -634,7 +692,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -650,7 +711,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -665,7 +728,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -702,7 +768,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -716,7 +785,12 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "traps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -731,7 +805,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -745,7 +821,12 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "traps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -760,7 +841,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -776,7 +860,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -792,7 +879,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -808,7 +897,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -828,7 +920,9 @@
     "primaryMuscles": [
       "traps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -842,7 +936,12 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "traps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -857,7 +956,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -873,7 +974,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -916,7 +1019,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -932,7 +1037,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -947,7 +1055,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [
@@ -1018,7 +1128,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -1050,7 +1162,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -1109,7 +1225,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -1125,7 +1243,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -1140,7 +1260,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -1156,7 +1280,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -1186,7 +1313,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1216,7 +1346,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1232,7 +1365,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -1261,7 +1396,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -1297,7 +1434,10 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "calves"
+    ]
   },
   {
     "aliases": [],
@@ -1327,7 +1467,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -1374,7 +1516,9 @@
     "primaryMuscles": [
       "traps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -1389,7 +1533,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -1404,7 +1550,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps"
+    ]
   },
   {
     "aliases": [],
@@ -1434,7 +1582,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1449,7 +1599,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1502,7 +1655,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1554,7 +1710,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1584,7 +1742,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1629,7 +1790,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1644,7 +1807,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -1659,7 +1824,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1675,7 +1842,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -1690,7 +1860,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -1705,7 +1877,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps"
+    ]
   },
   {
     "aliases": [
@@ -1743,7 +1917,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -1773,7 +1950,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1788,7 +1968,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps"
+    ]
   },
   {
     "aliases": [],
@@ -1817,7 +1999,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1847,7 +2032,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1862,7 +2050,9 @@
     "primaryMuscles": [
       "hamstrings"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -1891,7 +2081,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1906,7 +2099,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1972,7 +2168,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -1987,7 +2186,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [
@@ -2029,7 +2231,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -2044,7 +2248,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -2247,7 +2455,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [
@@ -2328,7 +2539,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -2343,7 +2557,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -2359,7 +2576,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -2374,7 +2593,9 @@
     "primaryMuscles": [
       "lower back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -2414,7 +2635,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -2429,7 +2652,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -2444,7 +2669,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -2459,7 +2686,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -2475,7 +2706,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -2490,7 +2724,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -2506,7 +2742,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [
@@ -2548,7 +2787,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -2578,7 +2819,10 @@
     "primaryMuscles": [
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -2594,7 +2838,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [
@@ -2631,7 +2878,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -2646,7 +2897,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -2662,7 +2917,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -2678,7 +2935,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -2694,7 +2953,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -2710,7 +2971,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -2726,7 +2989,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -2741,7 +3006,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -2756,7 +3025,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -2772,7 +3043,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -2787,7 +3061,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -2802,7 +3079,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [
@@ -2824,7 +3103,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [
@@ -2862,7 +3143,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -2878,7 +3161,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -2908,7 +3193,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -2923,7 +3210,9 @@
     "primaryMuscles": [
       "hamstrings"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -2938,7 +3227,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -2953,7 +3246,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -2968,7 +3263,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -2998,7 +3295,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -3013,7 +3313,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -3042,7 +3345,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -3087,7 +3392,9 @@
     "primaryMuscles": [
       "traps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -3107,7 +3414,9 @@
     "primaryMuscles": [
       "traps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -3142,7 +3451,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -3156,7 +3468,12 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "traps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -3171,7 +3488,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -3202,7 +3522,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -3246,7 +3569,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -3261,7 +3586,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -3276,7 +3603,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -3292,7 +3621,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -3307,7 +3638,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -3322,7 +3657,9 @@
     "primaryMuscles": [
       "lower back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -3337,7 +3674,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [
@@ -3374,7 +3713,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps"
+    ]
   },
   {
     "aliases": [],
@@ -3419,7 +3760,10 @@
     "primaryMuscles": [
       "abdominals"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -3448,7 +3792,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -3463,7 +3809,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -3501,7 +3849,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -3530,7 +3880,10 @@
     "primaryMuscles": [
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -3546,7 +3899,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -3561,7 +3916,10 @@
     "primaryMuscles": [
       "abdominals"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -3576,7 +3934,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -3591,7 +3953,10 @@
     "primaryMuscles": [
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -3646,7 +4011,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -3661,7 +4029,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -3676,7 +4047,9 @@
     "primaryMuscles": [
       "hamstrings"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -3691,7 +4064,10 @@
     "primaryMuscles": [
       "abdominals"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -3732,7 +4108,12 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "traps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -3820,7 +4201,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -3835,7 +4219,11 @@
     "primaryMuscles": [
       "calves"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -3850,7 +4238,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [
@@ -3963,7 +4354,10 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "calves"
+    ]
   },
   {
     "aliases": [],
@@ -3978,7 +4372,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -3992,7 +4390,10 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "calves"
+    ]
   },
   {
     "aliases": [],
@@ -4008,7 +4409,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -4024,7 +4427,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -4039,7 +4444,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4069,7 +4477,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -4084,7 +4494,10 @@
     "primaryMuscles": [
       "abdominals"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -4114,7 +4527,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -4129,7 +4544,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -4144,7 +4563,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4160,7 +4582,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -4175,7 +4600,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4190,7 +4618,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -4206,7 +4636,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -4221,7 +4654,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4236,7 +4672,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4251,7 +4690,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -4266,7 +4707,9 @@
     "primaryMuscles": [
       "traps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -4281,7 +4724,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4296,7 +4742,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -4312,7 +4760,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -4328,7 +4779,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -4366,7 +4820,10 @@
     "primaryMuscles": [
       "abdominals"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -4406,7 +4863,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -4435,7 +4895,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -4450,7 +4912,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4465,7 +4930,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -4510,7 +4978,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [
@@ -4532,7 +5002,9 @@
     "primaryMuscles": [
       "hamstrings"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -4547,7 +5019,9 @@
     "primaryMuscles": [
       "lower back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -4562,7 +5036,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -4592,7 +5069,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4647,7 +5127,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps"
+    ]
   },
   {
     "aliases": [],
@@ -4662,7 +5144,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -4677,7 +5161,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -4723,7 +5211,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -4738,7 +5229,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -4753,7 +5248,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -4798,7 +5296,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -4813,7 +5315,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4828,7 +5333,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4858,7 +5365,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [
@@ -4881,7 +5391,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -4896,7 +5408,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -4911,7 +5426,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [
@@ -4948,7 +5466,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -4982,7 +5503,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [
@@ -5021,7 +5545,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -5036,7 +5563,9 @@
     "primaryMuscles": [
       "neck"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -5066,7 +5595,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -5081,7 +5613,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -5096,7 +5631,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -5111,7 +5649,9 @@
     "primaryMuscles": [
       "hamstrings"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -5170,7 +5710,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -5185,7 +5729,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -5200,7 +5747,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -5216,7 +5767,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [
@@ -5259,7 +5812,9 @@
     "primaryMuscles": [
       "forearms"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -5349,7 +5904,12 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "traps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -5364,7 +5924,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -5379,7 +5942,10 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -5394,7 +5960,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [
@@ -5432,7 +6000,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -5471,7 +6043,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -5486,7 +6060,10 @@
     "primaryMuscles": [
       "hamstrings"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -5580,7 +6157,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -5623,7 +6203,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -5644,7 +6226,9 @@
     "primaryMuscles": [
       "hamstrings"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -5673,7 +6257,9 @@
     "primaryMuscles": [
       "chest"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -5688,7 +6274,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -5703,7 +6291,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -5718,7 +6308,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -5763,7 +6356,9 @@
     "primaryMuscles": [
       "lower back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -5779,7 +6374,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -5817,7 +6415,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -5833,7 +6434,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -5848,7 +6452,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -5879,7 +6487,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -5895,7 +6505,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -5910,7 +6523,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -5939,7 +6556,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -6075,7 +6695,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -6114,7 +6738,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [],
@@ -6156,7 +6782,9 @@
     "primaryMuscles": [
       "traps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -6172,7 +6800,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -6188,7 +6819,10 @@
       "hamstrings",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "lower back",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -6202,7 +6836,12 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "traps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -6251,7 +6890,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -6292,7 +6933,9 @@
       "quadriceps",
       "glutes"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "hamstrings"
+    ]
   },
   {
     "aliases": [],
@@ -6307,7 +6950,9 @@
     "primaryMuscles": [
       "hamstrings"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -6322,7 +6967,10 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -6367,7 +7015,10 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -6382,7 +7033,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [
@@ -6531,7 +7185,9 @@
     "primaryMuscles": [
       "hamstrings"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -6583,7 +7239,9 @@
     "primaryMuscles": [
       "traps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [],
@@ -6612,7 +7270,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -6641,7 +7302,10 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms",
+      "traps"
+    ]
   },
   {
     "aliases": [],
@@ -6673,7 +7337,11 @@
     "primaryMuscles": [
       "quadriceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ]
   },
   {
     "aliases": [],
@@ -6736,7 +7404,9 @@
     "primaryMuscles": [
       "biceps"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "forearms"
+    ]
   },
   {
     "aliases": [
@@ -6779,7 +7449,10 @@
     "primaryMuscles": [
       "lats"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ]
   },
   {
     "aliases": [],
@@ -6794,7 +7467,10 @@
     "primaryMuscles": [
       "middle back"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "biceps",
+      "shoulders"
+    ]
   },
   {
     "aliases": [],
@@ -6853,7 +7529,9 @@
     "primaryMuscles": [
       "shoulders"
     ],
-    "secondaryMuscles": []
+    "secondaryMuscles": [
+      "triceps"
+    ]
   },
   {
     "aliases": [

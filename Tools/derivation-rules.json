@@ -74,6 +74,23 @@
     "plyometric": ["quadriceps"], "olympic": ["quadriceps"],
     "cardio": ["quadriceps"], "stretch": ["abdominals"]
   },
+  "patternSecondaryMuscles": {
+    "horizontal press": ["triceps", "shoulders"],
+    "vertical press": ["triceps"],
+    "horizontal pull": ["biceps", "shoulders"],
+    "vertical pull": ["biceps", "middle back"],
+    "squat": ["glutes", "hamstrings", "lower back"],
+    "hinge": ["lower back", "traps"],
+    "lunge": ["glutes", "hamstrings"],
+    "fly": ["shoulders"],
+    "shrug": ["forearms"],
+    "curl": ["forearms"],
+    "carry": ["forearms", "traps"],
+    "olympic": ["glutes", "hamstrings", "traps", "shoulders"],
+    "plyometric": ["glutes", "calves"],
+    "rotation": ["abdominals"],
+    "flexion": ["abdominals"]
+  },
   "patternForce": {
     "horizontal press": "push", "vertical press": "push", "squat": "push",
     "lunge": "push", "extension": "push", "raise": "push", "fly": "push",

@@ -141,4 +141,43 @@ struct CatalogIntegrityTests {
             }
         }
     }
+
+    @Test("Compound resistance exercises name the muscles they work beyond the prime mover")
+    func secondaryMusclesPresent() throws {
+        let catalog = try ExerciseCatalog.bundled()
+        let needsSecondary = catalog.all.filter {
+            $0.isResistanceTraining && $0.mechanic == .compound
+        }
+        let missing = needsSecondary.filter { $0.secondaryMuscles.isEmpty }
+        #expect(missing.isEmpty,
+                "compound exercises with no secondary muscles: \(missing.map(\.id.rawValue).sorted())")
+    }
+
+    @Test("Known exercises name the specific muscles a lifter would expect")
+    func secondaryMusclesAreCorrect() throws {
+        let catalog = try ExerciseCatalog.bundled()
+
+        func secondaries(_ id: String) throws -> Set<MuscleGroup> {
+            let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: id)),
+                                        "\(id) missing from catalog")
+            return Set(exercise.secondaryMuscles)
+        }
+
+        // A bench press works triceps and front delts. This is the case that
+        // motivated the whole task.
+        #expect(try secondaries("barbell-bench-press").contains(.triceps))
+        #expect(try secondaries("barbell-bench-press").contains(.shoulders))
+        // A pulldown works biceps.
+        #expect(try secondaries("lat-pulldown").contains(.biceps))
+        // A squat works glutes.
+        #expect(try secondaries("barbell-squat").contains(.glutes))
+    }
+
+    @Test("A muscle is never both the prime mover and a secondary")
+    func primaryAndSecondaryStayDisjoint() throws {
+        for exercise in try ExerciseCatalog.bundled().all {
+            #expect(Set(exercise.primaryMuscles).isDisjoint(with: Set(exercise.secondaryMuscles)),
+                    "\(exercise.id) lists a muscle as both primary and secondary")
+        }
+    }
 }

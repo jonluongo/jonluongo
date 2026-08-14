@@ -91,7 +91,11 @@ def build() -> int:
         force = rules["patternForce"].get(pattern)
         mechanic = "compound" if pattern in rules["compoundPatterns"] else "isolation"
         category = rules["patternCategory"].get(pattern, rules["defaultCategory"])
-        secondary: list[str] = []
+        # Default: secondary muscles are a property of the movement pattern.
+        # free-exercise-db enrichment below overwrites this for matched
+        # entries that actually carry secondary-muscle data; overrides.json
+        # wins over both. Precedence order is unchanged.
+        secondary: list[str] = list(rules.get("patternSecondaryMuscles", {}).get(pattern, []))
         instructions: list[str] = []
         aliases: list[str] = []
 
@@ -106,7 +110,8 @@ def build() -> int:
             instructions = match.get("instructions") or []
             if match.get("primaryMuscles"):
                 primary = match["primaryMuscles"]
-            secondary = match.get("secondaryMuscles") or []
+            if match.get("secondaryMuscles"):
+                secondary = match["secondaryMuscles"]
             if match.get("mechanic"):
                 mechanic = match["mechanic"]
             if match.get("force"):
