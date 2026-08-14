@@ -16,6 +16,13 @@ enum MatchConfidence: Hashable, Sendable {
 }
 
 /// A catalog entry chosen for a piece of free text.
+///
+/// Produced only by `ExerciseResolver.resolve`, which is the sole path by
+/// which generated or user-typed exercise names are allowed to become a
+/// concrete `ExerciseID` for persistence. Callers branch on `confidence` to
+/// decide whether a resolution is trustworthy enough to save.
+///
+/// Depends on: `ExerciseID` and `MatchConfidence`.
 struct ResolvedExercise: Hashable, Sendable {
     let id: ExerciseID
     let confidence: MatchConfidence
@@ -48,22 +55,35 @@ struct ExerciseResolver: Sendable {
         self.catalog = catalog
 
         var exact: [String: ExerciseID] = [:]
-        var aliases: [String: ExerciseID] = [:]
-        var normalized: [String: ExerciseID] = [:]
+        var aliasCandidates: [String: Set<ExerciseID>] = [:]
+        var normalizedCandidates: [String: Set<ExerciseID>] = [:]
 
         for exercise in catalog.all {
             exact[exercise.displayName.lowercased()] = exercise.id
             exact[exercise.id.rawValue] = exercise.id
             for alias in exercise.aliases {
-                aliases[alias.lowercased()] = exercise.id
+                aliasCandidates[alias.lowercased(), default: []].insert(exercise.id)
             }
-            normalized[Self.normalize(exercise.displayName)] = exercise.id
-            normalized[Self.normalize(exercise.id.rawValue)] = exercise.id
+            normalizedCandidates[Self.normalize(exercise.displayName), default: []].insert(exercise.id)
+            normalizedCandidates[Self.normalize(exercise.id.rawValue), default: []].insert(exercise.id)
         }
 
         self.byExactName = exact
-        self.byAlias = aliases
-        self.byNormalized = normalized
+        // A key claimed by more than one exercise is ambiguous — e.g. token
+        // sorting collapses "cable-high-to-low-fly" and "cable-low-to-high-fly"
+        // to the same normalized key, and two different exercises can share a
+        // literal alias string. Silently keeping the last writer risks
+        // resolving to the WRONG exercise at a confidence tier callers treat as
+        // safe to persist. Drop both colliding entries instead: losing a
+        // resolution (falling through to fuzzy or nil) is acceptable, silently
+        // resolving wrong is not.
+        self.byAlias = Self.droppingCollisions(aliasCandidates)
+        self.byNormalized = Self.droppingCollisions(normalizedCandidates)
+    }
+
+    /// Keeps only keys claimed by exactly one id, discarding ambiguous ones.
+    private static func droppingCollisions(_ candidates: [String: Set<ExerciseID>]) -> [String: ExerciseID] {
+        candidates.compactMapValues { ids in ids.count == 1 ? ids.first : nil }
     }
 
     /// Lowercased, punctuation stripped, tokens sorted — so "Bench Press
@@ -93,10 +113,22 @@ struct ExerciseResolver: Sendable {
             return ResolvedExercise(id: id, confidence: .normalized)
         }
 
+        // `byNormalized` is a Dictionary, whose iteration order is randomized
+        // per process — without an explicit tie-break, a score tie (e.g. two
+        // candidates equidistant from a typo) would resolve to a different
+        // exercise on different launches. Break ties on the lowest
+        // `id.rawValue` so the result is deterministic regardless of order.
         var best: (id: ExerciseID, score: Double)?
         for (candidate, id) in byNormalized {
             let score = Self.similarity(key, candidate)
-            if score > (best?.score ?? 0) {
+            guard score > 0 else { continue }
+            if let current = best {
+                let better = score > current.score
+                    || (score == current.score && id.rawValue < current.id.rawValue)
+                if better {
+                    best = (id, score)
+                }
+            } else {
                 best = (id, score)
             }
         }
