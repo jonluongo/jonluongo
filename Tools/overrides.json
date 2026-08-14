@@ -177,5 +177,12 @@
   "ez-bar-preacher-curl": { "equipment": "ez bar" },
   "ez-bar-reverse-preacher-curl": { "equipment": "ez bar" },
   "dumbbell-leg-curl": { "equipment": "dumbbell" },
-  "dumbbell-preacher-curl": { "equipment": "dumbbell" }
+  "dumbbell-preacher-curl": { "equipment": "dumbbell" },
+
+  "band-external-rotation": { "primaryMuscles": ["shoulders"] },
+  "cable-external-rotation": { "primaryMuscles": ["shoulders"] },
+  "dumbbell-upright-row": { "primaryMuscles": ["shoulders"] },
+  "parralel-bar-dips": {
+    "primaryMuscles": ["triceps"], "secondaryMuscles": ["chest", "shoulders"]
+  }
 }
