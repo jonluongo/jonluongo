@@ -153,7 +153,7 @@
     ],
     "category": "strength",
     "displayName": "Band Assisted Pull Up",
-    "equipment": "machine",
+    "equipment": "band",
     "force": "pull",
     "id": "band-assisted-pull-up",
     "instructions": [
@@ -231,11 +231,11 @@
     "category": "strength",
     "displayName": "Band High Face Pull",
     "equipment": "band",
-    "force": "static",
+    "force": "pull",
     "id": "band-high-face-pull",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "horizontal pull",
     "primaryMuscles": [
       "shoulders"
     ],
@@ -269,7 +269,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Band Kneeling Pulldown",
-    "equipment": "cable",
+    "equipment": "band",
     "force": "pull",
     "id": "band-kneeling-pulldown",
     "instructions": [],
@@ -299,7 +299,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Band Leg Curl",
-    "equipment": "machine",
+    "equipment": "band",
     "force": "pull",
     "id": "band-leg-curl",
     "instructions": [],
@@ -386,7 +386,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Band Seated Pulldown",
-    "equipment": "cable",
+    "equipment": "band",
     "force": "pull",
     "id": "band-seated-pulldown",
     "instructions": [],
@@ -1062,6 +1062,7 @@
     "category": "cardio",
     "displayName": "Battle Ropes",
     "equipment": "other",
+    "force": "static",
     "id": "battle-ropes",
     "instructions": [],
     "mechanic": "compound",
@@ -1182,7 +1183,8 @@
     "mechanic": "compound",
     "pattern": "lunge",
     "primaryMuscles": [
-      "lats"
+      "quadriceps",
+      "glutes"
     ],
     "secondaryMuscles": []
   },
@@ -1480,11 +1482,11 @@
     "category": "strength",
     "displayName": "Cable Bar Face Pull",
     "equipment": "cable",
-    "force": "static",
+    "force": "pull",
     "id": "cable-bar-face-pull",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "horizontal pull",
     "primaryMuscles": [
       "shoulders"
     ],
@@ -1554,7 +1556,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Cable Chest Press",
-    "equipment": "machine",
+    "equipment": "cable",
     "force": "push",
     "id": "cable-chest-press",
     "instructions": [
@@ -1796,13 +1798,14 @@
   },
   {
     "aliases": [],
-    "category": "cardio",
+    "category": "strength",
     "displayName": "Cable Rope Kneeling Face Pull",
     "equipment": "cable",
+    "force": "pull",
     "id": "cable-rope-kneeling-face-pull",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "cardio",
+    "mechanic": "compound",
+    "pattern": "horizontal pull",
     "primaryMuscles": [
       "shoulders"
     ],
@@ -1878,13 +1881,14 @@
   },
   {
     "aliases": [],
-    "category": "cardio",
+    "category": "strength",
     "displayName": "Cable Seated Rope Face Pull",
     "equipment": "cable",
+    "force": "pull",
     "id": "cable-seated-rope-face-pull",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "cardio",
+    "mechanic": "compound",
+    "pattern": "horizontal pull",
     "primaryMuscles": [
       "shoulders"
     ],
@@ -1953,7 +1957,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Cable Single Leg Laying Leg Curl",
-    "equipment": "machine",
+    "equipment": "cable",
     "force": "pull",
     "id": "cable-single-leg-laying-leg-curl",
     "instructions": [],
@@ -1982,7 +1986,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Cable Standing Single Arm Chest Press",
-    "equipment": "machine",
+    "equipment": "cable",
     "force": "push",
     "id": "cable-standing-single-arm-chest-press",
     "instructions": [],
@@ -2070,7 +2074,7 @@
     "mechanic": "compound",
     "pattern": "horizontal pull",
     "primaryMuscles": [
-      "chest"
+      "middle back"
     ],
     "secondaryMuscles": []
   },
@@ -2085,7 +2089,7 @@
     "mechanic": "compound",
     "pattern": "horizontal pull",
     "primaryMuscles": [
-      "chest"
+      "middle back"
     ],
     "secondaryMuscles": []
   },
@@ -3001,7 +3005,8 @@
     "mechanic": "compound",
     "pattern": "lunge",
     "primaryMuscles": [
-      "lats"
+      "quadriceps",
+      "glutes"
     ],
     "secondaryMuscles": []
   },
@@ -3121,7 +3126,7 @@
     "mechanic": "compound",
     "pattern": "horizontal pull",
     "primaryMuscles": [
-      "lats"
+      "middle back"
     ],
     "secondaryMuscles": []
   },
@@ -3136,7 +3141,7 @@
     "mechanic": "compound",
     "pattern": "horizontal pull",
     "primaryMuscles": [
-      "lats"
+      "middle back"
     ],
     "secondaryMuscles": []
   },
@@ -3258,7 +3263,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Dumbbell Single Arm Chest Press",
-    "equipment": "machine",
+    "equipment": "dumbbell",
     "force": "push",
     "id": "dumbbell-single-arm-chest-press",
     "instructions": [],
@@ -3574,7 +3579,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Ez Bar Preacher Curl",
-    "equipment": "machine",
+    "equipment": "ez bar",
     "force": "pull",
     "id": "ez-bar-preacher-curl",
     "instructions": [],
@@ -3589,7 +3594,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Ez Bar Reverse Preacher Curl",
-    "equipment": "machine",
+    "equipment": "ez bar",
     "force": "pull",
     "id": "ez-bar-reverse-preacher-curl",
     "instructions": [],
@@ -3794,7 +3799,7 @@
     "mechanic": "compound",
     "pattern": "horizontal pull",
     "primaryMuscles": [
-      "lats"
+      "middle back"
     ],
     "secondaryMuscles": []
   },
@@ -3802,7 +3807,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Hamstring Curl",
-    "equipment": "suspension",
+    "equipment": "machine",
     "force": "pull",
     "id": "hamstring-curl",
     "instructions": [],
@@ -4782,11 +4787,11 @@
     "category": "strength",
     "displayName": "Machine Face Pulls",
     "equipment": "machine",
-    "force": "static",
+    "force": "pull",
     "id": "machine-face-pulls",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "horizontal pull",
     "primaryMuscles": [
       "shoulders"
     ],
@@ -4999,7 +5004,7 @@
     "mechanic": "compound",
     "pattern": "horizontal pull",
     "primaryMuscles": [
-      "lats"
+      "middle back"
     ],
     "secondaryMuscles": []
   },
@@ -5255,7 +5260,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Nordic Hamstring Curl",
-    "equipment": "suspension",
+    "equipment": "bodyweight",
     "force": "pull",
     "id": "nordic-hamstring-curl",
     "instructions": [],
@@ -5373,7 +5378,8 @@
     "mechanic": "compound",
     "pattern": "lunge",
     "primaryMuscles": [
-      "lats"
+      "quadriceps",
+      "glutes"
     ],
     "secondaryMuscles": []
   },
@@ -5645,7 +5651,7 @@
     "aliases": [],
     "category": "strength",
     "displayName": "Romanian Deadlift Hamstring Sweeps",
-    "equipment": "suspension",
+    "equipment": "barbell",
     "force": "pull",
     "id": "romanian-deadlift-hamstring-sweeps",
     "instructions": [],
@@ -6756,8 +6762,7 @@
     "mechanic": "isolation",
     "pattern": "shrug",
     "primaryMuscles": [
-      "hamstrings",
-      "glutes"
+      "traps"
     ],
     "secondaryMuscles": []
   },

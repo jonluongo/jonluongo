@@ -5,7 +5,7 @@
     "cable": "cable", "machine": "machine", "lever": "machine",
     "ez-bar": "ez bar", "trap-bar": "trap bar", "hex-bar": "trap bar",
     "medicine-ball": "medicine ball", "plate": "plate", "sled": "sled",
-    "trx": "suspension", "suspension": "suspension", "ring": "suspension",
+    "trx": "suspension", "suspension": "suspension",
     "bike": "cardio machine", "treadmill": "cardio machine",
     "rower": "cardio machine", "erg": "cardio machine",
     "elliptical": "cardio machine", "arc-trainer": "cardio machine",
@@ -15,7 +15,8 @@
     "leg-press": "machine", "leg-extension": "machine",
     "leg-curl": "machine", "hack-squat": "machine",
     "belt-squat": "machine", "assisted": "machine",
-    "chest-press": "machine", "preacher": "machine"
+    "chest-press": "machine", "preacher": "machine",
+    "hamstring-curl": "machine"
   },
   "defaultEquipment": "bodyweight",
   "pattern": {
@@ -44,9 +45,10 @@
     "clean": "olympic", "snatch": "olympic", "jerk": "olympic",
     "stretch": "stretch",
     "run": "cardio", "cycling": "cardio", "swim": "cardio",
-    "hiking": "cardio", "walk": "cardio", "rope": "cardio",
+    "hiking": "cardio", "walk": "cardio",
     "bike": "cardio", "arc-trainer": "cardio", "elliptical": "cardio",
-    "ski-erg": "cardio", "rower": "cardio", "stairmaster": "cardio"
+    "ski-erg": "cardio", "rower": "cardio", "stairmaster": "cardio",
+    "face-pull": "horizontal pull"
   },
   "defaultPattern": "carry",
   "patternMuscles": {
@@ -81,13 +83,12 @@
     "forearm": ["forearms"], "wrist": ["forearms"], "neck": ["neck"],
     "glute": ["glutes"], "hamstring": ["hamstrings"], "quad": ["quadriceps"],
     "abductor": ["abductors"], "adductor": ["adductors"],
-    "lat": ["lats"], "trap": ["traps"], "rear-delt": ["shoulders"],
+    "rear-delt": ["shoulders"],
     "abdominals": ["abdominals"], "oblique": ["abdominals"],
-    "lower-back": ["lower back"], "chest": ["chest"], "shoulder": ["shoulders"],
+    "lower-back": ["lower back"], "shoulder": ["shoulders"],
     "pec": ["chest"],
 
     "lateral-raise": ["shoulders"],
-    "trap-bar": ["hamstrings", "glutes"],
     "leg-extension": ["quadriceps"],
     "leg-curl": ["hamstrings"],
     "leg-press": ["quadriceps"],

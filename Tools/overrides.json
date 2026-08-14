@@ -150,5 +150,21 @@
   "steady-state-ride": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
     "category": "cardio", "force": null
-  }
+  },
+
+  "nordic-hamstring-curl": { "equipment": "bodyweight" },
+  "romanian-deadlift-hamstring-sweeps": { "equipment": "barbell" },
+
+  "band-assisted-pull-up": { "equipment": "band" },
+  "band-kneeling-pulldown": { "equipment": "band" },
+  "band-leg-curl": { "equipment": "band" },
+  "band-seated-pulldown": { "equipment": "band" },
+  "cable-chest-press": { "equipment": "cable" },
+  "cable-standing-single-arm-chest-press": { "equipment": "cable" },
+  "cable-single-leg-laying-leg-curl": { "equipment": "cable" },
+  "dumbbell-single-arm-chest-press": { "equipment": "dumbbell" },
+  "ez-bar-preacher-curl": { "equipment": "ez bar" },
+  "ez-bar-reverse-preacher-curl": { "equipment": "ez bar" },
+  "dumbbell-leg-curl": { "equipment": "dumbbell" },
+  "dumbbell-preacher-curl": { "equipment": "dumbbell" }
 }
