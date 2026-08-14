@@ -9,7 +9,8 @@ Merges three sources, in increasing precedence:
 Usage:
     python3 Tools/build-catalog.py [--fedb path/to/exercises.json]
 
-Writes LiftingPlan/Catalog/Resources/exercises.json and prints a coverage
+Writes LiftingPlan/Catalog/Resources/exercises.json as
+`{"version": CATALOG_VERSION, "exercises": [...]}` and prints a coverage
 report. Deterministic: the same inputs always produce byte-identical output.
 """
 from __future__ import annotations
@@ -23,6 +24,16 @@ OVERRIDES = ROOT / "Tools/overrides.json"
 OUT = ROOT / "LiftingPlan/Catalog/Resources/exercises.json"
 FEDB_URL = ("https://raw.githubusercontent.com/yuhonas/"
             "free-exercise-db/main/dist/exercises.json")
+
+# The catalog format version, written into the output alongside the exercise
+# list. `ExerciseCatalog.bundled()` reads this into `ExerciseCatalog.version`
+# and it gets stamped onto every `TrainingPlan` created from this catalog, so
+# a later correction to exercise data (a reclassified muscle, a changed
+# pattern) can be detected against plans/logged sets built under an older
+# version instead of silently changing what they mean. Bump this constant in
+# any change that alters catalog *data* (not the generator's mechanism), and
+# say so in the commit message.
+CATALOG_VERSION = 1
 
 # free-exercise-db's `level` uses "expert" where our taxonomy uses "advanced".
 FEDB_LEVEL_TO_DIFFICULTY = {
@@ -191,8 +202,9 @@ def build() -> int:
         catalog.append(entry)
 
     catalog.sort(key=lambda e: e["id"])
+    output = {"version": CATALOG_VERSION, "exercises": catalog}
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(catalog, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
+    OUT.write_text(json.dumps(output, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
 
     ids = [e["id"] for e in catalog]
     if len(set(ids)) != len(ids):

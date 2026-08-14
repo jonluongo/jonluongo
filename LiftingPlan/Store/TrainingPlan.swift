@@ -20,6 +20,12 @@ final class TrainingPlan {
     var completedAt: Date?
     /// Whether the on-device model produced this plan or the template did.
     var wasModelGenerated: Bool = false
+    /// The `ExerciseCatalog.version` that produced this plan's exercise
+    /// selections. A later correction to the catalog (e.g. reclassifying an
+    /// exercise's muscles) can change what an already-logged set means; this
+    /// stamp is what lets a future release detect a plan built against older
+    /// catalog data rather than silently reinterpreting it.
+    var catalogVersion: Int = 1
     /// Which days this block trains. Different blocks may train different days.
     private var weekdayRawValues: [Int] = [
         Weekday.monday.rawValue, Weekday.wednesday.rawValue, Weekday.friday.rawValue,
@@ -35,7 +41,7 @@ final class TrainingPlan {
     init(
         title: String = "", goal: String = "", startDate: Date = Date(),
         weekCount: Int = 8, weekdays: Set<Weekday> = [.monday, .wednesday, .friday],
-        durationMinutes: Int = 45, wasModelGenerated: Bool = false
+        durationMinutes: Int = 45, wasModelGenerated: Bool = false, catalogVersion: Int = 1
     ) {
         self.title = title
         self.goal = goal
@@ -44,6 +50,7 @@ final class TrainingPlan {
         self.weekdayRawValues = weekdays.map(\.rawValue).sorted()
         self.durationMinutes = durationMinutes
         self.wasModelGenerated = wasModelGenerated
+        self.catalogVersion = catalogVersion
     }
 
     var weekdays: Set<Weekday> {

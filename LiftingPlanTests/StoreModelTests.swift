@@ -148,6 +148,15 @@ struct StoreModelTests {
         #expect(loaded.orderedWeekdays == [.monday, .friday])
     }
 
+    @Test("A plan records which catalog version produced it")
+    func planStampsCatalogVersion() throws {
+        let context = try context()
+        context.insert(TrainingPlan(title: "Block", catalogVersion: 3))
+        try context.saveOrThrow()
+        let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
+        #expect(loaded.catalogVersion == 3)
+    }
+
     @Test("A profile round-trips its display unit and access tier")
     func profileRoundTrips() throws {
         let context = try context()

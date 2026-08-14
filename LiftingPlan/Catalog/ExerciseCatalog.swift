@@ -61,6 +61,18 @@ protocol ExerciseCatalogProviding: Sendable {
     func substitutes(for id: ExerciseID, limit: Int) -> [Exercise]
 }
 
+/// The on-disk shape of `exercises.json`: a version stamp alongside the
+/// exercise list, so a decoded catalog can always say which generation of
+/// data it came from.
+///
+/// Depends on: `Exercise`. Written by `Tools/build-catalog.py`, read only by
+/// `ExerciseCatalog.bundled()` — nothing else should decode this file
+/// directly, or the version stamp is easy to bypass.
+private struct CatalogFile: Decodable {
+    var version: Int
+    var exercises: [Exercise]
+}
+
 /// The bundled catalog of exercises, held in memory.
 ///
 /// Build one with `bundled()` at app start and pass it down, or with
@@ -68,14 +80,26 @@ protocol ExerciseCatalogProviding: Sendable {
 /// with the app and is never written at runtime, which is why it is not a
 /// SwiftData model.
 ///
+/// `version` identifies which generation of `exercises.json` produced this
+/// catalog. `TrainingPlan.catalogVersion` stamps a plan with the version that
+/// built it, so a later correction to the data (e.g. reclassifying an
+/// exercise's muscles) can be detected against plans and logged sets built
+/// under an older version instead of silently changing what they mean.
+///
 /// Depends on: `Exercise` and the taxonomies. No persistence, no UI.
 struct ExerciseCatalog: ExerciseCatalogProviding {
 
     let all: [Exercise]
+    let version: Int
     private let byID: [ExerciseID: Exercise]
 
-    init(exercises: [Exercise]) {
+    /// Builds an in-memory catalog directly from exercises, bypassing
+    /// `exercises.json`. Used by tests and previews that need a small
+    /// fixture; `version` defaults to 1 since those callers rarely care
+    /// which version they're pinned to.
+    init(exercises: [Exercise], version: Int = 1) {
         self.all = exercises.sorted { $0.displayName < $1.displayName }
+        self.version = version
         self.byID = Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
@@ -89,7 +113,8 @@ struct ExerciseCatalog: ExerciseCatalogProviding {
             throw CatalogError.resourceMissing("exercises.json")
         }
         let data = try Data(contentsOf: url)
-        return ExerciseCatalog(exercises: try JSONDecoder().decode([Exercise].self, from: data))
+        let file = try JSONDecoder().decode(CatalogFile.self, from: data)
+        return ExerciseCatalog(exercises: file.exercises, version: file.version)
     }
 
     func exercise(id: ExerciseID) -> Exercise? { byID[id] }

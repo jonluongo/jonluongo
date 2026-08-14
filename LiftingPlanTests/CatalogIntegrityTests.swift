@@ -17,6 +17,11 @@ struct CatalogIntegrityTests {
         #expect(try loaded().all.count == 412)
     }
 
+    @Test("The bundled catalog declares a version")
+    func catalogDeclaresVersion() throws {
+        #expect(try ExerciseCatalog.bundled().version >= 1)
+    }
+
     @Test("Every id is unique")
     func idsUnique() throws {
         let all = try loaded().all
