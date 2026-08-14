@@ -1,7 +1,21 @@
 # Retro 8-Bit Theme — Design
 
 **Date:** 2026-08-14
-**Status:** Approved for planning
+**Status:** SUPERSEDED — the retro 8-bit direction was dropped on 2026-08-14 in
+favor of a modern, minimal direction. Kept for the record.
+
+What survives from this document and carries into the replacement spec:
+
+- The governing principle that the visual treatment is a skin, not a mechanic.
+  No points, streaks, badges, levels, or celebratory UI, under any art
+  direction. Estimated 1RM stays a plain data point.
+- The token-layer code structure: a single `Theme/` folder, all colors and
+  typefaces defined once, views composing shared components rather than
+  styling themselves.
+- The accessibility floor and the palette contrast test.
+- The rollout order and the `Form`/`List` restyling risk.
+- The recorded decisions for the conversational onboarding project.
+
 **Scope:** App-wide visual restyle of LiftingPlan. Views and a new theme layer only.
 
 ## Problem
