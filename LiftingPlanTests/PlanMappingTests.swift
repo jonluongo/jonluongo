@@ -58,7 +58,7 @@ struct PlanMappingTests {
     }
 
     @Test("Estimated 1RM uses the Epley formula")
-    func epley() {
+    func epley() throws {
         let set = SetLog(setIndex: 0, weight: 100, reps: 10)
         // 100 * (1 + 10/30) = 133.33…
         let est = try #require(set.estimatedOneRepMax)
