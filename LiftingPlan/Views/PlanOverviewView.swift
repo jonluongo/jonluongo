@@ -4,16 +4,21 @@ import SwiftData
 /// Shows the current week's plan as a list of day cards, with regeneration and
 /// quick access into each session.
 struct PlanOverviewView: View {
-    let preferences: TrainingPreferences
+    let profile: UserProfile
 
     @Environment(\.modelContext) private var context
     @Environment(PlanGenerator.self) private var generator
-    @Query(sort: \WorkoutPlan.createdAt, order: .reverse) private var plans: [WorkoutPlan]
+    @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     @State private var isGenerating = false
     @State private var showingEditSetup = false
+    @State private var errorMessage: String?
 
-    private var currentPlan: WorkoutPlan? { plans.first }
+    private var currentPlan: TrainingPlan? { plans.first }
+
+    private var errorAlertBinding: Binding<Bool> {
+        Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
+    }
 
     var body: some View {
         Group {
@@ -52,7 +57,7 @@ struct PlanOverviewView: View {
         }
         .sheet(isPresented: $showingEditSetup) {
             NavigationStack {
-                SetupView(preferences: preferences, isOnboarding: false)
+                SetupView(profile: profile, isOnboarding: false)
             }
         }
         .overlay {
@@ -60,20 +65,36 @@ struct PlanOverviewView: View {
                 generatingOverlay
             }
         }
+        .alert("Couldn't Save", isPresented: errorAlertBinding) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "")
+        }
     }
 
     @ViewBuilder
-    private func planList(_ plan: WorkoutPlan) -> some View {
+    private func planList(_ plan: TrainingPlan) -> some View {
+        let days = plan.orderedWeeks.first?.orderedDays ?? []
         List {
             Section {
                 PlanHeaderCard(plan: plan)
             }
-            Section("Your week") {
-                ForEach(plan.orderedSessions) { session in
-                    NavigationLink {
-                        SessionDetailView(session: session)
-                    } label: {
-                        SessionRow(session: session)
+            if days.isEmpty {
+                Section {
+                    ContentUnavailableView {
+                        Label("No workouts yet", systemImage: "calendar.badge.exclamationmark")
+                    } description: {
+                        Text("Plan generation is being rebuilt against the full exercise catalog. Adjust your setup and regenerate once it's ready.")
+                    }
+                }
+            } else {
+                Section("Your week") {
+                    ForEach(days) { day in
+                        NavigationLink {
+                            SessionDetailView(day: day, profile: profile)
+                        } label: {
+                            WorkoutDayRow(day: day)
+                        }
                     }
                 }
             }
@@ -95,12 +116,18 @@ struct PlanOverviewView: View {
     private func regenerate() {
         isGenerating = true
         Task {
-            await PlanCoordinator.generateAndStore(
-                preferences: preferences,
-                generator: generator,
-                context: context,
-                existingPlans: plans
-            )
+            do {
+                try await PlanCoordinator.generateAndStore(
+                    profile: profile,
+                    weekdays: currentPlan?.weekdays ?? [.monday, .wednesday, .friday],
+                    durationMinutes: currentPlan?.durationMinutes ?? 45,
+                    generator: generator,
+                    context: context,
+                    existingPlans: plans
+                )
+            } catch {
+                errorMessage = (error as? PersistenceError)?.errorDescription ?? error.localizedDescription
+            }
             isGenerating = false
         }
     }
@@ -108,16 +135,15 @@ struct PlanOverviewView: View {
 
 /// Summary card at the top of the plan: goal, source, and progress.
 private struct PlanHeaderCard: View {
-    let plan: WorkoutPlan
+    let plan: TrainingPlan
 
-    private var completedCount: Int {
-        plan.sessions.filter(\.isCompleted).count
-    }
+    private var days: [WorkoutDay] { plan.orderedWeeks.first?.orderedDays ?? [] }
+    private var completedCount: Int { days.filter { $0.completedAt != nil }.count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if !plan.goalSnapshot.isEmpty {
-                Text(plan.goalSnapshot)
+            if !plan.goal.isEmpty {
+                Text(plan.goal)
                     .font(.headline)
             } else {
                 Text("General strength & muscle")
@@ -126,13 +152,13 @@ private struct PlanHeaderCard: View {
             HStack(spacing: 8) {
                 Label(plan.wasModelGenerated ? "AI-tailored" : "Template", systemImage: plan.wasModelGenerated ? "sparkles" : "square.grid.2x2")
                 Text("·")
-                Text("\(plan.sessions.count) days · \(plan.durationMinutes) min")
+                Text("\(days.count) days · \(plan.durationMinutes) min")
             }
             .font(.caption)
             .foregroundStyle(.secondary)
 
-            ProgressView(value: Double(completedCount), total: Double(max(plan.sessions.count, 1))) {
-                Text("\(completedCount) of \(plan.sessions.count) sessions done")
+            ProgressView(value: Double(completedCount), total: Double(max(days.count, 1))) {
+                Text("\(completedCount) of \(days.count) sessions done")
                     .font(.caption)
             }
             .tint(.accentColor)
@@ -142,21 +168,23 @@ private struct PlanHeaderCard: View {
 }
 
 /// A single day row in the week list.
-private struct SessionRow: View {
-    let session: WorkoutSession
+private struct WorkoutDayRow: View {
+    let day: WorkoutDay
+
+    private var isCompleted: Bool { day.completedAt != nil }
 
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(session.isCompleted ? Color.green.opacity(0.15) : Color.accentColor.opacity(0.12))
+                    .fill(isCompleted ? Color.green.opacity(0.15) : Color.accentColor.opacity(0.12))
                     .frame(width: 44, height: 44)
-                Image(systemName: session.isCompleted ? "checkmark" : "dumbbell.fill")
-                    .foregroundStyle(session.isCompleted ? .green : .accentColor)
+                Image(systemName: isCompleted ? "checkmark" : "dumbbell.fill")
+                    .foregroundStyle(isCompleted ? .green : .accentColor)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(session.weekday.fullName).font(.headline)
-                Text("\(session.focus) · \(session.exercises.count) exercises")
+                Text(day.weekday.fullName).font(.headline)
+                Text("\(day.focus) · \(day.orderedExercises.count) exercises")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

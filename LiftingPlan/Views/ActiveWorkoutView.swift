@@ -2,37 +2,58 @@ import SwiftUI
 import SwiftData
 
 /// The guided workout, spreadsheet-style: every exercise in one scroll, each with
-/// an editable table of sets (set · previous · lbs · reps · ✓). Checking a set off
-/// starts the rest/pace timer, which floats in a bar at the bottom.
+/// an editable table of sets (set · previous · weight · reps · ✓). Checking a set
+/// off starts the rest/pace timer, which floats in a bar at the bottom.
 struct ActiveWorkoutView: View {
-    let session: WorkoutSession
+    let day: WorkoutDay
+    let profile: UserProfile
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(RestTimerModel.self) private var restTimer
-    @Query(sort: \WorkoutPlan.createdAt, order: .reverse) private var plans: [WorkoutPlan]
+    @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     @State private var startDate = Date()
     @State private var showingFinishConfirm = false
+    @State private var errorMessage: String?
 
     private let restOptions = [30, 45, 60, 75, 90, 120, 150, 180]
 
-    private var exercises: [PlannedExercise] { session.orderedExercises }
+    private var exercises: [PlannedExercise] { day.orderedExercises }
 
-    private var totalSets: Int { exercises.reduce(0) { $0 + $1.setLogs.count } }
+    private var totalSets: Int { exercises.reduce(0) { $0 + ($1.loggedSets ?? []).count } }
     private var completedSets: Int {
-        exercises.reduce(0) { $0 + $1.setLogs.filter(\.isCompleted).count }
+        exercises.reduce(0) { $0 + ($1.loggedSets ?? []).filter(\.isCompleted).count }
+    }
+
+    private var errorAlertBinding: Binding<Bool> {
+        Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
     }
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach(exercises) { exercise in
-                    Section {
-                        exerciseRows(exercise)
-                    } header: {
-                        ExerciseHeaderView(exercise: exercise, onAddWarmup: { addSet(to: exercise, warmup: true) })
-                            .textCase(nil)
+                if exercises.isEmpty {
+                    ContentUnavailableView {
+                        Label("No exercises", systemImage: "dumbbell")
+                    } description: {
+                        Text("This day has no prescribed exercises to log.")
+                    }
+                } else {
+                    ForEach(exercises) { exercise in
+                        Section {
+                            ExerciseLogSection(
+                                exercise: exercise,
+                                profile: profile,
+                                plans: plans,
+                                onAddSet: addSet,
+                                onDeleteSet: delete,
+                                onCompleteSet: startRest
+                            )
+                        } header: {
+                            ExerciseHeaderView(exercise: exercise, onAddWarmup: { addSet(to: exercise, warmup: true) })
+                                .textCase(nil)
+                        }
                     }
                 }
 
@@ -52,7 +73,7 @@ struct ActiveWorkoutView: View {
             }
             .listStyle(.insetGrouped)
             .scrollDismissesKeyboard(.interactively)
-            .navigationTitle(session.focus)
+            .navigationTitle(day.focus)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .safeAreaInset(edge: .top) { progressBar }
@@ -65,6 +86,11 @@ struct ActiveWorkoutView: View {
             .confirmationDialog("Finish this workout?", isPresented: $showingFinishConfirm, titleVisibility: .visible) {
                 Button("Finish & Save") { finish() }
                 Button("Keep Going", role: .cancel) {}
+            }
+            .alert("Couldn't Save", isPresented: errorAlertBinding) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage ?? "")
             }
         }
         .onAppear(perform: seedSetsIfNeeded)
@@ -112,108 +138,50 @@ struct ActiveWorkoutView: View {
             .padding(.bottom, 4)
     }
 
-    // MARK: - Exercise rows
-
-    @ViewBuilder
-    private func exerciseRows(_ exercise: PlannedExercise) -> some View {
-        if let notes = exercise.notes, !notes.isEmpty {
-            Text(notes)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-
-        Menu {
-            ForEach(restOptions, id: \.self) { seconds in
-                Button(formatRest(seconds)) { exercise.restSeconds = seconds }
-            }
-        } label: {
-            Label("Rest timer: \(formatRest(exercise.restSeconds))", systemImage: "timer")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(Color.accentColor)
-        }
-
-        columnHeader
-
-        let ordered = exercise.orderedSetLogs
-        ForEach(Array(ordered.enumerated()), id: \.element.persistentModelID) { index, set in
-            SetRowView(
-                set: set,
-                workingNumber: workingNumber(at: index, in: ordered),
-                previousText: previousText(for: exercise, workingIndex: workingNumber(at: index, in: ordered) - 1, isWarmup: set.isWarmup),
-                onComplete: { startRest(for: exercise) }
-            )
-            .listRowBackground(set.isCompleted ? Color.green.opacity(0.12) : nil)
-            .swipeActions(edge: .trailing) {
-                Button(role: .destructive) { delete(set, from: exercise) } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
-        }
-
-        Button {
-            addSet(to: exercise, warmup: false)
-        } label: {
-            Label("Add Set", systemImage: "plus")
-                .font(.subheadline.weight(.semibold))
-                .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(.secondary)
-    }
-
-    private var columnHeader: some View {
-        HStack(spacing: 8) {
-            Text("SET").frame(width: 30)
-            Text("PREVIOUS").frame(maxWidth: .infinity)
-            Text("LBS").frame(width: 62)
-            Text("REPS").frame(width: 62)
-            Image(systemName: "checkmark").frame(width: 30)
-        }
-        .font(.caption2.weight(.semibold))
-        .foregroundStyle(.secondary)
-    }
-
     // MARK: - Actions
 
     private func startRest(for exercise: PlannedExercise) {
-        restTimer.start(seconds: exercise.restSeconds, context: exercise.name)
+        restTimer.start(seconds: exercise.restSeconds, context: exercise.displayName)
     }
 
     private func addSet(to exercise: PlannedExercise, warmup: Bool) {
-        let nextIndex = (exercise.setLogs.map(\.setIndex).max() ?? -1) + 1
-        let template = exercise.orderedSetLogs.last(where: { !$0.isWarmup })
-        let set = SetLog(
+        let existing = exercise.loggedSets ?? []
+        let nextIndex = (existing.map(\.setIndex).max() ?? -1) + 1
+        let ordered = existing.sorted { $0.setIndex < $1.setIndex }
+        let template = ordered.last(where: { !$0.isWarmup })
+        let set = LoggedSet(
             setIndex: nextIndex,
-            weight: warmup ? nil : template?.weight,
-            reps: warmup ? 0 : (template?.reps ?? exercise.repTargetUpperBound),
+            load: warmup ? nil : template?.load,
+            reps: warmup ? 0 : (template?.reps ?? RepRange(exercise.repRange).upperBound),
             isWarmup: warmup
         )
         context.insert(set)
         set.exercise = exercise
-        try? context.save()
+        save()
     }
 
-    private func delete(_ set: SetLog, from exercise: PlannedExercise) {
-        exercise.setLogs.removeAll { $0 === set }
+    private func delete(_ set: LoggedSet, from exercise: PlannedExercise) {
+        exercise.loggedSets?.removeAll { $0 === set }
         context.delete(set)
-        for (index, remaining) in exercise.orderedSetLogs.enumerated() {
-            remaining.setIndex = index
+        let remaining = (exercise.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }
+        for (index, set) in remaining.enumerated() {
+            set.setIndex = index
         }
-        try? context.save()
+        save()
     }
 
     private func finish() {
         restTimer.stop()
-        if session.completedAt == nil {
-            session.completedAt = Date()
+        if day.completedAt == nil {
+            day.completedAt = Date()
         }
-        try? context.save()
+        guard save() else { return }
         dismiss()
     }
 
     private func close() {
         restTimer.stop()
-        try? context.save()
+        guard save() else { return }
         dismiss()
     }
 
@@ -222,14 +190,15 @@ struct ActiveWorkoutView: View {
     /// Pre-populate each exercise with its prescribed number of empty working
     /// sets, primed with the progression target and last time's reps.
     private func seedSetsIfNeeded() {
-        for exercise in exercises where exercise.setLogs.isEmpty {
+        for exercise in exercises where (exercise.loggedSets ?? []).isEmpty {
             let previous = previousRecords(for: exercise)
-            let seededWeight = seedWeight(for: exercise)
+            let seededLoad = seedLoad(for: exercise)
+            let repTargetUpper = RepRange(exercise.repRange).upperBound
             for index in 0..<max(exercise.targetSets, 1) {
-                let priorReps = index < previous.count ? previous[index].reps : exercise.repTargetUpperBound
-                let set = SetLog(
+                let priorReps = index < previous.count ? previous[index].reps : repTargetUpper
+                let set = LoggedSet(
                     setIndex: index,
-                    weight: seededWeight,
+                    load: seededLoad,
                     reps: priorReps,
                     isWarmup: false
                 )
@@ -237,40 +206,41 @@ struct ActiveWorkoutView: View {
                 set.exercise = exercise
             }
         }
-        try? context.save()
+        save()
     }
 
-    private func seedWeight(for exercise: PlannedExercise) -> Double? {
-        if let history = PerformanceHistory.latestHistory(forExerciseNamed: exercise.name, excluding: exercise, from: plans),
-           let suggested = ProgressionEngine.suggestion(for: history).suggestedWeight {
+    private func seedLoad(for exercise: PlannedExercise) -> Mass? {
+        if let history = PerformanceHistory.latestHistory(for: exercise.exerciseID, excluding: exercise, from: plans),
+           let suggested = ProgressionEngine.suggestion(for: history).suggestedLoad {
             return suggested
         }
-        return exercise.suggestedWeight
+        return exercise.suggestedLoad
     }
 
     // MARK: - Previous column
 
     private func previousRecords(for exercise: PlannedExercise) -> [SetRecord] {
-        PerformanceHistory.latestHistory(forExerciseNamed: exercise.name, excluding: exercise, from: plans)?.recentSets ?? []
+        PerformanceHistory.latestHistory(for: exercise.exerciseID, excluding: exercise, from: plans)?.recentSets ?? []
     }
 
-    private func previousText(for exercise: PlannedExercise, workingIndex: Int, isWarmup: Bool) -> String {
-        guard !isWarmup, workingIndex >= 0 else { return "—" }
-        let previous = previousRecords(for: exercise)
-        guard workingIndex < previous.count else { return "—" }
-        let record = previous[workingIndex]
-        if let weight = record.weight, weight > 0 {
-            return "\(ProgressionEngine.formatted(weight)) × \(record.reps)"
+    // MARK: - Saving
+
+    /// Persists pending changes, surfacing any failure via `errorMessage`
+    /// rather than discarding it. Returns whether the save succeeded, so
+    /// callers that should only proceed on success (`finish`, `close`) can
+    /// bail out and leave the sheet open for the lifter to retry.
+    @discardableResult
+    private func save() -> Bool {
+        do {
+            try context.saveOrThrow()
+            return true
+        } catch {
+            errorMessage = (error as? PersistenceError)?.errorDescription ?? error.localizedDescription
+            return false
         }
-        return "\(record.reps) reps"
     }
 
     // MARK: - Helpers
-
-    /// 1-based working-set number for the row at `index` (warmups don't count).
-    private func workingNumber(at index: Int, in ordered: [SetLog]) -> Int {
-        ordered.prefix(index + 1).filter { !$0.isWarmup }.count
-    }
 
     private func elapsedString(_ now: Date) -> String {
         let seconds = max(0, Int(now.timeIntervalSince(startDate)))
@@ -303,7 +273,7 @@ private struct ExerciseHeaderView: View {
                     .foregroundStyle(Color.accentColor)
             }
             VStack(alignment: .leading, spacing: 1) {
-                Text(exercise.name)
+                Text(exercise.displayName)
                     .font(.headline)
                     .foregroundStyle(Color.accentColor)
                 Text("\(exercise.targetSets) × \(exercise.repRange)\(exercise.tempo.map { " · tempo \($0)" } ?? "")")

@@ -4,21 +4,35 @@ import SwiftData
 /// Collects the three core inputs — days, duration, goal — plus equipment and
 /// experience, then generates a plan. Used both for first-run onboarding and for
 /// editing preferences later (as a sheet).
+///
+/// Training days and session length live on the generated `TrainingPlan`, not
+/// on `UserProfile` — a later block can train a different split without
+/// touching the profile. This view holds them as local `@State`, seeded from
+/// the most recent plan (or sensible defaults when there is none yet), and
+/// hands them to `PlanCoordinator` when generating.
 struct SetupView: View {
-    @Bindable var preferences: TrainingPreferences
+    @Bindable var profile: UserProfile
     var isOnboarding: Bool
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(PlanGenerator.self) private var generator
-    @Query(sort: \WorkoutPlan.createdAt, order: .reverse) private var plans: [WorkoutPlan]
+    @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
+    @State private var selectedWeekdays: Set<Weekday> = [.monday, .wednesday, .friday]
+    @State private var durationMinutes = 45
+    @State private var hasSeededSchedule = false
     @State private var isGenerating = false
+    @State private var errorMessage: String?
 
     private let durationOptions = [30, 45, 60, 75, 90]
 
     private var weekdaySelection: Binding<Set<Weekday>> {
-        Binding(get: { preferences.weekdays }, set: { preferences.weekdays = $0 })
+        Binding(get: { selectedWeekdays }, set: { selectedWeekdays = $0 })
+    }
+
+    private var errorAlertBinding: Binding<Bool> {
+        Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
     }
 
     var body: some View {
@@ -39,7 +53,7 @@ struct SetupView: View {
             Section("Which days do you want to train?") {
                 WeekdayChips(selection: weekdaySelection)
                     .padding(.vertical, 4)
-                if preferences.weekdays.isEmpty {
+                if selectedWeekdays.isEmpty {
                     Text("Pick at least one day.")
                         .font(.footnote)
                         .foregroundStyle(.red)
@@ -47,7 +61,7 @@ struct SetupView: View {
             }
 
             Section("How long per workout?") {
-                Picker("Duration", selection: $preferences.durationMinutes) {
+                Picker("Duration", selection: $durationMinutes) {
                     ForEach(durationOptions, id: \.self) { minutes in
                         Text("\(minutes) min").tag(minutes)
                     }
@@ -58,20 +72,20 @@ struct SetupView: View {
             Section("What's your goal?") {
                 TextField(
                     "e.g. get stronger on bench, build my legs, tone up",
-                    text: $preferences.goal,
+                    text: $profile.goal,
                     axis: .vertical
                 )
                 .lineLimit(2...4)
             }
 
             Section("Equipment") {
-                Picker("Equipment", selection: $preferences.equipment) {
+                Picker("Equipment", selection: $profile.equipmentAccess) {
                     ForEach(Equipment.allCases) { Text($0.rawValue).tag($0) }
                 }
             }
 
             Section("Experience") {
-                Picker("Experience", selection: $preferences.experience) {
+                Picker("Experience", selection: $profile.experience) {
                     ForEach(ExperienceLevel.allCases) { Text($0.rawValue).tag($0) }
                 }
                 .pickerStyle(.segmented)
@@ -92,7 +106,7 @@ struct SetupView: View {
                     }
                     .fontWeight(.semibold)
                 }
-                .disabled(preferences.weekdays.isEmpty || isGenerating)
+                .disabled(selectedWeekdays.isEmpty || isGenerating)
             } footer: {
                 Text(generator.availability.statusMessage)
             }
@@ -107,23 +121,47 @@ struct SetupView: View {
             }
         }
         .interactiveDismissDisabled(isGenerating)
+        .onAppear(perform: seedScheduleIfNeeded)
+        .alert("Couldn't Save", isPresented: errorAlertBinding) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "")
+        }
+    }
+
+    /// Seed the local day/duration selection from the most recent plan the
+    /// first time this view appears, so editing setup starts from what's
+    /// actually scheduled rather than silently resetting it.
+    private func seedScheduleIfNeeded() {
+        guard !hasSeededSchedule else { return }
+        hasSeededSchedule = true
+        guard let latest = plans.first else { return }
+        selectedWeekdays = latest.weekdays
+        durationMinutes = latest.durationMinutes
     }
 
     private func generate() {
-        guard !preferences.weekdays.isEmpty else { return }
+        guard !selectedWeekdays.isEmpty else { return }
         isGenerating = true
-        preferences.updatedAt = Date()
+        profile.updatedAt = Date()
         Task {
-            await PlanCoordinator.generateAndStore(
-                preferences: preferences,
-                generator: generator,
-                context: context,
-                existingPlans: plans
-            )
-            preferences.hasCompletedSetup = true
-            try? context.save()
-            isGenerating = false
-            if !isOnboarding { dismiss() }
+            do {
+                _ = try await PlanCoordinator.generateAndStore(
+                    profile: profile,
+                    weekdays: selectedWeekdays,
+                    durationMinutes: durationMinutes,
+                    generator: generator,
+                    context: context,
+                    existingPlans: plans
+                )
+                profile.hasCompletedSetup = true
+                try context.saveOrThrow()
+                isGenerating = false
+                if !isOnboarding { dismiss() }
+            } catch {
+                isGenerating = false
+                errorMessage = (error as? PersistenceError)?.errorDescription ?? error.localizedDescription
+            }
         }
     }
 }

@@ -4,17 +4,29 @@ import SwiftData
 /// One editable set row: a set badge, the previous session's result, inline
 /// weight and reps fields, and a check to complete it (which starts the rest
 /// timer). Row tint for the completed state is applied by the enclosing list.
+///
+/// Weight is entered and displayed in `unit` (the lifter's `profile.displayUnit`)
+/// regardless of what unit `set.load` was originally logged in — the field
+/// always shows/writes a value converted to `unit`, so switching units in
+/// Settings doesn't strand a row showing the wrong number.
 struct SetRowView: View {
-    @Bindable var set: SetLog
+    @Bindable var set: LoggedSet
     /// 1-based working-set number, ignored when the row is a warmup.
     var workingNumber: Int
     var previousText: String
+    var unit: MassUnit
     var onComplete: () -> Void
 
     private var weightText: Binding<String> {
         Binding(
-            get: { set.weight.map { ProgressionEngine.formatted($0) } ?? "" },
-            set: { set.weight = Double($0.replacingOccurrences(of: ",", with: ".")) }
+            get: { set.load.map { ProgressionEngine.formatted($0.converted(to: unit).value) } ?? "" },
+            set: { text in
+                guard let value = Double(text.replacingOccurrences(of: ",", with: ".")) else {
+                    set.load = nil
+                    return
+                }
+                set.load = Mass(value: value, unit: unit)
+            }
         )
     }
 

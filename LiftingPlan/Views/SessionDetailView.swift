@@ -2,39 +2,51 @@ import SwiftUI
 
 /// Previews a day's prescribed exercises and launches the guided workout.
 struct SessionDetailView: View {
-    let session: WorkoutSession
+    let day: WorkoutDay
+    let profile: UserProfile
 
     @State private var showingWorkout = false
 
     var body: some View {
         List {
-            Section {
-                ForEach(session.orderedExercises) { exercise in
-                    ExercisePreviewRow(exercise: exercise)
+            if day.orderedExercises.isEmpty {
+                Section {
+                    ContentUnavailableView {
+                        Label("No exercises yet", systemImage: "dumbbell")
+                    } description: {
+                        Text("This day has no prescribed exercises. Regenerate your plan once catalog-based generation is back.")
+                    }
                 }
-            } header: {
-                Text("\(session.focus) · \(session.targetDurationMinutes) min")
-            } footer: {
-                Text("Tap Start to run the session with automatic rest timers between every set.")
+            } else {
+                Section {
+                    ForEach(day.orderedExercises) { exercise in
+                        ExercisePreviewRow(exercise: exercise)
+                    }
+                } header: {
+                    Text("\(day.focus) · \(day.durationMinutes) min")
+                } footer: {
+                    Text("Tap Start to run the session with automatic rest timers between every set.")
+                }
             }
         }
-        .navigationTitle(session.weekday.fullName)
+        .navigationTitle(day.weekday.fullName)
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             Button {
                 showingWorkout = true
             } label: {
-                Label(session.isCompleted ? "Repeat Workout" : "Start Workout", systemImage: "play.fill")
+                Label(day.completedAt != nil ? "Repeat Workout" : "Start Workout", systemImage: "play.fill")
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
             }
             .buttonStyle(.borderedProminent)
+            .disabled(day.orderedExercises.isEmpty)
             .padding()
             .background(.bar)
         }
         .fullScreenCover(isPresented: $showingWorkout) {
-            ActiveWorkoutView(session: session)
+            ActiveWorkoutView(day: day, profile: profile)
         }
     }
 }
@@ -43,12 +55,17 @@ struct SessionDetailView: View {
 struct ExercisePreviewRow: View {
     let exercise: PlannedExercise
 
+    private var isComplete: Bool {
+        let sets = exercise.loggedSets ?? []
+        return !sets.isEmpty && sets.allSatisfy(\.isCompleted)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(exercise.name).font(.headline)
+                Text(exercise.displayName).font(.headline)
                 Spacer()
-                if exercise.isComplete {
+                if isComplete {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                 }
             }

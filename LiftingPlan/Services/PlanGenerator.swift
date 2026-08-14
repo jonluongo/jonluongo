@@ -71,19 +71,22 @@ final class PlanGenerator {
         #endif
     }
 
-    /// Produce a plan for the given preferences. `performanceSummary` (from the
+    /// Produce a plan for `weekdays`/`durationMinutes`, drawing equipment/goal/
+    /// experience from `profile`. `performanceSummary` (from the
     /// `ProgressionEngine`) is included on regeneration so intensity ratchets up.
     /// Returns the blueprint plus whether the on-device model actually produced it.
     func generatePlan(
-        for preferences: TrainingPreferences,
+        profile: UserProfile,
+        weekdays: Set<Weekday>,
+        durationMinutes: Int,
         performanceSummary: String?
     ) async -> (blueprint: PlanBlueprint, usedModel: Bool) {
-        let orderedWeekdays = preferences.orderedWeekdays
+        let orderedWeekdays = Weekday.displayOrder.filter(weekdays.contains)
         let fallback = TemplatePlanBuilder.build(
             weekdays: orderedWeekdays,
-            durationMinutes: preferences.durationMinutes,
-            equipment: preferences.equipment,
-            experience: preferences.experience
+            durationMinutes: durationMinutes,
+            equipment: profile.equipmentAccess,
+            experience: profile.experience
         )
 
         refreshAvailability()
@@ -94,14 +97,15 @@ final class PlanGenerator {
         #if canImport(FoundationModels)
         do {
             let generated = try await runModel(
-                preferences: preferences,
+                profile: profile,
                 orderedWeekdays: orderedWeekdays,
+                durationMinutes: durationMinutes,
                 performanceSummary: performanceSummary
             )
             let blueprint = Self.blueprint(
                 from: generated,
                 orderedWeekdays: orderedWeekdays,
-                durationMinutes: preferences.durationMinutes,
+                durationMinutes: durationMinutes,
                 fallback: fallback
             )
             // If the model returned nothing usable, keep the template.
@@ -118,16 +122,18 @@ final class PlanGenerator {
 
     #if canImport(FoundationModels)
     private func runModel(
-        preferences: TrainingPreferences,
+        profile: UserProfile,
         orderedWeekdays: [Weekday],
+        durationMinutes: Int,
         performanceSummary: String?
     ) async throws -> GeneratedPlan {
         let session = LanguageModelSession {
             Self.instructions
         }
         let prompt = Self.prompt(
-            preferences: preferences,
+            profile: profile,
             orderedWeekdays: orderedWeekdays,
+            durationMinutes: durationMinutes,
             performanceSummary: performanceSummary
         )
         let response = try await session.respond(to: prompt, generating: GeneratedPlan.self)
@@ -146,18 +152,19 @@ final class PlanGenerator {
     """
 
     static func prompt(
-        preferences: TrainingPreferences,
+        profile: UserProfile,
         orderedWeekdays: [Weekday],
+        durationMinutes: Int,
         performanceSummary: String?
     ) -> String {
         let dayList = orderedWeekdays.map(\.fullName).joined(separator: ", ")
         var lines = [
             "Design a \(orderedWeekdays.count)-day weekly lifting plan.",
             "Training days (return days in this exact order): \(dayList).",
-            "Time per session: \(preferences.durationMinutes) minutes.",
-            "Equipment: \(preferences.equipment.promptDescription).",
-            "Experience: \(preferences.experience.promptDescription).",
-            "Primary goal: \(preferences.goal.isEmpty ? "general strength and muscle" : preferences.goal).",
+            "Time per session: \(durationMinutes) minutes.",
+            "Equipment: \(profile.equipmentAccess.promptDescription).",
+            "Experience: \(profile.experience.promptDescription).",
+            "Primary goal: \(profile.goal.isEmpty ? "general strength and muscle" : profile.goal).",
             "Give each day a clear focus, 3–6 exercises (compounds first), sets, a rep range, rest seconds (45–180), a rep tempo, and one short cue.",
         ]
         if let summary = performanceSummary, !summary.isEmpty {
@@ -173,6 +180,17 @@ final class PlanGenerator {
     #if canImport(FoundationModels)
     /// Convert the model's output into a `PlanBlueprint`, assigning weekdays from
     /// the requested order and filling any shortfall from the template.
+    ///
+    /// Exercises are deliberately left empty here: turning a model-generated
+    /// name into a persisted `ExerciseID` requires resolving it against the
+    /// catalog through `ExerciseResolver` first (see
+    /// `docs/superpowers/specs/2026-08-14-workout-programming-design.md`, "Anything
+    /// it returns still passes through `ExerciseResolver`"), and that wiring is
+    /// not in place yet. Persisting the generated name directly — or a
+    /// name-derived id — would reintroduce the name-keyed-history bug
+    /// `ExerciseID` exists to eliminate, so the day skeleton (weekday, focus) is
+    /// kept and the exercise list stays empty until that wiring lands, same as
+    /// `TemplatePlanBuilder.build`.
     static func blueprint(
         from generated: GeneratedPlan,
         orderedWeekdays: [Weekday],
@@ -183,29 +201,13 @@ final class PlanGenerator {
         for (index, weekday) in orderedWeekdays.enumerated() {
             if index < generated.days.count {
                 let g = generated.days[index]
-                let exercises = g.exercises.map { ex in
-                    ExerciseBlueprint(
-                        name: ex.name.trimmingCharacters(in: .whitespacesAndNewlines),
-                        muscleGroup: ex.muscleGroup,
-                        repRange: ex.repRange,
-                        sets: ex.sets,
-                        restSeconds: ex.restSeconds,
-                        suggestedWeight: nil,
-                        tempo: ex.tempo.isEmpty ? nil : ex.tempo,
-                        notes: ex.notes.isEmpty ? nil : ex.notes
-                    )
-                }.filter { !$0.name.isEmpty }
-
-                if exercises.isEmpty, index < fallback.days.count {
-                    days.append(fallback.days[index])
-                } else {
-                    days.append(DayBlueprint(
-                        weekday: weekday,
-                        focus: g.focus,
-                        durationMinutes: durationMinutes,
-                        exercises: exercises
-                    ))
-                }
+                let focus = g.focus.trimmingCharacters(in: .whitespacesAndNewlines)
+                days.append(DayBlueprint(
+                    weekday: weekday,
+                    focus: focus.isEmpty ? "Training" : focus,
+                    durationMinutes: durationMinutes,
+                    exercises: []
+                ))
             } else if index < fallback.days.count {
                 days.append(fallback.days[index])
             }
