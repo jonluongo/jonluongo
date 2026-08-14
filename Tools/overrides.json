@@ -214,5 +214,7 @@
   },
 
   "jump-rope": { "difficulty": "beginner" },
-  "jumping-jack": { "difficulty": "beginner" }
+  "jumping-jack": { "difficulty": "beginner" },
+
+  "captains-chair-knee-raise": { "equipment": "machine" }
 }

@@ -39,4 +39,11 @@ enum EquipmentAccess {
             .barbell, .machine, .cable, .ezBar, .trapBar,
             .sled, .cardioMachine, .other,
         ])
+
+    // `EquipmentType.pool` deliberately belongs to no tier above: none of
+    // them answers "does the lifter have pool access", so a swim exercise
+    // cannot be prescribed by any access level yet. Add a tier (or a new
+    // access case) once that question exists in onboarding, rather than
+    // folding `.pool` into `.other`/`.cardioMachine` and making it reachable
+    // by lifters who may have a weight room but no pool.
 }

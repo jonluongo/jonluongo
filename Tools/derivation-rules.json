@@ -10,6 +10,7 @@
     "rower": "cardio machine", "erg": "cardio machine",
     "elliptical": "cardio machine", "arc-trainer": "cardio machine",
     "stairmaster": "cardio machine", "ski-erg": "cardio machine",
+    "cycling": "cardio machine", "swim": "pool",
 
     "pulldown": "cable", "pushdown": "cable", "pec-deck": "machine",
     "leg-press": "machine", "leg-extension": "machine",

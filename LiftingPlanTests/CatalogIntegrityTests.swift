@@ -338,4 +338,77 @@ struct CatalogIntegrityTests {
         #expect(try difficulty("man-maker") == .advanced)
         #expect(try difficulty("wall-ball") == .advanced)
     }
+
+    // MARK: - Task 5: equipment-requiring cardio is not tagged bodyweight
+
+    /// Cycling requires a bike, whether stationary or road. All five
+    /// cycling entries — plus `steady-state-ride`, the same activity under a
+    /// different name — must ship as `.cardioMachine`, never `.bodyweight`.
+    /// This is the defect the audit found: the generator's `bodyweight`
+    /// default silently applied to slugs no equipment keyword matched.
+    @Test("No cycling entry is tagged bodyweight")
+    func cyclingRequiresEquipment() throws {
+        let catalog = try loaded()
+        let slugs = [
+            "cycling-cooldown", "cycling-intervals", "cycling-sprint",
+            "cycling-warmup", "indoor-cycling-spin", "steady-state-ride",
+        ]
+        for slug in slugs {
+            let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: slug)),
+                                        "\(slug) missing from catalog")
+            #expect(exercise.equipment == .cardioMachine,
+                    "\(slug) equipment is \(exercise.equipment)")
+            #expect(exercise.equipment != .bodyweight)
+        }
+    }
+
+    /// Swimming requires a pool. These entries must never ship as
+    /// `.bodyweight`, which would let a bodyweight-only lifter be handed a
+    /// swim workout. There is no equipment-access tier that grants `.pool`
+    /// yet (see `EquipmentAccess`), so these are correctly modeled but
+    /// currently unreachable by plan generation — that gap is covered by
+    /// `EquipmentAccessTests.poolIsNotYetReachableByAnyTier`, not here.
+    @Test("No swimming entry is tagged bodyweight")
+    func swimmingRequiresEquipment() throws {
+        let catalog = try loaded()
+        let slugs = [
+            "backstroke-swim", "breaststroke-swim", "butterfly-swim",
+            "freestyle-swim", "swim-kick-drill", "swim-pull-drill",
+            "swim-sprint-intervals",
+        ]
+        for slug in slugs {
+            let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: slug)),
+                                        "\(slug) missing from catalog")
+            #expect(exercise.equipment == .pool, "\(slug) equipment is \(exercise.equipment)")
+            #expect(exercise.equipment != .bodyweight)
+        }
+    }
+
+    /// A captain's chair is a fixed gym apparatus, not "no equipment".
+    @Test("Captain's chair knee raise is not tagged bodyweight")
+    func captainsChairRequiresEquipment() throws {
+        let catalog = try loaded()
+        let exercise = try #require(
+            catalog.exercise(id: ExerciseID(rawValue: "captains-chair-knee-raise")))
+        #expect(exercise.equipment != .bodyweight, "equipment is \(exercise.equipment)")
+    }
+
+    /// Running and hiking genuinely need no equipment. A fix for the cycling
+    /// and swimming defects above must not sweep these up along with it —
+    /// this test is the guard against that over-correction.
+    @Test("Running and hiking entries stay tagged bodyweight")
+    func runningAndHikingStayBodyweight() throws {
+        let catalog = try loaded()
+        let slugs = [
+            "long-run", "tempo-run", "trail-run", "hiking",
+            "hill-climb-repeats", "running-intervals", "running-cooldown",
+            "mountain-climber", "shadow-boxing",
+        ]
+        for slug in slugs {
+            let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: slug)),
+                                        "\(slug) missing from catalog")
+            #expect(exercise.equipment == .bodyweight,
+                    "\(slug) equipment is \(exercise.equipment), expected bodyweight")
+        }
+    }
 }

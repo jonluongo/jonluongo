@@ -62,4 +62,18 @@ struct EquipmentAccessTests {
             }
         }
     }
+
+    /// `.pool` is a deliberate gap, not an oversight: no access tier answers
+    /// "does the lifter have pool access", so swim exercises tagged `.pool`
+    /// cannot be prescribed by any tier today. This locks that decision in
+    /// so a future change to `EquipmentAccess` either keeps it intentional
+    /// or updates this test alongside adding real pool-access support —
+    /// never silently.
+    @Test("No access tier grants pool access yet")
+    func poolIsNotYetReachableByAnyTier() {
+        for tier in Equipment.allCases {
+            #expect(!EquipmentAccess.permitted(for: tier).contains(.pool),
+                    "\(tier) unexpectedly permits .pool")
+        }
+    }
 }

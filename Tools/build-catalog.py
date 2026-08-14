@@ -33,7 +33,7 @@ FEDB_URL = ("https://raw.githubusercontent.com/yuhonas/"
 # version instead of silently changing what they mean. Bump this constant in
 # any change that alters catalog *data* (not the generator's mechanism), and
 # say so in the commit message.
-CATALOG_VERSION = 3
+CATALOG_VERSION = 4
 
 # free-exercise-db's `level` uses "expert" where our taxonomy uses "advanced".
 FEDB_LEVEL_TO_DIFFICULTY = {

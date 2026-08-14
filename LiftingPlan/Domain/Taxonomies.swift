@@ -54,12 +54,20 @@ struct EquipmentType: ExtensibleTaxonomy {
     static let suspension = EquipmentType(rawValue: "suspension")
     static let sled = EquipmentType(rawValue: "sled")
     static let cardioMachine = EquipmentType(rawValue: "cardio machine")
+    /// A swimming pool. Deliberately absent from every `EquipmentAccess` tier
+    /// today — no tier answers "does the lifter have pool access", so an
+    /// exercise tagged `.pool` cannot yet be prescribed by plan generation.
+    /// That is the honest state until a pool-access question exists; folding
+    /// swimming into `.other`/`.cardioMachine` instead would make it
+    /// reachable by lifters with a "full gym" who may have no pool, which is
+    /// the same equipment-mismatch defect this taxonomy exists to prevent.
+    static let pool = EquipmentType(rawValue: "pool")
     static let other = EquipmentType(rawValue: "other")
 
     static let known: [EquipmentType] = [
         .bodyweight, .barbell, .dumbbell, .kettlebell, .cable, .machine,
         .band, .ezBar, .trapBar, .medicineBall, .plate, .suspension,
-        .sled, .cardioMachine, .other,
+        .sled, .cardioMachine, .pool, .other,
     ]
 }
 
