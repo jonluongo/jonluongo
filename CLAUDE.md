@@ -80,3 +80,27 @@ doing too much.
 
 Never claim work is complete without running the command and reading the
 output. State what was run and what it printed. If tests fail, say so.
+
+**Reading test output correctly.** Every test here uses Swift Testing, not
+XCTest, so `xcodebuild test` prints a legacy line that looks alarming and means
+nothing:
+
+```
+Test Suite 'All tests' passed. Executed 0 tests, with 0 failures
+```
+
+That is the XCTest reporter counting zero XCTest cases. It is expected. The
+line that actually proves tests ran is:
+
+```
+✔ Test run with 23 tests in 4 suites passed after 0.018 seconds.
+```
+
+`** TEST SUCCEEDED **` alone does not prove anything ran — it prints even when
+nothing executes. Always confirm the test count:
+
+```sh
+xcodebuild -project LiftingPlan.xcodeproj -scheme LiftingPlan \
+  -destination 'platform=iOS Simulator,name=iPhone 16' test 2>&1 \
+  | grep -E "Test run with|✘|error:"
+```
