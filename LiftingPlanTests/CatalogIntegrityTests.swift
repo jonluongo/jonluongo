@@ -83,4 +83,62 @@ struct CatalogIntegrityTests {
             #expect(resolved?.id == exercise.id, "\(exercise.id) did not resolve to itself")
         }
     }
+
+    /// No alias string may be claimed by more than one entry. A shared alias
+    /// is exactly how the resolver's `.alias` tier — a confidence callers
+    /// treat as safe to persist — can point at the wrong exercise; this is
+    /// the same class of bug that let "upright barbell row" resolve to a
+    /// dumbbell exercise and "decline barbell bench press" collide with
+    /// "barbell-incline-bench-press"'s bad enrichment.
+    @Test("No alias is claimed by more than one catalog entry")
+    func aliasesAreUnique() throws {
+        var owner: [String: ExerciseID] = [:]
+        for exercise in try loaded().all {
+            for alias in exercise.aliases {
+                let key = alias.lowercased()
+                if let existing = owner[key] {
+                    Issue.record(
+                        "alias \"\(alias)\" is claimed by both \(existing) and \(exercise.id)")
+                } else {
+                    owner[key] = exercise.id
+                }
+            }
+        }
+    }
+
+    /// If a slug names a muscle, its primary muscles must not contradict it.
+    ///
+    /// Matching is on hyphen-delimited tokens, not substrings, so "lat" does
+    /// not fire inside "plate" or "lateral" and "trap" does not fire inside
+    /// unrelated tokens. A handful of slugs still need explicit exclusion
+    /// because the token means something other than the target muscle there:
+    /// "trap-bar-deadlift" names its equipment (a hex bar), not the traps;
+    /// the "chest-supported" rows describe what a lifter leans against, not
+    /// what the row trains; "behind-the-neck-press" is a shoulder press
+    /// performed behind the neck, not a neck exercise. Scoped to these
+    /// unambiguous cases rather than every substring so the check stays
+    /// reliable rather than flaky.
+    @Test("A slug that names a muscle does not contradict its own primary muscles")
+    func slugMuscleAgreement() throws {
+        let expectations: [String: MuscleGroup] = [
+            "abduction": .abductors, "adduction": .adductors, "calf": .calves,
+            "tricep": .triceps, "bicep": .biceps, "hamstring": .hamstrings,
+            "quad": .quadriceps, "glute": .glutes, "chest": .chest,
+            "shoulder": .shoulders, "lat": .lats, "trap": .traps,
+            "forearm": .forearms, "neck": .neck,
+        ]
+        let excluded: Set<String> = [
+            "trap-bar-deadlift",
+            "chest-supported-dumbbell-row", "chest-supported-t-bar-row",
+            "behind-the-neck-press",
+        ]
+
+        for exercise in try loaded().all where !excluded.contains(exercise.id.rawValue) {
+            let tokens = Set(exercise.id.rawValue.split(separator: "-").map(String.init))
+            for (token, muscle) in expectations where tokens.contains(token) {
+                #expect(exercise.primaryMuscles.contains(muscle),
+                        "\(exercise.id) names \"\(token)\" but primary muscles are \(exercise.primaryMuscles)")
+            }
+        }
+    }
 }

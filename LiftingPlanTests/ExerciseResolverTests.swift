@@ -97,9 +97,8 @@ struct ExerciseResolverTests {
         ])
         let resolver = ExerciseResolver(catalog: catalog)
         for probe in ["Barbell Bench Press", "bench press barbell", "Barbel Bench Pres"] {
-            if let resolved = resolver.resolve(probe) {
-                #expect(catalog.exercise(id: resolved.id) != nil)
-            }
+            let resolved = try #require(resolver.resolve(probe), "\(probe) did not resolve")
+            #expect(catalog.exercise(id: resolved.id) != nil)
         }
     }
 }

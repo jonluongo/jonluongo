@@ -76,6 +76,7 @@ struct ExerciseCatalogTests {
     @Test("Substitutes share the pattern but are never the original")
     func substitutes() {
         let subs = catalog.substitutes(for: ExerciseID(rawValue: "barbell-bench-press"), limit: 5)
+        #expect(subs.count == 2)
         #expect(!subs.contains { $0.id == ExerciseID(rawValue: "barbell-bench-press") })
         #expect(subs.allSatisfy { $0.pattern == .horizontalPress })
     }
