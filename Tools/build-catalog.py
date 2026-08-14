@@ -70,12 +70,20 @@ def build() -> int:
         fedb_index.setdefault(normalize(entry["name"]), entry)
 
     catalog, enriched, overridden = [], 0, 0
+    pattern_fallthrough, equipment_fallthrough = [], []
 
     for slug in slugs:
         words = slug.replace("-", " ")
 
-        pattern = longest_match(slug, rules["pattern"]) or rules["defaultPattern"]
-        equipment = longest_match(slug, rules["equipment"]) or rules["defaultEquipment"]
+        pattern_match = longest_match(slug, rules["pattern"])
+        pattern = pattern_match or rules["defaultPattern"]
+        if pattern_match is None:
+            pattern_fallthrough.append(slug)
+
+        equipment_match = longest_match(slug, rules["equipment"])
+        equipment = equipment_match or rules["defaultEquipment"]
+        if equipment_match is None:
+            equipment_fallthrough.append(slug)
         primary = list(rules["patternMuscles"].get(pattern, []))
         hinted = longest_match(slug, rules["muscleHints"])
         if hinted:
@@ -141,6 +149,14 @@ def build() -> int:
     print(f"wrote {len(catalog)} exercises to {OUT.relative_to(ROOT)}")
     print(f"  enriched from free-exercise-db: {enriched}")
     print(f"  hand-authored overrides:        {overridden}")
+    print(f"  fell through to defaultPattern ({rules['defaultPattern']!r}): "
+          f"{len(pattern_fallthrough)}")
+    if pattern_fallthrough:
+        print(f"    {', '.join(sorted(pattern_fallthrough))}")
+    print(f"  fell through to defaultEquipment ({rules['defaultEquipment']!r}): "
+          f"{len(equipment_fallthrough)}")
+    if equipment_fallthrough:
+        print(f"    {', '.join(sorted(equipment_fallthrough))}")
     return 0
 
 

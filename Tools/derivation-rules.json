@@ -48,7 +48,19 @@
     "hiking": "cardio", "walk": "cardio",
     "bike": "cardio", "arc-trainer": "cardio", "elliptical": "cardio",
     "ski-erg": "cardio", "rower": "cardio", "stairmaster": "cardio",
-    "face-pull": "horizontal pull"
+    "face-pull": "horizontal pull",
+
+    "swing": "hinge", "pull-through": "hinge", "rack-pull": "hinge",
+    "superman": "hinge",
+    "push-press": "vertical press", "landmine-press": "vertical press",
+    "thruster": "vertical press", "floor-press": "horizontal press",
+    "wall-sit": "squat", "step-down": "lunge",
+    "situp": "flexion", "v-up": "flexion", "toes-to-bar": "flexion",
+    "mountain-climber": "cardio", "shadow-boxing": "cardio",
+    "hill-climb": "cardio", "swim-pull": "cardio",
+    "external-rotation": "rotation", "windmill": "rotation",
+    "push-downs": "extension", "clean-and-press": "olympic",
+    "press": "vertical press", "pull": "horizontal pull"
   },
   "defaultPattern": "carry",
   "patternMuscles": {

@@ -205,7 +205,7 @@
       "Continue as far as you are able, pause, and then return to the starting position."
     ],
     "mechanic": "compound",
-    "pattern": "carry",
+    "pattern": "rotation",
     "primaryMuscles": [
       "shoulders"
     ],
@@ -665,7 +665,7 @@
       "Pause at the bottom, and then bring the weight together at the top by extending through the elbows."
     ],
     "mechanic": "compound",
-    "pattern": "carry",
+    "pattern": "horizontal press",
     "primaryMuscles": [
       "triceps"
     ],
@@ -817,13 +817,14 @@
     "category": "strength",
     "displayName": "Barbell Rack Pull",
     "equipment": "barbell",
-    "force": "static",
+    "force": "pull",
     "id": "barbell-rack-pull",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "hinge",
     "primaryMuscles": [
-      "abdominals"
+      "hamstrings",
+      "glutes"
     ],
     "secondaryMuscles": []
   },
@@ -1008,13 +1009,13 @@
     "category": "strength",
     "displayName": "Barbell Thruster",
     "equipment": "barbell",
-    "force": "static",
+    "force": "push",
     "id": "barbell-thruster",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "vertical press",
     "primaryMuscles": [
-      "abdominals"
+      "shoulders"
     ],
     "secondaryMuscles": []
   },
@@ -1607,7 +1608,7 @@
       "Repeat for the recommended amount of repetitions and then repeat the movement with the next arm."
     ],
     "mechanic": "compound",
-    "pattern": "carry",
+    "pattern": "rotation",
     "primaryMuscles": [
       "shoulders"
     ],
@@ -1771,13 +1772,14 @@
     "category": "strength",
     "displayName": "Cable Pull Through",
     "equipment": "cable",
-    "force": "static",
+    "force": "pull",
     "id": "cable-pull-through",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "hinge",
     "primaryMuscles": [
-      "abdominals"
+      "hamstrings",
+      "glutes"
     ],
     "secondaryMuscles": []
   },
@@ -3090,13 +3092,13 @@
     "category": "strength",
     "displayName": "Dumbbell Push Press",
     "equipment": "dumbbell",
-    "force": "static",
+    "force": "push",
     "id": "dumbbell-push-press",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "vertical press",
     "primaryMuscles": [
-      "abdominals"
+      "shoulders"
     ],
     "secondaryMuscles": []
   },
@@ -3339,11 +3341,10 @@
     "category": "strength",
     "displayName": "Dumbbell Situp",
     "equipment": "dumbbell",
-    "force": "static",
     "id": "dumbbell-situp",
     "instructions": [],
     "mechanic": "isolation",
-    "pattern": "carry",
+    "pattern": "flexion",
     "primaryMuscles": [
       "abdominals"
     ],
@@ -3460,13 +3461,13 @@
     "category": "strength",
     "displayName": "Dumbbell Thruster",
     "equipment": "dumbbell",
-    "force": "static",
+    "force": "push",
     "id": "dumbbell-thruster",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "vertical press",
     "primaryMuscles": [
-      "abdominals"
+      "shoulders"
     ],
     "secondaryMuscles": []
   },
@@ -3934,16 +3935,15 @@
   },
   {
     "aliases": [],
-    "category": "strength",
+    "category": "cardio",
     "displayName": "Hill Climb Repeats",
     "equipment": "bodyweight",
-    "force": "static",
     "id": "hill-climb-repeats",
     "instructions": [],
     "mechanic": "isolation",
-    "pattern": "carry",
+    "pattern": "cardio",
     "primaryMuscles": [
-      "abdominals"
+      "quadriceps"
     ],
     "secondaryMuscles": []
   },
@@ -4323,13 +4323,13 @@
     "category": "strength",
     "displayName": "Kettlebell Push Press",
     "equipment": "kettlebell",
-    "force": "static",
+    "force": "push",
     "id": "kettlebell-push-press",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "vertical press",
     "primaryMuscles": [
-      "abdominals"
+      "shoulders"
     ],
     "secondaryMuscles": []
   },
@@ -4460,13 +4460,14 @@
     "category": "strength",
     "displayName": "Kettlebell Swing",
     "equipment": "kettlebell",
-    "force": "static",
+    "force": "pull",
     "id": "kettlebell-swing",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "hinge",
     "primaryMuscles": [
-      "abdominals"
+      "hamstrings",
+      "glutes"
     ],
     "secondaryMuscles": []
   },
@@ -4484,7 +4485,7 @@
       "As you begin the next repetition, return the weights to the shoulders."
     ],
     "mechanic": "compound",
-    "pattern": "carry",
+    "pattern": "vertical press",
     "primaryMuscles": [
       "shoulders"
     ],
@@ -4521,7 +4522,7 @@
       "Pause for a second after reaching the ground and reverse the motion back to the starting position."
     ],
     "mechanic": "compound",
-    "pattern": "carry",
+    "pattern": "rotation",
     "primaryMuscles": [
       "abdominals"
     ],
@@ -4567,13 +4568,13 @@
     "category": "strength",
     "displayName": "Landmine Press",
     "equipment": "barbell",
-    "force": "static",
+    "force": "push",
     "id": "landmine-press",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "vertical press",
     "primaryMuscles": [
-      "abdominals"
+      "shoulders"
     ],
     "secondaryMuscles": []
   },
@@ -4709,13 +4710,13 @@
     "category": "strength",
     "displayName": "Machine Cable V Bar Push Downs",
     "equipment": "machine",
-    "force": "static",
+    "force": "push",
     "id": "machine-cable-v-bar-push-downs",
     "instructions": [],
     "mechanic": "isolation",
-    "pattern": "carry",
+    "pattern": "extension",
     "primaryMuscles": [
-      "abdominals"
+      "triceps"
     ],
     "secondaryMuscles": []
   },
@@ -5136,7 +5137,7 @@
     "aliases": [
       "mountain climbers"
     ],
-    "category": "strength",
+    "category": "cardio",
     "displayName": "Mountain Climber",
     "equipment": "bodyweight",
     "force": "pull",
@@ -5146,7 +5147,7 @@
       "Explosively reverse the positions of your legs, extending the bent leg until the leg is straight and supported by the toe, and bringing the other foot up with the hip and knee flexed. Repeat in an alternating fashion for 20-30 seconds."
     ],
     "mechanic": "compound",
-    "pattern": "carry",
+    "pattern": "cardio",
     "primaryMuscles": [
       "quadriceps"
     ],
@@ -5820,16 +5821,15 @@
   },
   {
     "aliases": [],
-    "category": "strength",
+    "category": "cardio",
     "displayName": "Shadow Boxing",
     "equipment": "bodyweight",
-    "force": "static",
     "id": "shadow-boxing",
     "instructions": [],
     "mechanic": "isolation",
-    "pattern": "carry",
+    "pattern": "cardio",
     "primaryMuscles": [
-      "abdominals"
+      "quadriceps"
     ],
     "secondaryMuscles": []
   },
@@ -5868,13 +5868,13 @@
     "category": "strength",
     "displayName": "Single Arm Landmine Press",
     "equipment": "barbell",
-    "force": "static",
+    "force": "push",
     "id": "single-arm-landmine-press",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "vertical press",
     "primaryMuscles": [
-      "abdominals"
+      "shoulders"
     ],
     "secondaryMuscles": []
   },
@@ -6043,13 +6043,14 @@
     "category": "strength",
     "displayName": "Single Leg Step Down",
     "equipment": "bodyweight",
-    "force": "static",
+    "force": "push",
     "id": "single-leg-step-down",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "lunge",
     "primaryMuscles": [
-      "abdominals"
+      "quadriceps",
+      "glutes"
     ],
     "secondaryMuscles": []
   },
@@ -6103,13 +6104,13 @@
     "category": "strength",
     "displayName": "Sled Pull",
     "equipment": "sled",
-    "force": "static",
+    "force": "pull",
     "id": "sled-pull",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "horizontal pull",
     "primaryMuscles": [
-      "abdominals"
+      "middle back"
     ],
     "secondaryMuscles": []
   },
@@ -6580,7 +6581,7 @@
       "Repeat for the recommended amount of repetitions prescribed in your program."
     ],
     "mechanic": "compound",
-    "pattern": "carry",
+    "pattern": "hinge",
     "primaryMuscles": [
       "lower back"
     ],
@@ -6689,11 +6690,10 @@
     "category": "strength",
     "displayName": "Toes to Bar",
     "equipment": "bodyweight",
-    "force": "static",
     "id": "toes-to-bar",
     "instructions": [],
     "mechanic": "isolation",
-    "pattern": "carry",
+    "pattern": "flexion",
     "primaryMuscles": [
       "abdominals"
     ],
@@ -6800,11 +6800,10 @@
     "category": "strength",
     "displayName": "V Up",
     "equipment": "bodyweight",
-    "force": "static",
     "id": "v-up",
     "instructions": [],
     "mechanic": "isolation",
-    "pattern": "carry",
+    "pattern": "flexion",
     "primaryMuscles": [
       "abdominals"
     ],
@@ -6847,13 +6846,13 @@
     "category": "strength",
     "displayName": "Wall Sit",
     "equipment": "bodyweight",
-    "force": "static",
+    "force": "push",
     "id": "wall-sit",
     "instructions": [],
-    "mechanic": "isolation",
-    "pattern": "carry",
+    "mechanic": "compound",
+    "pattern": "squat",
     "primaryMuscles": [
-      "abdominals"
+      "quadriceps"
     ],
     "secondaryMuscles": []
   },
