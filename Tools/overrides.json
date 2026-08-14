@@ -1,0 +1,154 @@
+{
+  "bird-dog": {
+    "pattern": "carry", "primaryMuscles": ["lower back"],
+    "secondaryMuscles": ["glutes", "abdominals"], "category": "strength",
+    "mechanic": "isolation", "force": "static",
+    "aliases": ["quadruped opposite arm leg reach"]
+  },
+  "dead-bug": {
+    "pattern": "flexion", "primaryMuscles": ["abdominals"],
+    "category": "strength", "mechanic": "isolation", "force": "static"
+  },
+  "burpee": {
+    "pattern": "plyometric", "primaryMuscles": ["quadriceps"],
+    "secondaryMuscles": ["chest", "shoulders"], "category": "plyometrics",
+    "mechanic": "compound", "force": "push"
+  },
+  "battle-ropes": {
+    "pattern": "cardio", "primaryMuscles": ["shoulders"],
+    "secondaryMuscles": ["abdominals"], "category": "cardio",
+    "equipment": "other", "mechanic": "compound"
+  },
+  "dead-hang": {
+    "pattern": "carry", "primaryMuscles": ["forearms"],
+    "secondaryMuscles": ["lats"], "category": "strength",
+    "equipment": "bodyweight", "mechanic": "isolation", "force": "static"
+  },
+  "dumbbell-superman": {
+    "pattern": "hinge", "primaryMuscles": ["lower back"],
+    "category": "strength", "equipment": "dumbbell",
+    "mechanic": "isolation", "force": "static"
+  },
+  "frog-pump": {
+    "pattern": "hinge", "primaryMuscles": ["glutes"],
+    "category": "strength", "mechanic": "isolation", "force": "push"
+  },
+  "wrist-roller": {
+    "pattern": "curl", "primaryMuscles": ["forearms"],
+    "category": "strength", "equipment": "other", "mechanic": "isolation"
+  },
+  "yates-row": {
+    "pattern": "horizontal pull", "primaryMuscles": ["middle back"],
+    "secondaryMuscles": ["lats", "biceps"], "category": "strength",
+    "equipment": "barbell", "mechanic": "compound", "force": "pull",
+    "aliases": ["yates bent over row", "underhand barbell row"]
+  },
+  "zercher-squat": {
+    "pattern": "squat", "primaryMuscles": ["quadriceps"],
+    "secondaryMuscles": ["glutes", "abdominals"], "category": "strength",
+    "equipment": "barbell", "mechanic": "compound", "force": "push"
+  },
+  "zottman-curl": {
+    "pattern": "curl", "primaryMuscles": ["biceps"],
+    "secondaryMuscles": ["forearms"], "category": "strength",
+    "equipment": "dumbbell", "mechanic": "isolation", "force": "pull"
+  },
+  "hiking": {
+    "pattern": "cardio", "primaryMuscles": ["quadriceps"],
+    "category": "cardio", "equipment": "bodyweight", "mechanic": "compound"
+  },
+
+  "arnold-press": { "equipment": "dumbbell" },
+  "bayesian-curl": { "equipment": "cable" },
+  "chest-supported-t-bar-row": { "equipment": "machine" },
+  "cross-body-hammer-curl": { "equipment": "dumbbell" },
+  "deficit-deadlift": { "equipment": "barbell" },
+  "front-squat": { "equipment": "barbell" },
+  "good-mornings": { "equipment": "barbell" },
+  "hammer-strength-high-row": { "equipment": "machine" },
+  "hammer-strength-iso-lateral-row": { "equipment": "machine" },
+  "hang-clean": { "equipment": "barbell" },
+  "hang-power-clean": { "equipment": "barbell" },
+  "hang-snatch": { "equipment": "barbell" },
+  "hip-hinge-speed-romanian-deadlift": { "equipment": "barbell" },
+  "meadows-row": { "equipment": "barbell" },
+  "pause-squat": { "equipment": "barbell" },
+  "pendlay-row": { "equipment": "barbell" },
+  "pendulum-squat-v-squat": { "equipment": "machine" },
+  "power-clean": { "equipment": "barbell" },
+  "push-jerk": { "equipment": "barbell" },
+  "reverse-hyperextension": { "equipment": "machine" },
+  "seal-row": { "equipment": "barbell" },
+  "single-arm-tricep-extension": { "equipment": "dumbbell" },
+  "snatch-grip-deadlift": { "equipment": "barbell" },
+  "snatch-grip-high-pull": { "equipment": "barbell" },
+  "snatch-pull": { "equipment": "barbell" },
+  "spider-curl": { "equipment": "dumbbell" },
+  "split-jerk": { "equipment": "barbell" },
+  "z-press": { "equipment": "barbell" },
+
+  "behind-the-neck-press": {
+    "pattern": "vertical press", "primaryMuscles": ["shoulders"],
+    "equipment": "barbell", "mechanic": "compound", "force": "push",
+    "category": "strength"
+  },
+  "cuban-press": {
+    "pattern": "vertical press", "primaryMuscles": ["shoulders"],
+    "equipment": "dumbbell", "mechanic": "compound", "force": "push",
+    "category": "strength"
+  },
+  "floor-press": {
+    "pattern": "horizontal press", "primaryMuscles": ["chest"],
+    "equipment": "barbell", "mechanic": "compound", "force": "push",
+    "category": "strength"
+  },
+  "jm-press": {
+    "pattern": "extension", "primaryMuscles": ["triceps"],
+    "equipment": "barbell", "mechanic": "compound", "force": "push",
+    "category": "strength"
+  },
+  "tate-press": {
+    "pattern": "extension", "primaryMuscles": ["triceps"],
+    "equipment": "dumbbell", "mechanic": "isolation", "force": "push",
+    "category": "strength"
+  },
+  "pallof-press": {
+    "pattern": "rotation", "primaryMuscles": ["abdominals"],
+    "equipment": "cable", "mechanic": "isolation", "force": "static",
+    "category": "strength"
+  },
+  "man-maker": {
+    "pattern": "plyometric", "primaryMuscles": ["quadriceps"],
+    "secondaryMuscles": ["chest", "shoulders", "middle back"],
+    "equipment": "dumbbell", "mechanic": "compound", "force": "push",
+    "category": "plyometrics"
+  },
+  "wall-ball": {
+    "pattern": "plyometric", "primaryMuscles": ["quadriceps"],
+    "secondaryMuscles": ["shoulders"], "equipment": "medicine ball",
+    "mechanic": "compound", "force": "push", "category": "plyometrics"
+  },
+  "stair-climber": {
+    "pattern": "cardio", "primaryMuscles": ["quadriceps"],
+    "equipment": "cardio machine", "category": "cardio", "force": null
+  },
+  "versaclimber": {
+    "pattern": "cardio", "primaryMuscles": ["quadriceps"],
+    "equipment": "cardio machine", "category": "cardio", "force": null
+  },
+  "rowing-intervals": {
+    "pattern": "cardio", "primaryMuscles": ["quadriceps"],
+    "secondaryMuscles": ["middle back"], "equipment": "cardio machine",
+    "category": "cardio", "force": null
+  },
+  "rowing-sprint": {
+    "pattern": "cardio", "primaryMuscles": ["quadriceps"],
+    "secondaryMuscles": ["middle back"], "equipment": "cardio machine",
+    "category": "cardio", "force": null
+  },
+  "seated-calf-raise": { "equipment": "machine" },
+  "steady-state-ride": {
+    "pattern": "cardio", "primaryMuscles": ["quadriceps"],
+    "category": "cardio", "force": null
+  }
+}
