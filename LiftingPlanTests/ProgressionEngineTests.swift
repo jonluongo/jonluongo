@@ -103,7 +103,8 @@ struct ProgressionEngineTests {
 
     @Test("Rounds to the nearest 2.5")
     func rounding() {
-        #expect(ProgressionEngine.roundToNearest(103.7, step: 2.5) == 105)
+        #expect(ProgressionEngine.roundToNearest(104, step: 2.5) == 105)
+        #expect(ProgressionEngine.roundToNearest(103.7, step: 2.5) == 102.5)
         #expect(ProgressionEngine.roundToNearest(101.2, step: 2.5) == 100)
         #expect(ProgressionEngine.incrementFor(weight: 45) == 2.5)
         #expect(ProgressionEngine.incrementFor(weight: 50) == 5)
