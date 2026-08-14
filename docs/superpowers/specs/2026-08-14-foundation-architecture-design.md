@@ -76,6 +76,46 @@ every device through iCloud, and make catalog updates a migration rather than a
 file swap. Keeping them separate means user records reference exercises by slug
 and the catalog can be regenerated freely.
 
+## Extensibility principles
+
+The foundation has to carry features that do not exist yet. These rules are
+binding on implementation, not aspirational.
+
+**Data over code.** Anything that is a fact about training — the exercise
+catalog, split templates, rep and rest prescriptions per goal and experience —
+lives in versioned JSON, not in Swift control flow. The current
+`TemplatePlanBuilder` is the anti-pattern to eliminate: a `switch` over focus
+strings with exercise names and rest seconds baked into branches. Adding a new
+split or adjusting a prescription must be a data edit reviewable as a diff, with
+no logic recompiled.
+
+**Protocol seams at every boundary.** `ExerciseCatalogProviding`,
+`PlanGenerating`, `MediaProviding`, `ProgressionStrategy`. Layers depend on
+protocols, never concrete types. This is what lets the on-device model be
+swapped for a server model, MoveKit be swapped for another media source, a
+second progression scheme be added alongside the first, and every layer be
+tested against fakes.
+
+**Extensible taxonomies, not closed enums.** `MuscleGroup`, `EquipmentType`,
+`MovementPattern`, and `ExerciseCategory` are raw-value-backed structs with
+static constants, in the style of `SwiftUI.Font.Weight` — not closed `enum`s. A
+closed enum is the classic hardcoding trap when parsing external data: the day
+the catalog gains a value, decoding either crashes or silently drops the entry.
+Unknown values must round-trip intact.
+
+**No magic numbers.** Rest defaults, rep ranges, set counts, and progression
+thresholds live in a typed configuration loaded from data, with documented
+defaults. No numeric literal that expresses a training opinion appears inside a
+function body.
+
+**Additive by default.** The catalog schema is versioned. New fields are
+optional. Unknown JSON keys are ignored rather than fatal, so a catalog built by
+a newer version does not break an older build.
+
+**Every public type answers three questions.** What does it do, how is it used,
+what does it depend on. If a type cannot be understood without reading its
+internals, the boundary is wrong.
+
 ## Layers
 
 Strict dependency direction. Each layer may import only those above it.
