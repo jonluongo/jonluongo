@@ -930,7 +930,13 @@ flow.
     "bike": "cardio machine", "treadmill": "cardio machine",
     "rower": "cardio machine", "erg": "cardio machine",
     "elliptical": "cardio machine", "arc-trainer": "cardio machine",
-    "stairmaster": "cardio machine", "ski-erg": "cardio machine"
+    "stairmaster": "cardio machine", "ski-erg": "cardio machine",
+
+    "pulldown": "cable", "pushdown": "cable", "pec-deck": "machine",
+    "leg-press": "machine", "leg-extension": "machine",
+    "leg-curl": "machine", "hack-squat": "machine",
+    "belt-squat": "machine", "assisted": "machine",
+    "chest-press": "machine", "preacher": "machine"
   },
   "defaultEquipment": "bodyweight",
   "pattern": {
@@ -1012,14 +1018,35 @@ flow.
 }
 ```
 
-**Why the last block exists.** `muscleHints` matches substrings, longest key
-wins, so short keys collide with longer names: `"lat"` is inside
-`lateral-raise`, and `"trap"` is inside `trap-bar-deadlift`. Without the longer
-overriding keys, lateral raises would be tagged a lat exercise. When adding a
-hint, check whether it is a substring of an unrelated slug:
+**Two things to understand about these tables.**
+
+*Longest key wins, and short keys collide.* `"lat"` is inside `lateral-raise`
+and `"trap"` is inside `trap-bar-deadlift`, so without the longer overriding
+keys, lateral raises would be tagged a lat exercise. The same mechanism is what
+saves `"row"` inside `narrow-pulldown` — `"pulldown"` is the longer match. When
+adding a key, check whether it is a substring of an unrelated slug:
 
 ```sh
 grep -c "lat" docs/reference/movekit-exercise-slugs.txt
+```
+
+*Equipment is often implied by the movement, not named in the slug.*
+`lat-pulldown` and `leg-press` contain no equipment word, so the
+`defaultEquipment` of `bodyweight` would be wrong for them — a lifter with no
+gym would be prescribed a cable pulldown. The second block of equipment keys
+exists to catch these machine and cable movements by their name. When adding a
+movement whose equipment is implicit, add it there. To audit what currently
+falls through to the bodyweight default, run this after Step 4 and read the
+list for anything that is obviously a machine:
+
+```sh
+python3 -c "
+import json
+c = json.load(open('LiftingPlan/Catalog/Resources/exercises.json'))
+bw = sorted(e['id'] for e in c if e['equipment'] == 'bodyweight')
+print(len(bw), 'bodyweight entries')
+print('\n'.join(bw))
+"
 ```
 
 - [ ] **Step 2: Write the overrides for named movements**
