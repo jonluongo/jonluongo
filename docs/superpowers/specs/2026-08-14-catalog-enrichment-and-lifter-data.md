@@ -147,3 +147,56 @@ models are a schema change and can follow immediately after.
 Instructions coverage stays at 18%. Instructions are for the human reading an
 exercise, not for generation, and hand-authoring 337 of them is not worth it
 now. Revisit if the UI surfaces them prominently.
+
+---
+
+## Decision: the catalog stays at the 412 MoveKit exercises
+
+**Date:** 2026-08-14. Owner's call, recorded so it is not relitigated.
+
+Exercises are fixed primitives — the lego bricks the app builds with. Users
+never add them, and we do not add exercises outside the MoveKit slug set to
+fill gaps.
+
+### The known consequence
+
+An audit measured bodyweight coverage per movement pattern:
+
+| Pattern | Bodyweight options |
+|---|---|
+| hinge | 10 |
+| lunge | 9 |
+| horizontal press | 8 |
+| squat | 6 |
+| vertical pull | 5 |
+| carry | 5 |
+| flexion | 5 |
+| **horizontal pull** | **1** |
+| **vertical press** | **0** |
+
+The source slug list contains no pike push-up, handstand push-up, or wall walk,
+so there is no bodyweight vertical press to select. This is not a data defect —
+it is the shape of the brick set.
+
+**Therefore a bodyweight-only lifter can never be prescribed a vertical press,
+and every plan they receive draws its horizontal pull from a single exercise.**
+
+### What this requires of plan generation
+
+This is a binding requirement on the generation layer, not something to solve in
+data:
+
+1. **A movement pattern having zero options at a lifter's equipment tier is a
+   normal case, not an error.** Generation must route around it — never emit an
+   empty exercise slot, never fail, never fall back to an exercise the lifter
+   cannot perform.
+2. **Balance rules must tolerate an absent pattern.** A push/pull balance check
+   cannot demand a vertical press that does not exist for this lifter.
+3. **Where a pattern has only one option, sticky exercise selection still
+   applies** — the lifter simply repeats it across the block, which is correct
+   rather than a bug.
+4. **The chat should be able to say so plainly** if asked why a plan has no
+   overhead pressing: the honest answer is that it requires equipment the
+   lifter does not have.
+
+Revisit only if the owner licenses additional slugs.
