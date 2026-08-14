@@ -217,4 +217,125 @@ struct CatalogIntegrityTests {
         #expect(offenders.isEmpty,
                 "compound barbell/trap-bar lifts rated beginner: \(offenders.map(\.id.rawValue).sorted())")
     }
+
+    // MARK: - Task 3: audit corrections
+
+    /// Class-level guard against the bug class, not just the two exercises
+    /// the audit happened to name. An exercise whose slug contains any of
+    /// these tokens asks the body to support load across more than one
+    /// joint for the duration of the movement — a loaded carry (`carry`,
+    /// `farmer`), a suspended or supported hang (`hang`, `hold`), a
+    /// multi-position transition (`get-up`), or a plank (`plank`, which
+    /// moves no joint but loads shoulders, spine, and hips simultaneously
+    /// to resist collapse) — so none of them should ever be `isolation`.
+    ///
+    /// The original wording from the audit named `carry`/`hold`/`get-up`/
+    /// `farmer` only. It missed `dead-hang` (slug token is `hang`, not
+    /// `hold`) and the three planks (`plank`) entirely, even though both
+    /// groups have the identical multi-joint-under-static-load shape as the
+    /// exercises it did name. This test widens the token list to `hang` and
+    /// `plank` so the guard actually matches its own stated rationale rather
+    /// than the four slugs someone happened to type.
+    ///
+    /// `plate-pinch` is the deliberate exception discussed elsewhere in this
+    /// file: pinching plates loads the fingers and nothing else, which is
+    /// isolation by the ordinary joint-count definition. Its slug contains
+    /// none of these tokens, so it is not swept up here and needs no
+    /// exclusion list.
+    ///
+    /// Matching is on hyphen-delimited tokens, not substrings, for the
+    /// single-word tokens: a naive `slug.contains("hang")` also fires inside
+    /// `hanging-knee-raises`, which really is isolation (a hip-flexion ab
+    /// exercise that merely starts from a hang, not a load-bearing hold) —
+    /// this is exactly the substring-vs-token bug Task 2 fixed for the
+    /// derivation rules, and it would have made this guard flaky the same
+    /// way. `get-up` is checked as a substring because it is inherently a
+    /// two-token phrase; the catalog has no other slug containing it.
+    @Test("No carry, hang, hold, get-up, or plank exercise is tagged isolation")
+    func loadBearingHoldsAreNeverIsolation() throws {
+        let singleWordTokens: Set<String> = ["carry", "hold", "farmer", "hang", "plank"]
+        let offenders = try ExerciseCatalog.bundled().all.filter { exercise in
+            let slug = exercise.id.rawValue
+            let tokens = Set(slug.split(separator: "-").map(String.init))
+            let matchesToken = !tokens.isDisjoint(with: singleWordTokens)
+            let matchesGetUp = slug.contains("get-up")
+            return (matchesToken || matchesGetUp) && exercise.mechanic == .isolation
+        }
+        #expect(offenders.isEmpty,
+                "load-bearing holds tagged isolation: \(offenders.map(\.id.rawValue).sorted())")
+    }
+
+    @Test("Jefferson curls are a hinge on hamstrings and lower back, not a biceps curl")
+    func jeffersonCurlsAreHinges() throws {
+        let catalog = try ExerciseCatalog.bundled()
+        let slugs = [
+            "barbell-spinal-jefferson-curl", "bodyweight-spinal-jefferson-curl",
+            "dumbbell-spinal-jefferson-curl", "kettlebell-spinal-jefferson-curl",
+        ]
+        for slug in slugs {
+            let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: slug)),
+                                        "\(slug) missing from catalog")
+            #expect(exercise.pattern == .hinge, "\(slug) pattern is \(exercise.pattern)")
+            #expect(exercise.mechanic == .compound, "\(slug) mechanic is \(exercise.mechanic)")
+            #expect(exercise.difficulty != .beginner,
+                    "\(slug) is loaded spinal flexion, not a beginner movement")
+            #expect(exercise.primaryMuscles.contains(.lowerBack),
+                    "\(slug) primary muscles are \(exercise.primaryMuscles)")
+            #expect(!exercise.primaryMuscles.contains(.biceps),
+                    "\(slug) still lists biceps as a prime mover")
+        }
+    }
+
+    @Test("Carries, a farmer's carry, a Turkish get-up, and a dead hang are compound")
+    func namedLoadBearingHoldsAreCompound() throws {
+        let catalog = try ExerciseCatalog.bundled()
+        let slugs = [
+            "kettlebell-turkish-get-up", "kettlebell-farmers-carry", "dead-hang",
+            "elbow-side-plank", "front-plank", "hand-plank", "bird-dog", "sled-push",
+        ]
+        for slug in slugs {
+            let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: slug)),
+                                        "\(slug) missing from catalog")
+            #expect(exercise.mechanic == .compound, "\(slug) mechanic is \(exercise.mechanic)")
+        }
+    }
+
+    @Test("A plate pinch is isolation: it loads the fingers and nothing else")
+    func platePinchStaysIsolation() throws {
+        let catalog = try ExerciseCatalog.bundled()
+        let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: "plate-pinch")))
+        #expect(exercise.mechanic == .isolation, "plate-pinch mechanic is \(exercise.mechanic)")
+    }
+
+    @Test("Upright rows are a vertical shoulder movement, not a horizontal pull")
+    func uprightRowsAreNotHorizontalPulls() throws {
+        let catalog = try ExerciseCatalog.bundled()
+        for slug in ["barbell-upright-row", "dumbbell-upright-row"] {
+            let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: slug)),
+                                        "\(slug) missing from catalog")
+            #expect(exercise.pattern == .raise, "\(slug) pattern is \(exercise.pattern)")
+            #expect(exercise.pattern != .horizontalPull)
+            #expect(exercise.mechanic == .compound, "\(slug) mechanic is \(exercise.mechanic)")
+        }
+    }
+
+    @Test("Jumping jacks and jump rope are beginner plyometrics; box jumps and the rest stay advanced")
+    func plyometricDifficultyIsNotOneSizeFitsAll() throws {
+        let catalog = try ExerciseCatalog.bundled()
+        func difficulty(_ id: String) throws -> Difficulty {
+            try #require(catalog.exercise(id: ExerciseID(rawValue: id)),
+                        "\(id) missing from catalog").difficulty
+        }
+        // Low-impact, rhythmic conditioning moves: genuinely beginner.
+        #expect(try difficulty("jumping-jack") == .beginner)
+        #expect(try difficulty("jump-rope") == .beginner)
+        // Explosive jump-training with real landing/skill risk: still advanced.
+        // These must NOT regress to intermediate as a side effect of fixing
+        // the two beginner exceptions above.
+        #expect(try difficulty("box-jump") == .advanced)
+        #expect(try difficulty("burpee") == .advanced)
+        #expect(try difficulty("jump-squats") == .advanced)
+        #expect(try difficulty("man-maker") == .advanced)
+        #expect(try difficulty("wall-ball") == .advanced)
+    }
 }

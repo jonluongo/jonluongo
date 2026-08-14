@@ -999,19 +999,20 @@
     {
       "aliases": [],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "advanced",
       "displayName": "Barbell Spinal Jefferson Curl",
       "equipment": "barbell",
       "force": "pull",
       "id": "barbell-spinal-jefferson-curl",
       "instructions": [],
-      "mechanic": "isolation",
-      "pattern": "curl",
+      "mechanic": "compound",
+      "pattern": "hinge",
       "primaryMuscles": [
-        "biceps"
+        "lower back"
       ],
       "secondaryMuscles": [
-        "forearms"
+        "hamstrings",
+        "glutes"
       ]
     },
     {
@@ -1135,7 +1136,7 @@
         "Repeat for the recommended amount of repetitions."
       ],
       "mechanic": "compound",
-      "pattern": "horizontal pull",
+      "pattern": "raise",
       "primaryMuscles": [
         "shoulders"
       ],
@@ -1262,13 +1263,13 @@
         "quadruped opposite arm leg reach"
       ],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "intermediate",
       "displayName": "Bird Dog",
       "equipment": "bodyweight",
       "force": "static",
       "id": "bird-dog",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "carry",
       "primaryMuscles": [
         "lower back"
@@ -1463,19 +1464,20 @@
     {
       "aliases": [],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "advanced",
       "displayName": "Bodyweight Spinal Jefferson Curl",
       "equipment": "bodyweight",
       "force": "pull",
       "id": "bodyweight-spinal-jefferson-curl",
       "instructions": [],
-      "mechanic": "isolation",
-      "pattern": "curl",
+      "mechanic": "compound",
+      "pattern": "hinge",
       "primaryMuscles": [
-        "biceps"
+        "lower back"
       ],
       "secondaryMuscles": [
-        "forearms"
+        "hamstrings",
+        "glutes"
       ]
     },
     {
@@ -2515,13 +2517,13 @@
     {
       "aliases": [],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "intermediate",
       "displayName": "Dead Hang",
       "equipment": "bodyweight",
       "force": "static",
       "id": "dead-hang",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "carry",
       "primaryMuscles": [
         "forearms"
@@ -3757,19 +3759,20 @@
     {
       "aliases": [],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "advanced",
       "displayName": "Dumbbell Spinal Jefferson Curl",
       "equipment": "dumbbell",
       "force": "pull",
       "id": "dumbbell-spinal-jefferson-curl",
       "instructions": [],
-      "mechanic": "isolation",
-      "pattern": "curl",
+      "mechanic": "compound",
+      "pattern": "hinge",
       "primaryMuscles": [
-        "biceps"
+        "lower back"
       ],
       "secondaryMuscles": [
-        "forearms"
+        "hamstrings",
+        "glutes"
       ]
     },
     {
@@ -3916,7 +3919,7 @@
       "id": "dumbbell-upright-row",
       "instructions": [],
       "mechanic": "compound",
-      "pattern": "horizontal pull",
+      "pattern": "raise",
       "primaryMuscles": [
         "shoulders"
       ],
@@ -3959,13 +3962,13 @@
     {
       "aliases": [],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "intermediate",
       "displayName": "Elbow Side Plank",
       "equipment": "bodyweight",
       "force": "static",
       "id": "elbow-side-plank",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "carry",
       "primaryMuscles": [
         "abdominals"
@@ -4124,13 +4127,13 @@
     {
       "aliases": [],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "intermediate",
       "displayName": "Front Plank",
       "equipment": "bodyweight",
       "force": "static",
       "id": "front-plank",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "carry",
       "primaryMuscles": [
         "abdominals"
@@ -4280,13 +4283,13 @@
     {
       "aliases": [],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "intermediate",
       "displayName": "Hand Plank",
       "equipment": "bodyweight",
       "force": "static",
       "id": "hand-plank",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "carry",
       "primaryMuscles": [
         "abdominals"
@@ -4586,7 +4589,7 @@
     {
       "aliases": [],
       "category": "plyometrics",
-      "difficulty": "advanced",
+      "difficulty": "beginner",
       "displayName": "Jump Rope",
       "equipment": "bodyweight",
       "id": "jump-rope",
@@ -4622,7 +4625,7 @@
     {
       "aliases": [],
       "category": "plyometrics",
-      "difficulty": "advanced",
+      "difficulty": "beginner",
       "displayName": "Jumping Jack",
       "equipment": "bodyweight",
       "id": "jumping-jack",
@@ -4731,13 +4734,13 @@
     {
       "aliases": [],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "intermediate",
       "displayName": "Kettlebell Farmers Carry",
       "equipment": "kettlebell",
       "force": "static",
       "id": "kettlebell-farmers-carry",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "carry",
       "primaryMuscles": [
         "abdominals"
@@ -4993,19 +4996,20 @@
     {
       "aliases": [],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "advanced",
       "displayName": "Kettlebell Spinal Jefferson Curl",
       "equipment": "kettlebell",
       "force": "pull",
       "id": "kettlebell-spinal-jefferson-curl",
       "instructions": [],
-      "mechanic": "isolation",
-      "pattern": "curl",
+      "mechanic": "compound",
+      "pattern": "hinge",
       "primaryMuscles": [
-        "biceps"
+        "lower back"
       ],
       "secondaryMuscles": [
-        "forearms"
+        "hamstrings",
+        "glutes"
       ]
     },
     {
@@ -5075,13 +5079,13 @@
     {
       "aliases": [],
       "category": "strength",
-      "difficulty": "beginner",
+      "difficulty": "intermediate",
       "displayName": "Kettlebell Turkish Get Up",
       "equipment": "kettlebell",
       "force": "static",
       "id": "kettlebell-turkish-get-up",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "carry",
       "primaryMuscles": [
         "abdominals"
@@ -7340,7 +7344,7 @@
       "force": null,
       "id": "stair-climber",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -7387,11 +7391,11 @@
       "category": "cardio",
       "difficulty": "beginner",
       "displayName": "Steady State Ride",
-      "equipment": "bodyweight",
+      "equipment": "cardio machine",
       "force": null,
       "id": "steady-state-ride",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -7695,7 +7699,7 @@
       "force": null,
       "id": "versaclimber",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -7998,5 +8002,5 @@
       ]
     }
   ],
-  "version": 2
+  "version": 3
 }

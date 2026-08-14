@@ -2,7 +2,7 @@
   "bird-dog": {
     "pattern": "carry", "primaryMuscles": ["lower back"],
     "secondaryMuscles": ["glutes", "abdominals"], "category": "strength",
-    "mechanic": "isolation", "force": "static",
+    "force": "static",
     "aliases": ["quadruped opposite arm leg reach"]
   },
   "dead-bug": {
@@ -22,7 +22,7 @@
   "dead-hang": {
     "pattern": "carry", "primaryMuscles": ["forearms"],
     "secondaryMuscles": ["lats"], "category": "strength",
-    "equipment": "bodyweight", "mechanic": "isolation", "force": "static"
+    "equipment": "bodyweight", "force": "static"
   },
   "dumbbell-superman": {
     "pattern": "hinge", "primaryMuscles": ["lower back"],
@@ -132,11 +132,13 @@
   },
   "stair-climber": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
-    "equipment": "cardio machine", "category": "cardio", "force": null
+    "equipment": "cardio machine", "category": "cardio", "force": null,
+    "mechanic": "compound"
   },
   "versaclimber": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
-    "equipment": "cardio machine", "category": "cardio", "force": null
+    "equipment": "cardio machine", "category": "cardio", "force": null,
+    "mechanic": "compound"
   },
   "rowing-intervals": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
@@ -156,7 +158,8 @@
   "seated-calf-raise": { "equipment": "machine" },
   "steady-state-ride": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
-    "category": "cardio", "force": null
+    "equipment": "cardio machine", "category": "cardio", "force": null,
+    "mechanic": "compound"
   },
 
   "nordic-hamstring-curl": { "equipment": "bodyweight" },
@@ -181,8 +184,35 @@
 
   "band-external-rotation": { "primaryMuscles": ["shoulders"] },
   "cable-external-rotation": { "primaryMuscles": ["shoulders"] },
-  "dumbbell-upright-row": { "primaryMuscles": ["shoulders"] },
+  "dumbbell-upright-row": {
+    "primaryMuscles": ["shoulders"], "pattern": "raise", "mechanic": "compound"
+  },
+  "barbell-upright-row": { "pattern": "raise", "mechanic": "compound" },
   "parralel-bar-dips": {
     "primaryMuscles": ["triceps"], "secondaryMuscles": ["chest", "shoulders"]
-  }
+  },
+
+  "barbell-spinal-jefferson-curl": {
+    "pattern": "hinge", "primaryMuscles": ["lower back"],
+    "secondaryMuscles": ["hamstrings", "glutes"], "mechanic": "compound",
+    "difficulty": "advanced"
+  },
+  "bodyweight-spinal-jefferson-curl": {
+    "pattern": "hinge", "primaryMuscles": ["lower back"],
+    "secondaryMuscles": ["hamstrings", "glutes"], "mechanic": "compound",
+    "difficulty": "advanced"
+  },
+  "dumbbell-spinal-jefferson-curl": {
+    "pattern": "hinge", "primaryMuscles": ["lower back"],
+    "secondaryMuscles": ["hamstrings", "glutes"], "mechanic": "compound",
+    "difficulty": "advanced"
+  },
+  "kettlebell-spinal-jefferson-curl": {
+    "pattern": "hinge", "primaryMuscles": ["lower back"],
+    "secondaryMuscles": ["hamstrings", "glutes"], "mechanic": "compound",
+    "difficulty": "advanced"
+  },
+
+  "jump-rope": { "difficulty": "beginner" },
+  "jumping-jack": { "difficulty": "beginner" }
 }

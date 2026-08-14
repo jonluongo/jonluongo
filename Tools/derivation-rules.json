@@ -108,7 +108,7 @@
   },
   "compoundPatterns": [
     "squat", "hinge", "lunge", "horizontal press", "vertical press",
-    "horizontal pull", "vertical pull", "olympic", "plyometric"
+    "horizontal pull", "vertical pull", "olympic", "plyometric", "carry"
   ],
   "patternCategory": {
     "olympic": "olympic weightlifting", "plyometric": "plyometrics",
