@@ -63,7 +63,12 @@ enum PerformanceHistory {
     /// `orderedX` accessors rather than the raw relationship arrays — SwiftData
     /// does not guarantee relationship ordering, and callers here re-sort by
     /// log date anyway, but this keeps the traversal honest either way.
-    private static func allExercises(in plans: [TrainingPlan]) -> [PlannedExercise] {
+    ///
+    /// This is the single hierarchy walk for logged-exercise data. `ExerciseTrend`
+    /// (also in this layer) calls this rather than re-walking the tree itself —
+    /// two independent traversals of the same relationship chain is exactly what
+    /// let them drift before.
+    static func allExercises(in plans: [TrainingPlan]) -> [PlannedExercise] {
         plans
             .flatMap(\.orderedWeeks)
             .flatMap(\.orderedDays)

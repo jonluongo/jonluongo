@@ -24,6 +24,12 @@ enum TemplatePlanBuilder {
     }
 
     /// Choose a training split appropriate for how many days per week.
+    ///
+    /// Not called by `build` yet — `build` returns an empty plan until catalog
+    /// selection lands (see its doc comment). Kept because the assembly-rules
+    /// work in `docs/superpowers/specs/2026-08-14-workout-programming-design.md`
+    /// is exactly what wires this in: choosing which day gets which focus label
+    /// is a prerequisite for choosing which exercises fill that day.
     static func splitTemplate(forDayCount count: Int) -> [String] {
         switch count {
         case ...1: return ["Full Body"]

@@ -31,7 +31,6 @@ struct DayBlueprint: Equatable {
 struct ExerciseBlueprint: Equatable {
     var exerciseID: ExerciseID
     var displayName: String
-    var muscleGroup: String
     var repRange: String
     var sets: Int
     var restSeconds: Int

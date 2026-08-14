@@ -165,7 +165,7 @@ final class PlanGenerator {
             "Equipment: \(profile.equipmentAccess.promptDescription).",
             "Experience: \(profile.experience.promptDescription).",
             "Primary goal: \(profile.goal.isEmpty ? "general strength and muscle" : profile.goal).",
-            "Give each day a clear focus, 3–6 exercises (compounds first), sets, a rep range, rest seconds (45–180), a rep tempo, and one short cue.",
+            "Give each day a clear focus (e.g. Push, Pull, Legs, Upper Body, Lower Body, or Full Body).",
         ]
         if let summary = performanceSummary, !summary.isEmpty {
             lines.append("")
@@ -230,10 +230,23 @@ struct GeneratedPlan {
 struct GeneratedDay {
     @Guide(description: "Short focus label such as Push, Pull, Legs, Upper Body, Lower Body, or Full Body.")
     var focus: String
-    @Guide(description: "Three to six exercises for this day, ordered with the main compound lifts first.")
-    var exercises: [GeneratedExercise]
 }
 
+/// The per-exercise shape the model would fill in if `GeneratedDay` asked for
+/// exercises.
+///
+/// It currently does not: `blueprint(from:)` above only reads `focus` off
+/// each `GeneratedDay` and always maps `exercises` to `[]` (see its doc
+/// comment — turning a generated name into a persisted `ExerciseID` needs
+/// `ExerciseResolver` wiring that isn't in place yet). Asking the model to
+/// produce a `GeneratedExercise` for every exercise of every day when that
+/// output is thrown away spends real on-device inference for nothing, so
+/// `GeneratedDay` does not declare an `exercises: [GeneratedExercise]`
+/// property. This type is kept, not deleted, because the exercise-selection
+/// work in
+/// `docs/superpowers/specs/2026-08-14-workout-programming-design.md` is what
+/// re-attaches it as `GeneratedDay.exercises` once results are actually
+/// resolved and consumed.
 @Generable
 struct GeneratedExercise {
     @Guide(description: "The exercise name, e.g. Barbell Bench Press.")

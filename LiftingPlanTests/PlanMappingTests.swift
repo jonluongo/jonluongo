@@ -10,12 +10,12 @@ struct PlanMappingTests {
             DayBlueprint(weekday: .monday, focus: "Push", durationMinutes: 45, exercises: [
                 ExerciseBlueprint(
                     exerciseID: ExerciseID(rawValue: "barbell-bench-press"), displayName: "Bench",
-                    muscleGroup: "Chest", repRange: "6-10", sets: 4, restSeconds: 90,
+                    repRange: "6-10", sets: 4, restSeconds: 90,
                     suggestedLoad: nil, tempo: "3-0-1-0", notes: nil
                 ),
                 ExerciseBlueprint(
                     exerciseID: ExerciseID(rawValue: "overhead-press"), displayName: "OHP",
-                    muscleGroup: "Shoulders", repRange: "8-12", sets: 3, restSeconds: 75,
+                    repRange: "8-12", sets: 3, restSeconds: 75,
                     suggestedLoad: nil, tempo: nil, notes: nil
                 ),
             ]),
@@ -46,7 +46,7 @@ struct PlanMappingTests {
             DayBlueprint(weekday: .friday, focus: "", durationMinutes: 2, exercises: [
                 ExerciseBlueprint(
                     exerciseID: ExerciseID(rawValue: "weird-exercise"), displayName: "Weird",
-                    muscleGroup: "", repRange: "", sets: 99, restSeconds: 5,
+                    repRange: "", sets: 99, restSeconds: 5,
                     suggestedLoad: nil, tempo: nil, notes: nil
                 ),
             ]),
@@ -69,7 +69,7 @@ struct PlanMappingTests {
             DayBlueprint(weekday: .monday, focus: "Push", durationMinutes: 45, exercises: [
                 ExerciseBlueprint(
                     exerciseID: ExerciseID(rawValue: "barbell-bench-press"), displayName: "Bench",
-                    muscleGroup: "Chest", repRange: "6-10", sets: 4, restSeconds: 90,
+                    repRange: "6-10", sets: 4, restSeconds: 90,
                     suggestedLoad: Mass(value: 60, unit: .kilograms), tempo: nil, notes: nil
                 ),
             ]),
