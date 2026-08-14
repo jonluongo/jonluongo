@@ -12,8 +12,8 @@ import Foundation
 /// on the id it's handed.
 ///
 /// Depends on: `TrainingPlan`/`TrainingWeek`/`WorkoutDay`/`PlannedExercise`
-/// from Store, `ExerciseID` from Domain, `ExerciseHistory`/`SetRecord` from
-/// `ProgressionEngine.swift`.
+/// from Store, `ExerciseID`/`RepRange` from Domain, `ExerciseHistory`/`SetRecord`
+/// from `ProgressionEngine.swift`.
 enum PerformanceHistory {
 
     /// Most-recent logged performance for every exercise seen across `plans`
@@ -54,7 +54,7 @@ enum PerformanceHistory {
         return ExerciseHistory(
             exerciseID: exercise.exerciseID,
             displayName: exercise.displayName,
-            repTargetUpper: repTargetUpperBound(for: exercise.repRange),
+            repTargetUpper: RepRange(exercise.repRange).upperBound,
             recentSets: records
         )
     }
@@ -72,11 +72,5 @@ enum PerformanceHistory {
 
     private static func latestLogDate(_ exercise: PlannedExercise) -> Date {
         exercise.completedWorkingSets.map(\.completedAt).max() ?? .distantPast
-    }
-
-    /// Upper bound of a rep range string (e.g. "8-12" -> 12; "5" -> 5).
-    private static func repTargetUpperBound(for repRange: String) -> Int {
-        let numbers = repRange.split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }
-        return numbers.last ?? 0
     }
 }
