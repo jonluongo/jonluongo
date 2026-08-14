@@ -29,6 +29,10 @@ FEDB_LEVEL_TO_DIFFICULTY = {
     "beginner": "beginner", "intermediate": "intermediate", "expert": "advanced",
 }
 
+# Ranks our own derivation against free-exercise-db's `level`. Mechanism, not
+# data, so it lives here rather than in derivation-rules.json.
+DIFFICULTY_RANK = {"beginner": 0, "intermediate": 1, "advanced": 2}
+
 
 def normalize(text: str) -> str:
     """Lowercase, strip punctuation, and sort tokens for order-insensitive match."""
@@ -150,36 +154,38 @@ def build() -> int:
                 m for m in entry["secondaryMuscles"] if m not in entry["primaryMuscles"]
             ]
 
-        # Difficulty: pattern > free-exercise-db level > equipment > mechanic > default.
-        #
-        # The brief's stated precedence puts free-exercise-db's `level` above
-        # everything, since it is real human-authored data. But `level` is
-        # inconsistent for Olympic lifts in that source: "Power Clean" and
-        # "Snatch" are marked "intermediate" there, while "Clean and Jerk" and
-        # "Power Snatch" are marked "expert" for what is materially the same
-        # skill level. Deferring to it here would make a power clean
-        # "intermediate", which is not a defensible answer for an app matching
-        # exercises to lifter experience. `difficultyByPattern` only ever
-        # assigns "advanced" (Olympic and plyometric movements), so letting
-        # pattern win first can only sharpen technical lifts to "advanced" —
-        # it never overrides fedb with something less accurate. Everywhere
-        # else, fedb's `level` still outranks our own equipment/mechanic
-        # heuristics, using entry's final (post-override) fields so a
-        # hand-authored correction to pattern/equipment/mechanic is honored.
+        # Difficulty: derive from pattern > equipment > mechanic > default,
+        # using entry's final (post-override) fields so a hand-authored
+        # correction to pattern/equipment/mechanic is honored. free-exercise-db
+        # is real human-authored data, but its `level` field is internally
+        # inconsistent: "Barbell Squat" -> beginner while "Pushups" ->
+        # beginner too, "Power Clean" -> intermediate while "Clean and Jerk"
+        # -> expert for materially the same skill, "Barbell Deadlift" ->
+        # intermediate while our own compound+barbell rule already says
+        # intermediate. It is too noisy to let it lower a rating our own
+        # derivation already established (it once dragged barbell-squat and
+        # six other loaded barbell/trap-bar compounds down to "beginner").
+        # So fedb may only RAISE difficulty above the derived value, never
+        # lower it: we take the max rank of derived vs. fedb.
+        if entry["pattern"] in rules["difficultyByPattern"]:
+            derived_difficulty = rules["difficultyByPattern"][entry["pattern"]]
+        elif entry["equipment"] in rules["difficultyByEquipment"]:
+            derived_difficulty = rules["difficultyByEquipment"][entry["equipment"]]
+        elif entry.get("mechanic") in rules["difficultyByMechanic"]:
+            derived_difficulty = rules["difficultyByMechanic"][entry["mechanic"]]
+        else:
+            derived_difficulty = rules["defaultDifficulty"]
+
         fedb_difficulty_value = None
         if match is not None:
             fedb_difficulty_value = FEDB_LEVEL_TO_DIFFICULTY.get(match.get("level"))
-        if entry["pattern"] in rules["difficultyByPattern"]:
-            entry["difficulty"] = rules["difficultyByPattern"][entry["pattern"]]
-        elif fedb_difficulty_value is not None:
+
+        if (fedb_difficulty_value is not None
+                and DIFFICULTY_RANK[fedb_difficulty_value] > DIFFICULTY_RANK[derived_difficulty]):
             entry["difficulty"] = fedb_difficulty_value
             fedb_difficulty += 1
-        elif entry["equipment"] in rules["difficultyByEquipment"]:
-            entry["difficulty"] = rules["difficultyByEquipment"][entry["equipment"]]
-        elif entry.get("mechanic") in rules["difficultyByMechanic"]:
-            entry["difficulty"] = rules["difficultyByMechanic"][entry["mechanic"]]
         else:
-            entry["difficulty"] = rules["defaultDifficulty"]
+            entry["difficulty"] = derived_difficulty
 
         entry["aliases"] = sorted({a for a in entry["aliases"] if a and a != words})
         catalog.append(entry)

@@ -556,7 +556,7 @@
       "bent over barbell row"
     ],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Barbell Bent Over Row",
     "equipment": "barbell",
     "force": "pull",
@@ -622,7 +622,7 @@
       "close-grip barbell bench press"
     ],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Barbell Close Grip Bench Press",
     "equipment": "barbell",
     "force": "push",
@@ -1035,7 +1035,7 @@
   {
     "aliases": [],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Barbell Squat",
     "equipment": "barbell",
     "force": "push",
@@ -1122,7 +1122,7 @@
       "upright barbell row"
     ],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Barbell Upright Row",
     "equipment": "barbell",
     "force": "pull",
@@ -1235,7 +1235,7 @@
   {
     "aliases": [],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Bench Dips",
     "equipment": "bodyweight",
     "force": "push",
@@ -1480,7 +1480,7 @@
   {
     "aliases": [],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Bodyweight Squat",
     "equipment": "bodyweight",
     "force": "push",
@@ -2319,7 +2319,7 @@
       "chin-up"
     ],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Chin Ups",
     "equipment": "bodyweight",
     "force": "pull",
@@ -2532,7 +2532,7 @@
   {
     "aliases": [],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Decline Barbell Bench Press",
     "equipment": "barbell",
     "force": "push",
@@ -2602,7 +2602,7 @@
       "decline push-up"
     ],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Decline Push Up",
     "equipment": "bodyweight",
     "force": "push",
@@ -2744,7 +2744,7 @@
   {
     "aliases": [],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Bench Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -2904,7 +2904,7 @@
       "decline dumbbell bench press"
     ],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Dumbbell Decline Bench Press",
     "equipment": "dumbbell",
     "force": "push",
@@ -4483,7 +4483,7 @@
       "incline push-up"
     ],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Incline Push Up",
     "equipment": "bodyweight",
     "force": "push",
@@ -4536,7 +4536,7 @@
   {
     "aliases": [],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Inverted Row",
     "equipment": "bodyweight",
     "force": "pull",
@@ -4560,7 +4560,7 @@
   {
     "aliases": [],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Jm Press",
     "equipment": "barbell",
     "force": "push",
@@ -5818,7 +5818,7 @@
       "mountain climbers"
     ],
     "category": "cardio",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Mountain Climber",
     "equipment": "bodyweight",
     "force": "pull",
@@ -6193,7 +6193,7 @@
       "pullups"
     ],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Pull Ups",
     "equipment": "bodyweight",
     "force": "pull",
@@ -6924,7 +6924,7 @@
   {
     "aliases": [],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Sled Push",
     "equipment": "sled",
     "force": "push",
@@ -7426,7 +7426,7 @@
       "superman"
     ],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Supermans",
     "equipment": "bodyweight",
     "force": "static",
@@ -7599,7 +7599,7 @@
   {
     "aliases": [],
     "category": "strength",
-    "difficulty": "beginner",
+    "difficulty": "intermediate",
     "displayName": "Trap Bar Deadlift",
     "equipment": "trap bar",
     "force": "pull",

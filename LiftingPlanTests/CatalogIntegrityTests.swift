@@ -200,4 +200,16 @@ struct CatalogIntegrityTests {
         // A machine isolation is.
         #expect(try difficulty("machine-hip-abduction") == .beginner)
     }
+
+    @Test("Loading a barbell or trap bar for a compound lift is never beginner difficulty")
+    func loadedCompoundBarbellLiftsAreNotBeginner() throws {
+        let barbellLike: Set<EquipmentType> = [.barbell, .trapBar]
+        let offenders = try ExerciseCatalog.bundled().all.filter {
+            $0.mechanic == .compound
+                && barbellLike.contains($0.equipment)
+                && $0.difficulty == .beginner
+        }
+        #expect(offenders.isEmpty,
+                "compound barbell/trap-bar lifts rated beginner: \(offenders.map(\.id.rawValue).sorted())")
+    }
 }
