@@ -1,9 +1,15 @@
 # Modern Minimal Design System — Design
 
 **Date:** 2026-08-14
-**Status:** Deferred — sequenced second, after
-`2026-08-14-foundation-architecture-design.md`. The visual direction below is
-settled; the work simply waits on the data foundation.
+**Status:** SUPERSEDED by `2026-08-14-app-structure-revision.md`, which sets the
+visual direction to the Claude interface and makes chat the app shell rather
+than a first-run screen.
+
+What survives: the skin-is-not-a-mechanic rule (no points, streaks, badges, or
+celebratory UI), the token-layer code structure, the accessibility floor and
+contrast test, and the observation that SwiftUI `Form`/`List` resist custom
+styling. What is dropped: the cobalt/IBM Plex palette and the
+finished-work-recedes signature, both of which assumed a tab-based app.
 **Supersedes:** `2026-08-14-retro-8bit-theme-design.md`
 **Scope:** App-wide visual restyle. `Views/` and a new `Theme/` layer only.
 

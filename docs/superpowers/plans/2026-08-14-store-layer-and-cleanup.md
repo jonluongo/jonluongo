@@ -3,8 +3,13 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the user-data models with a CloudKit-ready store built on the
-Domain layer, so weights carry units and exercises carry stable identity — and
-delete the legacy code those changes make obsolete.
+Domain layer — carrying units, stable exercise identity, and the five-level
+plan/week/day/exercise/set hierarchy — and delete the legacy code those changes
+make obsolete.
+
+**Revised 2026-08-14** per `docs/superpowers/specs/2026-08-14-app-structure-revision.md`:
+a plan is now a multi-week block rather than a single week, and plans own a
+conversation thread. Task 4 below reflects that; earlier tasks are unchanged.
 
 **Architecture:** A new `Store/` layer holds SwiftData models written to
 CloudKit's constraints. Every weight becomes a `Mass`; every exercise reference
@@ -65,7 +70,7 @@ rewritten by this plan; nothing is left orphaned.
 | `weight: Double?` | `Models/SetLog.swift:12` | Unitless. Replaced by a stored value plus `MassUnit`. |
 | `name`/`muscleGroup` as identity | `Models/PlannedExercise.swift:7-8` | Free-text identity. Replaced by `exerciseID` plus a denormalized display name. |
 | Name-keyed history matching | `Services/PerformanceHistory.swift:19,35-38` | `exercise.name.lowercased()` as a join key is what fragments history. Re-keyed to `ExerciseID`. |
-| `TrainingPreferences` | `Models/TrainingPreferences.swift` (whole file) | Mixes identity with scheduling. Split into `UserProfile` and `TrainingSchedule`. |
+| `TrainingPreferences` | `Models/TrainingPreferences.swift` (whole file) | Mixes identity with scheduling. Identity moves to `UserProfile`; training days and duration become properties of a `TrainingPlan`, since different blocks may train different days. |
 | Nine `try? context.save()` | `Views/ActiveWorkoutView.swift` (5), `Views/RootView.swift`, `Views/SettingsView.swift`, `Views/SetupView.swift`, `Services/PlanCoordinator.swift` | Every persistence write silently discards failures. With CloudKit, save conflicts are expected rather than exceptional. |
 
 **Kept, with reasoning** — so a future reader does not delete them by mistake:
@@ -95,15 +100,16 @@ has a clean seam to build on.
 |---|---|
 | `LiftingPlan/Domain/EquipmentAccess.swift` | Maps a lifter's access tier onto the set of `EquipmentType` values it permits. Pure. |
 | `LiftingPlan/Store/UserProfile.swift` | Who the lifter is: display unit, experience, equipment access, constraints, goal. |
-| `LiftingPlan/Store/TrainingSchedule.swift` | When they train: weekdays and session duration. |
-| `LiftingPlan/Store/WorkoutPlan.swift` | A generated week. Owns sessions. |
-| `LiftingPlan/Store/WorkoutSession.swift` | One training day. Owns planned exercises. |
+| `LiftingPlan/Store/TrainingPlan.swift` | A training block: goal, start date, week count, status, training days. Owns weeks and messages. |
+| `LiftingPlan/Store/TrainingWeek.swift` | One week within a block. Carries a label and `isDeload`. Owns days. |
+| `LiftingPlan/Store/WorkoutDay.swift` | One training day. Owns planned exercises. |
+| `LiftingPlan/Store/PlanMessage.swift` | One conversational turn scoped to a plan — what makes a plan project-like. |
 | `LiftingPlan/Store/PlannedExercise.swift` | A prescribed movement, keyed by `ExerciseID`. Owns logged sets. |
 | `LiftingPlan/Store/LoggedSet.swift` | One set: a `Mass` as entered, reps, RPE, completion. |
 | `LiftingPlan/Store/StoreContainer.swift` | Builds the `ModelContainer`, CloudKit-backed or in-memory for tests. |
 | `LiftingPlan/Store/PersistenceError.swift` | The error surfaced when a save fails, replacing `try?`. |
 | `LiftingPlanTests/EquipmentAccessTests.swift` | Access-tier → equipment-type mapping. |
-| `LiftingPlanTests/StoreModelTests.swift` | Round-trips, relationships, cascade deletes, unit fidelity. |
+| `LiftingPlanTests/StoreModelTests.swift` | Round-trips, the plan/week/day/exercise/set hierarchy, cascade deletes, unit fidelity, CloudKit defaults. |
 | `LiftingPlanTests/PersistenceErrorTests.swift` | A failed save surfaces rather than vanishing. |
 
 Deleted outright: `Models/TrainingPreferences.swift`, `Models/WorkoutPlan.swift`,
@@ -462,21 +468,33 @@ git commit -m "Add PersistenceError so failed saves cannot be discarded"
 
 ### Task 4: The store models
 
-Replaces all five files under `Models/`. Written to CloudKit's constraints from
-the start: every property optional or defaulted, no unique attributes, every
-relationship optional with an inverse.
+Replaces all five files under `Models/`, and builds the five-level hierarchy
+from `2026-08-14-app-structure-revision.md`. Written to CloudKit's constraints
+from the start: every property optional or defaulted, no unique attributes,
+every relationship optional with an inverse.
+
+The shape being built:
+
+```
+TrainingPlan  (a block: goal, start date, week count, status, training days)
+  ├── TrainingWeek   (ordinal; may be a deload)
+  │     └── WorkoutDay   (weekday, focus)
+  │           └── PlannedExercise   (exerciseID + prescription)
+  │                 └── LoggedSet   (what actually happened)
+  └── PlanMessage    (the conversation scoped to this plan)
+```
 
 **Files:**
-- Create: `LiftingPlan/Store/UserProfile.swift`, `TrainingSchedule.swift`, `WorkoutPlan.swift`, `WorkoutSession.swift`, `PlannedExercise.swift`, `LoggedSet.swift`, `StoreContainer.swift`
+- Create: `LiftingPlan/Store/UserProfile.swift`, `TrainingPlan.swift`, `TrainingWeek.swift`, `WorkoutDay.swift`, `PlannedExercise.swift`, `LoggedSet.swift`, `PlanMessage.swift`, `StoreContainer.swift`
 - Delete: `LiftingPlan/Models/TrainingPreferences.swift`, `WorkoutPlan.swift`, `WorkoutSession.swift`, `PlannedExercise.swift`, `SetLog.swift`
 - Test: `LiftingPlanTests/StoreModelTests.swift`
 
 **Interfaces:**
 - Consumes: `Mass`, `MassUnit`, `ExerciseID` (Domain); `Equipment`, `ExperienceLevel`, `Weekday` (Task 1); `saveOrThrow` (Task 3).
-- Produces: the six `@Model` types above; `enum StoreContainer` with `static func inMemory() throws -> ModelContainer` and `static func cloudKit() throws -> ModelContainer`. Consumed by Tasks 5–7.
+- Produces: the seven `@Model` types above; `enum StoreContainer` with `static func inMemory() throws -> ModelContainer` and `static func cloudKit() throws -> ModelContainer`. Consumed by Tasks 5–7.
 
-**Because this task is large, implement and verify one model at a time**, in
-the order listed. Each model compiles against the ones before it.
+**Implement one model at a time**, bottom-up in the order given — each compiles
+against the ones before it.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -496,8 +514,7 @@ struct StoreModelTests {
     @Test("A logged set stores the weight in the unit it was entered")
     func setKeepsEnteredUnit() throws {
         let context = try context()
-        let set = LoggedSet(setIndex: 0, load: Mass(value: 135, unit: .pounds), reps: 5)
-        context.insert(set)
+        context.insert(LoggedSet(setIndex: 0, load: Mass(value: 135, unit: .pounds), reps: 5))
         try context.saveOrThrow()
 
         let loaded = try #require(try context.fetch(FetchDescriptor<LoggedSet>()).first)
@@ -510,20 +527,17 @@ struct StoreModelTests {
         let context = try context()
         context.insert(LoggedSet(setIndex: 0, load: nil, reps: 12))
         try context.saveOrThrow()
-
-        let loaded = try #require(try context.fetch(FetchDescriptor<LoggedSet>()).first)
-        #expect(loaded.load == nil)
+        #expect(try #require(try context.fetch(FetchDescriptor<LoggedSet>()).first).load == nil)
     }
 
     @Test("A planned exercise is keyed by exercise id, not by name")
     func plannedExerciseKeyedByID() throws {
         let context = try context()
-        let exercise = PlannedExercise(
+        context.insert(PlannedExercise(
             exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
             displayName: "Barbell Bench Press",
             order: 0, targetSets: 3, repRange: "5", restSeconds: 120
-        )
-        context.insert(exercise)
+        ))
         try context.saveOrThrow()
 
         let loaded = try #require(try context.fetch(FetchDescriptor<PlannedExercise>()).first)
@@ -531,57 +545,125 @@ struct StoreModelTests {
         #expect(loaded.displayName == "Barbell Bench Press")
     }
 
-    @Test("Deleting a session cascades to its exercises and their sets")
+    @Test("A plan holds weeks in order, and a week can be a deload")
+    func planHoldsOrderedWeeks() throws {
+        let context = try context()
+        let plan = TrainingPlan(title: "Strength block", goal: "Bigger bench", weekCount: 4)
+        plan.weeks = [
+            TrainingWeek(ordinal: 4, label: "Deload", isDeload: true),
+            TrainingWeek(ordinal: 1, label: "Accumulation"),
+        ]
+        context.insert(plan)
+        try context.saveOrThrow()
+
+        let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
+        #expect(loaded.orderedWeeks.map(\.ordinal) == [1, 4])
+        #expect(loaded.orderedWeeks.last?.isDeload == true)
+        #expect(loaded.orderedWeeks.first?.isDeload == false)
+    }
+
+    @Test("Weeks in one plan can prescribe different work — the point of the week layer")
+    func weeksCanDiffer() throws {
+        let context = try context()
+        let heavy = TrainingWeek(ordinal: 1)
+        heavy.days = [dayWithBench(sets: 5)]
+        let deload = TrainingWeek(ordinal: 2, label: "Deload", isDeload: true)
+        deload.days = [dayWithBench(sets: 2)]
+        let plan = TrainingPlan(title: "Block", weekCount: 2)
+        plan.weeks = [heavy, deload]
+        context.insert(plan)
+        try context.saveOrThrow()
+
+        let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
+        let setCounts = loaded.orderedWeeks.map { $0.orderedDays.first?.orderedExercises.first?.targetSets }
+        #expect(setCounts == [5, 2])
+    }
+
+    private func dayWithBench(sets: Int) -> WorkoutDay {
+        let exercise = PlannedExercise(
+            exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
+            displayName: "Barbell Bench Press",
+            order: 0, targetSets: sets, repRange: "5", restSeconds: 180
+        )
+        let day = WorkoutDay(weekday: .monday, focus: "Push")
+        day.exercises = [exercise]
+        return day
+    }
+
+    @Test("Deleting a plan cascades all the way down to logged sets")
     func cascadeDelete() throws {
         let context = try context()
-        let set = LoggedSet(setIndex: 0, load: Mass(value: 100, unit: .pounds), reps: 5)
         let exercise = PlannedExercise(
             exerciseID: ExerciseID(rawValue: "push-up"), displayName: "Push Up",
             order: 0, targetSets: 3, repRange: "10", restSeconds: 60
         )
-        exercise.loggedSets = [set]
-        let session = WorkoutSession(weekday: .monday, focus: "Push", durationMinutes: 45)
-        session.exercises = [exercise]
-        context.insert(session)
+        exercise.loggedSets = [LoggedSet(setIndex: 0, load: nil, reps: 10)]
+        let day = WorkoutDay(weekday: .monday, focus: "Push")
+        day.exercises = [exercise]
+        let week = TrainingWeek(ordinal: 1)
+        week.days = [day]
+        let plan = TrainingPlan(title: "Block", weekCount: 1)
+        plan.weeks = [week]
+        context.insert(plan)
         try context.saveOrThrow()
 
-        context.delete(session)
+        context.delete(plan)
         try context.saveOrThrow()
 
+        #expect(try context.fetch(FetchDescriptor<TrainingWeek>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<WorkoutDay>()).isEmpty)
         #expect(try context.fetch(FetchDescriptor<PlannedExercise>()).isEmpty)
         #expect(try context.fetch(FetchDescriptor<LoggedSet>()).isEmpty)
+    }
+
+    @Test("A plan owns its conversation, which is what makes it project-like")
+    func planOwnsConversation() throws {
+        let context = try context()
+        let plan = TrainingPlan(title: "Block", weekCount: 8)
+        plan.messages = [
+            PlanMessage(role: .assistant, text: "Built you an 8-week block.", createdAt: .distantPast),
+            PlanMessage(role: .user, text: "Make week 4 a deload", createdAt: .distantFuture),
+        ]
+        context.insert(plan)
+        try context.saveOrThrow()
+
+        let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
+        #expect(loaded.orderedMessages.map(\.role) == [.assistant, .user])
+        #expect(loaded.orderedMessages.first?.text.contains("8-week") == true)
+    }
+
+    @Test("A plan records its training days and its length")
+    func planRecordsScheduleAndLength() throws {
+        let context = try context()
+        context.insert(TrainingPlan(
+            title: "Block", goal: "Squat", weekCount: 12,
+            weekdays: [.friday, .monday]
+        ))
+        try context.saveOrThrow()
+
+        let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
+        #expect(loaded.weekCount == 12)
+        // `weekdays` is a Set, so compare against a Set — an array literal
+        // here does not type-check.
+        #expect(loaded.weekdays == Set<Weekday>([.monday, .friday]))
+        #expect(loaded.orderedWeekdays == [.monday, .friday])
     }
 
     @Test("A profile round-trips its display unit and access tier")
     func profileRoundTrips() throws {
         let context = try context()
-        let profile = UserProfile(
+        context.insert(UserProfile(
             displayUnit: .kilograms, experience: .advanced,
             equipmentAccess: .dumbbellsOnly, goal: "Bigger bench"
-        )
-        context.insert(profile)
+        ))
         try context.saveOrThrow()
 
         let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
         #expect(loaded.displayUnit == .kilograms)
         #expect(loaded.experience == .advanced)
         #expect(loaded.equipmentAccess == .dumbbellsOnly)
-        #expect(loaded.goal == "Bigger bench")
-    }
-
-    @Test("A schedule round-trips its weekdays in display order")
-    func scheduleRoundTrips() throws {
-        let context = try context()
-        let schedule = TrainingSchedule(weekdays: [.friday, .monday], durationMinutes: 60)
-        context.insert(schedule)
-        try context.saveOrThrow()
-
-        let loaded = try #require(try context.fetch(FetchDescriptor<TrainingSchedule>()).first)
-        // `weekdays` is a Set, so compare against a Set — an array literal
-        // here does not type-check.
-        #expect(loaded.weekdays == Set<Weekday>([.monday, .friday]))
-        #expect(loaded.orderedWeekdays == [.monday, .friday])
-        #expect(loaded.durationMinutes == 60)
+        #expect(loaded.permittedEquipment.contains(.dumbbell))
+        #expect(!loaded.permittedEquipment.contains(.barbell))
     }
 
     @Test("Every model property is optional or defaulted, as CloudKit requires")
@@ -591,11 +673,12 @@ struct StoreModelTests {
         // violate accidentally and hardest to notice until sync fails.
         let context = try context()
         context.insert(UserProfile())
-        context.insert(TrainingSchedule())
-        context.insert(WorkoutPlan())
-        context.insert(WorkoutSession())
+        context.insert(TrainingPlan())
+        context.insert(TrainingWeek())
+        context.insert(WorkoutDay())
         context.insert(PlannedExercise())
         context.insert(LoggedSet())
+        context.insert(PlanMessage())
         try context.saveOrThrow()
     }
 }
@@ -623,9 +706,9 @@ import SwiftData
 /// One set of one exercise, as the lifter logged it.
 ///
 /// A row exists as soon as it is on screen, so `isCompleted` — not existence —
-/// is what marks work as done, and checking it is what starts the rest timer.
-/// `load` is `nil` for bodyweight movements rather than zero, so "no external
-/// weight" and "an empty bar" stay distinguishable.
+/// marks work as done, and checking it is what starts the rest timer. `load`
+/// is `nil` for bodyweight movements rather than zero, so "no external weight"
+/// and "an empty bar" stay distinguishable.
 ///
 /// Every property has a default, as CloudKit requires.
 /// Depends on: `Mass` from Domain.
@@ -645,13 +728,8 @@ final class LoggedSet {
     var exercise: PlannedExercise?
 
     init(
-        setIndex: Int = 0,
-        load: Mass? = nil,
-        reps: Int = 0,
-        rpe: Double? = nil,
-        isCompleted: Bool = false,
-        isWarmup: Bool = false,
-        completedAt: Date = Date()
+        setIndex: Int = 0, load: Mass? = nil, reps: Int = 0, rpe: Double? = nil,
+        isCompleted: Bool = false, isWarmup: Bool = false, completedAt: Date = Date()
     ) {
         self.setIndex = setIndex
         self.load = load
@@ -680,7 +758,7 @@ final class LoggedSet {
 import Foundation
 import SwiftData
 
-/// A prescribed movement within a session, plus the sets logged against it.
+/// A prescribed movement within a day, plus the sets logged against it.
 ///
 /// `exerciseID` is the join key and the only identity that matters;
 /// `displayName` is a denormalized copy kept so history stays readable if an
@@ -688,7 +766,7 @@ import SwiftData
 /// name — that is the bug this field replaced.
 ///
 /// Every property has a default, as CloudKit requires.
-/// Depends on: `ExerciseID` from Domain.
+/// Depends on: `ExerciseID` and `Mass` from Domain.
 @Model
 final class PlannedExercise {
     /// The catalog key. Resolve it through `ExerciseCatalog` for full details.
@@ -699,7 +777,6 @@ final class PlannedExercise {
     var targetSets: Int = 0
     /// Human-readable rep target, e.g. "8-12" or "5".
     var repRange: String = ""
-    /// Suggested working weight, if the generator or engine proposed one.
     var suggestedLoad: Mass?
     /// Rest between sets, in seconds — drives the pace timer.
     var restSeconds: Int = 90
@@ -707,21 +784,16 @@ final class PlannedExercise {
     var tempo: String?
     var notes: String?
 
-    var session: WorkoutSession?
+    var day: WorkoutDay?
 
     @Relationship(deleteRule: .cascade, inverse: \LoggedSet.exercise)
     var loggedSets: [LoggedSet]? = []
 
     init(
-        exerciseID: ExerciseID = ExerciseID(rawValue: ""),
-        displayName: String = "",
-        order: Int = 0,
-        targetSets: Int = 0,
-        repRange: String = "",
-        suggestedLoad: Mass? = nil,
-        restSeconds: Int = 90,
-        tempo: String? = nil,
-        notes: String? = nil
+        exerciseID: ExerciseID = ExerciseID(rawValue: ""), displayName: String = "",
+        order: Int = 0, targetSets: Int = 0, repRange: String = "",
+        suggestedLoad: Mass? = nil, restSeconds: Int = 90,
+        tempo: String? = nil, notes: String? = nil
     ) {
         self.exerciseID = exerciseID
         self.displayName = displayName
@@ -736,44 +808,39 @@ final class PlannedExercise {
 
     /// Sets that count toward progression, in logging order.
     var completedWorkingSets: [LoggedSet] {
-        (loggedSets ?? [])
-            .filter(\.countsForProgression)
-            .sorted { $0.setIndex < $1.setIndex }
+        (loggedSets ?? []).filter(\.countsForProgression).sorted { $0.setIndex < $1.setIndex }
     }
 }
 ```
 
-- [ ] **Step 5: Write `WorkoutSession` and `WorkoutPlan`**
+- [ ] **Step 5: Write `WorkoutDay` and `TrainingWeek`**
 
 ```swift
 import Foundation
 import SwiftData
 
-/// One training day within a plan.
+/// One training day within a week.
 ///
 /// Read `orderedExercises` rather than `exercises` — SwiftData does not
-/// guarantee relationship ordering, and the order compounds-first is
-/// prescribed in matters.
+/// guarantee relationship ordering, and compounds-first order matters.
 ///
 /// Every property has a default, as CloudKit requires. Depends on: `Weekday`.
 @Model
-final class WorkoutSession {
+final class WorkoutDay {
     var weekdayRawValue: Int = Weekday.monday.rawValue
     /// Short label such as "Push" or "Lower Body".
     var focus: String = ""
     var durationMinutes: Int = 45
     var completedAt: Date?
 
-    var plan: WorkoutPlan?
+    var week: TrainingWeek?
 
-    @Relationship(deleteRule: .cascade, inverse: \PlannedExercise.session)
+    @Relationship(deleteRule: .cascade, inverse: \PlannedExercise.day)
     var exercises: [PlannedExercise]? = []
 
     init(
-        weekday: Weekday = .monday,
-        focus: String = "",
-        durationMinutes: Int = 45,
-        completedAt: Date? = nil
+        weekday: Weekday = .monday, focus: String = "",
+        durationMinutes: Int = 45, completedAt: Date? = nil
     ) {
         self.weekdayRawValue = weekday.rawValue
         self.focus = focus
@@ -792,41 +859,154 @@ final class WorkoutSession {
     }
 }
 
-/// A generated week of training.
+/// One week within a training block.
 ///
-/// Read `orderedSessions` for display order. `wasModelGenerated` records
-/// whether the on-device model produced this plan or the deterministic
-/// template did, so the difference is visible rather than guessed at.
+/// Weeks are stored concretely and may differ from one another — that is the
+/// whole reason this layer exists. A deload week prescribes genuinely less
+/// work than the week before it, rather than the same work at a lower load.
 ///
 /// Every property has a default, as CloudKit requires.
 @Model
-final class WorkoutPlan {
-    var createdAt: Date = Date()
-    var goal: String = ""
-    var wasModelGenerated: Bool = false
+final class TrainingWeek {
+    /// 1-based position within the plan.
+    var ordinal: Int = 1
+    /// Short label such as "Accumulation" or "Deload". May be empty.
+    var label: String = ""
+    var isDeload: Bool = false
 
-    @Relationship(deleteRule: .cascade, inverse: \WorkoutSession.plan)
-    var sessions: [WorkoutSession]? = []
+    var plan: TrainingPlan?
 
-    init(createdAt: Date = Date(), goal: String = "", wasModelGenerated: Bool = false) {
-        self.createdAt = createdAt
-        self.goal = goal
-        self.wasModelGenerated = wasModelGenerated
+    @Relationship(deleteRule: .cascade, inverse: \WorkoutDay.week)
+    var days: [WorkoutDay]? = []
+
+    init(ordinal: Int = 1, label: String = "", isDeload: Bool = false) {
+        self.ordinal = ordinal
+        self.label = label
+        self.isDeload = isDeload
     }
 
-    /// Sessions in Monday-first display order.
-    var orderedSessions: [WorkoutSession] {
-        (sessions ?? []).sorted {
-            Weekday.displayOrder.firstIndex(of: $0.weekday) ?? 0
-                < Weekday.displayOrder.firstIndex(of: $1.weekday) ?? 0
+    /// Days in Monday-first display order.
+    var orderedDays: [WorkoutDay] {
+        (days ?? []).sorted {
+            (Weekday.displayOrder.firstIndex(of: $0.weekday) ?? 0)
+                < (Weekday.displayOrder.firstIndex(of: $1.weekday) ?? 0)
         }
     }
 }
 ```
 
-- [ ] **Step 6: Write `UserProfile` and `TrainingSchedule`**
+- [ ] **Step 6: Write `PlanMessage` and `TrainingPlan`**
 
-These replace `TrainingPreferences`, which mixed identity with scheduling.
+```swift
+import Foundation
+import SwiftData
+
+/// Who produced a turn in a plan's conversation.
+enum PlanMessageRole: String, Codable, Sendable, CaseIterable {
+    case user
+    case assistant
+}
+
+/// One turn in the conversation attached to a plan.
+///
+/// This is what makes a plan project-like rather than a bare record: the
+/// discussion that produced and revised it lives with it, so "make week 4 a
+/// deload" is scoped to one plan instead of a global chat.
+///
+/// Every property has a default, as CloudKit requires.
+@Model
+final class PlanMessage {
+    private var roleRaw: String = PlanMessageRole.user.rawValue
+    var text: String = ""
+    var createdAt: Date = Date()
+
+    var plan: TrainingPlan?
+
+    init(role: PlanMessageRole = .user, text: String = "", createdAt: Date = Date()) {
+        self.roleRaw = role.rawValue
+        self.text = text
+        self.createdAt = createdAt
+    }
+
+    var role: PlanMessageRole {
+        get { PlanMessageRole(rawValue: roleRaw) ?? .user }
+        set { roleRaw = newValue.rawValue }
+    }
+}
+
+/// A training block: a fixed-length program the lifter is working through.
+///
+/// This is the top of the user-data hierarchy and the unit the interface
+/// treats as a project — it owns its weeks and its conversation. A plan is
+/// finite by design, so finishing one is a real event the chat can respond to
+/// by proposing the next block.
+///
+/// Every property has a default, as CloudKit requires.
+/// Depends on: `Weekday`.
+@Model
+final class TrainingPlan {
+    var title: String = ""
+    var goal: String = ""
+    var startDate: Date = Date()
+    /// How many weeks the block runs. Typically 8–12.
+    var weekCount: Int = 8
+    var completedAt: Date?
+    /// Whether the on-device model produced this plan or the template did.
+    var wasModelGenerated: Bool = false
+    /// Which days this block trains. Different blocks may train different days.
+    private var weekdayRawValues: [Int] = [
+        Weekday.monday.rawValue, Weekday.wednesday.rawValue, Weekday.friday.rawValue,
+    ]
+    var durationMinutes: Int = 45
+
+    @Relationship(deleteRule: .cascade, inverse: \TrainingWeek.plan)
+    var weeks: [TrainingWeek]? = []
+
+    @Relationship(deleteRule: .cascade, inverse: \PlanMessage.plan)
+    var messages: [PlanMessage]? = []
+
+    init(
+        title: String = "", goal: String = "", startDate: Date = Date(),
+        weekCount: Int = 8, weekdays: Set<Weekday> = [.monday, .wednesday, .friday],
+        durationMinutes: Int = 45, wasModelGenerated: Bool = false
+    ) {
+        self.title = title
+        self.goal = goal
+        self.startDate = startDate
+        self.weekCount = weekCount
+        self.weekdayRawValues = weekdays.map(\.rawValue).sorted()
+        self.durationMinutes = durationMinutes
+        self.wasModelGenerated = wasModelGenerated
+    }
+
+    var weekdays: Set<Weekday> {
+        get { Set(weekdayRawValues.compactMap(Weekday.init(rawValue:))) }
+        set { weekdayRawValues = newValue.map(\.rawValue).sorted() }
+    }
+
+    /// Training days in Monday-first display order.
+    var orderedWeekdays: [Weekday] {
+        Weekday.displayOrder.filter { weekdays.contains($0) }
+    }
+
+    /// Weeks in program order.
+    var orderedWeeks: [TrainingWeek] {
+        (weeks ?? []).sorted { $0.ordinal < $1.ordinal }
+    }
+
+    /// Conversation in chronological order.
+    var orderedMessages: [PlanMessage] {
+        (messages ?? []).sorted { $0.createdAt < $1.createdAt }
+    }
+
+    var isComplete: Bool { completedAt != nil }
+}
+```
+
+- [ ] **Step 7: Write `UserProfile`**
+
+`TrainingSchedule` from the earlier draft is gone — training days and duration
+are properties of a plan now, since different blocks may train different days.
 
 ```swift
 import Foundation
@@ -855,9 +1035,7 @@ final class UserProfile {
         displayUnit: MassUnit = .pounds,
         experience: ExperienceLevel = .intermediate,
         equipmentAccess: Equipment = .fullGym,
-        goal: String = "",
-        constraints: String = "",
-        hasCompletedSetup: Bool = false
+        goal: String = "", constraints: String = "", hasCompletedSetup: Bool = false
     ) {
         self.displayUnitRaw = displayUnit.rawValue
         self.experienceRaw = experience.rawValue
@@ -888,43 +1066,9 @@ final class UserProfile {
         EquipmentAccess.permitted(for: equipmentAccess)
     }
 }
-
-/// When the lifter trains: the scheduling half of what used to be
-/// `TrainingPreferences`.
-///
-/// Split from `UserProfile` because scheduling changes far more often than
-/// identity does, and mixing them meant every schedule tweak touched the same
-/// record as the lifter's goal.
-///
-/// Every property has a default, as CloudKit requires.
-@Model
-final class TrainingSchedule {
-    /// Stored as raw values so SwiftData persists the set simply.
-    private var weekdayRawValues: [Int] = [
-        Weekday.monday.rawValue, Weekday.wednesday.rawValue, Weekday.friday.rawValue,
-    ]
-    var durationMinutes: Int = 45
-    var updatedAt: Date = Date()
-
-    init(weekdays: Set<Weekday> = [.monday, .wednesday, .friday], durationMinutes: Int = 45) {
-        self.weekdayRawValues = weekdays.map(\.rawValue).sorted()
-        self.durationMinutes = durationMinutes
-        self.updatedAt = Date()
-    }
-
-    var weekdays: Set<Weekday> {
-        get { Set(weekdayRawValues.compactMap(Weekday.init(rawValue:))) }
-        set { weekdayRawValues = newValue.map(\.rawValue).sorted() }
-    }
-
-    /// Training days in Monday-first display order.
-    var orderedWeekdays: [Weekday] {
-        Weekday.displayOrder.filter { weekdays.contains($0) }
-    }
-}
 ```
 
-- [ ] **Step 7: Write `StoreContainer`**
+- [ ] **Step 8: Write `StoreContainer`**
 
 ```swift
 import Foundation
@@ -943,19 +1087,18 @@ enum StoreContainer {
     /// silently never persists.
     static let schema = Schema([
         UserProfile.self,
-        TrainingSchedule.self,
-        WorkoutPlan.self,
-        WorkoutSession.self,
+        TrainingPlan.self,
+        TrainingWeek.self,
+        WorkoutDay.self,
         PlannedExercise.self,
         LoggedSet.self,
+        PlanMessage.self,
     ])
 
     /// The production container, backed by the user's private CloudKit database.
     static func cloudKit() throws -> ModelContainer {
         let configuration = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: false,
-            cloudKitDatabase: .automatic
+            schema: schema, isStoredInMemoryOnly: false, cloudKitDatabase: .automatic
         )
         return try ModelContainer(for: schema, configurations: [configuration])
     }
@@ -963,16 +1106,14 @@ enum StoreContainer {
     /// An ephemeral container for tests and previews. Never touches CloudKit.
     static func inMemory() throws -> ModelContainer {
         let configuration = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: true,
-            cloudKitDatabase: .none
+            schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none
         )
         return try ModelContainer(for: schema, configurations: [configuration])
     }
 }
 ```
 
-- [ ] **Step 8: Delete the old models**
+- [ ] **Step 9: Delete the old models**
 
 ```sh
 git rm LiftingPlan/Models/TrainingPreferences.swift \
@@ -987,11 +1128,26 @@ The build will break — every view and service references these types. Tasks 5
 through 7 repair the call sites. Do not stub the old types to keep the build
 green; a broken build here is the honest signal of how far the change reaches.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 10: Run the store tests**
+
+```sh
+xcodebuild -project LiftingPlan.xcodeproj -scheme LiftingPlan \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:LiftingPlanTests/StoreModelTests test 2>&1 | grep -E "Test run with|✘|error:"
+```
+
+Expected: `✔ Test run with 10 tests in 1 suite passed`. The `Views/` targets do
+not compile yet; confirm no error originates from `Store/` before moving on.
+
+If `cloudKitCompatible` fails, a property lacks a default — that is the CloudKit
+requirement that is easiest to miss and hardest to notice, because it surfaces
+as a sync failure rather than a compile error. Fix the model, not the test.
+
+- [ ] **Step 11: Commit**
 
 ```sh
 git add -A LiftingPlan LiftingPlanTests
-git commit -m "Replace user-data models with a CloudKit-ready store layer"
+git commit -m "Replace user-data models with a CloudKit-ready plan hierarchy"
 ```
 
 ---
@@ -1185,9 +1341,10 @@ Expected: no output.
 
 - [ ] **Step 4: Update the views for the new model shapes**
 
-`TrainingPreferences` becomes `UserProfile` plus `TrainingSchedule`;
+`TrainingPreferences` becomes `UserProfile`, with training days and duration moving onto `TrainingPlan`;
 `SetLog` becomes `LoggedSet` with `load: Mass?` instead of `weight: Double?`;
-`PlannedExercise.name` becomes `displayName`. Weight entry and display go
+`PlannedExercise.name` becomes `displayName`; `WorkoutSession` becomes
+`WorkoutDay` and now hangs off a `TrainingWeek` rather than directly off a plan. Weight entry and display go
 through `profile.displayUnit`.
 
 - [ ] **Step 5: Run the full suite**
