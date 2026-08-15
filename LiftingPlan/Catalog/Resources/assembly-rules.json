@@ -283,6 +283,6 @@
     { "atLeast": "horizontal pull", "comparedTo": "horizontal press" },
     { "atLeast": "vertical pull", "comparedTo": "vertical press" }
   ],
-  "requiredWeeklyPatterns": ["squat", "hinge"],
+  "requiredWeeklyPatterns": ["squat", "hinge", "horizontal pull"],
   "maxShareOfSessionPerPattern": 0.5
 }
