@@ -10,8 +10,8 @@
 ## The decision
 
 The coaching intelligence moves out of the app and into Claude, reached over
-MCP. The app becomes a native training tool with a deterministic engine; Claude
-reads the app's data and proposes changes to it.
+MCP. The app becomes the blocks, the record, and the interface — it makes no
+training decisions of its own; Claude reads the app's data and builds with it.
 
 Apple's on-device model stays available for what it is genuinely good at
 (structured extraction from free text) but is no longer the thing that makes
@@ -71,7 +71,7 @@ The app owns:
 | The app owns | What that means |
 |---|---|
 | The blocks | 412 exercises with muscles, equipment, pattern, mechanic |
-| The rulebook | Splits, slot counts, prescriptions, balance rules — versioned JSON |
+| Reference material | Sensible splits and typical prescriptions in versioned JSON — for Claude to read, never applied by the app |
 | The record | Every logged set, baseline, and body metric |
 | The interface | The plan view, the logger, the timer |
 
@@ -115,10 +115,14 @@ discipline is what makes them liftable. Both, plus the pure parts of
 - the iOS app
 - a macOS MCP server executable
 
-One definition of exercise science, one catalog, one set of progression rules,
-two faces. The rejected alternative — reimplementing the rules in a Python MCP
-server — creates two sources of truth that drift, which is the exact bug class
-the catalog work spent two days eliminating.
+One catalog, one set of taxonomies, one definition of what a logged set is, two
+faces. The rejected alternative — redefining these in a Python MCP server —
+creates two sources of truth that drift, which is the exact bug class the
+catalog work spent two days eliminating.
+
+Note what does *not* move into the package, because it no longer exists:
+progression rules, split assembly, exercise selection. Those were decisions, and
+the app makes none.
 
 ### Data flow: snapshot out, proposal in
 
@@ -148,12 +152,14 @@ constraints, current block, recent sessions, current working weights, PRs.
 Small enough to carry on every turn.
 
 **Tools** for drill-down, so depth is paid for only when needed:
-`history(for:)`, `volumeByMuscle(weeks:)`, `progressionStalls()`,
-`sessionsSince(_:)`.
+`history(for:)`, `volumeByMuscle(weeks:)`, `sessionsSince(_:)`, and the legal
+exercise options for a given pattern and equipment tier.
 
-These are the existing `Services` operations — `PerformanceHistory`,
-`ExerciseTrend`, `ProgressionEngine` — which is why the package extraction pays
-for itself immediately rather than being scaffolding.
+Every one of these *reports* — none concludes. `PerformanceHistory` and
+`ExerciseTrend` already answer most of them, which is why the package
+extraction pays for itself rather than being scaffolding. Note there is no
+`progressionStalls()` returning a recommendation: reporting that a lift has not
+moved in four weeks is data; deciding what to do about it is Claude's.
 
 ### Freshness
 
@@ -185,40 +191,49 @@ Recorded so it is understood as temporary rather than mistaken for the design.
 
 ## Consequences for the app
 
-### The app's own plan builder is a fallback, not the main path
+### There is no plan builder, and deliberately no fallback
 
-Because Claude is the single decision-maker, `TemplatePlanBuilder` is demoted:
-it exists for **cold start** (before Claude has ever been connected) and as a
-**safety net** (Claude unavailable). It does not need to be brilliant. It needs
-to be sane.
+An earlier draft demoted `TemplatePlanBuilder` to a cold start and safety net.
+That was still one draft behind: **the app plans nothing at all.** Until Claude
+writes a plan, the app shows an empty state, and that is the accepted product
+behaviour rather than a gap to be filled.
 
-This re-scopes work that was sized for a primary engine:
+Deleted on 2026-08-15, with their tests:
 
-- **Sticky exercise selection** matters much less. It existed so regeneration
-  would not silently swap movements and destroy progression history. Claude,
-  adjusting week to week with the full record in view, handles continuity
-  directly and with more context than a rule approximating it. Keep it as a
-  property of the fallback; do not build elaborate machinery for it.
-- **Balance validation** stops being a repair loop policing a generator and
-  becomes a **tool Claude reads** — "does this week pull as much as it
-  presses" — plus a sanity check on the fallback's own output.
-- **`ExerciseResolver` is not a guard on Claude.** Claude selects IDs, so there
-  is nothing to resolve. Its real job returns: understanding *the lifter's*
-  free text ("some kind of row"). Smaller and more honest scope.
+| Deleted | Why |
+|---|---|
+| `TemplatePlanBuilder` | Decided splits and filled sessions. |
+| `SessionSkeleton`, `SlotSelection` | Decided slot counts and which patterns survive a short session. |
+| `AssemblyRules`, `SessionSlot` | Applied the rulebook as law. The JSON survives as reference; nothing decodes it. |
+| `PlanGenerator`, `PlanCoordinator` | Called Apple's on-device model to write plans. |
+| `ProgressionEngine` | Decided load increases from RPE and thresholds — the clearest case of a second coach. |
+| `PlanMessage` | Chat attached to a plan, from the abandoned in-app-chat design. |
 
-Still true: the app must produce a sensible block and log a session cleanly
-with Claude detached, or the MCP layer is decorating something unfinished. But
-"sensible" is the bar, not "expert."
+Also removed, because recording is not deciding: the clamps in
+`makeWorkoutPlan` (sets to 1–8, rest to 15–600, duration to ≥10), the `"8-12"`
+default rep range, and `ActiveWorkoutView.seedLoad` — which consulted
+`ProgressionEngine` *first* and so silently replaced a prescribed load with the
+app's own rule on any exercise with history. That was the worst violation in
+the codebase and it lived in a view.
 
-Deterministic generation — currently returning `PlanBlueprint(days: [])`, so
-the app generates nothing at all — remains the first work in every possible
-future, because the blocks must assemble before anyone can build with them.
+SwiftData defaults were neutralised for the same reason: `weekCount`,
+`durationMinutes`, and `restSeconds` became optional, and the default weekday
+set became empty rather than Mon/Wed/Fri. CloudKit requires a default on every
+property; it does not require that default to be a training opinion.
 
-## Privacy
+### What survives, and why
 
-For a single owner using their own Claude subscription against their own data,
-this is a personal choice with no disclosure burden.
+The blocks (`Domain/`, `Catalog/`), the record (`Store/`), the interface
+(`Views/`), and three services that answer rather than conclude:
+`PerformanceHistory`, `ExerciseTrend`, and `RestTimerModel`, which counts down
+what was prescribed.
 
-If it ships to other people, training logs plus bodyweight plus injury notes is
-sensitive data leaving the device. The export must be per-user and explicit from
-the start; consent is far cheaper to design in than to retrofit.
+`PlanBlueprint` survives with **no producer in the app**. It is the single seam
+where a plan enters the store, and it is waiting for Claude. Anyone finding it
+unreferenced should leave it alone rather than write something to feed it.
+
+### The standing consequence
+
+The app cannot currently create a plan by any path. That is correct, and it is
+also why the in-gym logger cannot yet be exercised end to end without seeded
+data — worth knowing before trusting it.
