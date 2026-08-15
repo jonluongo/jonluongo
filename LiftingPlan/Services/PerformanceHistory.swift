@@ -1,19 +1,51 @@
 import Foundation
 
-/// Bridges persisted `TrainingPlan` data into the plain value types the
-/// `ProgressionEngine` consumes. Keeps SwiftData out of the progression math.
+/// One logged set, reduced to a plain value with no SwiftData attached.
+///
+/// Built from a `LoggedSet` by `PerformanceHistory`, and shown to the lifter as
+/// what he did last time. Depends on: `Mass` from Domain.
+struct SetRecord: Equatable {
+    /// The weight as logged, in the unit it was logged in. `nil` means bodyweight.
+    var load: Mass?
+    var reps: Int
+    var rpe: Double?
+}
+
+/// What the lifter most recently did on a single exercise.
+///
+/// Keyed by `exerciseID`, never by name — that stable identity is what lets a
+/// lift's history survive a catalog rename or a later plan phrasing the same
+/// movement differently. `displayName` is carried for display only; it must
+/// never be compared or used as a key. Produced by `PerformanceHistory`, read
+/// by the log and the history views. This is a record of what happened, not a
+/// verdict about it. Depends on: `ExerciseID` from Domain, `SetRecord`.
+struct ExerciseHistory: Equatable {
+    var exerciseID: ExerciseID
+    /// For display only — never compared or used as a key.
+    var displayName: String
+    /// Upper bound of the prescribed rep range (e.g. "8-12" -> 12).
+    var repTargetUpper: Int
+    /// Sets from the lifter's most recent session on this exercise, in order.
+    var recentSets: [SetRecord]
+}
+
+/// Answers "what did he last do on this movement?" by walking the persisted
+/// plan hierarchy and joining on `ExerciseID`. Keeps SwiftData out of the
+/// value types above.
 ///
 /// Every lookup here is keyed by `ExerciseID`, never by display name. Two
-/// exercises that read as the same movement to a person — an AI-generated
-/// "Bench Press (Barbell)" one week and the catalog's "Barbell Bench Press"
-/// the next — must already share an `exerciseID` by the time they reach this
-/// type, or their history silently fragments and progression resets. That
+/// exercises that read as the same movement to a person — "Bench Press
+/// (Barbell)" in one plan and the catalog's "Barbell Bench Press" in the next
+/// — must already share an `exerciseID` by the time they reach this type, or
+/// their history silently fragments and a lift's record is lost. That
 /// resolution happens upstream (`ExerciseResolver`); this type only ever joins
 /// on the id it's handed.
 ///
+/// This is a query. It reports history; it draws no conclusion from it.
+///
 /// Depends on: `TrainingPlan`/`TrainingWeek`/`WorkoutDay`/`PlannedExercise`
 /// from Store, `ExerciseID`/`RepRange` from Domain, `ExerciseHistory`/`SetRecord`
-/// from `ProgressionEngine.swift`.
+/// above.
 enum PerformanceHistory {
 
     /// Most-recent logged performance for every exercise seen across `plans`

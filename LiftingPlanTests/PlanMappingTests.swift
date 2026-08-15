@@ -23,10 +23,9 @@ struct PlanMappingTests {
         ])
 
         let plan = blueprint.makeWorkoutPlan(
-            goal: "Get strong", durationMinutes: 45, wasModelGenerated: true, catalogVersion: 7
+            goal: "Get strong", durationMinutes: 45, catalogVersion: 7
         )
 
-        #expect(plan.wasModelGenerated)
         #expect(plan.catalogVersion == 7)   // carried through, not defaulted
         #expect(plan.orderedWeeks.count == 1)
         let week = plan.orderedWeeks[0]
@@ -43,29 +42,51 @@ struct PlanMappingTests {
         #expect(ordered[1].orderedExercises.isEmpty)
     }
 
-    @Test("Clamps out-of-range values and fills empty fields")
-    func clampsValues() {
+    @Test("Records unusual values exactly as prescribed, altering nothing")
+    func recordsValuesAsGiven() {
+        // Every value here would previously have been clamped or substituted.
+        // Each is legitimate: 10x3 is a real prescription, 720 seconds is a
+        // real rest between heavy singles, and an unstated rep range means
+        // unstated — not "8-12".
         let blueprint = PlanBlueprint(days: [
-            DayBlueprint(weekday: .friday, focus: "", durationMinutes: 2, exercises: [
+            DayBlueprint(weekday: .friday, focus: "", durationMinutes: 5, exercises: [
                 ExerciseBlueprint(
-                    exerciseID: ExerciseID(rawValue: "weird-exercise"), displayName: "Weird",
-                    repRange: "", sets: 99, restSeconds: 5,
+                    exerciseID: ExerciseID(rawValue: "barbell-back-squat"), displayName: "Squat",
+                    repRange: "", sets: 10, restSeconds: 720,
                     suggestedLoad: nil, tempo: nil, notes: nil
                 ),
             ]),
         ])
 
-        let plan = blueprint.makeWorkoutPlan(
-            goal: "", durationMinutes: 30, wasModelGenerated: false, catalogVersion: 7
-        )
+        let plan = blueprint.makeWorkoutPlan(goal: "", durationMinutes: 30, catalogVersion: 7)
         let day = plan.orderedWeeks[0].orderedDays[0]
         let exercise = day.orderedExercises[0]
 
-        #expect(day.focus == "Training")                // empty focus defaulted
-        #expect(day.durationMinutes == 10)               // clamped up from 2
-        #expect(exercise.targetSets == 8)                // clamped down from 99
-        #expect(exercise.restSeconds == 15)              // clamped up from 5
-        #expect(exercise.repRange == "8-12")             // empty rep range defaulted
+        #expect(day.focus == "")                 // no label invented
+        #expect(day.durationMinutes == 5)        // not floored to 10
+        #expect(exercise.targetSets == 10)       // not capped at 8
+        #expect(exercise.restSeconds == 720)     // not capped at 600
+        #expect(exercise.repRange == "")         // no rep range invented
+        #expect(RepRange(exercise.repRange).isEmpty)  // and it reads as "unstated"
+    }
+
+    @Test("Zero prescribed sets is recorded as zero, not floored to one")
+    func recordsZeroSets() {
+        let blueprint = PlanBlueprint(days: [
+            DayBlueprint(weekday: .monday, focus: "Push", durationMinutes: 45, exercises: [
+                ExerciseBlueprint(
+                    exerciseID: ExerciseID(rawValue: "barbell-bench-press"), displayName: "Bench",
+                    repRange: "5", sets: 0, restSeconds: 0,
+                    suggestedLoad: nil, tempo: nil, notes: nil
+                ),
+            ]),
+        ])
+
+        let plan = blueprint.makeWorkoutPlan(goal: "", durationMinutes: 45, catalogVersion: 7)
+        let exercise = plan.orderedWeeks[0].orderedDays[0].orderedExercises[0]
+
+        #expect(exercise.targetSets == 0)
+        #expect(exercise.restSeconds == 0)
     }
 
     @Test("Carries a suggested load through with its unit intact")
@@ -81,7 +102,7 @@ struct PlanMappingTests {
         ])
 
         let plan = blueprint.makeWorkoutPlan(
-            goal: "Get strong", durationMinutes: 45, wasModelGenerated: true, catalogVersion: 7
+            goal: "Get strong", durationMinutes: 45, catalogVersion: 7
         )
         let exercise = plan.orderedWeeks[0].orderedDays[0].orderedExercises[0]
 

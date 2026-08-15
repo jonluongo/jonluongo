@@ -19,7 +19,7 @@ struct SetRowView: View {
 
     private var weightText: Binding<String> {
         Binding(
-            get: { set.load.map { ProgressionEngine.formatted($0.converted(to: unit).value) } ?? "" },
+            get: { set.load.map { $0.converted(to: unit).value.compactString } ?? "" },
             set: { text in
                 guard let value = Double(text.replacingOccurrences(of: ",", with: ".")) else {
                     set.load = nil

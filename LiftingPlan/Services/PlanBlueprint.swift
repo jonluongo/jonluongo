@@ -1,13 +1,12 @@
 import Foundation
 
-/// A plain-value description of a generated plan. Both the on-device model path
-/// and the deterministic fallback produce one of these, and it is the single
-/// thing we map into SwiftData — which keeps that mapping easy to unit-test.
+/// A plain-value description of a plan the app has been handed.
 ///
-/// Produced by `PlanGenerator`/`TemplatePlanBuilder`, turned into a persisted
-/// `TrainingPlan` by
-/// `makeWorkoutPlan(goal:durationMinutes:wasModelGenerated:catalogVersion:)`
-/// below. Depends on: `DayBlueprint`.
+/// This is the single thing that gets mapped into SwiftData, which keeps that
+/// mapping easy to unit-test and leaves exactly one place where a plan can
+/// enter the store. Turned into a persisted `TrainingPlan` by
+/// `makeWorkoutPlan(goal:durationMinutes:catalogVersion:)` below. Depends on:
+/// `DayBlueprint`.
 struct PlanBlueprint: Equatable {
     var days: [DayBlueprint]
 }
@@ -42,9 +41,15 @@ struct ExerciseBlueprint: Equatable {
 
 extension PlanBlueprint {
     /// Build the SwiftData object graph for this blueprint: a new `TrainingPlan`
-    /// holding a single `TrainingWeek` (ordinal 1) whose days are these. Values
-    /// are clamped to sane ranges so a stray model output can never produce a
-    /// nonsensical plan.
+    /// holding a single `TrainingWeek` (ordinal 1) whose days are these.
+    ///
+    /// **Every value is recorded exactly as given.** Nothing here clamps,
+    /// floors, caps, or substitutes: 10 sets stay 10 sets, a 12-minute rest
+    /// between heavy singles stays 12 minutes, and an unstated rep range stays
+    /// unstated rather than becoming someone's idea of a sensible default.
+    /// Whoever wrote the plan made those calls with more context than this
+    /// function will ever have, and a silently altered prescription is
+    /// indistinguishable from the one that was actually written.
     ///
     /// A `PlanBlueprint` only ever describes one week's worth of training, so
     /// this maps it into exactly one concrete week rather than inventing
@@ -60,32 +65,30 @@ extension PlanBlueprint {
     func makeWorkoutPlan(
         goal: String,
         durationMinutes: Int,
-        wasModelGenerated: Bool,
         catalogVersion: Int
     ) -> TrainingPlan {
         let plan = TrainingPlan(
             goal: goal,
             weekCount: 1,
             durationMinutes: durationMinutes,
-            wasModelGenerated: wasModelGenerated,
             catalogVersion: catalogVersion
         )
         let week = TrainingWeek(ordinal: 1)
         week.days = days.map { day in
             let workoutDay = WorkoutDay(
                 weekday: day.weekday,
-                focus: day.focus.isEmpty ? "Training" : day.focus,
-                durationMinutes: max(10, day.durationMinutes)
+                focus: day.focus,
+                durationMinutes: day.durationMinutes
             )
             workoutDay.exercises = day.exercises.enumerated().map { exIndex, ex in
                 PlannedExercise(
                     exerciseID: ex.exerciseID,
                     displayName: ex.displayName,
                     order: exIndex,
-                    targetSets: min(max(ex.sets, 1), 8),
-                    repRange: ex.repRange.isEmpty ? "8-12" : ex.repRange,
+                    targetSets: ex.sets,
+                    repRange: ex.repRange,
                     suggestedLoad: ex.suggestedLoad,
-                    restSeconds: min(max(ex.restSeconds, 15), 600),
+                    restSeconds: ex.restSeconds,
                     tempo: ex.tempo,
                     notes: ex.notes
                 )

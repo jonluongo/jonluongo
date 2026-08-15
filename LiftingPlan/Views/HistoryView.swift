@@ -57,7 +57,7 @@ private struct TrendRow: View {
             VStack(alignment: .trailing, spacing: 2) {
                 if let latest = trend.latestLoad {
                     let converted = latest.converted(to: unit)
-                    Text("\(ProgressionEngine.formatted(converted.value)) \(unit.rawValue)")
+                    Text("\(converted.value.compactString) \(unit.rawValue)")
                         .font(.subheadline.weight(.semibold))
                         .monospacedDigit()
                 }
@@ -106,7 +106,7 @@ struct ExerciseTrendDetailView: View {
                         Spacer()
                         if let load = point.topLoad {
                             let converted = load.converted(to: unit)
-                            Text("\(ProgressionEngine.formatted(converted.value)) \(unit.rawValue) × \(point.topReps)")
+                            Text("\(converted.value.compactString) \(unit.rawValue) × \(point.topReps)")
                                 .monospacedDigit()
                         } else {
                             Text("\(point.topReps) reps").monospacedDigit()

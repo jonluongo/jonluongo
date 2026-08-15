@@ -187,18 +187,23 @@ struct ActiveWorkoutView: View {
 
     // MARK: - Seeding
 
-    /// Pre-populate each exercise with its prescribed number of empty working
-    /// sets, primed with the progression target and last time's reps.
+    /// Pre-populate each exercise with exactly the sets it prescribes, primed
+    /// with the load it prescribes and last time's reps.
+    ///
+    /// The seeded load is `exercise.suggestedLoad` and nothing else. What the
+    /// lifter did last time is shown beside each row as reference — see
+    /// `previousRecords(for:)` — but it is never substituted for the
+    /// prescription. Every seeded number is editable; the lifter logs what he
+    /// actually lifts.
     private func seedSetsIfNeeded() {
         for exercise in exercises where (exercise.loggedSets ?? []).isEmpty {
             let previous = previousRecords(for: exercise)
-            let seededLoad = seedLoad(for: exercise)
             let repTargetUpper = RepRange(exercise.repRange).upperBound
-            for index in 0..<max(exercise.targetSets, 1) {
+            for index in 0..<exercise.targetSets {
                 let priorReps = index < previous.count ? previous[index].reps : repTargetUpper
                 let set = LoggedSet(
                     setIndex: index,
-                    load: seededLoad,
+                    load: exercise.suggestedLoad,
                     reps: priorReps,
                     isWarmup: false
                 )
@@ -207,14 +212,6 @@ struct ActiveWorkoutView: View {
             }
         }
         save()
-    }
-
-    private func seedLoad(for exercise: PlannedExercise) -> Mass? {
-        if let history = PerformanceHistory.latestHistory(for: exercise.exerciseID, excluding: exercise, from: plans),
-           let suggested = ProgressionEngine.suggestion(for: history).suggestedLoad {
-            return suggested
-        }
-        return exercise.suggestedLoad
     }
 
     // MARK: - Previous column

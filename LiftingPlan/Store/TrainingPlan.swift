@@ -18,8 +18,6 @@ final class TrainingPlan {
     /// How many weeks the block runs. Typically 8–12.
     var weekCount: Int = 8
     var completedAt: Date?
-    /// Whether the on-device model produced this plan or the template did.
-    var wasModelGenerated: Bool = false
     /// The `ExerciseCatalog.version` that produced this plan's exercise
     /// selections. A later correction to the catalog (e.g. reclassifying an
     /// exercise's muscles) can change what an already-logged set means; this
@@ -41,7 +39,7 @@ final class TrainingPlan {
     init(
         title: String = "", goal: String = "", startDate: Date = Date(),
         weekCount: Int = 8, weekdays: Set<Weekday> = [.monday, .wednesday, .friday],
-        durationMinutes: Int = 45, wasModelGenerated: Bool = false, catalogVersion: Int = 1
+        durationMinutes: Int = 45, catalogVersion: Int = 1
     ) {
         self.title = title
         self.goal = goal
@@ -49,7 +47,6 @@ final class TrainingPlan {
         self.weekCount = weekCount
         self.weekdayRawValues = weekdays.map(\.rawValue).sorted()
         self.durationMinutes = durationMinutes
-        self.wasModelGenerated = wasModelGenerated
         self.catalogVersion = catalogVersion
     }
 

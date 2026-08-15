@@ -96,7 +96,7 @@ struct ExerciseLogSection: View {
         guard workingIndex < previous.count else { return "—" }
         let record = previous[workingIndex]
         if let load = record.load?.converted(to: profile.displayUnit), load.value > 0 {
-            return "\(ProgressionEngine.formatted(load.value)) × \(record.reps)"
+            return "\(load.value.compactString) × \(record.reps)"
         }
         return "\(record.reps) reps"
     }
