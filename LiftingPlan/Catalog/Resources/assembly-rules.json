@@ -1,4 +1,5 @@
 {
+  "_note": "INERT REFERENCE DATA — DO NOT DELETE. No Swift code decodes this file, and none should. Every number in it is a training opinion, and the app makes no training decisions. It ships as material Claude reads when building a plan. Its being unreferenced by code is the intended state, not evidence that it is dead.",
   "version": 2,
   "roleOrder": ["primary", "secondary", "accessory", "finisher"],
   "majorPatterns": [
