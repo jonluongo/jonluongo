@@ -58,25 +58,51 @@ become a Claude project.
 
 Revisit when the proof of concept has an answer.
 
-## What stays deterministic — and why this is not negotiable
+## One decision-maker, not two
 
-The model supplies **judgment**. The app owns **selection and safety**.
+**The app is the blocks and the record. Claude builds with them.**
 
-| Owned by code | Owned by the model |
+Claude makes every training decision: the split, which exercises, sets, reps,
+loads, what changes after an injury, when to deload. There is not a second
+planner in the app arguing with it.
+
+The app owns:
+
+| The app owns | What that means |
 |---|---|
-| Which exercises are permitted (`EquipmentAccess`) | Which split suits this lifter |
-| Resolving any name to a real `ExerciseID` (`ExerciseResolver`) | What to change after an injury report |
-| Sets, reps, rest (assembly rules JSON) | Whether progress says push or back off |
-| Balance rules (pull ≥ press, etc.) | Diet and recovery guidance |
-| Load progression (`ProgressionEngine`) | Explaining any of the above |
+| The blocks | 412 exercises with muscles, equipment, pattern, mechanic |
+| The rulebook | Splits, slot counts, prescriptions, balance rules — versioned JSON |
+| The record | Every logged set, baseline, and body metric |
+| The interface | The plan view, the logger, the timer |
 
-Two failures justify the split. A hallucinated `ExerciseID` corrupts training
-history irreversibly — history is keyed by exercise identity, and a fabricated
-key silently fragments it. A wrong load is an injury. Neither is acceptable at
-any model quality, so neither is delegated at any model quality.
+### Rejected: propose-and-validate
 
-This is the same division already designed in the programming spec. MCP changes
-only *who* supplies the judgment.
+An earlier draft had Claude propose a plan and the app check it — real
+exercise? owned equipment? sane load? That is guess-and-verify, and it is
+unnecessary.
+
+**Instead the app hands Claude legal options and Claude selects from them.**
+Asked what is available for horizontal press, the app returns catalog entries
+with their real `ExerciseID`s, already filtered to the lifter's equipment.
+Claude picks one. There is no name to get wrong because Claude never types a
+name.
+
+What remains is not supervision, it is an ordinary typed interface: an
+unrecognized ID returns an error the way any API does, and a write against a
+stale snapshot fails with a reason. Framing that as the app "checking Claude's
+work" overstated it.
+
+### What is genuinely reserved
+
+Only the irreversible thing: **the app is the sole writer of training history.**
+History is keyed by exercise identity, so a fabricated key silently fragments a
+lift's history into two unrelated series, and that cannot be repaired later.
+Typed IDs make it unrepresentable rather than merely forbidden.
+
+Note what is *not* reserved: load prescription. An earlier draft clamped load
+jumps for safety. Dropped — a coach with the lifter's actual history should be
+able to push hard when warranted, and a governor on that gets in the way of the
+product. Good data is the better answer than a limiter.
 
 ## Architecture
 
@@ -159,14 +185,34 @@ Recorded so it is understood as temporary rather than mistaken for the design.
 
 ## Consequences for the app
 
-The app must be genuinely good standing alone. If it cannot produce a sensible
-training block and log a session cleanly with Claude detached, the MCP layer is
-decorating something unfinished.
+### The app's own plan builder is a fallback, not the main path
 
-This makes deterministic plan generation — currently returning
-`PlanBlueprint(days: [])` — the prerequisite for everything here, in every
-possible future. It is the first work, and it implements
-`2026-08-14-workout-programming-design.md` unchanged.
+Because Claude is the single decision-maker, `TemplatePlanBuilder` is demoted:
+it exists for **cold start** (before Claude has ever been connected) and as a
+**safety net** (Claude unavailable). It does not need to be brilliant. It needs
+to be sane.
+
+This re-scopes work that was sized for a primary engine:
+
+- **Sticky exercise selection** matters much less. It existed so regeneration
+  would not silently swap movements and destroy progression history. Claude,
+  adjusting week to week with the full record in view, handles continuity
+  directly and with more context than a rule approximating it. Keep it as a
+  property of the fallback; do not build elaborate machinery for it.
+- **Balance validation** stops being a repair loop policing a generator and
+  becomes a **tool Claude reads** — "does this week pull as much as it
+  presses" — plus a sanity check on the fallback's own output.
+- **`ExerciseResolver` is not a guard on Claude.** Claude selects IDs, so there
+  is nothing to resolve. Its real job returns: understanding *the lifter's*
+  free text ("some kind of row"). Smaller and more honest scope.
+
+Still true: the app must produce a sensible block and log a session cleanly
+with Claude detached, or the MCP layer is decorating something unfinished. But
+"sensible" is the bar, not "expert."
+
+Deterministic generation — currently returning `PlanBlueprint(days: [])`, so
+the app generates nothing at all — remains the first work in every possible
+future, because the blocks must assemble before anyone can build with them.
 
 ## Privacy
 
