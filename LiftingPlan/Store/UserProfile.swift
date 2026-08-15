@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import LiftingKit
 
 /// Who the lifter is: the standing facts he has stated about himself, his
 /// equipment, and when he wants to train.

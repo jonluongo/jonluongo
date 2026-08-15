@@ -23,20 +23,20 @@ import Foundation
 /// prescription, and by the active-workout views to prefill new sets.
 ///
 /// Depends on: Foundation only.
-struct RepRange: Codable, Hashable, Sendable, CustomStringConvertible {
+public struct RepRange: Codable, Hashable, Sendable, CustomStringConvertible {
 
     /// The smaller of the two bounds found in the source text (0 if none were found).
-    let lowerBound: Int
+    public let lowerBound: Int
 
     /// The larger of the two bounds found in the source text (0 if none were found).
-    let upperBound: Int
+    public let upperBound: Int
 
     /// True when the source text contained no digits at all, i.e. there was
     /// no rep target to parse (as opposed to a target of literally zero reps).
-    let isEmpty: Bool
+    public let isEmpty: Bool
 
     /// Parses free text into bounds. See the type doc for the parsing rules.
-    init(_ text: String) {
+    public init(_ text: String) {
         let numbers = text
             .split(whereSeparator: { !$0.isNumber })
             .compactMap { Int($0) }
@@ -55,7 +55,7 @@ struct RepRange: Codable, Hashable, Sendable, CustomStringConvertible {
 
     /// A readable form: `"8-12"` for a range, `"5"` when both bounds match,
     /// `""` when the range is empty.
-    var description: String {
+    public var description: String {
         guard !isEmpty else { return "" }
         return lowerBound == upperBound ? "\(lowerBound)" : "\(lowerBound)-\(upperBound)"
     }

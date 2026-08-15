@@ -5,7 +5,7 @@ import Foundation
 /// Ordered loosely from most to least certain. Callers that care about
 /// precision — persisting a generated plan, say — can require `.exact` or
 /// `.alias` and treat the rest as a prompt to ask the lifter.
-enum MatchConfidence: Hashable, Sendable {
+public enum MatchConfidence: Hashable, Sendable {
     case exact
     case alias
     case normalized
@@ -23,24 +23,27 @@ enum MatchConfidence: Hashable, Sendable {
 /// decide whether a resolution is trustworthy enough to save.
 ///
 /// Depends on: `ExerciseID` and `MatchConfidence`.
-struct ResolvedExercise: Hashable, Sendable {
-    let id: ExerciseID
-    let confidence: MatchConfidence
+public struct ResolvedExercise: Hashable, Sendable {
+    public let id: ExerciseID
+    public let confidence: MatchConfidence
 }
 
 /// Maps free text onto a real catalog entry.
 ///
-/// This is the guard that keeps invented exercises out of the database. The
-/// on-device model is free to name a movement however it likes; every name it
-/// produces passes through here, and anything that cannot be resolved is
-/// either replaced from a fallback filter or rejected. **A name that does not
-/// resolve is never persisted.**
+/// This is the guard that keeps invented exercises out of the database. Claude
+/// is free to name a movement however it likes; every name it produces passes
+/// through here, and anything that cannot be resolved is either replaced from a
+/// fallback filter or rejected. **A name that does not resolve is never
+/// persisted** — history is keyed by exercise identity, and a fabricated key
+/// fragments a lift's history irreparably.
 ///
 /// Construct one with any `ExerciseCatalogProviding` and reuse it — the
-/// normalized index is built once at initialization.
+/// normalized index is built once at initialization. Both clients of this
+/// package resolve through the same instance of these rules, so the app and the
+/// MCP server cannot disagree about what a name refers to.
 ///
 /// Depends on: `ExerciseCatalogProviding` and Foundation.
-struct ExerciseResolver: Sendable {
+public struct ExerciseResolver: Sendable {
 
     /// Below this similarity a fuzzy match is considered wrong. Chosen so that
     /// single-character typos resolve while different exercises do not.
@@ -51,7 +54,7 @@ struct ExerciseResolver: Sendable {
     private let byAlias: [String: ExerciseID]
     private let byNormalized: [String: ExerciseID]
 
-    init(catalog: any ExerciseCatalogProviding) {
+    public init(catalog: any ExerciseCatalogProviding) {
         self.catalog = catalog
 
         var exact: [String: ExerciseID] = [:]
@@ -95,7 +98,7 @@ struct ExerciseResolver: Sendable {
     }
 
     /// Resolves text to a catalog entry, or `nil` if nothing matches well enough.
-    func resolve(_ text: String) -> ResolvedExercise? {
+    public func resolve(_ text: String) -> ResolvedExercise? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
@@ -139,7 +142,7 @@ struct ExerciseResolver: Sendable {
     /// Resolves text, and when nothing matches, substitutes the first exercise
     /// satisfying `fallback`. Returns `nil` only when the fallback itself
     /// matches nothing — an exercise is never invented.
-    func resolve(_ text: String, fallback: ExerciseFilter) -> ResolvedExercise? {
+    public func resolve(_ text: String, fallback: ExerciseFilter) -> ResolvedExercise? {
         if let resolved = resolve(text) { return resolved }
         guard let substitute = catalog.exercises(matching: fallback).first else { return nil }
         return ResolvedExercise(id: substitute.id, confidence: .fallback)

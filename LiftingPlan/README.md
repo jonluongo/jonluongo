@@ -35,20 +35,27 @@ substitutes a prescribed value. Before a plan exists, it shows an empty state.
 ## Build & run
 
 Open `LiftingPlan.xcodeproj` in Xcode and run the `LiftingPlan` scheme on a
-simulator or device. No dependencies to fetch — the project uses only Apple
-frameworks (SwiftUI, SwiftData, Charts, UserNotifications).
+simulator or device. The only dependency is the local `LiftingKit` package in
+this repository; everything else is an Apple framework (SwiftUI, SwiftData,
+Charts, UserNotifications).
 
 ## Architecture
 
 Four layers, importing only downward: `Domain/` → `Catalog/` → `Store/` →
 `Services/` → `Views/`. See the root `CLAUDE.md` for the binding version.
 
+The first two layers live in the local package `LiftingKit/`, not in the app
+target. They are the shared vocabulary — what an exercise is, what a weight is,
+what the catalog contains — so the app and the macOS MCP server cannot disagree
+about any of it. `Store/` deliberately stays in the app: the server reads a
+snapshot file and must never link SwiftData.
+
 - **`LiftingPlanApp`** — app entry, SwiftData container, the bundled catalog,
   and the shared `RestTimerModel`.
-- **`Domain/`** — pure value types: `Mass`, `RepRange`, `Exercise`, the
-  taxonomies. Foundation only.
-- **`Catalog/`** — `ExerciseCatalog` (the lego box and the query surface) and
-  `ExerciseResolver` (free text → a real `ExerciseID`).
+- **`LiftingKit` → `Domain/`** — pure value types: `Mass`, `RepRange`,
+  `Exercise`, the taxonomies. Foundation only.
+- **`LiftingKit` → `Catalog/`** — `ExerciseCatalog` (the lego box and the query
+  surface) and `ExerciseResolver` (free text → a real `ExerciseID`).
 - **`Store/`** — SwiftData `@Model` types: `UserProfile`, `TrainingPlan`,
   `TrainingWeek`, `WorkoutDay`, `PlannedExercise`, `LoggedSet`,
   `StrengthBaseline`, `BodyMetric`.
@@ -62,11 +69,12 @@ Four layers, importing only downward: `Domain/` → `Catalog/` → `Store/` →
 - **`Views/`** — `SetupView`, `PlanOverviewView`, `SessionDetailView`,
   `ActiveWorkoutView`, `HistoryView`, `SettingsView`, plus small components.
 
-`Catalog/Resources/assembly-rules.json` is inert reference material for Claude.
-No Swift code decodes it, by design.
+`LiftingKit/Sources/LiftingKit/Catalog/Resources/assembly-rules.json` is inert
+reference material for Claude. No Swift code decodes it, by design.
 
 ## Tests
 
 Swift Testing suites cover the pure layers — the exercise resolver, unit
 conversion, catalog integrity, blueprint mapping, trends, and rest-timer math.
-Run with `⌘U`.
+They live in two places now: the package suites run with
+`swift test --package-path LiftingKit`, and the app suites run with `⌘U`.

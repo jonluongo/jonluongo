@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import LiftingKit
 
 /// One point in the lifter's bodyweight history.
 ///

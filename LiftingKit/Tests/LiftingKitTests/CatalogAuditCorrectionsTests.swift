@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import LiftingPlan
+@testable import LiftingKit
 
 /// Guards on the two data corrections the equipment/mechanic audit produced,
 /// in both directions.

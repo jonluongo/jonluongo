@@ -9,7 +9,7 @@ Merges three sources, in increasing precedence:
 Usage:
     python3 Tools/build-catalog.py [--fedb path/to/exercises.json]
 
-Writes LiftingPlan/Catalog/Resources/exercises.json as
+Writes LiftingKit/Sources/LiftingKit/Catalog/Resources/exercises.json as
 `{"version": CATALOG_VERSION, "exercises": [...]}` and prints a coverage
 report.
 
@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SLUGS = ROOT / "docs/reference/movekit-exercise-slugs.txt"
 RULES = ROOT / "Tools/derivation-rules.json"
 OVERRIDES = ROOT / "Tools/overrides.json"
-OUT = ROOT / "LiftingPlan/Catalog/Resources/exercises.json"
+OUT = ROOT / "LiftingKit/Sources/LiftingKit/Catalog/Resources/exercises.json"
 
 # free-exercise-db, vendored rather than fetched.
 #

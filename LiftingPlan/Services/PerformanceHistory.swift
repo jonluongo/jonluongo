@@ -1,4 +1,5 @@
 import Foundation
+import LiftingKit
 
 /// One logged set, reduced to a plain value with no SwiftData attached.
 ///

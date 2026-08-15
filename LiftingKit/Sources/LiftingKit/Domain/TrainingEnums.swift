@@ -2,12 +2,12 @@ import Foundation
 
 /// Days of the week the user can train on. `rawValue` matches `Calendar`'s
 /// 1-based weekday numbering (1 = Sunday) so it maps cleanly to date math.
-enum Weekday: Int, CaseIterable, Codable, Identifiable, Comparable {
+public enum Weekday: Int, CaseIterable, Codable, Identifiable, Comparable {
     case sunday = 1, monday, tuesday, wednesday, thursday, friday, saturday
 
-    var id: Int { rawValue }
+    public var id: Int { rawValue }
 
-    var shortName: String {
+    public var shortName: String {
         switch self {
         case .sunday: "Sun"
         case .monday: "Mon"
@@ -19,7 +19,7 @@ enum Weekday: Int, CaseIterable, Codable, Identifiable, Comparable {
         }
     }
 
-    var fullName: String {
+    public var fullName: String {
         switch self {
         case .sunday: "Sunday"
         case .monday: "Monday"
@@ -32,31 +32,31 @@ enum Weekday: Int, CaseIterable, Codable, Identifiable, Comparable {
     }
 
     /// Monday-first ordering for display (most lifters think of the week that way).
-    static var displayOrder: [Weekday] {
+    public static var displayOrder: [Weekday] {
         [.monday, .tuesday, .wednesday, .thursday, .friday, .saturday, .sunday]
     }
 
-    static func < (lhs: Weekday, rhs: Weekday) -> Bool {
+    public static func < (lhs: Weekday, rhs: Weekday) -> Bool {
         lhs.rawValue < rhs.rawValue
     }
 }
 
 /// What equipment the lifter has access to — a fact about his gym, which
 /// `EquipmentAccess` turns into the concrete `EquipmentType`s it grants.
-enum Equipment: String, CaseIterable, Codable, Identifiable {
+public enum Equipment: String, CaseIterable, Codable, Identifiable {
     case fullGym = "Full gym"
     case dumbbellsOnly = "Dumbbells only"
     case homeMinimal = "Home / minimal"
     case bodyweight = "Bodyweight only"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 }
 
 /// Rough training age, as the lifter describes it. Recorded, not acted on.
-enum ExperienceLevel: String, CaseIterable, Codable, Identifiable {
+public enum ExperienceLevel: String, CaseIterable, Codable, Identifiable {
     case beginner = "Beginner"
     case intermediate = "Intermediate"
     case advanced = "Advanced"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 }

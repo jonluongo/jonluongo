@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import LiftingPlan
+@testable import LiftingKit
 
 @Suite("Exercise catalog")
 struct ExerciseCatalogTests {

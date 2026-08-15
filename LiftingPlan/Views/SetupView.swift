@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import LiftingKit
 
 /// Collects the standing facts about the lifter — training days, session
 /// length, goal, equipment, experience — and saves them to his `UserProfile`.

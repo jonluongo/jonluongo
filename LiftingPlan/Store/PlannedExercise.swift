@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import LiftingKit
 
 /// A prescribed movement within a day, plus the sets logged against it.
 ///

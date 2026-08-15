@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		67F06908302FD5FB002D0698 /* BarbellIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 67F06907302FD5FB002D0698 /* BarbellIcon.icon */; };
+		AA0000000000000000000062 /* LiftingKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000061 /* LiftingKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,6 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA0000000000000000000062 /* LiftingKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -88,6 +90,7 @@
 			);
 			name = LiftingPlan;
 			packageProductDependencies = (
+				AA0000000000000000000061 /* LiftingKit */,
 			);
 			productName = LiftingPlan;
 			productReference = AA0000000000000000000050 /* LiftingPlan.app */;
@@ -145,6 +148,9 @@
 			);
 			mainGroup = AA0000000000000000000002;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AA0000000000000000000060 /* XCLocalSwiftPackageReference "LiftingKit" */,
+			);
 			productRefGroup = AA0000000000000000000003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -457,6 +463,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		AA0000000000000000000060 /* XCLocalSwiftPackageReference "LiftingKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = LiftingKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA0000000000000000000061 /* LiftingKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LiftingKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AA0000000000000000000001 /* Project object */;
 }

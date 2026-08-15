@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import LiftingKit
 
 /// The guided workout, spreadsheet-style: every exercise in one scroll, each with
 /// an editable table of sets (set · previous · weight · reps · ✓). Checking a set

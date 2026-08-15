@@ -10,10 +10,10 @@ import Foundation
 /// bodyweight, because a push-up needs nothing.
 ///
 /// Depends on: `Equipment` and `EquipmentType`. No persistence, no UI.
-enum EquipmentAccess {
+public enum EquipmentAccess {
 
     /// The equipment types a lifter at this access tier can actually use.
-    static func permitted(for access: Equipment) -> Set<EquipmentType> {
+    public static func permitted(for access: Equipment) -> Set<EquipmentType> {
         switch access {
         case .bodyweight:
             bodyweightTier

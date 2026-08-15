@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import LiftingKit
 
 /// Summary of what the lifter has told us about himself, and data management.
 ///

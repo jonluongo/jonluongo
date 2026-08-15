@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import LiftingKit
 
 /// A training block: a fixed-length program the lifter is working through.
 ///

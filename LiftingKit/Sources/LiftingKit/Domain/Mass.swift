@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Raw values are the abbreviations shown in the UI and stored in the
 /// database. Depends on: Foundation only.
-enum MassUnit: String, Codable, Hashable, Sendable, CaseIterable {
+public enum MassUnit: String, Codable, Hashable, Sendable, CaseIterable {
     case kilograms = "kg"
     case pounds = "lb"
 }
@@ -22,28 +22,29 @@ enum MassUnit: String, Codable, Hashable, Sendable, CaseIterable {
 /// equivalence.
 ///
 /// Depends on: Foundation only.
-struct Mass: Codable, Hashable, Sendable {
+public struct Mass: Codable, Hashable, Sendable {
 
-    /// Exact by definition: one pound is 0.45359237 kg.
+    /// Exact by definition: one pound is 0.45359237 kg. Internal — callers read
+    /// `kilograms` or `pounds` rather than doing the arithmetic themselves.
     static let kilogramsPerPound = 0.45359237
 
     /// The number as entered, in `unit`.
-    let value: Double
-    let unit: MassUnit
+    public let value: Double
+    public let unit: MassUnit
 
-    init(value: Double, unit: MassUnit) {
+    public init(value: Double, unit: MassUnit) {
         self.value = value
         self.unit = unit
     }
 
-    var kilograms: Double {
+    public var kilograms: Double {
         switch unit {
         case .kilograms: value
         case .pounds: value * Self.kilogramsPerPound
         }
     }
 
-    var pounds: Double {
+    public var pounds: Double {
         switch unit {
         case .pounds: value
         case .kilograms: value / Self.kilogramsPerPound
@@ -51,7 +52,7 @@ struct Mass: Codable, Hashable, Sendable {
     }
 
     /// The same physical weight expressed in another unit.
-    func converted(to target: MassUnit) -> Mass {
+    public func converted(to target: MassUnit) -> Mass {
         guard target != unit else { return self }
         return switch target {
         case .kilograms: Mass(value: kilograms, unit: .kilograms)
@@ -61,7 +62,7 @@ struct Mass: Codable, Hashable, Sendable {
 
     /// Snapped to the nearest usable increment, for plate math and to absorb
     /// floating-point drift from conversion.
-    func rounded(toNearest increment: Double) -> Mass {
+    public func rounded(toNearest increment: Double) -> Mass {
         guard increment > 0 else { return self }
         return Mass(value: (value / increment).rounded() * increment, unit: unit)
     }

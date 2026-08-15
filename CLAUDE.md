@@ -29,6 +29,21 @@ xcodebuild -project LiftingPlan.xcodeproj -scheme LiftingPlan \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
+The tests live in two places. **Both must be run** — the app suite alone no
+longer covers the catalog, the taxonomies, `Mass`, or `RepRange`:
+
+```sh
+swift test --package-path LiftingKit
+```
+
+Xcode compiles a package dependency with `-suppress-warnings`, so the package
+cannot declare warnings-as-errors in its manifest without breaking the app
+build. Enforce the standard on the package explicitly:
+
+```sh
+swift build --package-path LiftingKit -Xswiftc -warnings-as-errors
+```
+
 Device builds sign with `DEVELOPMENT_TEAM = GKMVG76BQR` and need
 `-allowProvisioningUpdates`.
 
@@ -37,16 +52,29 @@ Device builds sign with `DEVELOPMENT_TEAM = GKMVG76BQR` and need
 Four layers. **A layer may import only the layers above it.** This is the most
 important rule in the project.
 
-| Layer | Contents | May import |
-|---|---|---|
-| `Domain/` | Pure value types and logic. No persistence, no UI. | Foundation only |
-| `Catalog/` | Bundled reference data — the exercise catalog and the assembly rules — plus lookup and resolution. | Domain |
-| `Store/` | SwiftData models. User data only. | Domain |
-| `Services/` | Queries over stored data, timing, and the one mapping into the store. | Domain, Catalog, Store |
-| `Views/` | SwiftUI. | All of the above |
+| Layer | Where it lives | Contents | May import |
+|---|---|---|---|
+| `Domain/` | `LiftingKit` package | Pure value types and logic. No persistence, no UI. | Foundation only |
+| `Catalog/` | `LiftingKit` package | Bundled reference data — the exercise catalog and the assembly rules — plus lookup and resolution. | Domain |
+| `Store/` | app target | SwiftData models. User data only. | LiftingKit |
+| `Services/` | app target | Queries over stored data, timing, and the one mapping into the store. | LiftingKit, Store |
+| `Views/` | app target | SwiftUI. | All of the above |
 
 `Domain/` importing nothing but Foundation is what makes the interesting logic
 testable without a database, simulator, or model. Do not erode it.
+
+The first two layers are a local Swift package, `LiftingKit/`, which the app
+consumes. It is the shared *vocabulary*: what an exercise is, what a weight is,
+what the catalog contains. A macOS MCP server links the same package, so the two
+clients cannot disagree about any of it.
+
+**`Store/` deliberately stays in the app.** The server reads a snapshot file and
+must never link SwiftData; moving the models into the package would drag
+SwiftData into a command-line tool for nothing.
+
+The package's public surface is kept small on purpose. Something used only by
+tests stays internal — the suites use `@testable import LiftingKit` rather than
+widening the API.
 
 `Services/` answers questions and maps data. It does not conclude anything about
 training. `PerformanceHistory` and `ExerciseTrend` report what happened;
@@ -58,8 +86,12 @@ clamping, flooring, capping, or defaulting a prescribed value.
 the seam where Claude's plans will arrive. Do not "fix" it by writing something
 that generates plans.
 
-`Catalog/` holds bundled reference data, never SwiftData: it ships with the
-app, is never written at runtime, and every file in it carries a `version`.
+`Catalog/` holds bundled reference data, never SwiftData: it ships inside the
+package, is never written at runtime, and every file in it carries a `version`.
+The files resolve through `Bundle.module`, not the app bundle. A resource that
+fails to resolve does not look like an error — it looks like an empty catalog —
+so `CatalogIntegrityTests` asserts both files load rather than trusting the
+build to have copied them.
 Exercise identity is the MoveKit slug (see
 `docs/reference/movekit-exercise-slugs.txt`), so purchased animations drop in
 without a mapping layer.

@@ -1,14 +1,18 @@
 import Foundation
 
 /// Why loading a piece of bundled reference data failed — the exercise
-/// catalog, the assembly rules, or anything else this layer ships.
-enum CatalogError: Error, LocalizedError {
+/// catalog, the assembly rules, or anything else this package ships.
+///
+/// Thrown by `ExerciseCatalog.bundled()`. Public so a client can tell a missing
+/// resource apart from a malformed one (which arrives as a `DecodingError`)
+/// rather than having to match on a message. Depends on: Foundation only.
+public enum CatalogError: Error, LocalizedError {
     case resourceMissing(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .resourceMissing(let name):
-            "The bundled reference data '\(name)' is missing from the app bundle."
+            "The bundled reference data '\(name)' is missing from the LiftingKit bundle."
         }
     }
 }
@@ -17,14 +21,14 @@ enum CatalogError: Error, LocalizedError {
 ///
 /// An empty set means "no constraint on this axis", so
 /// `ExerciseFilter()` matches everything. Depends on: the taxonomies.
-struct ExerciseFilter: Hashable, Sendable {
-    var equipment: Set<EquipmentType>
-    var patterns: Set<MovementPattern>
-    var muscles: Set<MuscleGroup>
-    var categories: Set<ExerciseCategory>
-    var mechanics: Set<Mechanic>
+public struct ExerciseFilter: Hashable, Sendable {
+    public var equipment: Set<EquipmentType>
+    public var patterns: Set<MovementPattern>
+    public var muscles: Set<MuscleGroup>
+    public var categories: Set<ExerciseCategory>
+    public var mechanics: Set<Mechanic>
 
-    init(
+    public init(
         equipment: Set<EquipmentType> = [],
         patterns: Set<MovementPattern> = [],
         muscles: Set<MuscleGroup> = [],
@@ -38,7 +42,7 @@ struct ExerciseFilter: Hashable, Sendable {
         self.mechanics = mechanics
     }
 
-    func matches(_ exercise: Exercise) -> Bool {
+    public func matches(_ exercise: Exercise) -> Bool {
         if !equipment.isEmpty, !equipment.contains(exercise.equipment) { return false }
         if !patterns.isEmpty, !patterns.contains(exercise.pattern) { return false }
         if !categories.isEmpty, !categories.contains(exercise.category) { return false }
@@ -59,7 +63,7 @@ struct ExerciseFilter: Hashable, Sendable {
 /// exercises must be able to record which generation of the data it selected
 /// from (see `TrainingPlan.catalogVersion`), and a fake must be able to vary
 /// that number. Depends on: `Exercise`, `ExerciseID`, `ExerciseFilter`.
-protocol ExerciseCatalogProviding: Sendable {
+public protocol ExerciseCatalogProviding: Sendable {
     /// Which generation of `exercises.json` this catalog came from.
     var version: Int { get }
     var all: [Exercise] { get }
@@ -83,10 +87,10 @@ private struct CatalogFile: Decodable {
 
 /// The bundled catalog of exercises, held in memory.
 ///
-/// Build one with `bundled()` at app start and pass it down, or with
-/// `init(exercises:)` in tests. This is immutable reference data — it ships
-/// with the app and is never written at runtime, which is why it is not a
-/// SwiftData model.
+/// Build one with `bundled()` at launch and pass it down, or with
+/// `init(exercises:)` for an empty or fixture catalog. This is immutable
+/// reference data — it ships inside this package and is never written at
+/// runtime, which is why it is not a SwiftData model.
 ///
 /// `version` identifies which generation of `exercises.json` produced this
 /// catalog. `TrainingPlan.catalogVersion` stamps a plan with the version that
@@ -95,29 +99,34 @@ private struct CatalogFile: Decodable {
 /// under an older version instead of silently changing what they mean.
 ///
 /// Depends on: `Exercise` and the taxonomies. No persistence, no UI.
-struct ExerciseCatalog: ExerciseCatalogProviding {
+public struct ExerciseCatalog: ExerciseCatalogProviding {
 
-    let all: [Exercise]
-    let version: Int
+    public let all: [Exercise]
+    public let version: Int
     private let byID: [ExerciseID: Exercise]
 
     /// Builds an in-memory catalog directly from exercises, bypassing
     /// `exercises.json`. Used by tests and previews that need a small
     /// fixture; `version` defaults to 1 since those callers rarely care
     /// which version they're pinned to.
-    init(exercises: [Exercise], version: Int = 1) {
+    public init(exercises: [Exercise], version: Int = 1) {
         self.all = exercises.sorted { $0.displayName < $1.displayName }
         self.version = version
         self.byID = Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
-    /// Loads `exercises.json` from the app bundle.
+    /// Loads `exercises.json` from this package's resource bundle.
+    ///
+    /// The file ships inside `LiftingKit`, not inside any client, so it
+    /// resolves through `Bundle.module` and is found identically from the iOS
+    /// app and from a macOS command-line tool. There is deliberately no bundle
+    /// parameter: the resource has exactly one home.
     ///
     /// Throws `CatalogError.resourceMissing` if the resource is absent, and a
-    /// `DecodingError` if it is malformed. Both are programmer errors that must
+    /// `DecodingError` if it is malformed. Both are build defects that must
     /// fail loudly rather than yield a silently empty catalog.
-    static func bundled(bundle: Bundle = .main) throws -> ExerciseCatalog {
-        guard let url = bundle.url(forResource: "exercises", withExtension: "json") else {
+    public static func bundled() throws -> ExerciseCatalog {
+        guard let url = Bundle.module.url(forResource: "exercises", withExtension: "json") else {
             throw CatalogError.resourceMissing("exercises.json")
         }
         let data = try Data(contentsOf: url)
@@ -125,11 +134,11 @@ struct ExerciseCatalog: ExerciseCatalogProviding {
         return ExerciseCatalog(exercises: file.exercises, version: file.version)
     }
 
-    func exercise(id: ExerciseID) -> Exercise? { byID[id] }
+    public func exercise(id: ExerciseID) -> Exercise? { byID[id] }
 
     /// Case-insensitive match on display name and aliases, ranked so that
     /// names beginning with the query come first.
-    func search(_ query: String, limit: Int) -> [Exercise] {
+    public func search(_ query: String, limit: Int) -> [Exercise] {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !needle.isEmpty else { return Array(all.prefix(limit)) }
         return all
@@ -144,13 +153,13 @@ struct ExerciseCatalog: ExerciseCatalogProviding {
             .map { $0 }
     }
 
-    func exercises(matching filter: ExerciseFilter) -> [Exercise] {
+    public func exercises(matching filter: ExerciseFilter) -> [Exercise] {
         all.filter(filter.matches)
     }
 
     /// Other exercises training the same pattern, closest first — those sharing
     /// primary muscles rank above those that merely share the pattern.
-    func substitutes(for id: ExerciseID, limit: Int) -> [Exercise] {
+    public func substitutes(for id: ExerciseID, limit: Int) -> [Exercise] {
         guard let original = byID[id] else { return [] }
         let originalMuscles = Set(original.primaryMuscles)
         return all

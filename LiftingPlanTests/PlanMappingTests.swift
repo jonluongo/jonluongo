@@ -1,5 +1,6 @@
 import Testing
 @testable import LiftingPlan
+import LiftingKit
 
 @Suite("Plan blueprint mapping")
 struct PlanMappingTests {

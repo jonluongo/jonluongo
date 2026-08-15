@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import LiftingKit
 
 /// One training day within a week.
 ///

@@ -1,4 +1,5 @@
 import Foundation
+import LiftingKit
 
 /// One session's top-set result for an exercise, used to plot a strength
 /// trend over time.

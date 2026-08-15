@@ -5,32 +5,33 @@ import Foundation
 /// The raw value is the MoveKit slug (`barbell-bench-press`), which is what
 /// makes their animation files drop in without a mapping layer. Treat it as an
 /// opaque key: never parse it, never display it. Depends on: Foundation only.
-struct ExerciseID: Codable, Hashable, Sendable, CustomStringConvertible {
-    let rawValue: String
+public struct ExerciseID: Codable, Hashable, Sendable, CustomStringConvertible {
+    public let rawValue: String
 
-    init(rawValue: String) {
+    public init(rawValue: String) {
         self.rawValue = rawValue.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
-    init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         self.init(rawValue: try container.decode(String.self))
     }
 
-    func encode(to encoder: any Encoder) throws {
+    public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(rawValue)
     }
 
-    var description: String { rawValue }
+    public var description: String { rawValue }
 }
 
 /// One entry in the bundled exercise catalog.
 ///
-/// Read these from `ExerciseCatalogProviding` rather than constructing them,
-/// except in tests. Instances are immutable reference data: they ship with the
-/// app, are never written at runtime, and are never persisted to the user's
-/// database — user records store an `ExerciseID` instead.
+/// Read these from `ExerciseCatalogProviding`; there is no public initializer,
+/// so an entry outside the catalog cannot be minted. Instances are immutable
+/// reference data: they ship inside this package, are never written at runtime,
+/// and are never persisted to the user's database — user records store an
+/// `ExerciseID` instead.
 ///
 /// Decoding is deliberately lenient. Absent collections default to empty and
 /// unknown keys are ignored, so a catalog produced by a newer build still loads
@@ -38,27 +39,30 @@ struct ExerciseID: Codable, Hashable, Sendable, CustomStringConvertible {
 /// `pattern`, and `category` are required.
 ///
 /// Depends on: the taxonomies in `Taxonomies.swift`.
-struct Exercise: Codable, Hashable, Sendable, Identifiable {
+public struct Exercise: Codable, Hashable, Sendable, Identifiable {
 
-    let id: ExerciseID
-    let displayName: String
+    public let id: ExerciseID
+    public let displayName: String
     /// Alternate names, used by `ExerciseResolver` and search.
-    let aliases: [String]
-    let primaryMuscles: [MuscleGroup]
-    let secondaryMuscles: [MuscleGroup]
-    let equipment: EquipmentType
-    let pattern: MovementPattern
-    let force: ForceType?
-    let mechanic: Mechanic?
-    let category: ExerciseCategory
-    let instructions: [String]
+    public let aliases: [String]
+    public let primaryMuscles: [MuscleGroup]
+    public let secondaryMuscles: [MuscleGroup]
+    public let equipment: EquipmentType
+    public let pattern: MovementPattern
+    public let force: ForceType?
+    public let mechanic: Mechanic?
+    public let category: ExerciseCategory
+    public let instructions: [String]
     /// Bundle filename of a demonstration animation, or `nil` when none ships.
-    let mediaAsset: String?
+    public let mediaAsset: String?
     /// How much training experience the movement asks for. Defaults to
     /// `.intermediate` so a catalog written before this field existed still
     /// loads with a reasonable value rather than failing to decode.
-    let difficulty: Difficulty
+    public let difficulty: Difficulty
 
+    /// Internal by design: outside this package an `Exercise` comes from the
+    /// catalog or from decoding `exercises.json`, never from a literal, so a
+    /// client cannot mint an entry the catalog does not have.
     init(
         id: ExerciseID,
         displayName: String,
@@ -89,7 +93,7 @@ struct Exercise: Codable, Hashable, Sendable, Identifiable {
         self.difficulty = difficulty
     }
 
-    init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
             id: try container.decode(ExerciseID.self, forKey: .id),
@@ -109,12 +113,15 @@ struct Exercise: Codable, Hashable, Sendable, Identifiable {
     }
 
     /// Lowercased haystack of the display name and every alias, for search and
-    /// resolution.
+    /// resolution. Internal: it exists to serve `ExerciseCatalog.search`, and
+    /// no client of this package reads it.
     var searchText: String {
         ([displayName] + aliases).joined(separator: " ").lowercased()
     }
 
     /// Whether this is resistance training, as opposed to cardio or stretching.
+    /// Internal until a client needs it; `ExerciseFilter(categories:)` is the
+    /// public way to ask the same question of the catalog.
     var isResistanceTraining: Bool {
         ExerciseCategory.resistance.contains(category)
     }

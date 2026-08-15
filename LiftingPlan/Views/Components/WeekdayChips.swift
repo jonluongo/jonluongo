@@ -1,4 +1,5 @@
 import SwiftUI
+import LiftingKit
 
 /// A row of tappable day chips for choosing which days to train.
 struct WeekdayChips: View {

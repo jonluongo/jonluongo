@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import LiftingKit
 
 /// What the lifter can currently do on a given exercise.
 ///

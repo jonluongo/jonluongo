@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import LiftingPlan
+@testable import LiftingKit
 
 @Suite("RepRange")
 struct RepRangeTests {

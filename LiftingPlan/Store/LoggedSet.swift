@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import LiftingKit
 
 /// One set of one exercise, as the lifter logged it.
 ///

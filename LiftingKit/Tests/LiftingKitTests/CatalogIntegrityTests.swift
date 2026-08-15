@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import LiftingPlan
+@testable import LiftingKit
 
 @Suite("Catalog integrity")
 struct CatalogIntegrityTests {
@@ -15,6 +15,44 @@ struct CatalogIntegrityTests {
     @Test("The catalog holds exactly the 412 MoveKit exercises")
     func count() throws {
         #expect(try loaded().all.count == 412)
+    }
+
+    /// Both bundled files now live in the package rather than the app bundle,
+    /// so they resolve through `Bundle.module`. A resource that fails to
+    /// resolve does not look like an error — it looks like an empty catalog —
+    /// which is exactly why this asserts the URLs rather than trusting the
+    /// build to have copied them.
+    ///
+    /// `assembly-rules.json` is deliberately decoded by nothing in Swift: every
+    /// number in it is a training opinion, and the app makes no training
+    /// decisions. It ships as material Claude reads. That is precisely why it
+    /// needs a test — nothing else would notice if it stopped shipping.
+    @Test("Both bundled reference files resolve from the package bundle")
+    func bundledResourcesResolve() throws {
+        let exercises = try #require(
+            Bundle.module.url(forResource: "exercises", withExtension: "json"),
+            "exercises.json did not resolve from Bundle.module"
+        )
+        let rules = try #require(
+            Bundle.module.url(forResource: "assembly-rules", withExtension: "json"),
+            "assembly-rules.json did not resolve from Bundle.module"
+        )
+
+        // Read and parse both, so a zero-byte or truncated copy fails here
+        // rather than surfacing as absent data somewhere downstream.
+        for url in [exercises, rules] {
+            let data = try Data(contentsOf: url)
+            #expect(!data.isEmpty, "\(url.lastPathComponent) is empty")
+            let parsed = try JSONSerialization.jsonObject(with: data)
+            let object = try #require(
+                parsed as? [String: Any],
+                "\(url.lastPathComponent) is not a JSON object"
+            )
+            #expect(
+                object["version"] is Int,
+                "\(url.lastPathComponent) carries no version stamp"
+            )
+        }
     }
 
     /// The version the shipped `exercises.json` must declare. Pinned rather

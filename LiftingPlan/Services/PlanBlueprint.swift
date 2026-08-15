@@ -1,4 +1,5 @@
 import Foundation
+import LiftingKit
 
 /// A plain-value description of a plan the app has been handed.
 ///

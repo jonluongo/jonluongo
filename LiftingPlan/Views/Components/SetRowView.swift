@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import LiftingKit
 
 /// One editable set row: a set badge, the previous session's result, inline
 /// weight and reps fields, and a check to complete it (which starts the rest

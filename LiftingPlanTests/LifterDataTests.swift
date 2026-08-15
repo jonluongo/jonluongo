@@ -2,6 +2,7 @@ import Testing
 import SwiftData
 import Foundation
 @testable import LiftingPlan
+import LiftingKit
 
 @Suite("Lifter data")
 struct LifterDataTests {

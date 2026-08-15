@@ -1,5 +1,5 @@
 import Testing
-@testable import LiftingPlan
+@testable import LiftingKit
 
 @Suite("Equipment access")
 struct EquipmentAccessTests {

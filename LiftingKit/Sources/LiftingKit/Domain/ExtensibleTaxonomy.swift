@@ -11,9 +11,11 @@ import Foundation
 /// what UI pickers and validation should enumerate. `rawValue` is canonicalized
 /// on creation — trimmed and lowercased — so casing never fragments identity.
 ///
-/// Depends on: Foundation only.
-protocol ExtensibleTaxonomy: RawRepresentable, Codable, Hashable, Sendable,
-                             CustomStringConvertible
+/// Depends on: Foundation only. Vended by the `LiftingKit` package, which both
+/// the iOS app and the macOS MCP server link, so both agree on what a muscle
+/// group or a piece of equipment is.
+public protocol ExtensibleTaxonomy: RawRepresentable, Codable, Hashable, Sendable,
+                                    CustomStringConvertible
 where RawValue == String {
     init(rawValue: String)
     /// The values this build recognizes. Not exhaustive of what may decode.
@@ -23,22 +25,25 @@ where RawValue == String {
 extension ExtensibleTaxonomy {
 
     /// Trimmed and lowercased, so `"  Chest "` and `"chest"` are one value.
+    ///
+    /// Internal: canonicalization is how conformers in this module build
+    /// themselves, not something a client does.
     static func canonicalized(_ raw: String) -> String {
         raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
-    init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         self.init(rawValue: try container.decode(String.self))
     }
 
-    func encode(to encoder: any Encoder) throws {
+    public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(rawValue)
     }
 
-    var description: String { rawValue }
+    public var description: String { rawValue }
 
     /// Whether this build recognizes the value, as opposed to merely carrying it.
-    var isKnown: Bool { Self.known.contains(self) }
+    public var isKnown: Bool { Self.known.contains(self) }
 }

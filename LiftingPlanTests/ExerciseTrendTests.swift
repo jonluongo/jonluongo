@@ -1,6 +1,7 @@
 import Testing
 import Foundation
 @testable import LiftingPlan
+import LiftingKit
 
 @Suite("Exercise trend")
 struct ExerciseTrendTests {

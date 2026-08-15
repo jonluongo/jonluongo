@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import Charts
+import LiftingKit
 
 /// Progress over time: every exercise you've logged, with a strength trend and
 /// a "pushing" indicator so you can see intensity climbing.
