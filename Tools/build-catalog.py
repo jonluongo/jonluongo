@@ -341,21 +341,16 @@ def build() -> int:
         catalog.append(entry)
 
     catalog.sort(key=lambda e: e["id"])
-    output = {"version": CATALOG_VERSION, "exercises": catalog}
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(output, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
 
+    # Every gate runs BEFORE the write, so a rejected build leaves the
+    # previous catalog on disk untouched rather than a fabricated one plus a
+    # non-zero exit code nobody reads. This ordering is what makes
+    # report_fallthrough's promise ("cannot be written at all") literally true.
     ids = [e["id"] for e in catalog]
     if len(set(ids)) != len(ids):
         print("FAIL: duplicate ids", file=sys.stderr)
         return 1
 
-    print(f"wrote {len(catalog)} exercises to {OUT.relative_to(ROOT)}")
-    print(f"  enriched from free-exercise-db: {enriched}")
-    print(f"  hand-authored overrides:        {overridden}")
-    print(f"  difficulty from free-exercise-db level: {fedb_difficulty}")
-    difficulty_counts = collections.Counter(e["difficulty"] for e in catalog)
-    print(f"  difficulty distribution: {dict(sorted(difficulty_counts.items()))}")
     print(f"  fell through to defaultPattern ({rules['defaultPattern']!r}): "
           f"{len(pattern_fallthrough)}")
     if pattern_fallthrough:
@@ -369,7 +364,21 @@ def build() -> int:
         "pattern", pattern_fallthrough, rules["acknowledgedPatternFallthrough"])
     failures += report_fallthrough(
         "equipment", equipment_fallthrough, rules["acknowledgedEquipmentFallthrough"])
-    return 1 if failures else 0
+    if failures:
+        print(f"FAIL: refusing to write {OUT.relative_to(ROOT)}", file=sys.stderr)
+        return 1
+
+    output = {"version": CATALOG_VERSION, "exercises": catalog}
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(output, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
+
+    print(f"wrote {len(catalog)} exercises to {OUT.relative_to(ROOT)}")
+    print(f"  enriched from free-exercise-db: {enriched}")
+    print(f"  hand-authored overrides:        {overridden}")
+    print(f"  difficulty from free-exercise-db level: {fedb_difficulty}")
+    difficulty_counts = collections.Counter(e["difficulty"] for e in catalog)
+    print(f"  difficulty distribution: {dict(sorted(difficulty_counts.items()))}")
+    return 0
 
 
 def report_fallthrough(field: str, actual: list[str], acknowledged: list[str]) -> int:
