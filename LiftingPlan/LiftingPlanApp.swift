@@ -1,9 +1,11 @@
 import SwiftUI
 import SwiftData
+import OSLog
 import LiftingKit
 
 @main
 struct LiftingPlanApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     /// One shared exercise catalog and one shared rest timer for the whole app.
     ///
     /// This is the composition root: the bundled catalog is loaded once here
@@ -36,6 +38,40 @@ struct LiftingPlanApp: App {
                 .task { restTimer.requestNotificationAuthorization() }
         }
         .modelContainer(container)
+        // Exporting on background, rather than behind a button, is what keeps
+        // the snapshot honest: a coach reading a stale document is confidently
+        // wrong, which is worse than one reading nothing, because stale data
+        // does not look like absence. Backgrounding is the moment the lifter
+        // has finished with the app and the log is complete.
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .background else { return }
+            exportSnapshot()
+        }
+    }
+
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "LiftingPlan", category: "snapshot"
+    )
+
+    /// Writes the current state of the store where Claude can read it.
+    ///
+    /// The failure is logged rather than propagated because there is nowhere
+    /// to propagate it to: the app is already leaving the screen, so no UI can
+    /// present it. Nothing is lost — the store is the record and the next
+    /// background writes the snapshot again — so this is handling the error,
+    /// not discarding it.
+    @MainActor
+    private func exportSnapshot() {
+        do {
+            let snapshot = try SnapshotExporter.export(
+                from: container.mainContext, catalogVersion: catalog.version
+            )
+            try SnapshotFileWriter().write(snapshot)
+        } catch {
+            Self.logger.error(
+                "Snapshot export failed: \(error.localizedDescription, privacy: .public)"
+            )
+        }
     }
 }
 

@@ -2,7 +2,7 @@ import Foundation
 
 /// Days of the week the user can train on. `rawValue` matches `Calendar`'s
 /// 1-based weekday numbering (1 = Sunday) so it maps cleanly to date math.
-public enum Weekday: Int, CaseIterable, Codable, Identifiable, Comparable {
+public enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable, Comparable {
     case sunday = 1, monday, tuesday, wednesday, thursday, friday, saturday
 
     public var id: Int { rawValue }
@@ -43,7 +43,7 @@ public enum Weekday: Int, CaseIterable, Codable, Identifiable, Comparable {
 
 /// What equipment the lifter has access to — a fact about his gym, which
 /// `EquipmentAccess` turns into the concrete `EquipmentType`s it grants.
-public enum Equipment: String, CaseIterable, Codable, Identifiable {
+public enum Equipment: String, CaseIterable, Codable, Sendable, Identifiable {
     case fullGym = "Full gym"
     case dumbbellsOnly = "Dumbbells only"
     case homeMinimal = "Home / minimal"
@@ -53,7 +53,7 @@ public enum Equipment: String, CaseIterable, Codable, Identifiable {
 }
 
 /// Rough training age, as the lifter describes it. Recorded, not acted on.
-public enum ExperienceLevel: String, CaseIterable, Codable, Identifiable {
+public enum ExperienceLevel: String, CaseIterable, Codable, Sendable, Identifiable {
     case beginner = "Beginner"
     case intermediate = "Intermediate"
     case advanced = "Advanced"
