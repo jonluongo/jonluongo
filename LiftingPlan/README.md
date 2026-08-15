@@ -1,17 +1,20 @@
 # LiftingPlan
 
-An iOS app that turns casual lifting into progressively harder training. You tell
-it which days you train, how long you have, and your goal — it builds a weekly
-lifting plan, paces your rest between sets with automatic timers, logs your
-weights, and pushes you to do more next time.
+An iOS app for training seriously: it holds the exercise catalog, records what
+you were prescribed, paces your rest between sets with automatic timers, logs
+every set you lift, and shows you what your lifts are doing over time.
+
+**The app makes no training decisions.** It is the legos, the record, and the
+interface. Claude does the planning — over MCP — and the app stores whatever
+plan it is given, recorded exactly as given. It never clamps, floors, caps, or
+substitutes a prescribed value. Before a plan exists, it shows an empty state.
 
 ## Highlights
 
 - **Setup in three inputs** — pick training days, session duration, and type a goal.
-- **On-device plan generation** with Apple's **Foundation Models** framework
-  (`@Generable` guided generation). No account, no API key, fully private. Falls
-  back to built-in templates when Apple Intelligence isn't available, so the app
-  works on any device or simulator.
+- **A 412-exercise catalog** keyed by MoveKit slug, queryable by name, muscle,
+  equipment, pattern, and substitutability — bundled, versioned, never written
+  at runtime.
 - **Pace timers** — a rest countdown starts automatically the moment you log a
   set, with a progress ring, haptics, a sound, and a background local
   notification so the cue lands even with the screen locked. Optional per-rep
@@ -20,45 +23,50 @@ weights, and pushes you to do more next time.
   editable table of sets (`SET · PREVIOUS · LBS · REPS · ✓`). The **PREVIOUS**
   column shows last time's numbers, warmup rows are marked **W**, checking a set
   off tints it green and kicks off the rest timer. Persisted with **SwiftData**.
-- **Progressive overload** — a pure, unit-tested `ProgressionEngine` reads your
-  recent performance and recommends the next target (add load when reps are met
-  at a manageable effort, hold when it was a grind). That summary is fed back to
-  the model on regeneration so plans keep ratcheting up intensity.
+- **Previous performance, as reference** — the log shows what you did last time
+  next to what you were prescribed. It shows both; it substitutes neither.
 - **Progress view** — per-exercise strength trends (estimated 1RM) with Swift Charts.
 
 ## Requirements
 
 - Xcode 26+
 - iOS 26.0+ deployment target
-- Apple Intelligence–capable device for on-device AI generation (otherwise the
-  template engine is used automatically)
 
 ## Build & run
 
 Open `LiftingPlan.xcodeproj` in Xcode and run the `LiftingPlan` scheme on a
 simulator or device. No dependencies to fetch — the project uses only Apple
-frameworks (SwiftUI, SwiftData, FoundationModels, Charts, UserNotifications).
+frameworks (SwiftUI, SwiftData, Charts, UserNotifications).
 
 ## Architecture
 
-- **`LiftingPlanApp`** — app entry, SwiftData container, shared `PlanGenerator`
-  and `RestTimerModel`.
-- **`Models/`** — SwiftData `@Model` types: `TrainingPreferences`, `WorkoutPlan`,
-  `WorkoutSession`, `PlannedExercise`, `SetLog`.
+Four layers, importing only downward: `Domain/` → `Catalog/` → `Store/` →
+`Services/` → `Views/`. See the root `CLAUDE.md` for the binding version.
+
+- **`LiftingPlanApp`** — app entry, SwiftData container, the bundled catalog,
+  and the shared `RestTimerModel`.
+- **`Domain/`** — pure value types: `Mass`, `RepRange`, `Exercise`, the
+  taxonomies. Foundation only.
+- **`Catalog/`** — `ExerciseCatalog` (the lego box and the query surface) and
+  `ExerciseResolver` (free text → a real `ExerciseID`).
+- **`Store/`** — SwiftData `@Model` types: `UserProfile`, `TrainingPlan`,
+  `TrainingWeek`, `WorkoutDay`, `PlannedExercise`, `LoggedSet`,
+  `StrengthBaseline`, `BodyMetric`.
 - **`Services/`**
-  - `PlanGenerator` — Foundation Models wrapper + guided-generation schema, with
-    availability checks and a template fallback.
-  - `TemplatePlanBuilder` — deterministic plan generator.
-  - `PlanBlueprint` — plain-value plan representation and the single mapping into
-    SwiftData.
-  - `ProgressionEngine` — pure progression logic (the "push me" brain).
-  - `PerformanceHistory` — bridges persisted logs into the engine's value types.
+  - `PlanBlueprint` — plain-value plan representation and the single mapping
+    into SwiftData, which records what it is handed without alteration.
+  - `PerformanceHistory` — the one hierarchy traversal; joins logs on
+    `ExerciseID`.
+  - `ExerciseTrend` — per-exercise top-set and estimated-1RM series.
   - `RestTimerModel` — the date-based pace timer.
-  - `PlanCoordinator` — ties generation + persistence together.
 - **`Views/`** — `SetupView`, `PlanOverviewView`, `SessionDetailView`,
   `ActiveWorkoutView`, `HistoryView`, `SettingsView`, plus small components.
 
+`Catalog/Resources/assembly-rules.json` is inert reference material for Claude.
+No Swift code decodes it, by design.
+
 ## Tests
 
-Swift Testing suites cover the pure logic — progression decisions, blueprint
-mapping/clamping, the template builder, and rest-timer math. Run with `⌘U`.
+Swift Testing suites cover the pure layers — the exercise resolver, unit
+conversion, catalog integrity, blueprint mapping, trends, and rest-timer math.
+Run with `⌘U`.

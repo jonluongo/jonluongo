@@ -17,13 +17,10 @@ struct SetupView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Environment(PlanGenerator.self) private var generator
-    @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     @State private var selectedWeekdays: Set<Weekday> = []
     @State private var durationMinutes: Int?
     @State private var hasSeededSchedule = false
-    @State private var isGenerating = false
     @State private var errorMessage: String?
 
     private let durationOptions = [30, 45, 60, 75, 90]
@@ -44,9 +41,9 @@ struct SetupView: View {
             if isOnboarding {
                 Section {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Let's build your week")
+                        Text("Tell me about your training")
                             .font(.title2.bold())
-                        Text("Tell me when you train and what you're chasing. I'll turn your casual sessions into a plan that pushes you.")
+                        Text("When you train, how long you have, and what you're chasing. Your answers are yours to change any time.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -109,26 +106,9 @@ struct SetupView: View {
                     }
                     .fontWeight(.semibold)
                 }
-                .disabled(!canSave || isGenerating)
-            }
-
-            Section {
-                Button(action: generate) {
-                    HStack {
-                        Spacer()
-                        if isGenerating {
-                            ProgressView()
-                            Text("Building your plan…")
-                        } else {
-                            Image(systemName: "sparkles")
-                            Text("Generate a Plan")
-                        }
-                        Spacer()
-                    }
-                }
-                .disabled(!canSave || isGenerating)
+                .disabled(!canSave)
             } footer: {
-                Text(generator.availability.statusMessage)
+                Text("Saved to your profile so Claude can read it when planning your training.")
             }
         }
         .navigationTitle(isOnboarding ? "Welcome" : "Edit Setup")
@@ -140,7 +120,6 @@ struct SetupView: View {
                 }
             }
         }
-        .interactiveDismissDisabled(isGenerating)
         .onAppear(perform: seedScheduleIfNeeded)
         .alert("Couldn't Save", isPresented: errorAlertBinding) {
             Button("OK", role: .cancel) {}
@@ -176,27 +155,4 @@ struct SetupView: View {
         }
     }
 
-    private func generate() {
-        guard let durationMinutes, !selectedWeekdays.isEmpty else { return }
-        isGenerating = true
-        profile.updatedAt = Date()
-        Task {
-            do {
-                _ = try await PlanCoordinator.generateAndStore(
-                    profile: profile,
-                    weekdays: selectedWeekdays,
-                    durationMinutes: durationMinutes,
-                    generator: generator,
-                    context: context,
-                    existingPlans: plans
-                )
-                try context.saveOrThrow()
-                isGenerating = false
-                if !isOnboarding { dismiss() }
-            } catch {
-                isGenerating = false
-                errorMessage = (error as? PersistenceError)?.errorDescription ?? error.localizedDescription
-            }
-        }
-    }
 }

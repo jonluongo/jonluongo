@@ -1,24 +1,20 @@
 import SwiftUI
 import SwiftData
 
-/// Shows the current week's plan as a list of day cards, with regeneration and
-/// quick access into each session.
+/// Shows the current week's plan as a list of day cards, with quick access into
+/// each session.
+///
+/// Displays whatever plan is stored, exactly as stored, and shows an empty
+/// state when there is none — the app does not write plans. Presented as the
+/// first tab. Depends on: Store.
 struct PlanOverviewView: View {
     let profile: UserProfile
 
-    @Environment(\.modelContext) private var context
-    @Environment(PlanGenerator.self) private var generator
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
-    @State private var isGenerating = false
     @State private var showingEditSetup = false
-    @State private var errorMessage: String?
 
     private var currentPlan: TrainingPlan? { plans.first }
-
-    private var errorAlertBinding: Binding<Bool> {
-        Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
-    }
 
     var body: some View {
         Group {
@@ -28,47 +24,24 @@ struct PlanOverviewView: View {
                 ContentUnavailableView {
                     Label("No plan yet", systemImage: "dumbbell")
                 } description: {
-                    Text("Generate a plan to get started.")
-                } actions: {
-                    Button("Generate Plan", action: regenerate)
-                        .buttonStyle(.borderedProminent)
+                    Text("Your training is planned in conversation with Claude. Once a plan is written, it lands here — your week, your sessions, and every set you log against them.\n\nUntil then there is nothing to show. Your setup, your history, and the exercise catalog are all here and ready.")
                 }
             }
         }
         .navigationTitle("This Week")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    Button {
-                        regenerate()
-                    } label: {
-                        Label("Regenerate Week", systemImage: "arrow.triangle.2.circlepath")
-                    }
-                    Button {
-                        showingEditSetup = true
-                    } label: {
-                        Label("Edit Setup", systemImage: "slider.horizontal.3")
-                    }
+                Button {
+                    showingEditSetup = true
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Label("Edit Setup", systemImage: "slider.horizontal.3")
                 }
-                .disabled(isGenerating)
             }
         }
         .sheet(isPresented: $showingEditSetup) {
             NavigationStack {
                 SetupView(profile: profile, isOnboarding: false)
             }
-        }
-        .overlay {
-            if isGenerating {
-                generatingOverlay
-            }
-        }
-        .alert("Couldn't Save", isPresented: errorAlertBinding) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(errorMessage ?? "")
         }
     }
 
@@ -82,9 +55,9 @@ struct PlanOverviewView: View {
             if days.isEmpty {
                 Section {
                     ContentUnavailableView {
-                        Label("No workouts yet", systemImage: "calendar.badge.exclamationmark")
+                        Label("No sessions in this plan", systemImage: "calendar.badge.exclamationmark")
                     } description: {
-                        Text("Plan generation is being rebuilt against the full exercise catalog. Adjust your setup and regenerate once it's ready.")
+                        Text("This plan has no training days yet. They appear here as they're added.")
                     }
                 }
             } else {
@@ -101,39 +74,9 @@ struct PlanOverviewView: View {
         }
     }
 
-    private var generatingOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.25).ignoresSafeArea()
-            VStack(spacing: 12) {
-                ProgressView()
-                Text("Building your plan…").font(.subheadline)
-            }
-            .padding(24)
-            .background(.regularMaterial, in: .rect(cornerRadius: 16))
-        }
-    }
-
-    private func regenerate() {
-        isGenerating = true
-        Task {
-            do {
-                try await PlanCoordinator.generateAndStore(
-                    profile: profile,
-                    weekdays: currentPlan?.weekdays ?? [.monday, .wednesday, .friday],
-                    durationMinutes: currentPlan?.durationMinutes ?? 45,
-                    generator: generator,
-                    context: context,
-                    existingPlans: plans
-                )
-            } catch {
-                errorMessage = (error as? PersistenceError)?.errorDescription ?? error.localizedDescription
-            }
-            isGenerating = false
-        }
-    }
 }
 
-/// Summary card at the top of the plan: goal, source, and progress.
+/// Summary card at the top of the plan: goal, shape, and progress.
 private struct PlanHeaderCard: View {
     let plan: TrainingPlan
 
@@ -146,16 +89,13 @@ private struct PlanHeaderCard: View {
                 Text(plan.goal)
                     .font(.headline)
             } else {
-                Text("General strength & muscle")
+                Text("No goal set")
                     .font(.headline)
+                    .foregroundStyle(.secondary)
             }
-            HStack(spacing: 8) {
-                Label(plan.wasModelGenerated ? "AI-tailored" : "Template", systemImage: plan.wasModelGenerated ? "sparkles" : "square.grid.2x2")
-                Text("·")
-                Text("\(days.count) days · \(plan.durationMinutes) min")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            Text("\(days.count) days · \(plan.durationMinutes) min")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             ProgressView(value: Double(completedCount), total: Double(max(days.count, 1))) {
                 Text("\(completedCount) of \(days.count) sessions done")

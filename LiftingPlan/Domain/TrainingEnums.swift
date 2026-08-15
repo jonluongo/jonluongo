@@ -41,7 +41,8 @@ enum Weekday: Int, CaseIterable, Codable, Identifiable, Comparable {
     }
 }
 
-/// What equipment the lifter has access to. Shapes the exercises the model picks.
+/// What equipment the lifter has access to — a fact about his gym, which
+/// `EquipmentAccess` turns into the concrete `EquipmentType`s it grants.
 enum Equipment: String, CaseIterable, Codable, Identifiable {
     case fullGym = "Full gym"
     case dumbbellsOnly = "Dumbbells only"
@@ -49,30 +50,13 @@ enum Equipment: String, CaseIterable, Codable, Identifiable {
     case bodyweight = "Bodyweight only"
 
     var id: String { rawValue }
-
-    var promptDescription: String {
-        switch self {
-        case .fullGym: "a fully equipped commercial gym (barbells, machines, cables, dumbbells)"
-        case .dumbbellsOnly: "an adjustable set of dumbbells and a bench"
-        case .homeMinimal: "a minimal home setup (some dumbbells, resistance bands, a pull-up bar)"
-        case .bodyweight: "no equipment — bodyweight movements only"
-        }
-    }
 }
 
-/// Rough training age. Used to set volume, complexity, and how hard to push.
+/// Rough training age, as the lifter describes it. Recorded, not acted on.
 enum ExperienceLevel: String, CaseIterable, Codable, Identifiable {
     case beginner = "Beginner"
     case intermediate = "Intermediate"
     case advanced = "Advanced"
 
     var id: String { rawValue }
-
-    var promptDescription: String {
-        switch self {
-        case .beginner: "new to lifting (less than a year of consistent training)"
-        case .intermediate: "1–3 years of consistent training"
-        case .advanced: "3+ years of consistent, structured training"
-        }
-    }
 }

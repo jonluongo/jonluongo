@@ -1,12 +1,14 @@
 import SwiftUI
 import SwiftData
 
-/// Preferences summary, on-device model status, and data management.
+/// Summary of what the lifter has told us about himself, and data management.
+///
+/// Presented as the third tab. Reads `UserProfile` for the summary and every
+/// `TrainingPlan` for the reset. Depends on: Store.
 struct SettingsView: View {
     let profile: UserProfile
 
     @Environment(\.modelContext) private var context
-    @Environment(PlanGenerator.self) private var generator
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     @State private var showingEditSetup = false
@@ -34,20 +36,6 @@ struct SettingsView: View {
                     }
                 }
                 Button("Edit Setup") { showingEditSetup = true }
-            }
-
-            Section {
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: generator.availability.isAvailable ? "sparkles" : "square.grid.2x2")
-                        .foregroundStyle(generator.availability.isAvailable ? .orange : .secondary)
-                    Text(generator.availability.statusMessage)
-                        .font(.footnote)
-                }
-                .padding(.vertical, 2)
-            } header: {
-                Text("Plan engine")
-            } footer: {
-                Text("Plans are generated privately on your device. When Apple Intelligence isn't available, built-in templates are used so everything still works.")
             }
 
             Section {

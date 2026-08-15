@@ -14,7 +14,7 @@ struct SessionDetailView: View {
                     ContentUnavailableView {
                         Label("No exercises yet", systemImage: "dumbbell")
                     } description: {
-                        Text("This day has no prescribed exercises. Regenerate your plan once catalog-based generation is back.")
+                        Text("This day has no prescribed exercises yet.")
                     }
                 }
             } else {

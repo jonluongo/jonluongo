@@ -3,12 +3,12 @@ import SwiftData
 
 @main
 struct LiftingPlanApp: App {
-    /// One shared generator (holds on-device model availability and the
-    /// exercise catalog it builds plans from) and one shared rest timer for the
-    /// whole app. This is the composition root: the bundled catalog is loaded
-    /// once here and injected, so every plan the app stores is stamped with the
-    /// version of the data that produced it.
-    @State private var planGenerator: PlanGenerator
+    /// One shared exercise catalog and one shared rest timer for the whole app.
+    ///
+    /// This is the composition root: the bundled catalog is loaded once here
+    /// and injected, so everything that needs to answer a question about an
+    /// exercise reads the same data, stamped with the same version.
+    private let catalog: ExerciseCatalog
     @State private var restTimer = RestTimerModel()
     private let container: ModelContainer
 
@@ -17,11 +17,11 @@ struct LiftingPlanApp: App {
         // there is no UI yet to show an error from, and the catalog is a bundled
         // build product, so a missing or malformed one is a build defect. Both
         // surface loudly rather than degrading silently: an in-memory container
-        // would quietly stop persisting, and an empty catalog would stamp plans
-        // with a version that never produced them.
+        // would quietly stop persisting, and an empty catalog would leave the
+        // app unable to name a single exercise.
         do {
             container = try StoreContainer.cloudKit()
-            _planGenerator = State(initialValue: PlanGenerator(catalog: try ExerciseCatalog.bundled()))
+            catalog = try ExerciseCatalog.bundled()
         } catch {
             fatalError("Could not start LiftingPlan: \(error)")
         }
@@ -30,10 +30,20 @@ struct LiftingPlanApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environment(planGenerator)
+                .environment(\.exerciseCatalog, catalog)
                 .environment(restTimer)
                 .task { restTimer.requestNotificationAuthorization() }
         }
         .modelContainer(container)
     }
+}
+
+extension EnvironmentValues {
+    /// The bundled exercise catalog, loaded once at launch.
+    ///
+    /// Read it to answer questions about a movement — what it is called, what
+    /// it trains, what could stand in for it. The default is an empty catalog
+    /// so previews and tests need not supply one; the real app always injects
+    /// the bundled data from `LiftingPlanApp.init`.
+    @Entry var exerciseCatalog: any ExerciseCatalogProviding = ExerciseCatalog(exercises: [], version: 0)
 }
