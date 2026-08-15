@@ -19,7 +19,6 @@ enum StoreContainer {
         WorkoutDay.self,
         PlannedExercise.self,
         LoggedSet.self,
-        PlanMessage.self,
         BodyMetric.self,
         StrengthBaseline.self,
     ])

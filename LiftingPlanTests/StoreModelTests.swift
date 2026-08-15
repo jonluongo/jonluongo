@@ -115,22 +115,6 @@ struct StoreModelTests {
         #expect(try context.fetch(FetchDescriptor<LoggedSet>()).isEmpty)
     }
 
-    @Test("A plan owns its conversation, which is what makes it project-like")
-    func planOwnsConversation() throws {
-        let context = try context()
-        let plan = TrainingPlan(title: "Block", weekCount: 8)
-        plan.messages = [
-            PlanMessage(role: .assistant, text: "Built you an 8-week block.", createdAt: .distantPast),
-            PlanMessage(role: .user, text: "Make week 4 a deload", createdAt: .distantFuture),
-        ]
-        context.insert(plan)
-        try context.saveOrThrow()
-
-        let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
-        #expect(loaded.orderedMessages.map(\.role) == [.assistant, .user])
-        #expect(loaded.orderedMessages.first?.text.contains("8-week") == true)
-    }
-
     @Test("A plan records its training days and its length")
     func planRecordsScheduleAndLength() throws {
         let context = try context()
@@ -240,7 +224,6 @@ struct StoreModelTests {
         context.insert(WorkoutDay())
         context.insert(PlannedExercise())
         context.insert(LoggedSet())
-        context.insert(PlanMessage())
         try context.saveOrThrow()
     }
 }

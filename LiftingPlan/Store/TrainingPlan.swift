@@ -4,9 +4,8 @@ import SwiftData
 /// A training block: a fixed-length program the lifter is working through.
 ///
 /// This is the top of the user-data hierarchy and the unit the interface
-/// treats as a project — it owns its weeks and its conversation. A plan is
-/// finite by design, so finishing one is a real event the chat can respond to
-/// by proposing the next block.
+/// treats as a project — it owns its weeks. A plan is finite by design, so
+/// finishing one is a real event a future block can respond to.
 ///
 /// Every property has a default, as CloudKit requires.
 /// Depends on: `Weekday`.
@@ -32,9 +31,6 @@ final class TrainingPlan {
 
     @Relationship(deleteRule: .cascade, inverse: \TrainingWeek.plan)
     var weeks: [TrainingWeek]? = []
-
-    @Relationship(deleteRule: .cascade, inverse: \PlanMessage.plan)
-    var messages: [PlanMessage]? = []
 
     init(
         title: String = "", goal: String = "", startDate: Date = Date(),
@@ -63,11 +59,6 @@ final class TrainingPlan {
     /// Weeks in program order.
     var orderedWeeks: [TrainingWeek] {
         (weeks ?? []).sorted { $0.ordinal < $1.ordinal }
-    }
-
-    /// Conversation in chronological order.
-    var orderedMessages: [PlanMessage] {
-        (messages ?? []).sorted { $0.createdAt < $1.createdAt }
     }
 
     var isComplete: Bool { completedAt != nil }
