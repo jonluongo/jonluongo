@@ -1,15 +1,16 @@
 import SwiftUI
 import SwiftData
 
-/// Collects the three core inputs — days, duration, goal — plus equipment and
-/// experience, then generates a plan. Used both for first-run onboarding and for
-/// editing preferences later (as a sheet).
+/// Collects the standing facts about the lifter — training days, session
+/// length, goal, equipment, experience — and saves them to his `UserProfile`.
+/// Used both for first-run onboarding and for editing preferences later (as a
+/// sheet).
 ///
-/// Training days and session length live on the generated `TrainingPlan`, not
-/// on `UserProfile` — a later block can train a different split without
-/// touching the profile. This view holds them as local `@State`, seeded from
-/// the most recent plan (or sensible defaults when there is none yet), and
-/// hands them to `PlanCoordinator` when generating.
+/// Saving is what completes setup; there is nothing else to wait for. The
+/// view collects, it does not conclude: nothing here decides what the lifter
+/// should train, only what he told us about himself.
+///
+/// Depends on: `UserProfile` from Store and `Weekday` from Domain.
 struct SetupView: View {
     @Bindable var profile: UserProfile
     var isOnboarding: Bool
@@ -19,13 +20,16 @@ struct SetupView: View {
     @Environment(PlanGenerator.self) private var generator
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
-    @State private var selectedWeekdays: Set<Weekday> = [.monday, .wednesday, .friday]
-    @State private var durationMinutes = 45
+    @State private var selectedWeekdays: Set<Weekday> = []
+    @State private var durationMinutes: Int?
     @State private var hasSeededSchedule = false
     @State private var isGenerating = false
     @State private var errorMessage: String?
 
     private let durationOptions = [30, 45, 60, 75, 90]
+
+    /// Setup is answerable only once the lifter has said when and how long.
+    private var canSave: Bool { !selectedWeekdays.isEmpty && durationMinutes != nil }
 
     private var weekdaySelection: Binding<Set<Weekday>> {
         Binding(get: { selectedWeekdays }, set: { selectedWeekdays = $0 })
@@ -63,10 +67,15 @@ struct SetupView: View {
             Section("How long per workout?") {
                 Picker("Duration", selection: $durationMinutes) {
                     ForEach(durationOptions, id: \.self) { minutes in
-                        Text("\(minutes) min").tag(minutes)
+                        Text("\(minutes) min").tag(Int?.some(minutes))
                     }
                 }
                 .pickerStyle(.segmented)
+                if durationMinutes == nil {
+                    Text("Pick a session length.")
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                }
             }
 
             Section("What's your goal?") {
@@ -92,21 +101,32 @@ struct SetupView: View {
             }
 
             Section {
-                Button(action: generate) {
+                Button(action: completeSetup) {
                     HStack {
                         Spacer()
-                        if isGenerating {
-                            ProgressView().tint(.white)
-                            Text("Building your plan…")
-                        } else {
-                            Image(systemName: "sparkles")
-                            Text(isOnboarding ? "Generate My Plan" : "Save & Regenerate Plan")
-                        }
+                        Text(isOnboarding ? "Save & Continue" : "Save")
                         Spacer()
                     }
                     .fontWeight(.semibold)
                 }
-                .disabled(selectedWeekdays.isEmpty || isGenerating)
+                .disabled(!canSave || isGenerating)
+            }
+
+            Section {
+                Button(action: generate) {
+                    HStack {
+                        Spacer()
+                        if isGenerating {
+                            ProgressView()
+                            Text("Building your plan…")
+                        } else {
+                            Image(systemName: "sparkles")
+                            Text("Generate a Plan")
+                        }
+                        Spacer()
+                    }
+                }
+                .disabled(!canSave || isGenerating)
             } footer: {
                 Text(generator.availability.statusMessage)
             }
@@ -129,19 +149,35 @@ struct SetupView: View {
         }
     }
 
-    /// Seed the local day/duration selection from the most recent plan the
-    /// first time this view appears, so editing setup starts from what's
-    /// actually scheduled rather than silently resetting it.
+    /// Seed the local day/duration selection from what the lifter last said,
+    /// the first time this view appears, so editing setup starts from his
+    /// stated schedule rather than silently resetting it. Both stay unset when
+    /// he has never said.
     private func seedScheduleIfNeeded() {
         guard !hasSeededSchedule else { return }
         hasSeededSchedule = true
-        guard let latest = plans.first else { return }
-        selectedWeekdays = latest.weekdays
-        durationMinutes = latest.durationMinutes
+        selectedWeekdays = profile.preferredWeekdays
+        durationMinutes = profile.preferredDurationMinutes
+    }
+
+    /// Writes what the lifter said to his profile and marks setup done. Setup
+    /// is complete when he has answered — it waits on nothing else.
+    private func completeSetup() {
+        guard canSave else { return }
+        profile.preferredWeekdays = selectedWeekdays
+        profile.preferredDurationMinutes = durationMinutes
+        profile.updatedAt = Date()
+        profile.hasCompletedSetup = true
+        do {
+            try context.saveOrThrow()
+            if !isOnboarding { dismiss() }
+        } catch {
+            errorMessage = (error as? PersistenceError)?.errorDescription ?? error.localizedDescription
+        }
     }
 
     private func generate() {
-        guard !selectedWeekdays.isEmpty else { return }
+        guard let durationMinutes, !selectedWeekdays.isEmpty else { return }
         isGenerating = true
         profile.updatedAt = Date()
         Task {
@@ -154,7 +190,6 @@ struct SetupView: View {
                     context: context,
                     existingPlans: plans
                 )
-                profile.hasCompletedSetup = true
                 try context.saveOrThrow()
                 isGenerating = false
                 if !isOnboarding { dismiss() }

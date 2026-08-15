@@ -1,7 +1,12 @@
 import Foundation
 import SwiftData
 
-/// Who the lifter is: the standing facts that shape every generated plan.
+/// Who the lifter is: the standing facts he has stated about himself, his
+/// equipment, and when he wants to train.
+///
+/// This is a record of what he said, not a set of conclusions drawn from it —
+/// what to do with these facts is decided elsewhere. Read it to answer
+/// questions about the lifter.
 ///
 /// Exactly one instance is expected. CloudKit forbids unique constraints, so
 /// that invariant is enforced in application code rather than by the schema.
@@ -9,9 +14,8 @@ import SwiftData
 /// shown; it never rewrites what was already logged. `avoidedPatterns` and
 /// `avoidedExercises` make the free-text `constraints` field enforceable
 /// rather than merely advisory: `constraints` still carries nuance ("my left
-/// shoulder hurts overhead") that a list cannot express and that the model
-/// reads directly, but the structured lists are what `permits(...)` can
-/// actually filter the catalog on.
+/// shoulder hurts overhead") that a list cannot express, but the structured
+/// lists are what `permits(...)` can actually filter the catalog on.
 ///
 /// Every property has a default, as CloudKit requires.
 /// Depends on: `Mass` and `ExerciseID`, `MovementPattern` from Domain.
@@ -29,6 +33,10 @@ final class UserProfile {
     var bodyweight: Mass?
     private var avoidedPatternRawValues: [String] = []
     private var avoidedExerciseRawValues: [String] = []
+    /// The days the lifter said he wants to train. Empty means he has not said.
+    private var preferredWeekdayRawValues: [Int] = []
+    /// How long he wants a session to run. `nil` means he has not said.
+    var preferredDurationMinutes: Int?
     var hasCompletedSetup: Bool = false
     var updatedAt: Date = Date()
 
@@ -38,6 +46,7 @@ final class UserProfile {
         equipmentAccess: Equipment = .fullGym,
         goal: String = "", constraints: String = "", bodyweight: Mass? = nil,
         avoidedPatterns: Set<MovementPattern> = [], avoidedExercises: Set<ExerciseID> = [],
+        preferredWeekdays: Set<Weekday> = [], preferredDurationMinutes: Int? = nil,
         hasCompletedSetup: Bool = false
     ) {
         self.displayUnitRaw = displayUnit.rawValue
@@ -48,6 +57,8 @@ final class UserProfile {
         self.bodyweight = bodyweight
         self.avoidedPatternRawValues = avoidedPatterns.map(\.rawValue).sorted()
         self.avoidedExerciseRawValues = avoidedExercises.map(\.rawValue).sorted()
+        self.preferredWeekdayRawValues = preferredWeekdays.map(\.rawValue).sorted()
+        self.preferredDurationMinutes = preferredDurationMinutes
         self.hasCompletedSetup = hasCompletedSetup
         self.updatedAt = Date()
     }
@@ -83,6 +94,20 @@ final class UserProfile {
     var avoidedExercises: Set<ExerciseID> {
         get { Set(avoidedExerciseRawValues.map(ExerciseID.init(rawValue:))) }
         set { avoidedExerciseRawValues = newValue.map(\.rawValue).sorted() }
+    }
+
+    /// The days the lifter wants to train, as stated in setup. This is his
+    /// availability, not a schedule the app chose; an empty set means he has
+    /// not said yet. A `TrainingPlan` records the days it actually trains,
+    /// which need not match.
+    var preferredWeekdays: Set<Weekday> {
+        get { Set(preferredWeekdayRawValues.compactMap(Weekday.init(rawValue:))) }
+        set { preferredWeekdayRawValues = newValue.map(\.rawValue).sorted() }
+    }
+
+    /// Training days in Monday-first display order.
+    var orderedPreferredWeekdays: [Weekday] {
+        Weekday.displayOrder.filter { preferredWeekdays.contains($0) }
     }
 
     /// Whether this lifter's constraints allow the movement pattern.

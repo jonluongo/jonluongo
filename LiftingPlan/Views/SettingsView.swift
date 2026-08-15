@@ -13,8 +13,6 @@ struct SettingsView: View {
     @State private var showingResetConfirm = false
     @State private var errorMessage: String?
 
-    private var currentPlan: TrainingPlan? { plans.first }
-
     private var errorAlertBinding: Binding<Bool> {
         Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
     }
@@ -23,9 +21,10 @@ struct SettingsView: View {
         List {
             Section("Your setup") {
                 LabeledContent("Days") {
-                    Text(currentPlan.map { $0.orderedWeekdays.map(\.shortName).joined(separator: " ") } ?? "Not set yet")
+                    let days = profile.orderedPreferredWeekdays
+                    Text(days.isEmpty ? "Not set yet" : days.map(\.shortName).joined(separator: " "))
                 }
-                LabeledContent("Duration", value: currentPlan.map { "\($0.durationMinutes) min" } ?? "—")
+                LabeledContent("Duration", value: profile.preferredDurationMinutes.map { "\($0) min" } ?? "Not set yet")
                 LabeledContent("Equipment", value: profile.equipmentAccess.rawValue)
                 LabeledContent("Experience", value: profile.experience.rawValue)
                 if !profile.goal.isEmpty {

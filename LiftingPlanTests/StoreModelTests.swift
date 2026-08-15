@@ -177,6 +177,32 @@ struct StoreModelTests {
         #expect(!loaded.permittedEquipment.contains(.barbell))
     }
 
+    @Test("A profile round-trips the schedule the lifter stated in setup")
+    func profileRoundTripsStatedSchedule() throws {
+        let context = try context()
+        context.insert(UserProfile(
+            preferredWeekdays: [.friday, .tuesday], preferredDurationMinutes: 75
+        ))
+        try context.saveOrThrow()
+
+        let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
+        #expect(loaded.preferredWeekdays == [.tuesday, .friday])
+        #expect(loaded.orderedPreferredWeekdays == [.tuesday, .friday])
+        #expect(loaded.preferredDurationMinutes == 75)
+    }
+
+    @Test("A profile that has said nothing about its schedule stores nothing")
+    func profileStatesNoScheduleByDefault() throws {
+        let context = try context()
+        context.insert(UserProfile())
+        try context.saveOrThrow()
+
+        let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
+        #expect(loaded.preferredWeekdays.isEmpty)
+        #expect(loaded.preferredDurationMinutes == nil)
+        #expect(!loaded.hasCompletedSetup)
+    }
+
     @Test("Every model property is optional or defaulted, as CloudKit requires")
     func cloudKitCompatible() throws {
         // Constructing each model with no arguments proves every property
