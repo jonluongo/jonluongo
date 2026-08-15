@@ -53,7 +53,14 @@ struct ExerciseFilter: Hashable, Sendable {
 ///
 /// Depend on this rather than `ExerciseCatalog` so tests and previews can
 /// supply a small fixture instead of loading 412 bundled entries.
+///
+/// `version` is part of the seam deliberately: a service that selects
+/// exercises must be able to record which generation of the data it selected
+/// from (see `TrainingPlan.catalogVersion`), and a fake must be able to vary
+/// that number. Depends on: `Exercise`, `ExerciseID`, `ExerciseFilter`.
 protocol ExerciseCatalogProviding: Sendable {
+    /// Which generation of `exercises.json` this catalog came from.
+    var version: Int { get }
     var all: [Exercise] { get }
     func exercise(id: ExerciseID) -> Exercise?
     func search(_ query: String, limit: Int) -> [Exercise]

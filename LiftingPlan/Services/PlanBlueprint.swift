@@ -5,7 +5,8 @@ import Foundation
 /// thing we map into SwiftData — which keeps that mapping easy to unit-test.
 ///
 /// Produced by `PlanGenerator`/`TemplatePlanBuilder`, turned into a persisted
-/// `TrainingPlan` by `makeWorkoutPlan(goal:durationMinutes:wasModelGenerated:)`
+/// `TrainingPlan` by
+/// `makeWorkoutPlan(goal:durationMinutes:wasModelGenerated:catalogVersion:)`
 /// below. Depends on: `DayBlueprint`.
 struct PlanBlueprint: Equatable {
     var days: [DayBlueprint]
@@ -49,12 +50,25 @@ extension PlanBlueprint {
     /// this maps it into exactly one concrete week rather than inventing
     /// additional weeks; prescribing genuinely different work across a
     /// multi-week block (e.g. a deload) is out of scope here.
-    func makeWorkoutPlan(goal: String, durationMinutes: Int, wasModelGenerated: Bool) -> TrainingPlan {
+    ///
+    /// `catalogVersion` is the `ExerciseCatalogProviding.version` these
+    /// exercises were selected from; it is stamped onto the plan so a later
+    /// correction to the catalog data can be detected rather than silently
+    /// reinterpreting logged work. It has deliberately no default value — the
+    /// stamp is only meaningful if every caller states where its exercises came
+    /// from, so the compiler asks rather than a wrong value being assumed.
+    func makeWorkoutPlan(
+        goal: String,
+        durationMinutes: Int,
+        wasModelGenerated: Bool,
+        catalogVersion: Int
+    ) -> TrainingPlan {
         let plan = TrainingPlan(
             goal: goal,
             weekCount: 1,
             durationMinutes: durationMinutes,
-            wasModelGenerated: wasModelGenerated
+            wasModelGenerated: wasModelGenerated,
+            catalogVersion: catalogVersion
         )
         let week = TrainingWeek(ordinal: 1)
         week.days = days.map { day in

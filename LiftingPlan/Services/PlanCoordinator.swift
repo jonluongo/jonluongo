@@ -13,7 +13,10 @@ enum PlanCoordinator {
 
     /// Generate a new plan for `weekdays`/`durationMinutes` and store it.
     /// Existing plans feed the progression summary so intensity keeps climbing.
-    /// Throws `PersistenceError` if the save fails — callers must surface it.
+    /// The stored plan is stamped with the catalog version the generator
+    /// reports, so a later correction to the catalog data can be detected
+    /// against it. Throws `PersistenceError` if the save fails — callers must
+    /// surface it.
     @discardableResult
     static func generateAndStore(
         profile: UserProfile,
@@ -36,7 +39,8 @@ enum PlanCoordinator {
         let plan = result.blueprint.makeWorkoutPlan(
             goal: profile.goal,
             durationMinutes: durationMinutes,
-            wasModelGenerated: result.usedModel
+            wasModelGenerated: result.usedModel,
+            catalogVersion: result.catalogVersion
         )
         plan.weekdays = weekdays
         context.insert(plan)

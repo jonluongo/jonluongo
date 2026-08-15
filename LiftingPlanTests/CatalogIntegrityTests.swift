@@ -17,9 +17,16 @@ struct CatalogIntegrityTests {
         #expect(try loaded().all.count == 412)
     }
 
-    @Test("The bundled catalog declares a version")
+    /// The version the shipped `exercises.json` must declare. Pinned rather
+    /// than range-checked: `Tools/build-catalog.py` requires `CATALOG_VERSION`
+    /// to be bumped whenever catalog data changes, and this is what makes
+    /// forgetting that bump a build failure instead of a silent lie in every
+    /// plan stamped afterwards. Bump it here in the same commit as there.
+    private static let expectedCatalogVersion = 4
+
+    @Test("The bundled catalog declares the current version")
     func catalogDeclaresVersion() throws {
-        #expect(try ExerciseCatalog.bundled().version >= 1)
+        #expect(try ExerciseCatalog.bundled().version == Self.expectedCatalogVersion)
     }
 
     @Test("Every id is unique")

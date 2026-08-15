@@ -5,10 +5,28 @@ import Observation
 import FoundationModels
 #endif
 
+/// The outcome of one generation request: the plan itself, which path produced
+/// it, and which catalog generation its exercises were selected from.
+///
+/// Returned by `PlanGenerator.generatePlan(...)` and consumed by
+/// `PlanCoordinator.generateAndStore(...)`, which persists all three. The
+/// version travels with the blueprint rather than being fetched separately so
+/// the stamp on a saved plan always describes the catalog that actually
+/// produced its exercises. Depends on: `PlanBlueprint`.
+struct PlanGenerationResult: Equatable {
+    var blueprint: PlanBlueprint
+    var usedModel: Bool
+    var catalogVersion: Int
+}
+
 /// Generates weekly lifting plans. Prefers Apple's on-device Foundation Model
 /// (guided generation for a guaranteed shape), and transparently falls back to a
 /// deterministic template when the model isn't available or a call fails — so the
 /// app works on any device or simulator.
+///
+/// Construct one per app with the catalog its exercises come from and share it
+/// through the environment. Depends on: `ExerciseCatalogProviding`,
+/// `TemplatePlanBuilder`, and (where available) `FoundationModels`.
 @Observable
 @MainActor
 final class PlanGenerator {
@@ -43,7 +61,16 @@ final class PlanGenerator {
     /// Cached availability, refreshed on demand.
     private(set) var availability: ModelAvailability = .unsupported
 
-    init() {
+    /// The exercise reference data this generator selects from. Held as the
+    /// protocol so a test can inject a fixture; its `version` is what every
+    /// plan produced here is stamped with.
+    @ObservationIgnored private let catalog: any ExerciseCatalogProviding
+
+    /// The catalog generation plans from this generator are built against.
+    var catalogVersion: Int { catalog.version }
+
+    init(catalog: any ExerciseCatalogProviding) {
+        self.catalog = catalog
         refreshAvailability()
     }
 
@@ -74,13 +101,19 @@ final class PlanGenerator {
     /// Produce a plan for `weekdays`/`durationMinutes`, drawing equipment/goal/
     /// experience from `profile`. `performanceSummary` (from the
     /// `ProgressionEngine`) is included on regeneration so intensity ratchets up.
-    /// Returns the blueprint plus whether the on-device model actually produced it.
+    /// Returns the blueprint, whether the on-device model actually produced it,
+    /// and the catalog version its exercises were drawn from.
     func generatePlan(
         profile: UserProfile,
         weekdays: Set<Weekday>,
         durationMinutes: Int,
         performanceSummary: String?
-    ) async -> (blueprint: PlanBlueprint, usedModel: Bool) {
+    ) async -> PlanGenerationResult {
+        func result(_ blueprint: PlanBlueprint, usedModel: Bool) -> PlanGenerationResult {
+            PlanGenerationResult(
+                blueprint: blueprint, usedModel: usedModel, catalogVersion: catalog.version
+            )
+        }
         let orderedWeekdays = Weekday.displayOrder.filter(weekdays.contains)
         let fallback = TemplatePlanBuilder.build(
             weekdays: orderedWeekdays,
@@ -91,7 +124,7 @@ final class PlanGenerator {
 
         refreshAvailability()
         guard availability.isAvailable, !orderedWeekdays.isEmpty else {
-            return (fallback, false)
+            return result(fallback, usedModel: false)
         }
 
         #if canImport(FoundationModels)
@@ -109,12 +142,14 @@ final class PlanGenerator {
                 fallback: fallback
             )
             // If the model returned nothing usable, keep the template.
-            return blueprint.days.isEmpty ? (fallback, false) : (blueprint, true)
+            return blueprint.days.isEmpty
+                ? result(fallback, usedModel: false)
+                : result(blueprint, usedModel: true)
         } catch {
-            return (fallback, false)
+            return result(fallback, usedModel: false)
         }
         #else
-        return (fallback, false)
+        return result(fallback, usedModel: false)
         #endif
     }
 

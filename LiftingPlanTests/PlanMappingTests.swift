@@ -22,9 +22,12 @@ struct PlanMappingTests {
             DayBlueprint(weekday: .wednesday, focus: "Pull", durationMinutes: 45, exercises: []),
         ])
 
-        let plan = blueprint.makeWorkoutPlan(goal: "Get strong", durationMinutes: 45, wasModelGenerated: true)
+        let plan = blueprint.makeWorkoutPlan(
+            goal: "Get strong", durationMinutes: 45, wasModelGenerated: true, catalogVersion: 7
+        )
 
         #expect(plan.wasModelGenerated)
+        #expect(plan.catalogVersion == 7)   // carried through, not defaulted
         #expect(plan.orderedWeeks.count == 1)
         let week = plan.orderedWeeks[0]
         let ordered = week.orderedDays
@@ -52,7 +55,9 @@ struct PlanMappingTests {
             ]),
         ])
 
-        let plan = blueprint.makeWorkoutPlan(goal: "", durationMinutes: 30, wasModelGenerated: false)
+        let plan = blueprint.makeWorkoutPlan(
+            goal: "", durationMinutes: 30, wasModelGenerated: false, catalogVersion: 7
+        )
         let day = plan.orderedWeeks[0].orderedDays[0]
         let exercise = day.orderedExercises[0]
 
@@ -75,7 +80,9 @@ struct PlanMappingTests {
             ]),
         ])
 
-        let plan = blueprint.makeWorkoutPlan(goal: "Get strong", durationMinutes: 45, wasModelGenerated: true)
+        let plan = blueprint.makeWorkoutPlan(
+            goal: "Get strong", durationMinutes: 45, wasModelGenerated: true, catalogVersion: 7
+        )
         let exercise = plan.orderedWeeks[0].orderedDays[0].orderedExercises[0]
 
         #expect(exercise.suggestedLoad?.value == 60)

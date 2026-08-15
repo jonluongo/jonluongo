@@ -148,8 +148,11 @@ struct StoreModelTests {
         #expect(loaded.orderedWeekdays == [.monday, .friday])
     }
 
-    @Test("A plan records which catalog version produced it")
-    func planStampsCatalogVersion() throws {
+    /// Round-tripping only. That a *generated* plan is stamped with the version
+    /// of the catalog that produced it is behaviour, and lives in
+    /// `CatalogVersionStampingTests`, which goes through the production path.
+    @Test("A plan's catalog version survives a save and reload")
+    func planPersistsCatalogVersion() throws {
         let context = try context()
         context.insert(TrainingPlan(title: "Block", catalogVersion: 3))
         try context.saveOrThrow()
