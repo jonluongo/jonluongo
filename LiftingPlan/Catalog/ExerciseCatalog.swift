@@ -1,13 +1,14 @@
 import Foundation
 
-/// Why loading the bundled catalog failed.
+/// Why loading a piece of bundled reference data failed — the exercise
+/// catalog, the assembly rules, or anything else this layer ships.
 enum CatalogError: Error, LocalizedError {
     case resourceMissing(String)
 
     var errorDescription: String? {
         switch self {
         case .resourceMissing(let name):
-            "The bundled exercise catalog '\(name)' is missing from the app bundle."
+            "The bundled reference data '\(name)' is missing from the app bundle."
         }
     }
 }

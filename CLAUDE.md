@@ -25,7 +25,7 @@ important rule in the project.
 | Layer | Contents | May import |
 |---|---|---|
 | `Domain/` | Pure value types and logic. No persistence, no UI. | Foundation only |
-| `Catalog/` | Bundled exercise reference data, lookup, resolution. | Domain |
+| `Catalog/` | Bundled reference data — the exercise catalog and the assembly rules — plus lookup and resolution. | Domain |
 | `Store/` | SwiftData models. User data only. | Domain |
 | `Services/` | Generation, progression, timing, coordination. | Domain, Catalog, Store |
 | `Views/` | SwiftUI. | All of the above |
@@ -33,9 +33,14 @@ important rule in the project.
 `Domain/` importing nothing but Foundation is what makes the interesting logic
 testable without a database, simulator, or model. Do not erode it.
 
-The exercise catalog is bundled reference data, never SwiftData. Exercise
-identity is the MoveKit slug (see `docs/reference/movekit-exercise-slugs.txt`),
-so purchased animations drop in without a mapping layer.
+`Catalog/` holds bundled reference data, never SwiftData: it ships with the
+app, is never written at runtime, and every file in it carries a `version`.
+Two kinds live there today — the exercise catalog (`exercises.json`) and the
+programming rules that shape a generated week (`assembly-rules.json`: splits by
+day count, slots by session length, sets/reps/rest by slot role, balance
+rules). Exercise identity is the MoveKit slug (see
+`docs/reference/movekit-exercise-slugs.txt`), so purchased animations drop in
+without a mapping layer.
 
 Design specs live in `docs/superpowers/specs/`. Read the foundation
 architecture spec before changing the data model.
