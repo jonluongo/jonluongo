@@ -21,8 +21,10 @@ final class PlannedExercise {
     /// Human-readable rep target, e.g. "8-12" or "5".
     var repRange: String = ""
     var suggestedLoad: Mass?
-    /// Rest between sets, in seconds — drives the pace timer.
-    var restSeconds: Int = 90
+    /// Rest between sets, in seconds — drives the pace timer. `nil` when no
+    /// rest was prescribed, in which case no timer starts unless the lifter
+    /// sets one himself.
+    var restSeconds: Int?
     /// Optional rep tempo like "3-0-1-0".
     var tempo: String?
     var notes: String?
@@ -35,7 +37,7 @@ final class PlannedExercise {
     init(
         exerciseID: ExerciseID = ExerciseID(rawValue: ""), displayName: String = "",
         order: Int = 0, targetSets: Int = 0, repRange: String = "",
-        suggestedLoad: Mass? = nil, restSeconds: Int = 90,
+        suggestedLoad: Mass? = nil, restSeconds: Int? = nil,
         tempo: String? = nil, notes: String? = nil
     ) {
         self.exerciseID = exerciseID

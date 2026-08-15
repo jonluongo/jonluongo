@@ -7,6 +7,14 @@ struct SessionDetailView: View {
 
     @State private var showingWorkout = false
 
+    /// "Push · 45 min", dropping either part the plan did not state.
+    private var header: String {
+        [day.focus, day.durationMinutes.map { "\($0) min" }]
+            .compactMap { $0 }
+            .filter { !$0.isEmpty }
+            .joined(separator: " · ")
+    }
+
     var body: some View {
         List {
             if day.orderedExercises.isEmpty {
@@ -23,7 +31,7 @@ struct SessionDetailView: View {
                         ExercisePreviewRow(exercise: exercise)
                     }
                 } header: {
-                    Text("\(day.focus) · \(day.durationMinutes) min")
+                    Text(header)
                 } footer: {
                     Text("Tap Start to run the session with automatic rest timers between every set.")
                 }
@@ -71,7 +79,9 @@ struct ExercisePreviewRow: View {
             }
             HStack(spacing: 10) {
                 Label("\(exercise.targetSets) × \(exercise.repRange)", systemImage: "repeat")
-                Label("\(exercise.restSeconds)s rest", systemImage: "timer")
+                if let rest = exercise.restSeconds {
+                    Label("\(rest)s rest", systemImage: "timer")
+                }
                 if let tempo = exercise.tempo {
                     Label(tempo, systemImage: "metronome")
                 }

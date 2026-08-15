@@ -203,6 +203,31 @@ struct StoreModelTests {
         #expect(!loaded.hasCompletedSetup)
     }
 
+    @Test("Defaults state no training opinion, only 'not specified'")
+    func defaultsAreNeutral() throws {
+        // CloudKit requires a default on every property, so these cannot be
+        // removed — but a default is not a licence to prescribe. Anything a
+        // plan does not set must read as unstated, never as Mon/Wed/Fri,
+        // 8 weeks, 45 minutes, or 90 seconds of rest.
+        let context = try context()
+        let plan = TrainingPlan()
+        let day = WorkoutDay()
+        let exercise = PlannedExercise()
+        context.insert(plan)
+        context.insert(day)
+        context.insert(exercise)
+        try context.saveOrThrow()
+
+        #expect(plan.weekCount == nil)
+        #expect(plan.weekdays.isEmpty)
+        #expect(plan.durationMinutes == nil)
+        #expect(day.durationMinutes == nil)
+        #expect(day.focus == "")
+        #expect(exercise.restSeconds == nil)
+        #expect(exercise.targetSets == 0)
+        #expect(exercise.repRange == "")
+    }
+
     @Test("Every model property is optional or defaulted, as CloudKit requires")
     func cloudKitCompatible() throws {
         // Constructing each model with no arguments proves every property

@@ -83,6 +83,13 @@ private struct PlanHeaderCard: View {
     private var days: [WorkoutDay] { plan.orderedWeeks.first?.orderedDays ?? [] }
     private var completedCount: Int { days.filter { $0.completedAt != nil }.count }
 
+    /// "3 days · 45 min", dropping the duration when the plan does not state one.
+    private var shape: String {
+        let dayText = "\(days.count) days"
+        guard let minutes = plan.durationMinutes else { return dayText }
+        return "\(dayText) · \(minutes) min"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !plan.goal.isEmpty {
@@ -93,7 +100,7 @@ private struct PlanHeaderCard: View {
                     .font(.headline)
                     .foregroundStyle(.secondary)
             }
-            Text("\(days.count) days · \(plan.durationMinutes) min")
+            Text(shape)
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -113,6 +120,12 @@ private struct WorkoutDayRow: View {
 
     private var isCompleted: Bool { day.completedAt != nil }
 
+    /// "Push · 5 exercises", dropping the focus when the plan did not label it.
+    private var subtitle: String {
+        let count = "\(day.orderedExercises.count) exercises"
+        return day.focus.isEmpty ? count : "\(day.focus) · \(count)"
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
@@ -124,7 +137,7 @@ private struct WorkoutDayRow: View {
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(day.weekday.fullName).font(.headline)
-                Text("\(day.focus) · \(day.orderedExercises.count) exercises")
+                Text(subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

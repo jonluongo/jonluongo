@@ -15,8 +15,8 @@ final class TrainingPlan {
     var title: String = ""
     var goal: String = ""
     var startDate: Date = Date()
-    /// How many weeks the block runs. Typically 8–12.
-    var weekCount: Int = 8
+    /// How many weeks the block runs. `nil` until a plan says.
+    var weekCount: Int?
     var completedAt: Date?
     /// The `ExerciseCatalog.version` that produced this plan's exercise
     /// selections. A later correction to the catalog (e.g. reclassifying an
@@ -25,10 +25,10 @@ final class TrainingPlan {
     /// catalog data rather than silently reinterpreting it.
     var catalogVersion: Int = 1
     /// Which days this block trains. Different blocks may train different days.
-    private var weekdayRawValues: [Int] = [
-        Weekday.monday.rawValue, Weekday.wednesday.rawValue, Weekday.friday.rawValue,
-    ]
-    var durationMinutes: Int = 45
+    /// Empty until a plan says which.
+    private var weekdayRawValues: [Int] = []
+    /// How long a session in this block runs. `nil` until a plan says.
+    var durationMinutes: Int?
 
     @Relationship(deleteRule: .cascade, inverse: \TrainingWeek.plan)
     var weeks: [TrainingWeek]? = []
@@ -38,8 +38,8 @@ final class TrainingPlan {
 
     init(
         title: String = "", goal: String = "", startDate: Date = Date(),
-        weekCount: Int = 8, weekdays: Set<Weekday> = [.monday, .wednesday, .friday],
-        durationMinutes: Int = 45, catalogVersion: Int = 1
+        weekCount: Int? = nil, weekdays: Set<Weekday> = [],
+        durationMinutes: Int? = nil, catalogVersion: Int = 1
     ) {
         self.title = title
         self.goal = goal

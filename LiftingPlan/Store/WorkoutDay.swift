@@ -12,7 +12,8 @@ final class WorkoutDay {
     var weekdayRawValue: Int = Weekday.monday.rawValue
     /// Short label such as "Push" or "Lower Body".
     var focus: String = ""
-    var durationMinutes: Int = 45
+    /// How long this session runs. `nil` when the plan did not say.
+    var durationMinutes: Int?
     var completedAt: Date?
 
     var week: TrainingWeek?
@@ -22,7 +23,7 @@ final class WorkoutDay {
 
     init(
         weekday: Weekday = .monday, focus: String = "",
-        durationMinutes: Int = 45, completedAt: Date? = nil
+        durationMinutes: Int? = nil, completedAt: Date? = nil
     ) {
         self.weekdayRawValue = weekday.rawValue
         self.focus = focus

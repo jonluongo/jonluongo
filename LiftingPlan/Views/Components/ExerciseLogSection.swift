@@ -36,7 +36,7 @@ struct ExerciseLogSection: View {
                     Button(formatRest(seconds)) { exercise.restSeconds = seconds }
                 }
             } label: {
-                Label("Rest timer: \(formatRest(exercise.restSeconds))", systemImage: "timer")
+                Label(restLabel, systemImage: "timer")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Color.accentColor)
             }
@@ -99,6 +99,12 @@ struct ExerciseLogSection: View {
             return "\(load.value.compactString) × \(record.reps)"
         }
         return "\(record.reps) reps"
+    }
+
+    /// "Rest timer: 90s", or an invitation to set one when the plan did not.
+    private var restLabel: String {
+        guard let seconds = exercise.restSeconds else { return "Set a rest timer" }
+        return "Rest timer: \(formatRest(seconds))"
     }
 
     private func formatRest(_ seconds: Int) -> String {

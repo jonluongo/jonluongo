@@ -16,7 +16,7 @@ struct PlanBlueprint: Equatable {
 struct DayBlueprint: Equatable {
     var weekday: Weekday
     var focus: String
-    var durationMinutes: Int
+    var durationMinutes: Int?
     var exercises: [ExerciseBlueprint]
 }
 
@@ -33,7 +33,7 @@ struct ExerciseBlueprint: Equatable {
     var displayName: String
     var repRange: String
     var sets: Int
-    var restSeconds: Int
+    var restSeconds: Int?
     var suggestedLoad: Mass?
     var tempo: String?
     var notes: String?
@@ -64,7 +64,7 @@ extension PlanBlueprint {
     /// from, so the compiler asks rather than a wrong value being assumed.
     func makeWorkoutPlan(
         goal: String,
-        durationMinutes: Int,
+        durationMinutes: Int?,
         catalogVersion: Int
     ) -> TrainingPlan {
         let plan = TrainingPlan(

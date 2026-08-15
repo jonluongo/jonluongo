@@ -73,7 +73,7 @@ struct ActiveWorkoutView: View {
             }
             .listStyle(.insetGrouped)
             .scrollDismissesKeyboard(.interactively)
-            .navigationTitle(day.focus)
+            .navigationTitle(day.focus.isEmpty ? day.weekday.fullName : day.focus)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .safeAreaInset(edge: .top) { progressBar }
@@ -140,8 +140,12 @@ struct ActiveWorkoutView: View {
 
     // MARK: - Actions
 
+    /// Starts the pace timer for the rest this exercise prescribes. When none
+    /// was prescribed, no timer starts — the app does not invent one. The
+    /// lifter can set a rest himself from the log, which starts it from then on.
     private func startRest(for exercise: PlannedExercise) {
-        restTimer.start(seconds: exercise.restSeconds, context: exercise.displayName)
+        guard let seconds = exercise.restSeconds else { return }
+        restTimer.start(seconds: seconds, context: exercise.displayName)
     }
 
     private func addSet(to exercise: PlannedExercise, warmup: Bool) {
