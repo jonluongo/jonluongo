@@ -72,7 +72,7 @@
       "equipment": "cardio machine",
       "id": "arc-trainer",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -105,7 +105,7 @@
       "equipment": "cardio machine",
       "id": "assault-bike",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -117,7 +117,7 @@
       "category": "strength",
       "difficulty": "intermediate",
       "displayName": "B Stance Hip Thrust",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "force": "pull",
       "id": "b-stance-hip-thrust",
       "instructions": [],
@@ -158,7 +158,7 @@
       "equipment": "pool",
       "id": "backstroke-swim",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -1163,7 +1163,7 @@
     {
       "aliases": [],
       "category": "cardio",
-      "difficulty": "intermediate",
+      "difficulty": "beginner",
       "displayName": "Battle Ropes",
       "equipment": "other",
       "force": "static",
@@ -1239,7 +1239,7 @@
       "category": "strength",
       "difficulty": "intermediate",
       "displayName": "Bench Dips",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "force": "push",
       "id": "bench-dips",
       "instructions": [
@@ -1322,7 +1322,7 @@
       "category": "strength",
       "difficulty": "intermediate",
       "displayName": "Bodyweight Box Squat",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "force": "push",
       "id": "bodyweight-box-squat",
       "instructions": [],
@@ -1508,7 +1508,7 @@
       "category": "plyometrics",
       "difficulty": "advanced",
       "displayName": "Box Jump",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "id": "box-jump",
       "instructions": [],
       "mechanic": "compound",
@@ -1529,7 +1529,7 @@
       "equipment": "pool",
       "id": "breaststroke-swim",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -1541,7 +1541,7 @@
       "category": "strength",
       "difficulty": "intermediate",
       "displayName": "Bulgarian Split Squat",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "force": "push",
       "id": "bulgarian-split-squat",
       "instructions": [],
@@ -1582,7 +1582,7 @@
       "equipment": "pool",
       "id": "butterfly-swim",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -2438,7 +2438,7 @@
       "equipment": "cardio machine",
       "id": "cycling-cooldown",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -2453,7 +2453,7 @@
       "equipment": "cardio machine",
       "id": "cycling-intervals",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -2468,7 +2468,7 @@
       "equipment": "cardio machine",
       "id": "cycling-sprint",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -2483,7 +2483,7 @@
       "equipment": "cardio machine",
       "id": "cycling-warmup",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -2563,7 +2563,7 @@
       "category": "strength",
       "difficulty": "intermediate",
       "displayName": "Decline Crunch",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "force": "pull",
       "id": "decline-crunch",
       "instructions": [
@@ -2607,7 +2607,7 @@
       "category": "strength",
       "difficulty": "intermediate",
       "displayName": "Decline Push Up",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "force": "push",
       "id": "decline-push-up",
       "instructions": [
@@ -2631,7 +2631,7 @@
       "category": "strength",
       "difficulty": "beginner",
       "displayName": "Decline Sit Up",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "id": "decline-sit-up",
       "instructions": [],
       "mechanic": "isolation",
@@ -3986,7 +3986,7 @@
       "equipment": "cardio machine",
       "id": "elliptical",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -4079,7 +4079,7 @@
       "equipment": "pool",
       "id": "freestyle-swim",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -4396,7 +4396,7 @@
     {
       "aliases": [],
       "category": "cardio",
-      "difficulty": "intermediate",
+      "difficulty": "beginner",
       "displayName": "Hiking",
       "equipment": "bodyweight",
       "id": "hiking",
@@ -4416,7 +4416,7 @@
       "equipment": "bodyweight",
       "id": "hill-climb-repeats",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -4515,7 +4515,7 @@
       "equipment": "cardio machine",
       "id": "incline-treadmill-walk",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -4530,7 +4530,7 @@
       "equipment": "cardio machine",
       "id": "indoor-cycling-spin",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -4591,7 +4591,7 @@
       "category": "plyometrics",
       "difficulty": "beginner",
       "displayName": "Jump Rope",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "id": "jump-rope",
       "instructions": [],
       "mechanic": "compound",
@@ -5235,7 +5235,7 @@
       "equipment": "bodyweight",
       "id": "long-run",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -5821,7 +5821,7 @@
         "mountain climbers"
       ],
       "category": "cardio",
-      "difficulty": "intermediate",
+      "difficulty": "beginner",
       "displayName": "Mountain Climber",
       "equipment": "bodyweight",
       "force": "pull",
@@ -6462,7 +6462,7 @@
       "equipment": "bodyweight",
       "id": "running-cooldown",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -6477,7 +6477,7 @@
       "equipment": "bodyweight",
       "id": "running-intervals",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -6582,7 +6582,7 @@
       "equipment": "bodyweight",
       "id": "shadow-boxing",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -6760,7 +6760,7 @@
       "category": "strength",
       "difficulty": "intermediate",
       "displayName": "Single Leg Hip Thrust",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "force": "pull",
       "id": "single-leg-hip-thrust",
       "instructions": [],
@@ -6836,7 +6836,7 @@
       "category": "strength",
       "difficulty": "intermediate",
       "displayName": "Single Leg Step Down",
-      "equipment": "bodyweight",
+      "equipment": "other",
       "force": "push",
       "id": "single-leg-step-down",
       "instructions": [],
@@ -6898,7 +6898,7 @@
       "equipment": "cardio machine",
       "id": "ski-erg",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -7458,7 +7458,7 @@
       "equipment": "pool",
       "id": "swim-kick-drill",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -7473,7 +7473,7 @@
       "equipment": "pool",
       "id": "swim-pull-drill",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -7488,7 +7488,7 @@
       "equipment": "pool",
       "id": "swim-sprint-intervals",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -7528,7 +7528,7 @@
       "equipment": "bodyweight",
       "id": "tempo-run",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -7592,7 +7592,7 @@
       "equipment": "bodyweight",
       "id": "trail-run",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -7649,7 +7649,7 @@
       "equipment": "cardio machine",
       "id": "treadmill-run",
       "instructions": [],
-      "mechanic": "isolation",
+      "mechanic": "compound",
       "pattern": "cardio",
       "primaryMuscles": [
         "quadriceps"
@@ -7752,7 +7752,7 @@
       "category": "strength",
       "difficulty": "intermediate",
       "displayName": "Weighted Pull Ups",
-      "equipment": "bodyweight",
+      "equipment": "plate",
       "force": "pull",
       "id": "weighted-pull-ups",
       "instructions": [
@@ -8002,5 +8002,5 @@
       ]
     }
   ],
-  "version": 4
+  "version": 5
 }

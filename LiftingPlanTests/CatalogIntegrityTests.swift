@@ -22,7 +22,7 @@ struct CatalogIntegrityTests {
     /// to be bumped whenever catalog data changes, and this is what makes
     /// forgetting that bump a build failure instead of a silent lie in every
     /// plan stamped afterwards. Bump it here in the same commit as there.
-    private static let expectedCatalogVersion = 4
+    private static let expectedCatalogVersion = 5
 
     @Test("The bundled catalog declares the current version")
     func catalogDeclaresVersion() throws {
@@ -321,7 +321,6 @@ struct CatalogIntegrityTests {
             let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: slug)),
                                         "\(slug) missing from catalog")
             #expect(exercise.pattern == .raise, "\(slug) pattern is \(exercise.pattern)")
-            #expect(exercise.pattern != .horizontalPull)
             #expect(exercise.mechanic == .compound, "\(slug) mechanic is \(exercise.mechanic)")
         }
     }
@@ -365,7 +364,6 @@ struct CatalogIntegrityTests {
                                         "\(slug) missing from catalog")
             #expect(exercise.equipment == .cardioMachine,
                     "\(slug) equipment is \(exercise.equipment)")
-            #expect(exercise.equipment != .bodyweight)
         }
     }
 
@@ -387,7 +385,6 @@ struct CatalogIntegrityTests {
             let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: slug)),
                                         "\(slug) missing from catalog")
             #expect(exercise.equipment == .pool, "\(slug) equipment is \(exercise.equipment)")
-            #expect(exercise.equipment != .bodyweight)
         }
     }
 

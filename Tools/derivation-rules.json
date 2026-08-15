@@ -109,7 +109,8 @@
   },
   "compoundPatterns": [
     "squat", "hinge", "lunge", "horizontal press", "vertical press",
-    "horizontal pull", "vertical pull", "olympic", "plyometric", "carry"
+    "horizontal pull", "vertical pull", "olympic", "plyometric", "carry",
+    "cardio"
   ],
   "patternCategory": {
     "olympic": "olympic weightlifting", "plyometric": "plyometrics",
@@ -142,11 +143,43 @@
     "tibialis": ["calves"],
     "calf-press": ["calves"]
   },
-  "difficultyByPattern": { "olympic": "advanced", "plyometric": "advanced" },
+  "difficultyByPattern": {
+    "olympic": "advanced", "plyometric": "advanced", "cardio": "beginner"
+  },
   "difficultyByEquipment": {
     "machine": "beginner", "cable": "beginner", "band": "beginner",
     "cardio machine": "beginner"
   },
   "difficultyByMechanic": { "compound": "intermediate", "isolation": "beginner" },
-  "defaultDifficulty": "intermediate"
+  "defaultDifficulty": "intermediate",
+
+  "acknowledgedPatternFallthrough": [
+    "kettlebell-turkish-get-up", "plate-pinch", "sled-push"
+  ],
+  "acknowledgedEquipmentFallthrough": [
+    "abdominals-stretch-variation-four",
+    "abdominals-stretch-variation-one",
+    "abdominals-stretch-variation-three",
+    "abdominals-stretch-variation-two", "back-extension", "bird-dog",
+    "bodyweight-alternating-lateral-lunge",
+    "bodyweight-alternating-reverse-lunges", "bodyweight-deadlift",
+    "bodyweight-donkey-calf-raise", "bodyweight-elevated-push-up",
+    "bodyweight-hip-abduction", "bodyweight-knee-push-ups",
+    "bodyweight-reverse-lunge", "bodyweight-russian-twist",
+    "bodyweight-spinal-jefferson-curl", "bodyweight-squat", "burpee",
+    "chin-ups", "cossack-squat", "dead-bug", "diamond-push-ups",
+    "elbow-side-plank", "forward-lunge", "frog-pump",
+    "front-foot-elevated-split-squat", "front-plank", "glute-bridge",
+    "hand-plank", "hanging-knee-raises", "hill-climb-repeats",
+    "incline-push-up", "inverted-row", "jump-squats", "jumping-jack",
+    "long-run", "lunge-walking", "mountain-climber", "neck-curl",
+    "neck-extension", "neutral-grip-pull-up", "parralel-bar-dips",
+    "pull-ups", "push-up", "running-cooldown", "running-intervals",
+    "shadow-boxing", "single-leg-back-extension",
+    "single-leg-glute-bridge", "single-leg-standing-calf-raise",
+    "single-legged-romanian-deadlifts", "sissy-squat",
+    "split-squat-isometric-hold", "supermans", "tempo-run",
+    "tibialis-raise", "toes-to-bar", "trail-run", "v-up", "wall-sit",
+    "wide-grip-pull-up"
+  ]
 }

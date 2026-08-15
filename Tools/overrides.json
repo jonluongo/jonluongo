@@ -17,7 +17,7 @@
   "battle-ropes": {
     "pattern": "cardio", "primaryMuscles": ["shoulders"],
     "secondaryMuscles": ["abdominals"], "category": "cardio",
-    "equipment": "other", "mechanic": "compound"
+    "equipment": "other"
   },
   "dead-hang": {
     "pattern": "carry", "primaryMuscles": ["forearms"],
@@ -55,7 +55,7 @@
   },
   "hiking": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
-    "category": "cardio", "equipment": "bodyweight", "mechanic": "compound"
+    "category": "cardio", "equipment": "bodyweight"
   },
 
   "arnold-press": { "equipment": "dumbbell" },
@@ -132,13 +132,11 @@
   },
   "stair-climber": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
-    "equipment": "cardio machine", "category": "cardio", "force": null,
-    "mechanic": "compound"
+    "equipment": "cardio machine", "category": "cardio", "force": null
   },
   "versaclimber": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
-    "equipment": "cardio machine", "category": "cardio", "force": null,
-    "mechanic": "compound"
+    "equipment": "cardio machine", "category": "cardio", "force": null
   },
   "rowing-intervals": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
@@ -158,8 +156,7 @@
   "seated-calf-raise": { "equipment": "machine" },
   "steady-state-ride": {
     "pattern": "cardio", "primaryMuscles": ["quadriceps"],
-    "equipment": "cardio machine", "category": "cardio", "force": null,
-    "mechanic": "compound"
+    "equipment": "cardio machine", "category": "cardio", "force": null
   },
 
   "nordic-hamstring-curl": { "equipment": "bodyweight" },
@@ -213,8 +210,22 @@
     "difficulty": "advanced"
   },
 
-  "jump-rope": { "difficulty": "beginner" },
+  "jump-rope": { "difficulty": "beginner", "equipment": "other" },
   "jumping-jack": { "difficulty": "beginner" },
 
-  "captains-chair-knee-raise": { "equipment": "machine" }
+  "captains-chair-knee-raise": { "equipment": "machine" },
+
+  "plate-pinch": { "mechanic": "isolation" },
+
+  "weighted-pull-ups": { "equipment": "plate" },
+  "box-jump": { "equipment": "other" },
+  "bulgarian-split-squat": { "equipment": "other" },
+  "bench-dips": { "equipment": "other" },
+  "bodyweight-box-squat": { "equipment": "other" },
+  "decline-crunch": { "equipment": "other" },
+  "decline-sit-up": { "equipment": "other" },
+  "decline-push-up": { "equipment": "other" },
+  "b-stance-hip-thrust": { "equipment": "other" },
+  "single-leg-hip-thrust": { "equipment": "other" },
+  "single-leg-step-down": { "equipment": "other" }
 }
