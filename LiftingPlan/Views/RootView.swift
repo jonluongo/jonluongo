@@ -5,6 +5,9 @@ import SwiftData
 /// `UserProfile` record exists.
 struct RootView: View {
     @Environment(\.modelContext) private var context
+    /// The inbox that imports arriving plans. Optional so a preview need not
+    /// supply one; the app always does.
+    @Environment(PlanInbox.self) private var planInbox: PlanInbox?
     @Query private var allProfiles: [UserProfile]
 
     @State private var saveErrorMessage: String?
@@ -29,10 +32,25 @@ struct RootView: View {
         } message: {
             Text(saveErrorMessage ?? "")
         }
+        // A plan that could not be imported is shown rather than swallowed: an
+        // unreadable plan otherwise looks identical to not having been sent
+        // one, and the lifter would wait for something that already arrived.
+        .alert("Couldn't Import Plan", isPresented: planErrorAlertBinding) {
+            Button("OK", role: .cancel) { planInbox?.dismissError() }
+        } message: {
+            Text(planInbox?.errorMessage ?? "")
+        }
     }
 
     private var errorAlertBinding: Binding<Bool> {
         Binding(get: { saveErrorMessage != nil }, set: { if !$0 { saveErrorMessage = nil } })
+    }
+
+    private var planErrorAlertBinding: Binding<Bool> {
+        Binding(
+            get: { planInbox?.errorMessage != nil },
+            set: { if !$0 { planInbox?.dismissError() } }
+        )
     }
 
     private func ensureProfileExists() {

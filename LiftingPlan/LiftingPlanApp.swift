@@ -14,6 +14,12 @@ struct LiftingPlanApp: App {
     private let catalog: ExerciseCatalog
     @State private var restTimer = RestTimerModel()
     private let container: ModelContainer
+    /// The shared iCloud folder both machines see. The snapshot goes out
+    /// through it and plans come in through it; nothing else in the app knows
+    /// there is a file involved.
+    private let transport: ICloudDocumentTransport
+    /// Imports a plan the moment one lands, so no refresh is ever asked for.
+    @State private var planInbox: PlanInbox
 
     init() {
         // A store or catalog that fails to open at launch is unrecoverable —
@@ -28,6 +34,16 @@ struct LiftingPlanApp: App {
         } catch {
             fatalError("Could not start LiftingPlan: \(error)")
         }
+        // Composed here for the same reason the catalog is: one transport, so
+        // the document written out and the document read in cannot end up in
+        // different folders. Nothing is resolved yet — the iCloud container is
+        // looked up when a document actually moves.
+        let transport = ICloudDocumentTransport()
+        self.transport = transport
+        _planInbox = State(initialValue: PlanInbox(
+            transport: transport, watcher: UbiquitousPlanWatcher(),
+            context: container.mainContext, catalog: catalog
+        ))
     }
 
     var body: some Scene {
@@ -35,7 +51,11 @@ struct LiftingPlanApp: App {
             RootView()
                 .environment(\.exerciseCatalog, catalog)
                 .environment(restTimer)
+                .environment(planInbox)
                 .task { restTimer.requestNotificationAuthorization() }
+                // Started once, for the life of the app: a plan arriving from
+                // the Mac is imported wherever the lifter happens to be.
+                .task { planInbox.start() }
         }
         .modelContainer(container)
         // Exporting on background, rather than behind a button, is what keeps
@@ -66,7 +86,7 @@ struct LiftingPlanApp: App {
             let snapshot = try SnapshotExporter.export(
                 from: container.mainContext, catalogVersion: catalog.version
             )
-            try SnapshotFileWriter().write(snapshot)
+            try transport.writeSnapshot(snapshot)
         } catch {
             Self.logger.error(
                 "Snapshot export failed: \(error.localizedDescription, privacy: .public)"

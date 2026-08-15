@@ -6,7 +6,7 @@ import LiftingKit
 ///
 /// Call `export(from:catalogVersion:)` with the app's `ModelContext` and the
 /// version of the catalog currently loaded; hand the result to a
-/// `SnapshotWriting` to put it where Claude can read it. This is the only
+/// `DocumentTransport` to put it where Claude can read it. This is the only
 /// place that knows both SwiftData and the document format, which is what
 /// keeps the format free of persistence — the macOS server links the same
 /// document types and never links SwiftData.
