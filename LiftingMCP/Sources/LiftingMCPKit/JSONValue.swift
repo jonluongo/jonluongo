@@ -88,6 +88,11 @@ extension JSONValue {
 
 extension JSONValue: Codable {
 
+    /// JSON is untyped on the wire, so decoding means trying each shape in
+    /// turn. The `try?`s below discard nothing: a failure means only "not this
+    /// type, try the next", and exhausting every one throws a real
+    /// `DecodingError` rather than yielding a silent `null`. `Int` is tried
+    /// before `Double` so a whole number stays whole.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() {
