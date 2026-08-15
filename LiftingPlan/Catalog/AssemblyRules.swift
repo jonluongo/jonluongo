@@ -43,9 +43,16 @@ protocol AssemblyRulesProviding: Sendable {
     /// The patterns whose weekly frequency is worth guaranteeing.
     var majorPatterns: [MovementPattern] { get }
 
-    /// How often each major pattern must be trained by a lifter training
+    /// How often each major pattern is worth training for a lifter training
     /// `count` days a week.
-    func minimumWeeklyFrequency(forDayCount count: Int) -> Int
+    ///
+    /// A target, not a promise. It is reached when sessions are long enough to
+    /// run a split day at full length; a shorter session keeps fewer slots, and
+    /// what a truncated week can actually deliver is limited by real capacity —
+    /// `days × slots` — which no table keyed by day count alone can express.
+    /// Read this as the ceiling worth aiming for, and derive the guarantee from
+    /// the week that was actually assembled.
+    func targetWeeklyFrequency(forDayCount count: Int) -> Int
 
     /// The largest fraction of one session's slots a single pattern may fill.
     var maxShareOfSessionPerPattern: Double { get }
@@ -84,11 +91,11 @@ struct AssemblyRules: AssemblyRulesProviding, Decodable {
     private let slotBudgets: [SlotBudget]
     private let prescriptionsByRole: [SlotRole: RolePrescription]
     private let setAdjustments: [String: Int]
-    private let minimumsByDayCount: [Int: Int]
-    private let minimumBounds: ClosedRange<Int>?
+    private let targetsByDayCount: [Int: Int]
+    private let targetBounds: ClosedRange<Int>?
 
     private enum CodingKeys: String, CodingKey {
-        case version, roleOrder, majorPatterns, minimumWeeklyFrequencyByDayCount
+        case version, roleOrder, majorPatterns, targetWeeklyFrequencyByDayCount
         case splitsByDayCount, slotCountByDurationMinutes, byRole
         case setAdjustmentByExperience, balanceRules, requiredWeeklyPatterns
         case maxShareOfSessionPerPattern
@@ -111,9 +118,9 @@ struct AssemblyRules: AssemblyRulesProviding, Decodable {
         splitsByDayCount = try Self.keyedByDayCount(splits, at: container, forKey: .splitsByDayCount)
         dayCountBounds = Self.bounds(of: splitsByDayCount.keys)
 
-        let minimums = try container.decode([String: Int].self, forKey: .minimumWeeklyFrequencyByDayCount)
-        minimumsByDayCount = try Self.keyedByDayCount(minimums, at: container, forKey: .minimumWeeklyFrequencyByDayCount)
-        minimumBounds = Self.bounds(of: minimumsByDayCount.keys)
+        let targets = try container.decode([String: Int].self, forKey: .targetWeeklyFrequencyByDayCount)
+        targetsByDayCount = try Self.keyedByDayCount(targets, at: container, forKey: .targetWeeklyFrequencyByDayCount)
+        targetBounds = Self.bounds(of: targetsByDayCount.keys)
 
         let byRole = try container.decode([String: RolePrescription].self, forKey: .byRole)
         prescriptionsByRole = Dictionary(
@@ -192,9 +199,9 @@ struct AssemblyRules: AssemblyRulesProviding, Decodable {
         setAdjustments[Self.canonical(experience.rawValue)] ?? 0
     }
 
-    func minimumWeeklyFrequency(forDayCount count: Int) -> Int {
-        guard let bounds = minimumBounds else { return 0 }
-        return minimumsByDayCount[bounds.clamping(count)] ?? 0
+    func targetWeeklyFrequency(forDayCount count: Int) -> Int {
+        guard let bounds = targetBounds else { return 0 }
+        return targetsByDayCount[bounds.clamping(count)] ?? 0
     }
 }
 

@@ -19,7 +19,7 @@ private struct StubRules: AssemblyRulesProviding {
     var balanceRules: [BalanceRule] { [] }
     var requiredWeeklyPatterns: [MovementPattern] { [] }
     var majorPatterns: [MovementPattern] { [] }
-    func minimumWeeklyFrequency(forDayCount count: Int) -> Int { 0 }
+    func targetWeeklyFrequency(forDayCount count: Int) -> Int { 0 }
     var maxShareOfSessionPerPattern: Double { 1 }
     static func bundled(bundle: Bundle) throws -> StubRules { StubRules(version: 4242) }
 }
@@ -211,34 +211,38 @@ struct AssemblyRulesTests {
 
     // MARK: - Balance, the reason this app organizes by pattern
 
-    @Test("Every split trains each major pattern at least the declared weekly minimum",
+    /// The target is a promise about the split as authored — every slot of every
+    /// day, which is what a lifter with time for a full session gets. What a
+    /// *truncated* week delivers depends on session length too, so it is checked
+    /// against real capacity in `SessionSkeletonTests` rather than here.
+    @Test("Every split as authored trains each major pattern at least its weekly target",
           arguments: 1...6)
-    func everySplitMeetsTheWeeklyFrequencyMinimum(count: Int) throws {
+    func everySplitMeetsItsWeeklyFrequencyTarget(count: Int) throws {
         let rules = try rules()
-        let minimum = rules.minimumWeeklyFrequency(forDayCount: count)
-        #expect(minimum > 0)
+        let target = rules.targetWeeklyFrequency(forDayCount: count)
+        #expect(target > 0)
         let slots = weeklySlots(rules, dayCount: count)
         #expect(!rules.majorPatterns.isEmpty)
         for pattern in rules.majorPatterns {
             let occurrences = slots.filter { $0.pattern == pattern }.count
             #expect(
-                occurrences >= minimum,
-                "The \(count)-day split trains '\(pattern)' \(occurrences)x per week, below its minimum of \(minimum)."
+                occurrences >= target,
+                "The \(count)-day split trains '\(pattern)' \(occurrences)x per week, below its target of \(target)."
             )
         }
     }
 
-    @Test("The declared weekly minimum is twice a week wherever more than one day is trained")
+    @Test("The weekly target is twice a week wherever more than one day is trained")
     func twiceWeeklyIsTheStandardWhereItIsAchievable() throws {
         let rules = try rules()
-        // Not read back from the file's own minimum: the programming spec states
+        // Not read back from the file's own target: the programming spec states
         // twice weekly outright, and one training day cannot reach it — six major
         // patterns twice over is twelve slots, more than any single session holds.
-        #expect(rules.minimumWeeklyFrequency(forDayCount: 1) >= 1)
+        #expect(rules.targetWeeklyFrequency(forDayCount: 1) >= 1)
         for count in 2...6 {
             #expect(
-                rules.minimumWeeklyFrequency(forDayCount: count) >= 2,
-                "The \(count)-day split does not promise each major pattern twice a week."
+                rules.targetWeeklyFrequency(forDayCount: count) >= 2,
+                "The \(count)-day split does not aim at each major pattern twice a week."
             )
         }
     }
@@ -304,7 +308,7 @@ struct AssemblyRulesTests {
           "balanceRules": [],
           "requiredWeeklyPatterns": [],
           "majorPatterns": [],
-          "minimumWeeklyFrequencyByDayCount": { "1": 1 },
+          "targetWeeklyFrequencyByDayCount": { "1": 1 },
           "maxShareOfSessionPerPattern": 1.0
         }
         """

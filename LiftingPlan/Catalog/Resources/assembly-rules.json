@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "roleOrder": ["primary", "secondary", "accessory", "finisher"],
   "majorPatterns": [
     "squat",
@@ -9,7 +9,7 @@
     "horizontal pull",
     "vertical pull"
   ],
-  "minimumWeeklyFrequencyByDayCount": {
+  "targetWeeklyFrequencyByDayCount": {
     "1": 1,
     "2": 2,
     "3": 2,
