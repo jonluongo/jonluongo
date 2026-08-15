@@ -29,6 +29,10 @@ final class TrainingPlan {
     private var weekdayRawValues: [Int] = []
     /// How long a session in this block runs. `nil` until a plan says.
     var durationMinutes: Int?
+    /// The `PlanDocument.id` this block was imported from, which is what makes
+    /// importing the same plan twice a no-op instead of a duplicate. `nil` for
+    /// a block that did not arrive as a document.
+    var sourceDocumentID: UUID?
 
     @Relationship(deleteRule: .cascade, inverse: \TrainingWeek.plan)
     var weeks: [TrainingWeek]? = []
@@ -36,7 +40,8 @@ final class TrainingPlan {
     init(
         title: String = "", goal: String = "", startDate: Date = Date(),
         weekCount: Int? = nil, weekdays: Set<Weekday> = [],
-        durationMinutes: Int? = nil, catalogVersion: Int = 1
+        durationMinutes: Int? = nil, catalogVersion: Int = 1,
+        sourceDocumentID: UUID? = nil
     ) {
         self.title = title
         self.goal = goal
@@ -45,6 +50,7 @@ final class TrainingPlan {
         self.weekdayRawValues = weekdays.map(\.rawValue).sorted()
         self.durationMinutes = durationMinutes
         self.catalogVersion = catalogVersion
+        self.sourceDocumentID = sourceDocumentID
     }
 
     var weekdays: Set<Weekday> {

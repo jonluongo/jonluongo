@@ -7,7 +7,7 @@ struct PlanMappingTests {
 
     @Test("Maps a blueprint into an ordered SwiftData plan")
     func mapsOrdered() {
-        let blueprint = PlanBlueprint(days: [
+        let blueprint = PlanBlueprint(goal: "Get strong", durationMinutes: 45, days: [
             DayBlueprint(weekday: .monday, focus: "Push", durationMinutes: 45, exercises: [
                 ExerciseBlueprint(
                     exerciseID: ExerciseID(rawValue: "barbell-bench-press"), displayName: "Bench",
@@ -23,11 +23,13 @@ struct PlanMappingTests {
             DayBlueprint(weekday: .wednesday, focus: "Pull", durationMinutes: 45, exercises: []),
         ])
 
-        let plan = blueprint.makeWorkoutPlan(
-            goal: "Get strong", durationMinutes: 45, catalogVersion: 7
-        )
+        let plan = blueprint.makeWorkoutPlan(catalogVersion: 7)
 
         #expect(plan.catalogVersion == 7)   // carried through, not defaulted
+        #expect(plan.goal == "Get strong")
+        #expect(plan.durationMinutes == 45)
+        // The training days are a restatement of the days prescribed.
+        #expect(plan.orderedWeekdays == [.monday, .wednesday])
         #expect(plan.orderedWeeks.count == 1)
         let week = plan.orderedWeeks[0]
         let ordered = week.orderedDays
@@ -49,7 +51,7 @@ struct PlanMappingTests {
         // Each is legitimate: 10x3 is a real prescription, 720 seconds is a
         // real rest between heavy singles, and an unstated rep range means
         // unstated — not "8-12".
-        let blueprint = PlanBlueprint(days: [
+        let blueprint = PlanBlueprint(durationMinutes: 30, days: [
             DayBlueprint(weekday: .friday, focus: "", durationMinutes: 5, exercises: [
                 ExerciseBlueprint(
                     exerciseID: ExerciseID(rawValue: "barbell-back-squat"), displayName: "Squat",
@@ -59,7 +61,7 @@ struct PlanMappingTests {
             ]),
         ])
 
-        let plan = blueprint.makeWorkoutPlan(goal: "", durationMinutes: 30, catalogVersion: 7)
+        let plan = blueprint.makeWorkoutPlan(catalogVersion: 7)
         let day = plan.orderedWeeks[0].orderedDays[0]
         let exercise = day.orderedExercises[0]
 
@@ -83,7 +85,7 @@ struct PlanMappingTests {
             ]),
         ])
 
-        let plan = blueprint.makeWorkoutPlan(goal: "", durationMinutes: 45, catalogVersion: 7)
+        let plan = blueprint.makeWorkoutPlan(catalogVersion: 7)
         let exercise = plan.orderedWeeks[0].orderedDays[0].orderedExercises[0]
 
         #expect(exercise.targetSets == 0)
@@ -102,9 +104,7 @@ struct PlanMappingTests {
             ]),
         ])
 
-        let plan = blueprint.makeWorkoutPlan(
-            goal: "Get strong", durationMinutes: 45, catalogVersion: 7
-        )
+        let plan = blueprint.makeWorkoutPlan(catalogVersion: 7)
         let exercise = plan.orderedWeeks[0].orderedDays[0].orderedExercises[0]
 
         #expect(exercise.suggestedLoad?.value == 60)
