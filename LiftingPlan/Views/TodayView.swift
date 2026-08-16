@@ -146,135 +146,29 @@ struct TodayView: View {
     private func content(_ plan: TrainingPlan, _ standing: TodayInBlock) -> some View {
         switch standing.standing {
         case .session(let day):
-            sessionSection(day, in: plan)
-            if day.progress.isFinished, let next = standing.upcoming {
-                nextSection(next, in: plan)
+            TodaySessionSection(day: day, plan: plan)
+            // A session already logged asks the same question a rest day does.
+            if day.progress.isFinished, let upcoming = standing.upcoming {
+                next(upcoming, in: plan)
             }
             noteSection(plan)
         case .rest:
-            restSection
-            if let next = standing.upcoming { nextSection(next, in: plan) }
+            TodayRestSection()
+            if let upcoming = standing.upcoming { next(upcoming, in: plan) }
             noteSection(plan)
         case .beforeBlock(let days):
-            Section {
-                Text(TodayPhrasing.start(inDays: days))
-                    .font(.barbellTitle)
-                    .padding(.vertical, Spacing.tight)
-            }
-            if let next = standing.upcoming { nextSection(next, in: plan) }
+            TodayBeforeBlockSection(daysUntilStart: days)
+            if let upcoming = standing.upcoming { next(upcoming, in: plan) }
             noteSection(plan)
         case .closed, .elapsed:
-            finishedSection(plan)
+            TodayFinishedSection(plan: plan)
         case .undated, .unscheduled:
             EmptyView()
         }
     }
 
-    /// Today's session: what it is for, and every exercise it prescribes, one
-    /// line each. The whole session is shown rather than the next exercise
-    /// alone — a prescribed session is something the lifter plans a gym trip
-    /// around, and whether the rack is still needed is a question the screen
-    /// should already have answered.
-    @ViewBuilder
-    private func sessionSection(_ day: BlockDay, in plan: TrainingPlan) -> some View {
-        let session = TodayInPlan.session(day, in: plan)
-        Section {
-            if case .finished = day.progress {
-                IconCircleRow(
-                    systemImage: "checkmark", tint: .green,
-                    title: "Logged", subtitle: nil
-                )
-            }
-            if let session {
-                ForEach(session.orderedExercises) { exercise in
-                    ExerciseLine(exercise: exercise)
-                }
-            } else {
-                // The block moved underneath the answer. Said plainly rather
-                // than guessed at with a neighbouring day's session.
-                Text("This session is no longer in the record.")
-                    .font(.barbellBody)
-            }
-        } header: {
-            VStack(alignment: .leading, spacing: Spacing.tight) {
-                Text(TodayPhrasing.sessionTitle(day))
-                    .font(.barbellTitle)
-                    .foregroundStyle(.primary)
-                if let shape = TodayPhrasing.sessionShape(
-                    exercises: session?.orderedExercises.count ?? 0,
-                    durationMinutes: session?.durationMinutes
-                ) {
-                    Text(shape)
-                        .font(.barbellSupport)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .textCase(nil)
-            .padding(.bottom, Spacing.snug)
-        }
-    }
-
-    /// Two days in five are this one, so it says what it is and what follows,
-    /// in the same type a training day gets. Rest is what the block prescribes
-    /// today, not the absence of a screen.
-    private var restSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Spacing.tight) {
-                Text("Rest day")
-                    .font(.barbellTitle)
-                Text("Nothing is prescribed today.")
-                    .font(.barbellSupport)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.vertical, Spacing.tight)
-        }
-    }
-
-    /// The next session the block prescribes, and the way into it.
-    @ViewBuilder
-    private func nextSection(_ next: BlockDay, in plan: TrainingPlan) -> some View {
-        let session = TodayInPlan.session(next, in: plan)
-        Section("Next") {
-            if let session {
-                NavigationLink {
-                    SessionDetailView(day: session, profile: profile)
-                } label: {
-                    IconCircleRow(
-                        systemImage: "dumbbell.fill", tint: .accentColor,
-                        title: TodayPhrasing.nextLine(for: next, from: now),
-                        subtitle: TodayPhrasing.sessionShape(
-                            exercises: session.orderedExercises.count,
-                            durationMinutes: session.durationMinutes)
-                    )
-                }
-            } else {
-                Text(TodayPhrasing.nextLine(for: next, from: now))
-                    .font(.barbellBody)
-            }
-        }
-    }
-
-    /// A block that is over: what the record holds, and the one thing left to
-    /// do about it. The app cannot reach the coach, so it says who can.
-    private func finishedSection(_ plan: TrainingPlan) -> some View {
-        let days = plan.orderedWeeks.flatMap { $0.orderedDays }
-        return Section {
-            VStack(alignment: .leading, spacing: Spacing.snug) {
-                Text("Block finished")
-                    .font(.barbellTitle)
-                if let record = TodayPhrasing.recordLine(
-                    finished: days.filter { $0.completedAt != nil }.count,
-                    prescribed: days.count
-                ) {
-                    Text(record)
-                        .font(.barbellSupport)
-                        .foregroundStyle(.secondary)
-                }
-                Text("Ask Claude for the next one.")
-                    .font(.barbellBody)
-            }
-            .padding(.vertical, Spacing.tight)
-        }
+    private func next(_ day: BlockDay, in plan: TrainingPlan) -> some View {
+        TodayNextSection(next: day, plan: plan, profile: profile, now: now)
     }
 
     /// The coach's words, while the block is one the lifter is in. Absent when
@@ -304,25 +198,5 @@ struct TodayView: View {
             .padding(Spacing.section)
             .background(.bar)
         }
-    }
-}
-
-/// One prescribed exercise as a line: its name, and what the plan asks of it.
-///
-/// The full per-set breakdown belongs to the logging screen; the front door
-/// states the shape of the session and stops there.
-private struct ExerciseLine: View {
-
-    let exercise: PlannedExercise
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.tight) {
-            Text(exercise.displayName)
-                .font(.barbellTitle)
-            Text(PrescriptionSummary.text(for: exercise))
-                .font(.barbellSupport)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.vertical, Spacing.tight)
     }
 }
