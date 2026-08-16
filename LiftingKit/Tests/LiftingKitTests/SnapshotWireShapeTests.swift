@@ -42,6 +42,10 @@ struct SnapshotWireShapeTests {
                 SnapshotLoggedSet(
                     setIndex: 1, load: nil, reps: 0, durationSeconds: 34,
                     rpe: nil, isCompleted: true, isWarmup: false, completedAt: Self.instant),
+                SnapshotLoggedSet(
+                    setIndex: 2, load: Mass(value: 32, unit: .kilograms), reps: 0,
+                    distance: Distance(value: 40, unit: .metres),
+                    rpe: nil, isCompleted: true, isWarmup: false, completedAt: Self.instant),
             ]
         )
         return TrainingSnapshot(
@@ -101,13 +105,26 @@ struct SnapshotWireShapeTests {
     @Test("A held set is written under 'durationSeconds' and reports no reps")
     func heldSetIsOnTheWire() throws {
         let sets = try #require(try encodedExercise()["loggedSets"] as? [[String: Any]])
-        let held = try #require(sets.last)
+        let held = try #require(sets.first { $0["setIndex"] as? Int == 1 })
 
         #expect(held["durationSeconds"] as? Int == 34)
         #expect(held["reps"] as? Int == 0, "seconds are not repetitions")
+        #expect(held["distance"] == nil, "a hold went nowhere")
     }
 
-    @Test("A counted set writes no duration at all rather than a zero one")
+    @Test("A carried set is written under 'distance' as a number and its unit")
+    func carriedSetIsOnTheWire() throws {
+        let sets = try #require(try encodedExercise()["loggedSets"] as? [[String: Any]])
+        let carried = try #require(sets.first { $0["setIndex"] as? Int == 2 })
+        let distance = try #require(carried["distance"] as? [String: Any])
+
+        #expect(distance["value"] as? Double == 40)
+        #expect(distance["unit"] as? String == "m", "the unit travels with the number")
+        #expect(carried["reps"] as? Int == 0, "metres are not repetitions")
+        #expect(carried["durationSeconds"] == nil, "nor were they seconds")
+    }
+
+    @Test("A counted set writes no duration and no distance rather than zeroes")
     func countedSetWritesNoDuration() throws {
         let sets = try #require(try encodedExercise()["loggedSets"] as? [[String: Any]])
         let counted = try #require(sets.first)
@@ -116,6 +133,9 @@ struct SnapshotWireShapeTests {
         #expect(
             counted["durationSeconds"] == nil,
             "a set that was not timed did not last no time")
+        #expect(
+            counted["distance"] == nil,
+            "a set that was not carried did not travel no distance")
     }
 
     // MARK: - A document written by hand, not by the encoder
@@ -149,6 +169,10 @@ struct SnapshotWireShapeTests {
                      "completedAt": "2023-11-14T22:13:20Z"},
                     {"setIndex": 1, "reps": 9,
                      "load": {"value": 80, "unit": "kg"},
+                     "isCompleted": true, "isWarmup": false,
+                     "completedAt": "2023-11-14T22:13:20Z"},
+                    {"setIndex": 2, "reps": 0,
+                     "distance": {"value": 40, "unit": "m"},
                      "isCompleted": true, "isWarmup": false,
                      "completedAt": "2023-11-14T22:13:20Z"}
                   ]
@@ -187,14 +211,26 @@ struct SnapshotWireShapeTests {
 
         #expect(sets.first?.durationSeconds == 34)
         #expect(sets.first?.reps == 0)
-        #expect(sets.last?.durationSeconds == nil)
-        #expect(sets.last?.reps == 9)
+        #expect(sets.first?.distance == nil)
+        #expect(sets.dropFirst().first?.durationSeconds == nil)
+        #expect(sets.dropFirst().first?.reps == 9)
     }
 
-    @Test("A snapshot written before durations existed reads as having none")
-    func olderSnapshotHasNoDurations() throws {
-        let json = Self.handWritten.replacingOccurrences(
-            of: "\"reps\": 0, \"durationSeconds\": 34", with: "\"reps\": 0")
+    @Test("A hand-written carried set decodes as a distance in the unit it names")
+    func handWrittenCarriedSetDecodes() throws {
+        let carried = try #require(try decodedExercise().loggedSets.last)
+
+        #expect(carried.distance == Distance(value: 40, unit: .metres))
+        #expect(carried.reps == 0)
+        #expect(carried.durationSeconds == nil)
+    }
+
+    @Test("A snapshot written before durations or distances existed reads as having none")
+    func olderSnapshotHasNeither() throws {
+        let json = Self.handWritten
+            .replacingOccurrences(of: "\"reps\": 0, \"durationSeconds\": 34", with: "\"reps\": 0")
+            .replacingOccurrences(
+                of: "\"distance\": {\"value\": 40, \"unit\": \"m\"},", with: "")
         let decoded = try TrainingSnapshot.makeDecoder()
             .decode(TrainingSnapshot.self, from: Data(json.utf8))
         let exercise = try #require(
@@ -202,5 +238,6 @@ struct SnapshotWireShapeTests {
 
         #expect(exercise.loggedSets.first?.durationSeconds == nil)
         #expect(exercise.loggedSets.first?.reps == 0)
+        #expect(exercise.loggedSets.allSatisfy { $0.distance == nil })
     }
 }

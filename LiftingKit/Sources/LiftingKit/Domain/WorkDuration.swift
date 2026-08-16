@@ -17,10 +17,11 @@ import Foundation
 /// never as the wrong one. The prescription itself is always shown verbatim;
 /// this type only says what can be read out of it.
 ///
-/// **What it depends on.** `TargetUnits` for the vocabulary, which `RepRange`
-/// shares, so the two cannot disagree about whether `"30 seconds"` counts
-/// repetitions. Foundation otherwise. It decides nothing about training: no
-/// value here says how long anything should be held, only what a word means.
+/// **What it depends on.** `TargetUnits` for the vocabulary and for the scan
+/// that reads numbers against a unit — both shared with `RepRange` and
+/// `WorkDistance`, so the three cannot disagree about whether `"30 seconds"`
+/// counts repetitions. Foundation otherwise. It decides nothing about training:
+/// no value here says how long anything should be held, only what a word means.
 ///
 /// A duration is read only when the text is unambiguous. Two different time
 /// units in one string (`"1 min 30 s"`), a distance beside the time
@@ -90,9 +91,8 @@ public struct WorkDuration: Hashable, Sendable, CustomStringConvertible {
     /// says the work is measured in time without naming a unit, or a clock,
     /// which is never anything else.
     private static func namesTime(_ text: String) -> Bool {
-        let words = Set(text.lowercased().split(whereSeparator: { !$0.isLetter }).map(String.init))
-        if words.contains(where: { TargetUnits.secondsPerTimeWord[$0] != nil }) { return true }
-        if !words.isDisjoint(with: TargetUnits.timingWords) { return true }
+        if TargetUnits.names(Set(TargetUnits.secondsPerTimeWord.keys), in: text) { return true }
+        if TargetUnits.names(TargetUnits.timingWords, in: text) { return true }
         return text.contains(where: \.isNumber) && text.contains(TargetUnits.clockSeparator)
     }
 
@@ -121,124 +121,22 @@ public struct WorkDuration: Hashable, Sendable, CustomStringConvertible {
         }
     }
 
-    /// Every number in the text converted through the unit word that applies to
-    /// it, or `nil` when any of them cannot be, or when they do not all share
-    /// one unit.
+    /// Every number the text states, converted through the time unit it states
+    /// them in, or `nil` when they cannot all be read against one time unit.
+    ///
+    /// The reading is `TargetUnits.statedQuantities(in:)`, shared with
+    /// `WorkDistance`; the only thing this adds is the conversion, which is what
+    /// makes time different from every other measure. Sixty seconds to a minute
+    /// is arithmetic, not a prescription — and it is the reason a duration can
+    /// be one number where a distance must carry its unit.
     private static func unitDurations(in text: String) -> [Int]? {
-        let tokens = TargetUnits.tokens(in: text)
-        var units: Set<String> = []
-        var durations: [Int] = []
-
-        for (index, token) in tokens.enumerated() {
-            guard case .number(let value) = token else { continue }
-            guard let unit = tokens.dropFirst(index + 1).compactMap(\.unitWord).first,
-                let secondsPerUnit = TargetUnits.secondsPerTimeWord[unit]
-            else {
-                // A number with no unit after it, or one measuring a distance.
-                return nil
-            }
-            units.insert(unit)
-            durations.append(value * secondsPerUnit)
+        guard let stated = TargetUnits.statedQuantities(in: text),
+            let secondsPerUnit = TargetUnits.secondsPerTimeWord[stated.unit]
+        else {
+            // No numbers, no unit, two different units — or one measuring
+            // something other than time.
+            return nil
         }
-        guard units.count == 1 else { return nil }
-        return durations
-    }
-}
-
-/// The unit words a prescribed target may be written in, and what each one
-/// measures.
-///
-/// One vocabulary in one place, so `RepRange` and `WorkDuration` cannot
-/// disagree about whether `"30 seconds"` counts repetitions. Nothing here is a
-/// training opinion: no value says what a set should be, only what a word
-/// means. Time and distance both appear because timed holds and loaded carries
-/// are both work the catalog already carries.
-///
-/// Depends on: Foundation only.
-enum TargetUnits {
-
-    /// How many seconds each time word is worth. Unit arithmetic rather than a
-    /// prescription: a minute is sixty seconds by definition.
-    static let secondsPerTimeWord: [String: Int] = [
-        "s": 1, "sec": 1, "secs": 1, "second": 1, "seconds": 1,
-        "min": 60, "mins": 60, "minute": 60, "minutes": 60,
-        "hr": 3600, "hrs": 3600, "hour": 3600, "hours": 3600,
-    ]
-
-    /// Words that say the work is measured in time without naming a unit, so
-    /// `"max hold"` and `"hold for time"` reach the lifter as holds rather than
-    /// as a rep field. They are read only when no rep count could be found, so
-    /// `"8-12, hold at the top"` stays eight to twelve repetitions.
-    static let timingWords: Set<String> = ["hold", "holds", "time", "timed", "isometric"]
-
-    /// Words that mean the number beside them measures distance. Read so a
-    /// carry is not mistaken for a hold, and so neither is read as reps.
-    static let distanceWords: Set<String> = [
-        "m", "meter", "meters", "metre", "metres",
-        "yd", "yds", "yard", "yards",
-        "ft", "foot", "feet",
-    ]
-
-    /// Every unit word that means the number beside it is not a rep count.
-    static var nonRepWords: Set<String> { Set(secondsPerTimeWord.keys).union(distanceWords) }
-
-    /// What separates the parts of a clock, which is never a rep range.
-    static let clockSeparator: Character = ":"
-
-    /// How many of one clock part make the next one up. Calendar arithmetic.
-    static let secondsPerClockStep = 60
-
-    /// One piece of a target string: a number, a unit word, or a word that is
-    /// neither.
-    enum Token: Equatable {
-        case number(Int)
-        case unit(String)
-        case word
-
-        /// The unit this token names, or `nil` when it names none.
-        var unitWord: String? {
-            guard case .unit(let word) = self else { return nil }
-            return word
-        }
-    }
-
-    /// The text as numbers and words in the order they were written, so a
-    /// number can be read together with the unit that follows it.
-    static func tokens(in text: String) -> [Token] {
-        var tokens: [Token] = []
-        var current = ""
-        var currentIsNumber = false
-
-        func flush() {
-            guard !current.isEmpty else { return }
-            if currentIsNumber {
-                // A run of digits too long for an `Int` is not a target anyone
-                // wrote; treating it as a plain word refuses it rather than
-                // trapping.
-                tokens.append(Int(current).map(Token.number) ?? .word)
-            } else {
-                tokens.append(nonRepWords.contains(current) ? .unit(current) : .word)
-            }
-            current = ""
-        }
-
-        for character in text.lowercased() {
-            let isNumber = character.isNumber
-            let isLetter = character.isLetter
-            guard isNumber || isLetter else {
-                flush()
-                continue
-            }
-            if current.isEmpty || isNumber == currentIsNumber {
-                currentIsNumber = isNumber
-                current.append(character)
-            } else {
-                flush()
-                currentIsNumber = isNumber
-                current.append(character)
-            }
-        }
-        flush()
-        return tokens
+        return stated.values.map { $0 * secondsPerUnit }
     }
 }

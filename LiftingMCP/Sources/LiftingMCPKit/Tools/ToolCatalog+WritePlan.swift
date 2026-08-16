@@ -26,10 +26,11 @@ extension ToolCatalog {
             a list when they differ — that is how a drop set, a ramp, a back-off \
             set or a per-set note is written. 'intensity' states how hard the \
             work should be, on whatever scale you work in; it is recorded as \
-            written and never converted or bounded. Work held for time is \
-            prescribed in 'repRange' as the time it is — '30 seconds', '1:30' — \
-            and the app logs it as a duration in seconds rather than as reps, so \
-            a plank never lands in the log or in volume_by_muscle as \
+            written and never converted or bounded. Work that is not counted in \
+            reps is prescribed in 'repRange' as the measure it actually is: held \
+            for time — '30 seconds', '1:30' — or carried over a distance — \
+            '40 metres', '20 yd'. The app logs each in its own unit, so neither a \
+            plank nor a carry ever lands in the log or in volume_by_muscle as \
             repetitions. Everything else is recorded exactly as you write it — no \
             set count, rest, rep range, load, or effort target is adjusted.
             """,
@@ -92,12 +93,18 @@ extension ToolCatalog {
                 "The target as written, e.g. '8-12' or '5'. Applies to every set "
                     + "that does not state its own. Omit if you are not prescribing "
                     + "one. Write a hold as the time it is — '30 seconds', '45s', "
-                    + "'1:30' — and the lifter logs it in seconds rather than reps: "
-                    + "the log records a duration and a rep count separately, and "
-                    + "volume_by_muscle reports seconds apart from reps. A target in "
-                    + "any other unit ('40 m' for a carry) is shown to him exactly "
-                    + "as written, but there is nowhere to record how far he went; "
-                    + "only reps and seconds can be logged."),
+                    + "'1:30' — and a carry as the distance it is — '40 m', "
+                    + "'40 metres', '50-100 yd'. The lifter logs each in the unit it "
+                    + "was prescribed in: a hold is logged in seconds rather than "
+                    + "reps and a carry in the distance it covered, because the log "
+                    + "records a rep count, a duration and a distance as three "
+                    + "separate things. volume_by_muscle reports all three apart, so "
+                    + "no hold and no carry is ever counted as a repetition. A "
+                    + "distance keeps the "
+                    + "unit you wrote it in and is never converted — "
+                    + distanceUnits + " are read; a unit outside that list is shown to "
+                    + "him exactly as written but cannot be logged, so prescribe a "
+                    + "carry in one of them if you want the distance recorded."),
             "restSeconds": integer("Rest between sets. Omit if not prescribing rest."),
             "suggestedLoad": massSchema(
                 "The load to work with. Applies to every set that does not state "
@@ -111,12 +118,19 @@ extension ToolCatalog {
         required: ["exerciseID", "displayName", "sets"]
     )
 
+    /// The distance units this build can read out of a prescription and log,
+    /// named in the schema so the writer can see them before he writes one.
+    /// Assembled from `DistanceUnit.known` rather than typed out again, so the
+    /// list Claude reads is the list the reader actually reads.
+    private static let distanceUnits =
+        DistanceUnit.known.map { "'\($0.rawValue)'" }.joined(separator: ", ")
+
     /// One set of a prescription whose sets differ. Everything is optional:
     /// `{}` is a legitimate set, meaning "the same as this exercise prescribes".
     private static let setSchema = object([
         "repRange": string(
-            "This set's target, e.g. '5', 'AMRAP', or a hold such as '30 seconds'. "
-                + "Omit to use the exercise's."),
+            "This set's target, e.g. '5', 'AMRAP', a hold such as '30 seconds', or "
+                + "a carry such as '40 m'. Omit to use the exercise's."),
         "suggestedLoad": massSchema("This set's load. Omit to use the exercise's."),
         "intensity": intensitySchema("How hard this set should be. Omit to use the exercise's."),
         "notes": string("Anything about this set alone, e.g. 'last set to failure'."),

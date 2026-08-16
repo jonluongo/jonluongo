@@ -12,11 +12,13 @@ import LiftingKit
 /// Settings doesn't strand a row showing the wrong number.
 ///
 /// **The second field records what the plan prescribed, in the unit it
-/// prescribed it in.** For counted work it writes `set.reps`; for a hold —
-/// `isTimed` — it writes `set.durationSeconds` instead, and the reps stay zero.
-/// The number the lifter types under a placeholder reading "30 seconds" is
-/// thirty-four *seconds*, and writing it into a rep count is how a plank became
-/// thirty-four repetitions in every report that followed.
+/// prescribed it in.** For counted work it writes `set.reps`; for a hold it
+/// writes `set.durationSeconds`; for a carry it writes `set.distance` in the
+/// unit the carry was prescribed in. Exactly one of the three is ever written,
+/// because `measure` is one value rather than a pair of flags. The number the
+/// lifter types under a placeholder reading "30 seconds" is thirty-four
+/// *seconds*, and writing it into a rep count is how a plank became thirty-four
+/// repetitions in every report that followed.
 struct SetRowView: View {
     @Bindable var set: LoggedSet
     /// 1-based working-set number, ignored when the row is a warmup.
@@ -32,9 +34,10 @@ struct SetRowView: View {
     /// The load the plan prescribed for this set, shown the same way and for
     /// the same reason. `"—"` when it prescribed none.
     var loadTargetText: String
-    /// Whether this row records a hold rather than a rep count. Decided by the
-    /// prescription, in `HoldPrescription`, and never by what is typed.
-    var isTimed: Bool
+    /// What this row records — reps, a hold, or a distance in the unit it was
+    /// prescribed in. Decided by the prescription, in `WorkPrescription`, and
+    /// never by what is typed.
+    var measure: WorkMeasure
     var unit: MassUnit
     var onComplete: () -> Void
 
@@ -51,11 +54,15 @@ struct SetRowView: View {
         )
     }
 
-    /// The second field's text, bound to whichever of the two things this row
-    /// records. Nothing is ever written to both: a row is counted or it is
-    /// held.
+    /// The second field's text, bound to whichever of the three things this row
+    /// records. Nothing is ever written to more than one: a row is counted, or
+    /// held, or carried.
     private var workText: Binding<String> {
-        isTimed ? durationText : repsText
+        switch measure {
+        case .repetitions: repsText
+        case .time: durationText
+        case .distance(let unit): distanceText(in: unit)
+        }
     }
 
     private var repsText: Binding<String> {
@@ -71,6 +78,25 @@ struct SetRowView: View {
         Binding(
             get: { set.durationSeconds.map(String.init) ?? "" },
             set: { set.durationSeconds = Int($0.filter(\.isNumber)) }
+        )
+    }
+
+    /// A carry, in the unit the plan prescribed it in — which is the unit named
+    /// in the column header above the field, so the number he types and the
+    /// number the log keeps are the same measurement. Cleared to `nil` rather
+    /// than to zero when the field is emptied: a set that was not carried did
+    /// not travel no distance. Nothing here converts, so a carry prescribed in
+    /// yards is recorded in yards.
+    private func distanceText(in unit: DistanceUnit) -> Binding<String> {
+        Binding(
+            get: { set.distance.map { $0.value.compactString } ?? "" },
+            set: { text in
+                guard let value = Double(text.replacingOccurrences(of: ",", with: ".")) else {
+                    set.distance = nil
+                    return
+                }
+                set.distance = Distance(value: value, unit: unit)
+            }
         )
     }
 
@@ -95,7 +121,8 @@ struct SetRowView: View {
                 .lineLimit(1)
 
             field(text: weightText, placeholder: loadTargetText, isDecimal: true)
-            field(text: workText, placeholder: repTargetText, isDecimal: false)
+            // A distance can be a fraction of its unit; reps and seconds cannot.
+            field(text: workText, placeholder: repTargetText, isDecimal: measuresDistance)
 
             Button {
                 complete()
@@ -107,6 +134,13 @@ struct SetRowView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    /// Whether the field the lifter types into holds a distance, which is the
+    /// one of the three that can be a fraction of its unit.
+    private var measuresDistance: Bool {
+        if case .distance = measure { return true }
+        return false
     }
 
     private func field(text: Binding<String>, placeholder: String, isDecimal: Bool) -> some View {

@@ -46,17 +46,15 @@ enum RepPrescription {
 /// when it is (`seededSeconds`). It is `RepPrescription`'s mirror, and between
 /// them a prescribed target reaches the lifter as the unit it was written in.
 ///
-/// **How it is used.** `ExerciseLogSection` asks `isTimed(_: PlannedExercise)`
-/// to label the column and to bind each row to the set's seconds instead of its
-/// reps; `ActiveWorkoutView` asks `seededSeconds` when it lays a session out.
-/// A hold whose text names one duration is seeded with it, exactly as a rep
-/// target naming one number is; a range seeds nothing, because choosing an end
-/// of it would be the app deciding how long to hold.
+/// **How it is used.** `ActiveWorkoutView` asks `seededSeconds` when it lays a
+/// session out. A hold whose text names one duration is seeded with it, exactly
+/// as a rep target naming one number is; a range seeds nothing, because choosing
+/// an end of it would be the app deciding how long to hold. Which of the three
+/// things a row records is asked of `WorkPrescription`, not here.
 ///
 /// **What it depends on.** `WorkDuration` from LiftingKit, which does the
-/// reading, and `PlannedExercise` for the whole-exercise question. It decides
-/// nothing about training: an exercise is timed because its prescription says
-/// so, never because of anything the lifter did.
+/// reading. It decides nothing about training: an exercise is timed because its
+/// prescription says so, never because of anything the lifter did.
 enum HoldPrescription {
 
     /// Whether this target is work held for time rather than counted.
@@ -64,22 +62,58 @@ enum HoldPrescription {
         WorkDuration(target ?? "").isTimed
     }
 
-    /// Whether this exercise's work is held for time.
-    ///
-    /// One answer for the whole exercise, because the column above the set
-    /// table is one word and it must not lie about the rows under it. An
-    /// exercise counts as timed when anything it prescribes is — its own target
-    /// or any of its sets' — which is what a plank prescribed as three
-    /// thirty-second holds looks like from either direction.
-    static func isTimed(_ exercise: PlannedExercise) -> Bool {
-        isTimed(exercise.repRange)
-            || exercise.prescribedSets.contains { isTimed($0.repRange) }
-    }
-
     /// The hold to seed into a new set, in seconds, or `nil` when the
     /// prescription names no single duration — a range, or no target at all.
     static func seededSeconds(for target: String?) -> Int? {
         WorkDuration(target ?? "").seconds
+    }
+}
+
+/// Which of the things a set can record this exercise's rows record, and what a
+/// carry seeds a new row with.
+///
+/// **What it does.** Gives one answer for a whole exercise — counted, held, or
+/// carried over a distance in a stated unit — and reads the distance a carry
+/// prescribes. It is the third of the three seams that read a prescription, and
+/// deliberately the only one that answers *which*: a set that could be described
+/// as timed by one question and as carried by another is a set logged wrong, so
+/// there is exactly one question and it has exactly one answer.
+///
+/// **How it is used.** `ExerciseLogSection` asks `measure(of:)` to label the
+/// column and to bind every row under it to the field that measure names;
+/// `ActiveWorkoutView` asks `seededDistance` when it lays a session out. A carry
+/// naming one distance is seeded with it, exactly as a rep target naming one
+/// number is; a range seeds nothing, because choosing an end of it would be the
+/// app deciding how far to carry.
+///
+/// **What it depends on.** `WorkMeasure` and `WorkDistance` from LiftingKit,
+/// which do the reading, and `PlannedExercise` for the whole-exercise question.
+/// It decides nothing about training: an exercise is a carry because its
+/// prescription says so, never because of anything the lifter did.
+enum WorkPrescription {
+
+    /// What this exercise's work is measured in.
+    ///
+    /// One answer for the whole exercise, because the column above the set table
+    /// is one word and it must not lie about the rows under it. An exercise is
+    /// measured by its own target when that target names a measure, and
+    /// otherwise by the first of its sets that names one — which is what a plank
+    /// prescribed as three thirty-second holds, or a carry prescribed as three
+    /// listed distances, looks like from either direction.
+    static func measure(of exercise: PlannedExercise) -> WorkMeasure {
+        let own = WorkMeasure(exercise.repRange)
+        guard own == .repetitions else { return own }
+        return exercise.prescribedSets
+            .lazy
+            .map { WorkMeasure($0.repRange ?? "") }
+            .first { $0 != .repetitions } ?? .repetitions
+    }
+
+    /// The distance to seed into a new set, or `nil` when the prescription names
+    /// no single distance — a range, a unit this build cannot read, or no target
+    /// at all.
+    static func seededDistance(for target: String?) -> Distance? {
+        WorkDistance(target ?? "").distance
     }
 }
 

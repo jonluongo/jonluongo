@@ -34,10 +34,11 @@ struct ExerciseLogSection: View {
     /// logged rather than one figure standing in for all of them.
     private var prescribedSets: [SetPrescription] { exercise.prescribedSets }
 
-    /// Whether this exercise's work is held for time rather than counted, which
-    /// decides both what the column is called and which of the two things every
-    /// row here writes. It comes from the prescription and nothing else.
-    private var isTimed: Bool { HoldPrescription.isTimed(exercise) }
+    /// What this exercise's work is measured in — reps, seconds, or a distance
+    /// in the unit it was prescribed in. It decides both what the column is
+    /// called and which of the three things every row here writes, and it comes
+    /// from the prescription and nothing else.
+    private var measure: WorkMeasure { WorkPrescription.measure(of: exercise) }
 
     var body: some View {
         Group {
@@ -75,7 +76,7 @@ struct ExerciseLogSection: View {
                     loadTargetText: loadTargetText(
                         prescription(forWorkingNumber: workingNumber(at: index),
                                      isWarmup: set.isWarmup)),
-                    isTimed: isTimed,
+                    measure: measure,
                     unit: profile.displayUnit,
                     onComplete: { onCompleteSet(exercise) }
                 )
@@ -120,18 +121,28 @@ struct ExerciseLogSection: View {
     }
 
     /// The column names. The last-but-one names the unit the rows under it are
-    /// actually recorded in — seconds for a hold, repetitions otherwise — so
-    /// the number the lifter types is the number the log keeps.
+    /// actually recorded in — seconds for a hold, the prescribed distance unit
+    /// for a carry, repetitions otherwise — so the number the lifter types is
+    /// the number the log keeps.
     private var columnHeader: some View {
         HStack(spacing: 8) {
             Text("SET").frame(width: 30)
             Text("PREVIOUS").frame(maxWidth: .infinity)
             Text(profile.displayUnit.rawValue.uppercased()).frame(width: 62)
-            Text(isTimed ? "SECS" : "REPS").frame(width: 62)
+            Text(workColumnName).frame(width: 62)
             Image(systemName: "checkmark").frame(width: 30)
         }
         .font(.caption2.weight(.semibold))
         .foregroundStyle(.secondary)
+    }
+
+    /// What the second field is called: the unit its rows are recorded in.
+    private var workColumnName: String {
+        switch measure {
+        case .repetitions: "REPS"
+        case .time: "SECS"
+        case .distance(let unit): unit.rawValue.uppercased()
+        }
     }
 
     /// 1-based working-set number for the row at `index` (warmups don't count).
@@ -160,8 +171,9 @@ struct ExerciseLogSection: View {
     }
 
     /// What he did on this set last time, in the unit he did it in. A hold is
-    /// reported as the seconds it was held; nothing here converts one into the
-    /// other, because they are not the same measurement.
+    /// reported as the seconds it was held and a carry as the distance it
+    /// covered; nothing here converts one measure into another, because they are
+    /// not the same measurement.
     private func previousText(workingIndex: Int, isWarmup: Bool) -> String {
         guard !isWarmup, workingIndex >= 0 else { return "—" }
         let previous = PerformanceHistory.latestHistory(
@@ -169,10 +181,11 @@ struct ExerciseLogSection: View {
         )?.recentSets ?? []
         guard workingIndex < previous.count else { return "—" }
         let record = previous[workingIndex]
-        let work = record.durationSeconds.map { "\($0)s" } ?? "\(record.reps)"
+        let measured = record.durationSeconds.map { "\($0)s" } ?? record.distance?.description
+        let work = measured ?? "\(record.reps)"
         if let load = record.load?.converted(to: profile.displayUnit), load.value > 0 {
             return "\(load.value.compactString) × \(work)"
         }
-        return record.durationSeconds != nil ? work : "\(work) reps"
+        return measured != nil ? work : "\(work) reps"
     }
 }

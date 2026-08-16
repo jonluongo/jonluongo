@@ -16,12 +16,18 @@ extension ToolRunner {
     /// last fortnight of data is the present one. `snapshotAgeDays` says how
     /// stale it is.
     ///
-    /// **Time held is reported as time, never as repetitions.** A plank logged
-    /// as a 34-second hold adds 34 to `primarySeconds` and nothing at all to
-    /// `primaryReps`. Counting it as 34 reps was the error this column split
-    /// exists to end — and dropping it instead would hide work that happened,
-    /// so it is reported in the unit it was done in and left to be weighed by
-    /// whoever is reasoning about it.
+    /// **Every measure is reported in the unit it was performed in, never as
+    /// another.** A plank logged as a 34-second hold adds 34 to `primarySeconds`
+    /// and nothing at all to `primaryReps`; a farmer's carry over 40 metres adds
+    /// 40 metres to `primaryDistance` and nothing to either. Counting them as
+    /// reps was the error this column split exists to end — and dropping them
+    /// instead would hide work that happened, so each is reported in its own
+    /// unit and left to be weighed by whoever is reasoning about it.
+    ///
+    /// `primaryDistance` is a list rather than a number because distances carry
+    /// their units: metres and yards are totalled separately and never added,
+    /// since relating them would mean converting one into the other, and this
+    /// server converts nothing.
     ///
     /// Sets whose exercise the catalog no longer knows cannot be attributed to
     /// a muscle; they are counted separately under `unattributed` with their
@@ -91,9 +97,11 @@ extension ToolRunner {
     /// reader never has to assume. It states the two exclusions and the one
     /// distinction that a total could otherwise hide.
     static let countingRule =
-        "Completed working sets only. Warmups and unfinished rows are excluded. Reps and "
-        + "seconds are counted apart: a set held for time adds to the seconds and nothing to "
-        + "the reps, so no hold is ever reported as a repetition."
+        "Completed working sets only. Warmups and unfinished rows are excluded. Reps, seconds "
+        + "and distance are counted apart: a set held for time adds to the seconds and nothing "
+        + "to the reps, and a set carried for distance adds to the distance and nothing to "
+        + "either, so no hold and no carry is ever reported as a repetition. Distance is a "
+        + "list, one total per unit, because nothing here converts yards into metres."
 
     /// How many weeks back a volume window reaches when the call does not say.
     /// A default for a report, not a prescription about a training block.
@@ -111,29 +119,41 @@ extension ToolRunner {
 ///
 /// Built by `volume_by_muscle` while it walks the log and read back once with
 /// `reported(as:)`. Primary and secondary counts stay apart because combining
-/// them would require a weighting, which is a training opinion. Repetitions and
-/// seconds stay apart for a harder reason: they are different units, and a hold
-/// added into a rep total is a number nobody performed.
+/// them would require a weighting, which is a training opinion. Repetitions,
+/// seconds and distance stay apart for a harder reason: they are different
+/// units, and a hold or a carry added into a rep total is a number nobody
+/// performed.
 ///
-/// Depends on: `MuscleGroup`, `SnapshotLoggedSet` and `JSONValue`.
+/// Distance is held per unit rather than as one running total, because adding
+/// yards to metres would need a conversion this project does not do anywhere.
+///
+/// Depends on: `MuscleGroup`, `SnapshotLoggedSet`, `Distance` and `JSONValue`.
 private struct MuscleVolume {
     private(set) var primarySets = 0
     private(set) var primaryReps = 0
     private(set) var primarySeconds = 0
+    private(set) var primaryDistance: [DistanceUnit: Double] = [:]
     private(set) var secondarySets = 0
     private(set) var secondaryReps = 0
     private(set) var secondarySeconds = 0
+    private(set) var secondaryDistance: [DistanceUnit: Double] = [:]
 
     mutating func addPrimary(_ set: SnapshotLoggedSet) {
         primarySets += 1
         primaryReps += set.reps
         primarySeconds += set.durationSeconds ?? 0
+        if let distance = set.distance {
+            primaryDistance[distance.unit, default: 0] += distance.value
+        }
     }
 
     mutating func addSecondary(_ set: SnapshotLoggedSet) {
         secondarySets += 1
         secondaryReps += set.reps
         secondarySeconds += set.durationSeconds ?? 0
+        if let distance = set.distance {
+            secondaryDistance[distance.unit, default: 0] += distance.value
+        }
     }
 
     func reported(as muscle: MuscleGroup) -> JSONValue {
@@ -142,9 +162,20 @@ private struct MuscleVolume {
             "primarySets": .integer(primarySets),
             "primaryReps": .integer(primaryReps),
             "primarySeconds": .integer(primarySeconds),
+            "primaryDistance": Self.reported(primaryDistance),
             "secondarySets": .integer(secondarySets),
             "secondaryReps": .integer(secondaryReps),
             "secondarySeconds": .integer(secondarySeconds),
+            "secondaryDistance": Self.reported(secondaryDistance),
         ]
+    }
+
+    /// One total per unit, in a stable order. Empty when nothing was carried,
+    /// which is an absence rather than a distance of zero.
+    private static func reported(_ totals: [DistanceUnit: Double]) -> JSONValue {
+        .array(
+            totals
+                .sorted { $0.key.rawValue < $1.key.rawValue }
+                .map { ["unit": .string($0.key.rawValue), "value": .number($0.value)] })
     }
 }

@@ -146,13 +146,24 @@ rep range, no seeding a load from a rule. If a value is missing, either model
 its absence honestly (optional, or a documented empty state) or refuse — never
 invent one. A plan the user sees must be the plan that was prescribed.
 
-**A set is counted or it is held, and the two are different numbers.** A rep
-target is read by `RepRange` and a hold by `WorkDuration`, which share one
-vocabulary so they cannot both claim a target; a logged set carries `reps` and
-`durationSeconds` as separate fields, and which one a row writes is decided by
-what was prescribed for it, never by what was typed. Nothing may add seconds
-into a rep total — that is one number nobody performed, and it propagates into
-every report that follows. A hold that was not timed is `nil`, never zero.
+**A set is counted, held, or carried, and no two of them are the same number.**
+A rep target is read by `RepRange`, a hold by `WorkDuration` and a carry by
+`WorkDistance`; they share one vocabulary and one scan in `TargetUnits`, and
+they claim a target in a fixed order so two of them never claim the same one.
+`WorkMeasure` gives the single answer everything downstream binds to — one value
+with three cases, never a set of booleans that could say two things at once. A
+logged set carries `reps`, `durationSeconds` and `distance` as separate fields,
+and which one a row writes is decided by what was prescribed for it, never by
+what was typed. Nothing may add seconds or metres into a rep total — that is a
+number nobody performed, and it propagates into every report that follows. A
+distance keeps the unit it was prescribed in and is never converted, exactly as
+`Mass` keeps its own; two units are reported side by side rather than summed. A
+hold that was not timed and a carry that did not happen are `nil`, never zero.
+
+Adding a fourth measure means adding a case to `WorkMeasure`, which will not
+compile until every place that logs one has been told what to do with it. That
+is deliberate — it is what stops the next measure from landing in the rep column
+the way a hold once did.
 
 **Refuse rather than discard.** An inbound document stating a key this format
 does not have is refused with the key named and nothing taken in — never read

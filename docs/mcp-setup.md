@@ -158,8 +158,7 @@ you log it in is a *hold*: the column above it reads SECS rather than REPS, and
 the 34 you type is stored as thirty-four seconds. It travels that way too —
 `durationSeconds` in the snapshot, in `exercise_history`, in `recent_sessions`
 — and `volume_by_muscle` totals seconds in their own column beside reps, so a
-month of planks never reads as repetitions you did not perform. A set is
-counted or it is held; the two are never the same number.
+month of planks never reads as repetitions you did not perform.
 
 A hold that names one duration seeds the row (`"30 seconds"`, `"45s"`,
 `"1:30"`). A range (`"30-45 seconds"`) seeds nothing and shows the range, the
@@ -168,10 +167,25 @@ hard you train. So does a hold whose length cannot be read without guessing
 (`"1 min 30 s"`, `"max hold"`): it is still logged in seconds, just not
 pre-filled.
 
-**A distance still cannot be logged.** `"40 m"` is shown to you exactly as
-written and is not misread as forty reps, but there is nowhere to record how far
-you actually carried it — the log holds reps and seconds. `write_plan` says so
-in its own description, so Claude knows before he prescribes a carry.
+**A carry is prescribed in a distance and logged in that same distance.**
+`"repRange": "40 metres"` reaches your screen as written, the column above the
+row reads M rather than REPS, and the 38 you type is stored as thirty-eight
+metres — value and unit together. It travels as `distance` in the snapshot, in
+`exercise_history` and in `recent_sessions`, and `volume_by_muscle` reports
+`primaryDistance` as one total per unit. Nothing converts: 50 yards stays 50
+yards and is never added to a total in metres, because relating the two is a
+decision and this app makes none. `m`, `km`, `yd`, `ft` and `mi` are the units
+read out of a prescription; a unit outside that list is still shown to you
+exactly as written, and `write_plan` says which ones can be logged so Claude
+knows before he prescribes a carry.
+
+A carry naming one distance seeds the row (`"40 m"`); a range (`"50-100 yd"`)
+seeds nothing and shows the range, exactly as a rep range or a hold range does.
+
+**A set is counted, held, or carried, and no two of them are the same number.**
+Reps, seconds and distance are three separate fields in the log and three
+separate columns in every report, and a set that was not held or not carried
+reports nothing there rather than a zero.
 
 ## Things worth knowing
 

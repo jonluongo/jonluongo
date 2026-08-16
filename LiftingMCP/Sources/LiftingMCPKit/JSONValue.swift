@@ -212,6 +212,14 @@ extension JSONValue {
         return ["value": .number(mass.value), "unit": .string(mass.unit.rawValue)]
     }
 
+    /// A distance as it was carried, in the unit it was carried in, never
+    /// converted. `nil` stays `null`, which is how a set that was counted or
+    /// held is told apart from one carried no distance at all.
+    public static func distance(_ distance: Distance?) -> JSONValue {
+        guard let distance else { return .null }
+        return ["value": .number(distance.value), "unit": .string(distance.unit.rawValue)]
+    }
+
     /// An optional string, absent rather than empty when there is none.
     public static func string(_ value: String?) -> JSONValue {
         value.map { JSONValue.string($0) } ?? .null

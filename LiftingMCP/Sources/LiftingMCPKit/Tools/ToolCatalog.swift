@@ -88,9 +88,11 @@ public enum ToolCatalog {
         description: """
             Every set ever logged for one movement, oldest first, with the load, \
             reps, RPE, and what was prescribed at the time. A set held for time \
-            reports 'durationSeconds' and no reps; a counted set reports reps and \
-            a null duration — the two are never the same number. Includes warmups \
-            and uncompleted rows, each flagged, plus any stated starting baseline.
+            reports 'durationSeconds' and no reps; a set carried for distance \
+            reports 'distance' as a value and its unit and no reps; a counted set \
+            reports reps and nulls for both — no two of them are ever the same \
+            number. Includes warmups and uncompleted rows, each flagged, plus any \
+            stated starting baseline.
             """,
         inputSchema: object(
             ["id": string("The exercise ID, exactly as list_exercises reported it.")],
@@ -104,7 +106,8 @@ public enum ToolCatalog {
         description: """
             The most recently trained days, newest first: what was prescribed, \
             what was logged against it, and when. Each logged set carries its \
-            reps and, for work held for time, its 'durationSeconds'.
+            reps, its 'durationSeconds' for work held for time, and its \
+            'distance' — a value and its unit — for work carried over a distance.
             """,
         inputSchema: object(
             ["limit": integer("How many sessions to return. Defaults to 10.")]
@@ -115,11 +118,13 @@ public enum ToolCatalog {
         name: volumeByMuscle,
         title: "Volume by muscle",
         description: """
-            Completed working sets, reps and seconds held per muscle over a \
-            recent window, counted separately as primary and as secondary so no \
-            weighting is assumed. Time held is reported as seconds and never \
-            added into the rep total, so a block of planks never reads as \
-            repetitions. Warmups and uncompleted rows are excluded.
+            Completed working sets per muscle over a recent window, with reps, \
+            seconds held and distance carried counted separately as primary and \
+            as secondary so no weighting is assumed. Time held is reported as \
+            seconds and distance as 'primaryDistance' — one total per unit — and \
+            neither is ever added into the rep total, so a block of planks never \
+            reads as repetitions and neither does a block of carries. Warmups and \
+            uncompleted rows are excluded.
             """,
         inputSchema: object(
             ["weeks": integer("How many weeks back from now to count. Defaults to 4.")]

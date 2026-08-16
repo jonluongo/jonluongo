@@ -45,16 +45,18 @@ extension ToolRunner {
 
     /// One logged set beside what was prescribed for it.
     ///
-    /// `reps` and `durationSeconds` answer different questions and are never
-    /// the same number: a set counted in repetitions reports `reps` and a null
-    /// duration, and a hold reports the seconds it was held and no reps. Adding
-    /// one into the other is the mistake this pair exists to make impossible.
+    /// `reps`, `durationSeconds` and `distance` answer different questions and
+    /// are never the same number: a set counted in repetitions reports `reps`
+    /// and nulls for the other two, a hold reports the seconds it was held, and
+    /// a carry reports how far it went and in what unit. Adding any of them into
+    /// another is the mistake this trio exists to make impossible.
     private static func historyEntry(_ record: LoggedSetRecord) -> JSONValue {
         [
             "date": .date(record.loggedSet.completedAt),
             "load": .mass(record.loggedSet.load),
             "reps": .integer(record.loggedSet.reps),
             "durationSeconds": .integer(record.loggedSet.durationSeconds),
+            "distance": .distance(record.loggedSet.distance),
             "rpe": record.loggedSet.rpe.map { .number($0) } ?? .null,
             "isCompleted": .bool(record.loggedSet.isCompleted),
             "isWarmup": .bool(record.loggedSet.isWarmup),
@@ -152,6 +154,7 @@ extension ToolRunner {
                         "load": .mass($0.load),
                         "reps": .integer($0.reps),
                         "durationSeconds": .integer($0.durationSeconds),
+                        "distance": .distance($0.distance),
                         "rpe": $0.rpe.map { .number($0) } ?? .null,
                         "isCompleted": .bool($0.isCompleted),
                         "isWarmup": .bool($0.isWarmup),

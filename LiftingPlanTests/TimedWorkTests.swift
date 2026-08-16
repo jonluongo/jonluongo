@@ -57,7 +57,7 @@ struct TimedWorkTests {
     func timedPrescriptionIsRecognized() throws {
         let exercise = try imported("30 seconds", into: try context())
 
-        #expect(HoldPrescription.isTimed(exercise))
+        #expect(WorkPrescription.measure(of: exercise) == .time)
         #expect(RepPrescription.seededReps(for: exercise.repRange) == nil)
         #expect(HoldPrescription.seededSeconds(for: exercise.repRange) == 30)
         #expect(RepPrescription.targetText(for: exercise.repRange) == "30 seconds")
@@ -67,7 +67,7 @@ struct TimedWorkTests {
     func countedPrescriptionIsNotTimed() throws {
         let exercise = try imported("8-12", into: try context())
 
-        #expect(!HoldPrescription.isTimed(exercise))
+        #expect(WorkPrescription.measure(of: exercise) == .repetitions)
         #expect(HoldPrescription.seededSeconds(for: exercise.repRange) == nil)
     }
 
@@ -89,7 +89,7 @@ struct TimedWorkTests {
         let exercise = try #require(
             plan.orderedWeeks.first?.orderedDays.first?.orderedExercises.first)
 
-        #expect(HoldPrescription.isTimed(exercise))
+        #expect(WorkPrescription.measure(of: exercise) == .time)
         #expect(
             exercise.prescribedSets.map { HoldPrescription.seededSeconds(for: $0.repRange) }
                 == [30, 45])

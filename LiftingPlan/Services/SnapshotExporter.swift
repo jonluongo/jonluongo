@@ -150,13 +150,14 @@ enum SnapshotExporter {
         )
     }
 
-    /// One logged set, in the unit it was logged in. A hold crosses as seconds
-    /// and a counted set as reps; neither is converted into the other, and a
-    /// set that was not timed reports no duration rather than a zero one.
+    /// One logged set, in the unit it was logged in. A hold crosses as seconds,
+    /// a carry as a distance with the unit it was carried in, and a counted set
+    /// as reps; none of the three is converted into another, and a set that was
+    /// not timed or not carried reports nothing there rather than a zero.
     private static func snapshot(of set: LoggedSet) -> SnapshotLoggedSet {
         SnapshotLoggedSet(
             setIndex: set.setIndex, load: set.load, reps: set.reps,
-            durationSeconds: set.durationSeconds, rpe: set.rpe,
+            durationSeconds: set.durationSeconds, distance: set.distance, rpe: set.rpe,
             isCompleted: set.isCompleted, isWarmup: set.isWarmup,
             completedAt: set.completedAt
         )
