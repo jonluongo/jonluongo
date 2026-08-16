@@ -15,6 +15,18 @@ struct SessionDetailView: View {
             .joined(separator: " · ")
     }
 
+    /// What Start actually does, which depends on whether this session was
+    /// prescribed any rest. A timer runs where the plan asked for one and
+    /// nowhere else — the app never decides how long to rest — so promising
+    /// "automatic rest timers between every set" would be false on most
+    /// sessions and would describe an app that prescribes.
+    private var startFooter: String {
+        let prescribesRest = day.orderedExercises.contains { $0.restSeconds != nil }
+        return prescribesRest
+            ? "Tap Start to log this session set by set. Where the plan prescribes rest, checking a set off runs that rest."
+            : "Tap Start to log this session set by set. Nothing here prescribes rest, so no timer starts on its own — you can run one yourself from the timer button."
+    }
+
     var body: some View {
         List {
             if day.orderedExercises.isEmpty {
@@ -33,7 +45,7 @@ struct SessionDetailView: View {
                 } header: {
                     Text(header)
                 } footer: {
-                    Text("Tap Start to run the session with automatic rest timers between every set.")
+                    Text(startFooter)
                 }
             }
         }

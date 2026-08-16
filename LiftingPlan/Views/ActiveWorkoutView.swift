@@ -16,9 +16,11 @@ struct ActiveWorkoutView: View {
 
     @State private var startDate = Date()
     @State private var showingFinishConfirm = false
+    @State private var showingRestPicker = false
+    /// The last rest the lifter ran himself, kept for this session only so the
+    /// sheet reopens on it. Never read from or written to the store.
+    @State private var lastCustomRestSeconds = 0
     @State private var errorMessage: String?
-
-    private let restOptions = [30, 45, 60, 75, 90, 120, 150, 180]
 
     private var exercises: [PlannedExercise] { day.orderedExercises }
 
@@ -93,6 +95,12 @@ struct ActiveWorkoutView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
+            .sheet(isPresented: $showingRestPicker) {
+                RestDurationSheet(initialSeconds: lastCustomRestSeconds) { seconds in
+                    lastCustomRestSeconds = seconds
+                    restTimer.start(seconds: seconds, context: "Rest")
+                }
+            }
         }
         .onAppear(perform: seedSetsIfNeeded)
     }
@@ -116,15 +124,12 @@ struct ActiveWorkoutView: View {
             }
         }
         ToolbarItem(placement: .topBarTrailing) {
-            Menu {
-                ForEach(restOptions, id: \.self) { seconds in
-                    Button(formatRest(seconds)) {
-                        restTimer.start(seconds: seconds, context: "Rest")
-                    }
-                }
+            Button {
+                showingRestPicker = true
             } label: {
                 Image(systemName: "timer")
             }
+            .accessibilityLabel("Rest timer")
         }
         ToolbarItem(placement: .topBarTrailing) {
             Button("Finish") { showingFinishConfirm = true }
@@ -143,7 +148,8 @@ struct ActiveWorkoutView: View {
 
     /// Starts the pace timer for the rest this exercise prescribes. When none
     /// was prescribed, no timer starts — the app does not invent one. The
-    /// lifter can set a rest himself from the log, which starts it from then on.
+    /// lifter can run a timer of his own from the toolbar, which is a stopwatch
+    /// for this session and does not touch what was prescribed.
     private func startRest(for exercise: PlannedExercise) {
         guard let seconds = exercise.restSeconds else { return }
         restTimer.start(seconds: seconds, context: exercise.displayName)
@@ -157,7 +163,10 @@ struct ActiveWorkoutView: View {
         let set = LoggedSet(
             setIndex: nextIndex,
             load: warmup ? nil : template?.load,
-            reps: warmup ? 0 : (template?.reps ?? RepRange(exercise.repRange).upperBound),
+            // An added working set copies the one just logged — the lifter's
+            // own number, in this session. When there is none to copy it falls
+            // back to the prescription, never to a rule of the app's.
+            reps: warmup ? 0 : (template?.reps ?? RepPrescription.seededReps(for: exercise.repRange) ?? 0),
             isWarmup: warmup
         )
         context.insert(set)
@@ -193,23 +202,25 @@ struct ActiveWorkoutView: View {
     // MARK: - Seeding
 
     /// Pre-populate each exercise with exactly the sets it prescribes, primed
-    /// with the load it prescribes and last time's reps.
+    /// with what the plan prescribed and nothing else.
     ///
-    /// The seeded load is `exercise.suggestedLoad` and nothing else. What the
-    /// lifter did last time is shown beside each row as reference — see
-    /// `previousRecords(for:)` — but it is never substituted for the
-    /// prescription. Every seeded number is editable; the lifter logs what he
-    /// actually lifts.
+    /// The seeded load is `exercise.suggestedLoad`; the seeded reps come from
+    /// `RepPrescription`, which fills the field only when the plan named one
+    /// number and leaves it blank — with the prescribed target shown in its
+    /// place — when the plan named a range. Neither number is ever taken from
+    /// what the lifter did last time. Last session's performance is shown
+    /// beside each row as reference (`ExerciseLogSection.previousText`), which
+    /// is what it is for; substituting it for the prescription is how the
+    /// prescription stops reaching the lifter at all. Every seeded number is
+    /// editable, because what gets logged is what he actually lifts.
     private func seedSetsIfNeeded() {
         for exercise in exercises where (exercise.loggedSets ?? []).isEmpty {
-            let previous = previousRecords(for: exercise)
-            let repTargetUpper = RepRange(exercise.repRange).upperBound
+            let prescribedReps = RepPrescription.seededReps(for: exercise.repRange)
             for index in 0..<exercise.targetSets {
-                let priorReps = index < previous.count ? previous[index].reps : repTargetUpper
                 let set = LoggedSet(
                     setIndex: index,
                     load: exercise.suggestedLoad,
-                    reps: priorReps,
+                    reps: prescribedReps ?? 0,
                     isWarmup: false
                 )
                 context.insert(set)
@@ -217,12 +228,6 @@ struct ActiveWorkoutView: View {
             }
         }
         save()
-    }
-
-    // MARK: - Previous column
-
-    private func previousRecords(for exercise: PlannedExercise) -> [SetRecord] {
-        PerformanceHistory.latestHistory(for: exercise.exerciseID, excluding: exercise, from: plans)?.recentSets ?? []
     }
 
     // MARK: - Saving
@@ -247,15 +252,6 @@ struct ActiveWorkoutView: View {
     private func elapsedString(_ now: Date) -> String {
         let seconds = max(0, Int(now.timeIntervalSince(startDate)))
         return String(format: "%d:%02d", seconds / 60, seconds % 60)
-    }
-
-    private func formatRest(_ seconds: Int) -> String {
-        if seconds >= 60 {
-            let minutes = seconds / 60
-            let remainder = seconds % 60
-            return remainder == 0 ? "\(minutes)min" : "\(minutes)min \(remainder)s"
-        }
-        return "\(seconds)s"
     }
 }
 

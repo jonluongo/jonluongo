@@ -74,6 +74,17 @@ private struct TrendRow: View {
     }
 }
 
+/// One plottable estimate: a session that had an estimable 1-rep max, in the
+/// display unit, and which unbroken run of such sessions it belongs to.
+private struct ChartEstimate: Identifiable {
+    let id = UUID()
+    let date: Date
+    let value: Double
+    /// Sessions separated by one with no estimate get different runs, which is
+    /// what makes the line break rather than span the gap.
+    let run: Int
+}
+
 /// Chart + session list for a single exercise.
 struct ExerciseTrendDetailView: View {
     let trend: ExerciseTrend
@@ -81,17 +92,23 @@ struct ExerciseTrendDetailView: View {
 
     var body: some View {
         List {
-            if trend.points.count >= 2 {
+            if estimates.count >= 2 {
                 Section("Estimated 1-rep max") {
-                    Chart(trend.points) { point in
+                    Chart(estimates) { estimate in
+                        // `run` breaks the line wherever a session had nothing
+                        // to estimate from: each unbroken stretch is its own
+                        // series, so absence reads as a gap. It used to plot as
+                        // 0, which drew a collapse in strength that never
+                        // happened.
                         LineMark(
-                            x: .value("Date", point.date),
-                            y: .value("Est. 1RM", displayEstimate(point))
+                            x: .value("Date", estimate.date),
+                            y: .value("Est. 1RM", estimate.value),
+                            series: .value("Run", estimate.run)
                         )
                         .interpolationMethod(.monotone)
                         PointMark(
-                            x: .value("Date", point.date),
-                            y: .value("Est. 1RM", displayEstimate(point))
+                            x: .value("Date", estimate.date),
+                            y: .value("Est. 1RM", estimate.value)
                         )
                     }
                     .frame(height: 200)
@@ -121,10 +138,30 @@ struct ExerciseTrendDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    /// Estimated 1RM, converted from its stable kilogram basis into the
-    /// display unit for the chart's Y axis.
-    private func displayEstimate(_ point: TrendPoint) -> Double {
-        guard let kilograms = point.estimatedOneRepMaxKilograms else { return 0 }
-        return Mass(value: kilograms, unit: .kilograms).converted(to: unit).value
+    /// Only the sessions there is an estimate for, converted from the stable
+    /// kilogram basis into the display unit, each tagged with the unbroken run
+    /// it belongs to.
+    ///
+    /// Sessions with no estimable 1-rep max — bodyweight work, a set logged
+    /// with no load — produce no entry at all and increment `run`, so the
+    /// chart shows a gap where there is no answer instead of drawing one.
+    private var estimates: [ChartEstimate] {
+        var result: [ChartEstimate] = []
+        var run = 0
+        var previousWasEstimable = false
+        for point in trend.points {
+            guard let kilograms = point.estimatedOneRepMaxKilograms else {
+                previousWasEstimable = false
+                continue
+            }
+            if !previousWasEstimable && !result.isEmpty { run += 1 }
+            previousWasEstimable = true
+            result.append(ChartEstimate(
+                date: point.date,
+                value: Mass(value: kilograms, unit: .kilograms).converted(to: unit).value,
+                run: run
+            ))
+        }
+        return result
     }
 }

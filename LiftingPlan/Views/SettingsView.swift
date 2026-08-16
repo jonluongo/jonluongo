@@ -9,7 +9,7 @@ import LiftingKit
 /// conversation and records himself, so none of them appears here — what is left
 /// is the one preference that is about the app rather than about training.
 ///
-/// Reads `UserProfile` for the unit and every `TrainingPlan` for the reset.
+/// Reads `UserProfile` for the unit and every `TrainingPlan` for the delete.
 /// Depends on: Store.
 struct SettingsView: View {
     let profile: UserProfile
@@ -47,18 +47,18 @@ struct SettingsView: View {
                 Button(role: .destructive) {
                     showingResetConfirm = true
                 } label: {
-                    Text("Reset All Data")
+                    Text("Delete All Plans")
                 }
             } footer: {
-                Text("Deletes every plan and logged set. Your profile is kept.")
+                Text("Deletes every plan and every set logged against it. Your profile, your strength baselines and your body measurements are kept.")
             }
         }
         .navigationTitle("Settings")
-        .confirmationDialog("Reset all data?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
-            Button("Delete Everything", role: .destructive) { resetData() }
+        .confirmationDialog("Delete all plans?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
+            Button("Delete Plans", role: .destructive) { deleteAllPlans() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This can't be undone.")
+            Text("The sets you logged go with them and don't come back. The plan itself will import again the next time Claude's plan document arrives, without them.")
         }
         .alert("Couldn't Save", isPresented: errorAlertBinding) {
             Button("OK", role: .cancel) {}
@@ -74,7 +74,14 @@ struct SettingsView: View {
         save()
     }
 
-    private func resetData() {
+    /// Deletes the plans and, by cascade, every set logged against them.
+    ///
+    /// Deliberately nothing else. `StrengthBaseline` and `BodyMetric` are what
+    /// the lifter is, not what he was asked to train — Claude records them and
+    /// nothing regenerates them, whereas a plan document is still in the shared
+    /// folder and imports itself again. The copy on the button says exactly
+    /// this rather than promising a reset it does not perform.
+    private func deleteAllPlans() {
         for plan in plans {
             context.delete(plan)
         }

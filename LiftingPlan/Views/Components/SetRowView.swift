@@ -15,6 +15,11 @@ struct SetRowView: View {
     /// 1-based working-set number, ignored when the row is a warmup.
     var workingNumber: Int
     var previousText: String
+    /// The rep target the plan prescribed, shown in the reps field while it is
+    /// empty — `"8-12"`, `"AMRAP"`, or `"—"` when the plan named none. It is a
+    /// placeholder rather than a value so the prescription reaches the lifter
+    /// without the app claiming he lifted it.
+    var repTargetText: String
     var unit: MassUnit
     var onComplete: () -> Void
 
@@ -59,7 +64,7 @@ struct SetRowView: View {
                 .lineLimit(1)
 
             field(text: weightText, placeholder: "—", isDecimal: true)
-            field(text: repsText, placeholder: "0", isDecimal: false)
+            field(text: repsText, placeholder: repTargetText, isDecimal: false)
 
             Button {
                 complete()
@@ -79,6 +84,10 @@ struct SetRowView: View {
             .multilineTextAlignment(.center)
             .font(.body.weight(.semibold))
             .monospacedDigit()
+            // A prescribed target like "8-12" is wider than a logged number;
+            // shrink it rather than truncate the prescription.
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
             .frame(width: 62, height: 34)
             .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 8))
     }
