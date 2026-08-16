@@ -5,9 +5,10 @@ SwiftData with CloudKit sync.
 
 **The app makes no training decisions.** It is the blocks, the record, and the
 interface: it owns the exercise catalog and the training log, answers questions
-about them, displays plans, and logs sets. Claude — reached over MCP, built in a
-later plan — makes every training decision: the split, the exercises, sets,
-reps, rest, load, and what changes after an injury.
+about them, displays plans, and logs sets. Claude — reached over MCP, which is
+built and running — makes every training decision: the split, the exercises,
+sets, reps, rest, load, intensity, how a block progresses week to week, and what
+changes after an injury.
 
 There is no plan generator in the app, and deliberately no fallback one. Until
 Claude writes a plan, the app shows an empty state. If you find yourself adding
@@ -20,10 +21,15 @@ goal, equipment, experience and injuries are all things Claude asks better in
 conversation, and he records them with the `update_profile` tool. The one
 preference left in Settings is lb/kg, which is about how a number is drawn
 rather than about training. A profile that has been told nothing must read as
-*not known*, never as a plausible default: `experience` and `equipmentAccess`
-are optional for exactly that reason, and `availableEquipment` is absent rather
-than empty when nobody has said. Do not add a form, and do not add a default
-that asserts something about a lifter nobody ever asked.
+*not known*, never as a plausible default: `experience` is optional for exactly
+that reason, and `availableEquipment` is absent rather than empty when nobody
+has said — `nil` is "nobody asked", `[]` is "owns nothing", and the two must
+never collapse. Do not add a form, and do not add a default that asserts
+something about a lifter nobody ever asked.
+
+Equipment is **an open set of what he owns**, not a tier. The four `Equipment`
+tiers survive only as input shorthand that expands at the boundary; nothing
+stores one, and nothing may reintroduce one as the vocabulary.
 
 The single thing the app insists on is data integrity — real `ExerciseID`s,
 because history is keyed by exercise identity and a fabricated key fragments a
@@ -40,11 +46,13 @@ xcodebuild -project LiftingPlan.xcodeproj -scheme LiftingPlan \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-The tests live in two places. **Both must be run** — the app suite alone no
-longer covers the catalog, the taxonomies, `Mass`, or `RepRange`:
+The tests live in three places. **All three must be run** — the app suite alone
+covers neither the catalog, the taxonomies, `Mass` and `RepRange`, nor the
+document formats and the MCP tools:
 
 ```sh
 swift test --package-path LiftingKit
+swift test --package-path LiftingMCP
 ```
 
 Xcode compiles a package dependency with `-suppress-warnings`, so the package
@@ -53,6 +61,7 @@ build. Enforce the standard on the package explicitly:
 
 ```sh
 swift build --package-path LiftingKit -Xswiftc -warnings-as-errors
+swift build --package-path LiftingMCP -Xswiftc -warnings-as-errors
 ```
 
 Device builds sign with `DEVELOPMENT_TEAM = GKMVG76BQR` and need
@@ -93,9 +102,9 @@ training. `PerformanceHistory` and `ExerciseTrend` report what happened;
 place a plan enters the store — and it records what it was handed, never
 clamping, flooring, capping, or defaulting a prescribed value.
 
-`PlanBlueprint` currently has no producer in the app. That is expected: it is
-the seam where Claude's plans will arrive. Do not "fix" it by writing something
-that generates plans.
+`PlanBlueprint` is the seam where Claude's plans arrive, and it now has exactly
+one producer: `PlanImporter`, building it from a decoded `PlanDocument`. That is
+the only producer it may ever have. Do not add one that generates plans.
 
 `Catalog/` holds bundled reference data, never SwiftData: it ships inside the
 package, is never written at runtime, and every file in it carries a `version`.
@@ -136,6 +145,19 @@ prescribed. No clamping a set count, no capping rest, no substituting a default
 rep range, no seeding a load from a rule. If a value is missing, either model
 its absence honestly (optional, or a documented empty state) or refuse — never
 invent one. A plan the user sees must be the plan that was prescribed.
+
+**Refuse rather than discard.** An inbound document stating a key this format
+does not have is refused with the key named and nothing taken in — never read
+around. A silently dropped key tells the writer his prescription landed when
+none of it did, which is the only failure here that reports success. The rule
+lives in `DocumentRefusal` in LiftingKit so the phone and the macOS server
+cannot answer it differently.
+
+**Every inbound format is versioned, and skew is refused, not guessed.** Both
+documents carry a `version`; a reader handles an older one and refuses a newer
+one *whole*, naming both versions, before holding any key against it — an
+unknown key is exactly what a later format is made of. Bump the version when a
+reader would have to behave differently, never for an additive field.
 
 **Extensible taxonomies, not closed enums.** Muscle groups, equipment,
 movement patterns, and categories are raw-value-backed structs with static

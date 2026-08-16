@@ -11,6 +11,7 @@ training decisions; Claude does, over MCP.
 | Spec | Covers | Status |
 |---|---|---|
 | `2026-08-15-mcp-coaching-architecture-design.md` | Claude as the single decision-maker, the app as blocks + record + interface, snapshot-out/proposal-in, and the full list of what was deleted on 2026-08-15. **Read this first.** | Live — authoritative |
+| `2026-08-15-local-mcp-loop-design.md` | The local loop itself: the shared Swift package, the two documents over iCloud Documents, and the stdio MCP server. | Live — but **its two file formats are described narrower than they shipped.** The loop and the layering are accurate; read "What changed on 2026-08-16" at the end for the format as it actually is. |
 | `2026-08-14-foundation-architecture-design.md` | Layer boundaries, the exercise catalog as bundled reference data, units, and the CloudKit constraints on every model. | Live |
 | `2026-08-14-catalog-enrichment-and-lifter-data.md` | Secondary muscles, difficulty, and the lifter data needed to prescribe starting loads. | Live |
 | `2026-08-14-workout-programming-design.md` | Movement patterns over muscle groups, push/pull balance, sticky exercise selection. | **Reference only.** The training reasoning is sound and `assembly-rules.json` encodes it for Claude to read. But its "What this means for the existing code" section is dead: the app no longer assembles weeks, enforces balance, or rewrites `TemplatePlanBuilder` — that type is deleted. Treat it as material for the coach, not instructions for the app. |

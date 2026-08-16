@@ -1,7 +1,9 @@
 # The Local MCP Loop — Design
 
 **Date:** 2026-08-15
-**Status:** Awaiting owner greenlight
+**Status:** Built. **The two document formats described below are narrower than
+what shipped** — see "What changed on 2026-08-16" at the end. The loop, the
+layering, and the reports-not-verdicts rule are all live and accurate.
 **Extends:** `2026-08-15-mcp-coaching-architecture-design.md`
 
 ## The loop
@@ -153,3 +155,63 @@ plan that references a since-renamed exercise.
 - In-app chat.
 - Any app-side training decision. Still the standing rule.
 - Bidirectional live sync. Two documents, each written by exactly one side.
+
+## What changed on 2026-08-16
+
+The loop above was built and then used, and four audits found the same fault
+throughout: **nothing in it decides anything, but the vocabulary is too narrow to
+coach in, and narrowness is silent.** The plan is
+`docs/superpowers/plans/2026-08-16-open-the-format.md`. The sections above are
+left as written; what follows is what is true instead.
+
+**`plan.json` is a block, not a week.** "sets, reps, rest, load, and notes as
+given" was the whole of it. `PlanDocument` is now version 3 and carries `weeks`,
+each with its own days, optional label, and `isDeload` flag. Periodization,
+wave loading and a deload were unsayable before — and `weekCount: 8` was
+accepted, echoed back as success, and imported as one week, so seven weeks
+vanished in silence. A week's ordinal is its position; a stated `weekCount` is
+now checked against the weeks present rather than believed.
+
+**A prescribed exercise's sets may differ from one another.** `sets` is a count
+or an explicit list, which is how a drop set, a ramp, a back-off set and a
+per-set note are said. `intensity` states an RPE, a reps-in-reserve target, a
+percentage of a one-rep max, or a scale this build has never heard of — carried
+as a scale plus a verbatim value, never converted or bounded. Prescribed effort
+can now be compared with the RPE the lifter logged, which the snapshot already
+reported and nothing could ever set.
+
+**"The import does exactly one thing beyond decoding" is no longer true, and
+deliberately so.** It still confirms every `ExerciseID`, for the reason given
+above. It now also refuses a key the format does not have, naming it and where
+it sat, and refuses a document from a later format version whole. Silently
+dropping a key was worse than rejecting it: the writer is told "Written" and
+believes the prescription landed. `DocumentRefusal` in LiftingKit is the single
+implementation, so the server and the phone cannot disagree about what is
+acceptable.
+
+**The snapshot's profile no longer has an equipment tier.** "equipment access"
+above meant one of four closed tiers, which could not express a garage gym —
+`fullGym` granted 109 machine and cable exercises the lifter cannot do and
+`homeMinimal` denied all 66 barbell ones — and an unrecognized tier value
+rejected the entire document, violating the extensible-taxonomy rule at the
+exact point Claude was recording a fact. The profile now carries an open set of
+`EquipmentType`. Tiers remain as input shorthand that expands at the boundary
+and is never stored, so an unrecognized one cannot reject anything.
+
+**There is a sixth tool, and it can write what it reads.** `update_profile`
+records bodyweight as a dated series and strength baselines keyed on the lift —
+both were read by `ContextReport` and writable by nothing, so Claude was
+permanently told the lifter had no weight and no strength anchor, and a first
+plan had nothing to set a load against. `experience` is an extensible taxonomy
+rather than three fixed words.
+
+**The estimated one-rep max is gone from the app.** Choosing Epley over Brzycki
+is itself a training opinion, and its only consumer drew a verdict — a green
+arrow telling the lifter he was getting stronger. The history chart plots the
+heaviest set actually logged instead. Claude has every logged set and can
+compute whatever estimate he thinks is right.
+
+Still out of scope, and still true: supersets and circuits as *structure*, and
+logging a hold in seconds. A timed prescription now travels correctly end to
+end and is no longer misread as a rep count, but `LoggedSet` counts reps, so
+there is nowhere to record that a 30-second plank was held for 34.

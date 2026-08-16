@@ -161,6 +161,13 @@ extraction pays for itself rather than being scaffolding. Note there is no
 `progressionStalls()` returning a recommendation: reporting that a lift has not
 moved in four weeks is data; deciding what to do about it is Claude's.
 
+The reports-not-verdicts rule above is binding and held. The tool *names* here
+are a design sketch and the built surface differs — six tools, listed in
+`2026-08-15-local-mcp-loop-design.md`. In particular "equipment tier" is no
+longer the vocabulary: the profile carries an open set of what the lifter owns,
+because no tier could describe a real gym. See that spec's "What changed on
+2026-08-16".
+
 ### Freshness
 
 The snapshot exports automatically when the app backgrounds, never behind a
