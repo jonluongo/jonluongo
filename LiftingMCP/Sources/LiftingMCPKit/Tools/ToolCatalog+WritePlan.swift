@@ -26,9 +26,12 @@ extension ToolCatalog {
             a list when they differ — that is how a drop set, a ramp, a back-off \
             set or a per-set note is written. 'intensity' states how hard the \
             work should be, on whatever scale you work in; it is recorded as \
-            written and never converted or bounded. Everything else is recorded \
-            exactly as you write it — no set count, rest, rep range, load, or \
-            effort target is adjusted.
+            written and never converted or bounded. Work held for time is \
+            prescribed in 'repRange' as the time it is — '30 seconds', '1:30' — \
+            and the app logs it as a duration in seconds rather than as reps, so \
+            a plank never lands in the log or in volume_by_muscle as \
+            repetitions. Everything else is recorded exactly as you write it — no \
+            set count, rest, rep range, load, or effort target is adjusted.
             """,
         inputSchema: object(
             [
@@ -86,9 +89,15 @@ extension ToolCatalog {
                 ],
             ],
             "repRange": string(
-                "The rep target as written, e.g. '8-12' or '5'. Applies to every "
-                    + "set that does not state its own. Omit if you are not "
-                    + "prescribing one."),
+                "The target as written, e.g. '8-12' or '5'. Applies to every set "
+                    + "that does not state its own. Omit if you are not prescribing "
+                    + "one. Write a hold as the time it is — '30 seconds', '45s', "
+                    + "'1:30' — and the lifter logs it in seconds rather than reps: "
+                    + "the log records a duration and a rep count separately, and "
+                    + "volume_by_muscle reports seconds apart from reps. A target in "
+                    + "any other unit ('40 m' for a carry) is shown to him exactly "
+                    + "as written, but there is nowhere to record how far he went; "
+                    + "only reps and seconds can be logged."),
             "restSeconds": integer("Rest between sets. Omit if not prescribing rest."),
             "suggestedLoad": massSchema(
                 "The load to work with. Applies to every set that does not state "
@@ -105,7 +114,9 @@ extension ToolCatalog {
     /// One set of a prescription whose sets differ. Everything is optional:
     /// `{}` is a legitimate set, meaning "the same as this exercise prescribes".
     private static let setSchema = object([
-        "repRange": string("This set's reps, e.g. '5' or 'AMRAP'. Omit to use the exercise's."),
+        "repRange": string(
+            "This set's target, e.g. '5', 'AMRAP', or a hold such as '30 seconds'. "
+                + "Omit to use the exercise's."),
         "suggestedLoad": massSchema("This set's load. Omit to use the exercise's."),
         "intensity": intensitySchema("How hard this set should be. Omit to use the exercise's."),
         "notes": string("Anything about this set alone, e.g. 'last set to failure'."),

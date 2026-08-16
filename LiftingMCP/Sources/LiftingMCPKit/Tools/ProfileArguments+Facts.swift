@@ -54,8 +54,12 @@ extension ToolRunner {
     /// (`{"date": …, "value": 182, "unit": "lb"}`). A reading that names no day
     /// belongs to the day the update was written, which is when the fact was
     /// recorded rather than a guess about when he stood on the scale.
+    ///
+    /// An explicit `null` is refused rather than ignored, in the document's own
+    /// words — see `refuseNull`.
     static func readings(_ value: JSONValue?) throws -> [BodyweightReading] {
         guard let value else { return [] }
+        try refuseNull(value, .bodyweight)
         return try records(value).map { entry in
             guard let members = entry.objectValue else {
                 throw ProfileArgumentError(
@@ -82,6 +86,7 @@ extension ToolRunner {
     /// ever join.
     func baselines(_ value: JSONValue?) throws -> [BaselineStatement] {
         guard let value else { return [] }
+        try Self.refuseNull(value, .baselines)
         return try Self.records(value).map { entry in
             guard let members = entry.objectValue else {
                 throw ProfileArgumentError(
@@ -112,6 +117,22 @@ extension ToolRunner {
                 recordedAt: try Self.date(members["recordedAt"], "baselines")
             )
         }
+    }
+
+    /// Refuses an explicit `null` on a series, saying what the document itself
+    /// would have said.
+    ///
+    /// The rule and the sentence both live in `DocumentRefusal.nulledSeries` in
+    /// LiftingKit, because the phone refuses this while decoding the document
+    /// and this server refuses it while reading the call that would have
+    /// written one — and a caller told here that a null was fine, then told by
+    /// the app that it was not, has learned two different formats. `null` is
+    /// how every *single* fact is returned to not-known; a dated series is the
+    /// exception, and this is where the exception is enforced rather than
+    /// silently ignored.
+    static func refuseNull(_ value: JSONValue, _ series: ProfileSeries) throws {
+        guard value == .null else { return }
+        throw ProfileArgumentError(DocumentRefusal.nulledSeries(series).message)
     }
 
     /// A series as written: several records, or one on its own.

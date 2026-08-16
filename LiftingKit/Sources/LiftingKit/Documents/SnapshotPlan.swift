@@ -118,8 +118,10 @@ public struct SnapshotPlannedExercise: Codable, Hashable, Sendable {
     /// Position within the day, ascending.
     public let order: Int
     public let targetSets: Int
-    /// The rep target as written, e.g. "8-12" or "5". May be empty when none
-    /// was prescribed. Parse it with `RepRange` rather than by hand.
+    /// The target as written, e.g. "8-12", "5", or "30 seconds". May be empty
+    /// when none was prescribed. Parse it with `RepRange` rather than by hand,
+    /// and with `WorkDuration` when it prescribes a hold — a timed target is
+    /// logged into each set's `durationSeconds`, never into its reps.
     public let repRange: String
     /// The load the plan suggested, in the unit it was written in. `nil` when
     /// none was given.
@@ -185,19 +187,33 @@ public struct SnapshotPlannedExercise: Codable, Hashable, Sendable {
     }
 }
 
-/// One set as the lifter logged it: what he lifted, for how many, how hard it
-/// felt, and when.
+/// One set as the lifter logged it: what he lifted, for how many or for how
+/// long, how hard it felt, and when.
 ///
 /// A row exists as soon as it is on screen, so read `isCompleted` rather than
 /// existence to know work was done, and `isWarmup` to know whether it counts.
 /// `load` is `nil` for a bodyweight movement rather than zero, so "no external
-/// weight" and "an empty bar" stay distinguishable. Depends on: `Mass`.
+/// weight" and "an empty bar" stay distinguishable.
+///
+/// **A set is counted in repetitions or held for a duration, and the two are
+/// never the same number.** A plank held for 34 seconds reads `reps: 0` and
+/// `durationSeconds: 34`; a set of five reads `reps: 5` and
+/// `durationSeconds: null`. Add seconds into a rep total and every volume
+/// report that follows is wrong, which is exactly what this field exists to
+/// stop. `durationSeconds` is `nil` — never zero — when the set recorded no
+/// hold, because a set that was not timed did not last no time.
+///
+/// Depends on: `Mass`.
 public struct SnapshotLoggedSet: Codable, Hashable, Sendable {
     /// Position within the exercise, ascending.
     public let setIndex: Int
     /// The weight as entered, in the unit entered. `nil` means bodyweight.
     public let load: Mass?
+    /// Repetitions performed. `0` for a set logged as a hold.
     public let reps: Int
+    /// How long the set was held, in whole seconds. `nil` when the set was
+    /// counted in repetitions rather than timed — never zero.
+    public let durationSeconds: Int?
     /// Rating of perceived exertion, 1–10. `nil` when not rated.
     public let rpe: Double?
     public let isCompleted: Bool
@@ -205,12 +221,13 @@ public struct SnapshotLoggedSet: Codable, Hashable, Sendable {
     public let completedAt: Date
 
     public init(
-        setIndex: Int, load: Mass?, reps: Int, rpe: Double?,
+        setIndex: Int, load: Mass?, reps: Int, durationSeconds: Int? = nil, rpe: Double?,
         isCompleted: Bool, isWarmup: Bool, completedAt: Date
     ) {
         self.setIndex = setIndex
         self.load = load
         self.reps = reps
+        self.durationSeconds = durationSeconds
         self.rpe = rpe
         self.isCompleted = isCompleted
         self.isWarmup = isWarmup

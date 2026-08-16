@@ -87,8 +87,10 @@ public enum ToolCatalog {
         title: "Exercise history",
         description: """
             Every set ever logged for one movement, oldest first, with the load, \
-            reps, RPE, and what was prescribed at the time. Includes warmups and \
-            uncompleted rows, each flagged, plus any stated starting baseline.
+            reps, RPE, and what was prescribed at the time. A set held for time \
+            reports 'durationSeconds' and no reps; a counted set reports reps and \
+            a null duration — the two are never the same number. Includes warmups \
+            and uncompleted rows, each flagged, plus any stated starting baseline.
             """,
         inputSchema: object(
             ["id": string("The exercise ID, exactly as list_exercises reported it.")],
@@ -101,7 +103,8 @@ public enum ToolCatalog {
         title: "Recent sessions",
         description: """
             The most recently trained days, newest first: what was prescribed, \
-            what was logged against it, and when.
+            what was logged against it, and when. Each logged set carries its \
+            reps and, for work held for time, its 'durationSeconds'.
             """,
         inputSchema: object(
             ["limit": integer("How many sessions to return. Defaults to 10.")]
@@ -112,9 +115,11 @@ public enum ToolCatalog {
         name: volumeByMuscle,
         title: "Volume by muscle",
         description: """
-            Completed working sets and reps per muscle over a recent window, \
-            counted separately as primary and as secondary so no weighting is \
-            assumed. Warmups and uncompleted rows are excluded.
+            Completed working sets, reps and seconds held per muscle over a \
+            recent window, counted separately as primary and as secondary so no \
+            weighting is assumed. Time held is reported as seconds and never \
+            added into the rep total, so a block of planks never reads as \
+            repetitions. Warmups and uncompleted rows are excluded.
             """,
         inputSchema: object(
             ["weeks": integer("How many weeks back from now to count. Defaults to 4.")]
@@ -132,12 +137,16 @@ public enum ToolCatalog {
             goal, his injuries, when he trains. The app asks him none of this, \
             so what he tells you is written here or it is not written at all. \
             Pass only the fields you have just learned: anything you leave out \
-            keeps the value it already has. Pass null for a field to return it \
-            to not-known, which is how a fact recorded in error is taken back. \
-            Lists replace rather than add, so send the whole list each time — \
-            except bodyweight and baselines, which are series: each record you \
-            send is filed under its day or its lift, adding a new one and \
-            correcting one already there, so the history is never overwritten.
+            keeps the value it already has. Pass null for a single fact to \
+            return it to not-known, which is how a fact recorded in error is \
+            taken back. Lists replace rather than add, so send the whole list \
+            each time — except bodyweight and baselines, which are series: each \
+            record you send is filed under its day or its lift, adding a new one \
+            and correcting one already there, so the history is never \
+            overwritten. Those two cannot be nulled, and a null on either is \
+            refused rather than ignored: it would read either as recording \
+            nothing or as erasing every entry. Correct a series by stating that \
+            day's reading, or that lift's baseline, again.
             """,
         inputSchema: object([
             "equipment": [
@@ -162,7 +171,8 @@ public enum ToolCatalog {
                         + "series, not one number: pass a list to record several weigh-ins, "
                         + "and add \"date\" (ISO 8601, UTC) to file one on the day it happened "
                         + "rather than today. Stating a day again corrects that day's reading; "
-                        + "a new day is added, so the trend is never overwritten."),
+                        + "a new day is added, so the trend is never overwritten. Null is "
+                        + "refused here — a series cannot be taken back, only corrected."),
                 "anyOf": [massSchema, ["type": "array", "items": massSchema]],
             ],
             "baselines": [
@@ -173,7 +183,8 @@ public enum ToolCatalog {
                         + "\"reps\": …}, with an optional ISO 8601 \"recordedAt\". Leave out "
                         + "\"load\" for bodyweight work. Take exerciseID verbatim from "
                         + "\(listExercises); an ID the catalog does not have is refused. "
-                        + "Stating a lift again replaces that lift's baseline."),
+                        + "Stating a lift again replaces that lift's baseline. Null is "
+                        + "refused here — a series cannot be taken back, only corrected."),
                 "anyOf": [baselineSchema, ["type": "array", "items": baselineSchema]],
             ],
             "experience": [

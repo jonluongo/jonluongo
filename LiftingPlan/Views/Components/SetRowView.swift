@@ -10,21 +10,31 @@ import LiftingKit
 /// regardless of what unit `set.load` was originally logged in — the field
 /// always shows/writes a value converted to `unit`, so switching units in
 /// Settings doesn't strand a row showing the wrong number.
+///
+/// **The second field records what the plan prescribed, in the unit it
+/// prescribed it in.** For counted work it writes `set.reps`; for a hold —
+/// `isTimed` — it writes `set.durationSeconds` instead, and the reps stay zero.
+/// The number the lifter types under a placeholder reading "30 seconds" is
+/// thirty-four *seconds*, and writing it into a rep count is how a plank became
+/// thirty-four repetitions in every report that followed.
 struct SetRowView: View {
     @Bindable var set: LoggedSet
     /// 1-based working-set number, ignored when the row is a warmup.
     var workingNumber: Int
     var previousText: String
-    /// The rep target the plan prescribed *for this set*, shown in the reps
-    /// field while it is empty — `"8-12"`, `"AMRAP"`, or `"—"` when the plan
-    /// named none. It is a placeholder rather than a value so the prescription
-    /// reaches the lifter without the app claiming he lifted it. Sets of one
-    /// exercise may carry different targets: a ramp and a drop set are exactly
-    /// that.
+    /// The target the plan prescribed *for this set*, shown in the second field
+    /// while it is empty — `"8-12"`, `"AMRAP"`, `"30 seconds"`, or `"—"` when
+    /// the plan named none. It is a placeholder rather than a value so the
+    /// prescription reaches the lifter without the app claiming he lifted it.
+    /// Sets of one exercise may carry different targets: a ramp and a drop set
+    /// are exactly that.
     var repTargetText: String
     /// The load the plan prescribed for this set, shown the same way and for
     /// the same reason. `"—"` when it prescribed none.
     var loadTargetText: String
+    /// Whether this row records a hold rather than a rep count. Decided by the
+    /// prescription, in `HoldPrescription`, and never by what is typed.
+    var isTimed: Bool
     var unit: MassUnit
     var onComplete: () -> Void
 
@@ -41,10 +51,26 @@ struct SetRowView: View {
         )
     }
 
+    /// The second field's text, bound to whichever of the two things this row
+    /// records. Nothing is ever written to both: a row is counted or it is
+    /// held.
+    private var workText: Binding<String> {
+        isTimed ? durationText : repsText
+    }
+
     private var repsText: Binding<String> {
         Binding(
             get: { set.reps > 0 ? String(set.reps) : "" },
             set: { set.reps = Int($0.filter(\.isNumber)) ?? 0 }
+        )
+    }
+
+    /// A hold, in seconds. Cleared to `nil` rather than to zero when the field
+    /// is emptied — a set that was not timed did not last no time.
+    private var durationText: Binding<String> {
+        Binding(
+            get: { set.durationSeconds.map(String.init) ?? "" },
+            set: { set.durationSeconds = Int($0.filter(\.isNumber)) }
         )
     }
 
@@ -69,7 +95,7 @@ struct SetRowView: View {
                 .lineLimit(1)
 
             field(text: weightText, placeholder: loadTargetText, isDecimal: true)
-            field(text: repsText, placeholder: repTargetText, isDecimal: false)
+            field(text: workText, placeholder: repTargetText, isDecimal: false)
 
             Button {
                 complete()

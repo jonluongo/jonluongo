@@ -146,6 +146,14 @@ rep range, no seeding a load from a rule. If a value is missing, either model
 its absence honestly (optional, or a documented empty state) or refuse — never
 invent one. A plan the user sees must be the plan that was prescribed.
 
+**A set is counted or it is held, and the two are different numbers.** A rep
+target is read by `RepRange` and a hold by `WorkDuration`, which share one
+vocabulary so they cannot both claim a target; a logged set carries `reps` and
+`durationSeconds` as separate fields, and which one a row writes is decided by
+what was prescribed for it, never by what was typed. Nothing may add seconds
+into a rep total — that is one number nobody performed, and it propagates into
+every report that follows. A hold that was not timed is `nil`, never zero.
+
 **Refuse rather than discard.** An inbound document stating a key this format
 does not have is refused with the key named and nothing taken in — never read
 around. A silently dropped key tells the writer his prescription landed when

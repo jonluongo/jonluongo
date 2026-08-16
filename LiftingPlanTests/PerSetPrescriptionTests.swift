@@ -240,6 +240,48 @@ struct PerSetPrescriptionTests {
             == IntensityTarget(scale: .repsInReserve, value: "0"))
     }
 
+    @Test("The exported JSON carries the per-set keys a reader actually reads")
+    func snapshotWireShapeIsPinned() throws {
+        let context = try context()
+        try PlanImporter.import(
+            document([
+                PlanDocumentExercise(
+                    exerciseID: Self.squat, displayName: "Squat",
+                    sets: [
+                        SetPrescription(repRange: "5", suggestedLoad: kg(60)),
+                        SetPrescription(
+                            repRange: "AMRAP", suggestedLoad: kg(80),
+                            intensity: IntensityTarget(scale: .rpe, value: "9"),
+                            notes: "Top set"),
+                    ])
+            ]),
+            into: context, catalog: try catalog()
+        )
+        let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
+        let data = try TrainingSnapshot.makeEncoder().encode(snapshot)
+
+        // Read as untyped JSON rather than decoded back into the types that
+        // wrote it: encoding and decoding with one pair of coding keys agrees
+        // with itself whatever those keys are called, and what a reader on the
+        // other side of the file depends on is the names.
+        let root = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let plans = try #require(root["plans"] as? [[String: Any]])
+        let weeks = try #require(plans.first?["weeks"] as? [[String: Any]])
+        let days = try #require(weeks.first?["days"] as? [[String: Any]])
+        let exercises = try #require(days.first?["exercises"] as? [[String: Any]])
+        let sets = try #require(exercises.first?["prescribedSets"] as? [[String: Any]])
+
+        #expect(sets.count == 2)
+        #expect(sets.first?["repRange"] as? String == "5")
+        #expect(sets.last?["notes"] as? String == "Top set")
+        let intensity = try #require(sets.last?["intensity"] as? [String: Any])
+        #expect(intensity["scale"] as? String == "rpe")
+        #expect(intensity["value"] as? String == "9")
+        let load = try #require(sets.last?["suggestedLoad"] as? [String: Any])
+        #expect(load["value"] as? Double == 80)
+        #expect(load["unit"] as? String == "kg")
+    }
+
     @Test("A snapshot written before per-set prescriptions existed still reads")
     func olderSnapshotStillDecodes() throws {
         let json = """

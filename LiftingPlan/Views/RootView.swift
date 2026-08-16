@@ -30,6 +30,10 @@ struct RootView: View {
                     .task { ensureProfileExists() }
             }
         }
+        // Run once a launch, before anything reads the profile: a fact an
+        // earlier build recorded under a column this one renamed is carried
+        // across here or it is stranded in the store forever.
+        .task { upgradeStore() }
         .alert("Couldn't Save", isPresented: errorAlertBinding) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -77,11 +81,31 @@ struct RootView: View {
     private func ensureProfileExists() {
         guard allProfiles.isEmpty else { return }
         context.insert(UserProfile())
+        save()
+    }
+
+    /// Carries anything an earlier build left in a renamed column into the shape
+    /// this build reads. A failure is shown rather than swallowed: a lifter
+    /// whose gym did not come across would otherwise find Claude asking him
+    /// what he trains with for no reason he can see.
+    private func upgradeStore() {
+        do {
+            try StoreUpgrade.run(in: context)
+        } catch {
+            saveErrorMessage = Self.describe(error)
+        }
+    }
+
+    private func save() {
         do {
             try context.saveOrThrow()
         } catch {
-            saveErrorMessage = (error as? PersistenceError)?.errorDescription ?? error.localizedDescription
+            saveErrorMessage = Self.describe(error)
         }
+    }
+
+    private static func describe(_ error: any Error) -> String {
+        (error as? PersistenceError)?.errorDescription ?? error.localizedDescription
     }
 }
 

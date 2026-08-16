@@ -256,14 +256,33 @@ struct StoreModelTests {
     func cloudKitCompatible() throws {
         // Constructing each model with no arguments proves every property
         // carries a default — the CloudKit requirement that is easiest to
-        // violate accidentally and hardest to notice until sync fails.
+        // violate accidentally and hardest to notice until sync fails. Every
+        // model in the schema, not most of them: the three newest were the
+        // three this test did not reach.
         let context = try context()
         context.insert(UserProfile())
         context.insert(TrainingPlan())
         context.insert(TrainingWeek())
         context.insert(WorkoutDay())
         context.insert(PlannedExercise())
+        context.insert(PrescribedSet())
         context.insert(LoggedSet())
+        context.insert(BodyMetric())
+        context.insert(StrengthBaseline())
         try context.saveOrThrow()
+    }
+
+    @Test("A set records reps or a hold, and states no hold when it was not timed")
+    func loggedSetDurationIsAbsentUntilRecorded() throws {
+        let context = try context()
+        let counted = LoggedSet(reps: 5)
+        let held = LoggedSet(durationSeconds: 34)
+        context.insert(counted)
+        context.insert(held)
+        try context.saveOrThrow()
+
+        #expect(counted.durationSeconds == nil, "not timed is not zero seconds")
+        #expect(held.durationSeconds == 34)
+        #expect(held.reps == 0)
     }
 }

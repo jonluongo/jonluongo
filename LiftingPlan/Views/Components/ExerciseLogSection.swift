@@ -34,6 +34,11 @@ struct ExerciseLogSection: View {
     /// logged rather than one figure standing in for all of them.
     private var prescribedSets: [SetPrescription] { exercise.prescribedSets }
 
+    /// Whether this exercise's work is held for time rather than counted, which
+    /// decides both what the column is called and which of the two things every
+    /// row here writes. It comes from the prescription and nothing else.
+    private var isTimed: Bool { HoldPrescription.isTimed(exercise) }
+
     var body: some View {
         Group {
             if let notes = exercise.notes, !notes.isEmpty {
@@ -70,6 +75,7 @@ struct ExerciseLogSection: View {
                     loadTargetText: loadTargetText(
                         prescription(forWorkingNumber: workingNumber(at: index),
                                      isWarmup: set.isWarmup)),
+                    isTimed: isTimed,
                     unit: profile.displayUnit,
                     onComplete: { onCompleteSet(exercise) }
                 )
@@ -113,12 +119,15 @@ struct ExerciseLogSection: View {
         .foregroundStyle(.secondary)
     }
 
+    /// The column names. The last-but-one names the unit the rows under it are
+    /// actually recorded in — seconds for a hold, repetitions otherwise — so
+    /// the number the lifter types is the number the log keeps.
     private var columnHeader: some View {
         HStack(spacing: 8) {
             Text("SET").frame(width: 30)
             Text("PREVIOUS").frame(maxWidth: .infinity)
             Text(profile.displayUnit.rawValue.uppercased()).frame(width: 62)
-            Text("REPS").frame(width: 62)
+            Text(isTimed ? "SECS" : "REPS").frame(width: 62)
             Image(systemName: "checkmark").frame(width: 30)
         }
         .font(.caption2.weight(.semibold))
@@ -150,6 +159,9 @@ struct ExerciseLogSection: View {
         return load.converted(to: profile.displayUnit).value.compactString
     }
 
+    /// What he did on this set last time, in the unit he did it in. A hold is
+    /// reported as the seconds it was held; nothing here converts one into the
+    /// other, because they are not the same measurement.
     private func previousText(workingIndex: Int, isWarmup: Bool) -> String {
         guard !isWarmup, workingIndex >= 0 else { return "—" }
         let previous = PerformanceHistory.latestHistory(
@@ -157,9 +169,10 @@ struct ExerciseLogSection: View {
         )?.recentSets ?? []
         guard workingIndex < previous.count else { return "—" }
         let record = previous[workingIndex]
+        let work = record.durationSeconds.map { "\($0)s" } ?? "\(record.reps)"
         if let load = record.load?.converted(to: profile.displayUnit), load.value > 0 {
-            return "\(load.value.compactString) × \(record.reps)"
+            return "\(load.value.compactString) × \(work)"
         }
-        return "\(record.reps) reps"
+        return record.durationSeconds != nil ? work : "\(work) reps"
     }
 }

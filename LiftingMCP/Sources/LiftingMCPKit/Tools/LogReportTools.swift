@@ -43,11 +43,18 @@ extension ToolRunner {
         ])
     }
 
+    /// One logged set beside what was prescribed for it.
+    ///
+    /// `reps` and `durationSeconds` answer different questions and are never
+    /// the same number: a set counted in repetitions reports `reps` and a null
+    /// duration, and a hold reports the seconds it was held and no reps. Adding
+    /// one into the other is the mistake this pair exists to make impossible.
     private static func historyEntry(_ record: LoggedSetRecord) -> JSONValue {
         [
             "date": .date(record.loggedSet.completedAt),
             "load": .mass(record.loggedSet.load),
             "reps": .integer(record.loggedSet.reps),
+            "durationSeconds": .integer(record.loggedSet.durationSeconds),
             "rpe": record.loggedSet.rpe.map { .number($0) } ?? .null,
             "isCompleted": .bool(record.loggedSet.isCompleted),
             "isWarmup": .bool(record.loggedSet.isWarmup),
@@ -144,6 +151,7 @@ extension ToolRunner {
                         "setIndex": .integer($0.setIndex),
                         "load": .mass($0.load),
                         "reps": .integer($0.reps),
+                        "durationSeconds": .integer($0.durationSeconds),
                         "rpe": $0.rpe.map { .number($0) } ?? .null,
                         "isCompleted": .bool($0.isCompleted),
                         "isWarmup": .bool($0.isWarmup),

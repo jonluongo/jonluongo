@@ -202,7 +202,9 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
                 "This plan says it runs \(claimed) weeks but states \(weeks.count). Nothing was "
                     + "taken in, because the weeks it does not state would simply be missing. "
                     + "Send one entry in 'weeks' for every week of the block, each with its own "
-                    + "days; 'weekCount' is then whatever you sent and need not be stated.")
+                    + "days; 'weekCount' is then whatever you sent and need not be stated. A plan "
+                    + "left over from an earlier build says this — it stated a length beside a "
+                    + "single week of 'days' — and writing it again is the whole of the fix.")
         }
         return weeks
     }

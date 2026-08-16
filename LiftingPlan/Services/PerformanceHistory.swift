@@ -4,11 +4,15 @@ import LiftingKit
 /// One logged set, reduced to a plain value with no SwiftData attached.
 ///
 /// Built from a `LoggedSet` by `PerformanceHistory`, and shown to the lifter as
-/// what he did last time. Depends on: `Mass` from Domain.
+/// what he did last time. A set is counted or it is held: `durationSeconds` is
+/// `nil` on a counted set, and `reps` is zero on a held one. Depends on: `Mass`
+/// from Domain.
 struct SetRecord: Equatable {
     /// The weight as logged, in the unit it was logged in. `nil` means bodyweight.
     var load: Mass?
     var reps: Int
+    /// How long it was held, in seconds. `nil` when it was counted instead.
+    var durationSeconds: Int?
     var rpe: Double?
 }
 
@@ -65,7 +69,8 @@ enum PerformanceHistory {
 
     static func history(from exercise: PlannedExercise) -> ExerciseHistory {
         let records = exercise.completedWorkingSets.map {
-            SetRecord(load: $0.load, reps: $0.reps, rpe: $0.rpe)
+            SetRecord(
+                load: $0.load, reps: $0.reps, durationSeconds: $0.durationSeconds, rpe: $0.rpe)
         }
         return ExerciseHistory(
             exerciseID: exercise.exerciseID,

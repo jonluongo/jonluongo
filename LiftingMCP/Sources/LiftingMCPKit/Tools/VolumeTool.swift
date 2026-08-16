@@ -16,6 +16,13 @@ extension ToolRunner {
     /// last fortnight of data is the present one. `snapshotAgeDays` says how
     /// stale it is.
     ///
+    /// **Time held is reported as time, never as repetitions.** A plank logged
+    /// as a 34-second hold adds 34 to `primarySeconds` and nothing at all to
+    /// `primaryReps`. Counting it as 34 reps was the error this column split
+    /// exists to end — and dropping it instead would hide work that happened,
+    /// so it is reported in the unit it was done in and left to be weighed by
+    /// whoever is reasoning about it.
+    ///
     /// Sets whose exercise the catalog no longer knows cannot be attributed to
     /// a muscle; they are counted separately under `unattributed` with their
     /// IDs, rather than dropped as though the work never happened.
@@ -43,10 +50,10 @@ extension ToolRunner {
                 continue
             }
             for muscle in exercise.primaryMuscles {
-                totals[muscle, default: MuscleVolume()].addPrimary(reps: record.loggedSet.reps)
+                totals[muscle, default: MuscleVolume()].addPrimary(record.loggedSet)
             }
             for muscle in exercise.secondaryMuscles {
-                totals[muscle, default: MuscleVolume()].addSecondary(reps: record.loggedSet.reps)
+                totals[muscle, default: MuscleVolume()].addSecondary(record.loggedSet)
             }
         }
 
@@ -56,7 +63,7 @@ extension ToolRunner {
             "windowEnd": .date(windowEnd),
             "snapshotGeneratedAt": .date(snapshot.generatedAt),
             "snapshotAgeDays": .integer(TrainingLog.ageInDays(of: snapshot, at: windowEnd)),
-            "counts": "Completed working sets only. Warmups and unfinished rows are excluded.",
+            "counts": .string(Self.countingRule),
             "muscles": .array(
                 totals
                     .sorted {
@@ -80,6 +87,14 @@ extension ToolRunner {
         ])
     }
 
+    /// What every one of these numbers counts, said in the report itself so a
+    /// reader never has to assume. It states the two exclusions and the one
+    /// distinction that a total could otherwise hide.
+    static let countingRule =
+        "Completed working sets only. Warmups and unfinished rows are excluded. Reps and "
+        + "seconds are counted apart: a set held for time adds to the seconds and nothing to "
+        + "the reps, so no hold is ever reported as a repetition."
+
     /// How many weeks back a volume window reaches when the call does not say.
     /// A default for a report, not a prescription about a training block.
     static let defaultVolumeWeeks = 4
@@ -96,22 +111,29 @@ extension ToolRunner {
 ///
 /// Built by `volume_by_muscle` while it walks the log and read back once with
 /// `reported(as:)`. Primary and secondary counts stay apart because combining
-/// them would require a weighting, which is a training opinion. Depends on:
-/// `MuscleGroup` and `JSONValue`.
+/// them would require a weighting, which is a training opinion. Repetitions and
+/// seconds stay apart for a harder reason: they are different units, and a hold
+/// added into a rep total is a number nobody performed.
+///
+/// Depends on: `MuscleGroup`, `SnapshotLoggedSet` and `JSONValue`.
 private struct MuscleVolume {
     private(set) var primarySets = 0
     private(set) var primaryReps = 0
+    private(set) var primarySeconds = 0
     private(set) var secondarySets = 0
     private(set) var secondaryReps = 0
+    private(set) var secondarySeconds = 0
 
-    mutating func addPrimary(reps: Int) {
+    mutating func addPrimary(_ set: SnapshotLoggedSet) {
         primarySets += 1
-        primaryReps += reps
+        primaryReps += set.reps
+        primarySeconds += set.durationSeconds ?? 0
     }
 
-    mutating func addSecondary(reps: Int) {
+    mutating func addSecondary(_ set: SnapshotLoggedSet) {
         secondarySets += 1
-        secondaryReps += reps
+        secondaryReps += set.reps
+        secondarySeconds += set.durationSeconds ?? 0
     }
 
     func reported(as muscle: MuscleGroup) -> JSONValue {
@@ -119,8 +141,10 @@ private struct MuscleVolume {
             "muscle": .string(muscle.rawValue),
             "primarySets": .integer(primarySets),
             "primaryReps": .integer(primaryReps),
+            "primarySeconds": .integer(primarySeconds),
             "secondarySets": .integer(secondarySets),
             "secondaryReps": .integer(secondaryReps),
+            "secondarySeconds": .integer(secondarySeconds),
         ]
     }
 }

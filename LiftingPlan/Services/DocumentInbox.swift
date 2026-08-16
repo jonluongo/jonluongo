@@ -145,8 +145,46 @@ final class DocumentInbox {
         errorMessage = Self.deduplicated(failures).joined(separator: "\n\n").nilWhenEmpty
     }
 
+    /// What to put in front of the lifter when something could not be taken in.
+    ///
+    /// **A refusal is written to whoever wrote the document, and the lifter is
+    /// not him.** "Send it under a key the format has" and "unknown key
+    /// `dropSets` at weeks → 0 → days → 1" are exactly right for Claude and
+    /// useless in an alert on a phone: the person reading it cannot rewrite the
+    /// plan, and nothing tells him what he *can* do. So a refusal reaches him
+    /// as two sentences — what happened, in terms of his training, and the one
+    /// thing that fixes it — with the author's own sentence kept underneath,
+    /// unaltered, because relaying it is the fix. Nothing is summarized away:
+    /// the detail he shows Claude is the detail Claude was given.
+    ///
+    /// Anything that is not a refusal of a document — a folder that cannot be
+    /// reached, a file that is not JSON — is shown as it is. Those are already
+    /// about the phone rather than about the plan.
     private static func describe(_ error: any Error) -> String {
-        (error as? any LocalizedError)?.errorDescription ?? error.localizedDescription
+        guard let addressedToTheAuthor = Self.authorFacingMessage(of: error) else {
+            return (error as? any LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+        return """
+            Claude sent a plan this app could not read whole, so none of it was taken in. \
+            Nothing you have already logged has changed. Ask him to send it again — showing \
+            him what it says below is the quickest fix, and he will know what to do with it.
+
+            \(addressedToTheAuthor)
+            """
+    }
+
+    /// The sentence a refusal addresses to whoever wrote the document, or `nil`
+    /// when the failure was not about a document's contents at all.
+    ///
+    /// The two cases are the two ways a document is turned away: refused while
+    /// being read, by the rule both clients share, or refused on import for
+    /// naming an exercise that does not exist.
+    private static func authorFacingMessage(of error: any Error) -> String? {
+        switch error {
+        case let refusal as DocumentRefusal: refusal.message
+        case let failure as PlanImportError: failure.errorDescription
+        default: nil
+        }
     }
 
     private static func deduplicated(_ messages: [String]) -> [String] {

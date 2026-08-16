@@ -165,8 +165,14 @@ struct ActiveWorkoutView: View {
             load: warmup ? nil : template?.load,
             // An added working set copies the one just logged — the lifter's
             // own number, in this session. When there is none to copy it falls
-            // back to the prescription, never to a rule of the app's.
+            // back to the prescription, never to a rule of the app's. A hold
+            // copies the hold and no reps, because those are the two things a
+            // set can be and this one is the same kind as the one before it.
             reps: warmup ? 0 : (template?.reps ?? RepPrescription.seededReps(for: exercise.repRange) ?? 0),
+            durationSeconds: warmup
+                ? nil
+                : (template?.durationSeconds
+                    ?? HoldPrescription.seededSeconds(for: exercise.repRange)),
             isWarmup: warmup
         )
         context.insert(set)
@@ -210,7 +216,10 @@ struct ActiveWorkoutView: View {
     /// into one figure would hand the lifter a session nobody prescribed. The
     /// seeded reps come from `RepPrescription`, which fills the field only when
     /// that set named one number and leaves it blank — with the prescribed
-    /// target shown in its place — when it named a range. Neither number is
+    /// target shown in its place — when it named a range. Work prescribed as a
+    /// hold seeds its seconds through `HoldPrescription` instead and leaves the
+    /// reps at zero, so a thirty-second plank is logged as a thirty-second hold
+    /// rather than as thirty repetitions. Neither number is
     /// ever taken from what the lifter did last time. Last session's
     /// performance is shown beside each row as reference
     /// (`ExerciseLogSection.previousText`), which is what it is for;
@@ -224,6 +233,10 @@ struct ActiveWorkoutView: View {
                     setIndex: index,
                     load: prescribed.suggestedLoad,
                     reps: RepPrescription.seededReps(for: prescribed.repRange) ?? 0,
+                    // A hold seeds the seconds it prescribes and leaves the reps
+                    // at zero. Only one of the two is ever filled in, because a
+                    // set is counted or it is held and never both.
+                    durationSeconds: HoldPrescription.seededSeconds(for: prescribed.repRange),
                     isWarmup: false
                 )
                 context.insert(set)

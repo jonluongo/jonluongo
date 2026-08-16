@@ -36,8 +36,13 @@ extension ToolRunner {
             preferredDurationMinutes: try Self.stated(
                 arguments, "preferredDurationMinutes",
                 { try Self.wholeNumber($0, "preferredDurationMinutes") }),
-            bodyweight: try Self.readings(arguments["bodyweight"]),
-            baselines: try baselines(arguments["baselines"])
+            // Read out of the object rather than through the subscript, which
+            // answers `nil` for an explicit `null`. That collapse is convenient
+            // everywhere else and wrong here: a null on a series is refused,
+            // and a reader that could not see one would accept and ignore it
+            // while the document itself refused it.
+            bodyweight: try Self.readings(arguments.objectValue?["bodyweight"]),
+            baselines: try baselines(arguments.objectValue?["baselines"])
         )
     }
 

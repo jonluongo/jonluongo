@@ -23,7 +23,9 @@ import Foundation
 /// represent a duration or a distance, so it says so: no bounds, and `isEmpty`.
 /// Nothing is lost by that, because a prescription carries its rep target as the
 /// free text it was written in and reports it back unaltered; only this type's
-/// claim to have parsed reps out of it is withdrawn.
+/// claim to have parsed reps out of it is withdrawn. A hold is read by
+/// `WorkDuration`, which is this type's mirror and logs into a set's
+/// `durationSeconds` rather than its reps.
 ///
 /// Text that names no target at all (`""`, `"AMRAP"`) is the same answer: both
 /// bounds are 0 and `isEmpty` is true, so a caller can tell "there is no rep
@@ -73,26 +75,15 @@ public struct RepRange: Codable, Hashable, Sendable, CustomStringConvertible {
     /// beside the number, or digits separated by a colon, which is a clock and
     /// never a rep range. Nothing here says how long a plank should be held or
     /// how far a carry should go — it only declines to read seconds as reps.
+    ///
+    /// The vocabulary is `TargetUnits`, shared with `WorkDuration`, so the type
+    /// that refuses to read a hold as reps and the type that reads it as a hold
+    /// cannot disagree about which words those are.
     private static func countsSomethingOtherThanReps(_ text: String) -> Bool {
         let words = text.lowercased().split(whereSeparator: { !$0.isLetter })
-        if words.contains(where: { nonRepUnits.contains(String($0)) }) { return true }
-        return text.contains(where: \.isNumber) && text.contains(":")
+        if words.contains(where: { TargetUnits.nonRepWords.contains(String($0)) }) { return true }
+        return text.contains(where: \.isNumber) && text.contains(TargetUnits.clockSeparator)
     }
-
-    /// Unit words that mean the number beside them is not a rep count.
-    ///
-    /// Vocabulary, not a training opinion: no value here says what a set should
-    /// be, only what a word means. Time and distance both appear because timed
-    /// holds and loaded carries are both real work the catalog already carries,
-    /// and both were being recorded as repetitions.
-    private static let nonRepUnits: Set<String> = [
-        "s", "sec", "secs", "second", "seconds",
-        "min", "mins", "minute", "minutes",
-        "hr", "hrs", "hour", "hours",
-        "m", "meter", "meters", "metre", "metres",
-        "yd", "yds", "yard", "yards",
-        "ft", "foot", "feet",
-    ]
 
     /// A readable form: `"8-12"` for a range, `"5"` when both bounds match,
     /// `""` when the range is empty.

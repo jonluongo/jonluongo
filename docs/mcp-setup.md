@@ -82,7 +82,7 @@ exist and the tools that read your log will tell you so.
 | `list_exercises` | Catalog entries with real IDs, filtered to equipment you own |
 | `exercise_history` | Every set you have logged for one movement, in order |
 | `recent_sessions` | What you have been doing lately |
-| `volume_by_muscle` | Set and rep totals per muscle over a window |
+| `volume_by_muscle` | Set, rep and seconds-held totals per muscle over a window |
 | `write_plan` | Writes a block to your phone — every week of it |
 | `update_profile` | Writes down what you said about yourself, what you weigh, and what you can already lift |
 
@@ -152,11 +152,26 @@ end of a range would be the app deciding how hard you train. The snapshot report
 the prescribed intensity directly beside the RPE you logged, which is the
 comparison a progression decision turns on and which was impossible before.
 
-**Timed work can be prescribed, but not logged.** `"repRange": "30 seconds"`
-reaches your screen and Claude's next read exactly as written, and it is no
-longer misread as thirty reps and pre-filled into the log. But there is nowhere
-to record that you held it for 34 — the log counts reps and nothing else. Worth
-knowing before planning a block around planks or carries.
+**Timed work is prescribed in seconds and logged in seconds.**
+`"repRange": "30 seconds"` reaches your screen exactly as written, and the row
+you log it in is a *hold*: the column above it reads SECS rather than REPS, and
+the 34 you type is stored as thirty-four seconds. It travels that way too —
+`durationSeconds` in the snapshot, in `exercise_history`, in `recent_sessions`
+— and `volume_by_muscle` totals seconds in their own column beside reps, so a
+month of planks never reads as repetitions you did not perform. A set is
+counted or it is held; the two are never the same number.
+
+A hold that names one duration seeds the row (`"30 seconds"`, `"45s"`,
+`"1:30"`). A range (`"30-45 seconds"`) seeds nothing and shows the range, the
+same way a rep range does — picking an end of it would be the app deciding how
+hard you train. So does a hold whose length cannot be read without guessing
+(`"1 min 30 s"`, `"max hold"`): it is still logged in seconds, just not
+pre-filled.
+
+**A distance still cannot be logged.** `"40 m"` is shown to you exactly as
+written and is not misread as forty reps, but there is nowhere to record how far
+you actually carried it — the log holds reps and seconds. `write_plan` says so
+in its own description, so Claude knows before he prescribes a carry.
 
 ## Things worth knowing
 
@@ -183,16 +198,36 @@ thing this breaks is a stale `plan.json` claiming `weekCount: 8` over a single
 week — that document was the bug, and it is now refused with an explanation
 instead of importing as one week.
 
+**If that is the plan sitting in your folder, this is what you will see.** The
+app opens with an alert saying a plan arrived that it could not read whole, that
+nothing you have logged has changed, and to ask Claude to send it again — with
+the sentence written for him underneath, ready to be shown to him. Asking for
+the block again is the whole of the fix: the same conversation, written by this
+build, produces a document that imports. Nothing is deleted in the meantime, so
+there is no hurry and nothing to clean up.
+
+**A refusal is written for two readers, and says something true to each.** The
+sentence Claude gets names the key and where it sat, because he is the one who
+can fix it. The sentence you get says what happened to your training and what to
+do about it, because you are the one holding the phone. Neither is a summary of
+the other; you get both.
+
 **A new plan supersedes rather than overwrites.** Your previous block and every
 set logged against it survive. There is no confirmation dialog — Claude decides
 — but nothing is destroyed.
 
 **A profile update merges.** Claude sends only what he just learned; every other
-fact stays as it was. A fact he sends as `null` goes back to not-known, which is
-how something recorded wrongly gets taken back rather than replaced with another
-guess. Lists — the movements you avoid, the days you train — are sent whole, so
-they replace rather than pile up. Two updates written before your phone has
-synced fold into one; nothing is lost between them.
+fact stays as it was. A single fact he sends as `null` goes back to not-known,
+which is how something recorded wrongly gets taken back rather than replaced
+with another guess. Lists — the movements you avoid, the days you train — are
+sent whole, so they replace rather than pile up. Two updates written before your
+phone has synced fold into one; nothing is lost between them.
+
+The two series are the exception, and the tool and the phone now say so in the
+same words: a `null` on `bodyweight` or `baselines` is refused rather than
+quietly ignored, because it would read either as recording nothing or as erasing
+every entry and there is no telling which was meant. To correct one, state that
+day's reading, or that lift's baseline, again.
 
 **Bodyweight and baselines are series, and they now have a write path at all.**
 Both used to be read by Claude and writable by nobody, so he was permanently told

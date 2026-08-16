@@ -77,11 +77,9 @@ extension ProfileUpdate {
             preferredDurationMinutes: try container.decodeStated(
                 Int.self, forKey: .preferredDurationMinutes),
             bodyweight: try container.decodeSeries(
-                [BodyweightReading].self, forKey: .bodyweight,
-                correctedBy: "state that day's reading again"),
+                [BodyweightReading].self, forKey: .bodyweight, as: .bodyweight),
             baselines: try container.decodeSeries(
-                [BaselineStatement].self, forKey: .baselines,
-                correctedBy: "state that lift's baseline again")
+                [BaselineStatement].self, forKey: .baselines, as: .baselines)
         )
     }
 
@@ -181,16 +179,16 @@ extension KeyedDecodingContainer {
     /// meant to correct stayed exactly as it was; read as "forget the series" it
     /// would destroy a history nobody asked it to. Neither can be inferred, so
     /// the document says which it meant by stating the record again.
+    ///
+    /// The refusal is built by `DocumentRefusal.nulledSeries(_:)`, which the MCP
+    /// server's argument reader throws as well, so the two clients cannot answer
+    /// this differently.
     fileprivate func decodeSeries<Record: Decodable>(
-        _ type: [Record].Type, forKey key: Key, correctedBy remedy: String
+        _ type: [Record].Type, forKey key: Key, as series: ProfileSeries
     ) throws -> [Record] {
         guard contains(key) else { return [] }
         guard try !decodeNil(forKey: key) else {
-            throw DocumentRefusal.unreadableValue(
-                "'\(key.stringValue)' is a dated series, not a single value, so a null cannot "
-                    + "take it back — it would read either as recording nothing or as erasing "
-                    + "every entry, and there is no telling which was meant. Nothing was taken "
-                    + "in. To correct an entry, \(remedy); to add one, send just the new one.")
+            throw DocumentRefusal.nulledSeries(series)
         }
         return try decode([Record].self, forKey: key)
     }
