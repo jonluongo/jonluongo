@@ -23,7 +23,13 @@ final class TrainingPlan {
     /// exercise's muscles) can change what an already-logged set means; this
     /// stamp is what lets a future release detect a plan built against older
     /// catalog data rather than silently reinterpreting it.
-    var catalogVersion: Int = 1
+    ///
+    /// `nil` when nobody stamped it. It used to default to `1`, which said this
+    /// block's exercises were chosen against the first catalog this app ever
+    /// shipped — a claim nothing had made, and the one claim the stamp exists to
+    /// prevent. `PlanBlueprint.makeWorkoutPlan` requires the version for exactly
+    /// that reason, so every block the app builds carries a real one.
+    var catalogVersion: Int?
     /// Which days this block trains. Different blocks may train different days.
     /// Empty until a plan says which.
     private var weekdayRawValues: [Int] = []
@@ -40,7 +46,7 @@ final class TrainingPlan {
     init(
         title: String = "", goal: String = "", startDate: Date = Date(),
         weekCount: Int? = nil, weekdays: Set<Weekday> = [],
-        durationMinutes: Int? = nil, catalogVersion: Int = 1,
+        durationMinutes: Int? = nil, catalogVersion: Int? = nil,
         sourceDocumentID: UUID? = nil
     ) {
         self.title = title

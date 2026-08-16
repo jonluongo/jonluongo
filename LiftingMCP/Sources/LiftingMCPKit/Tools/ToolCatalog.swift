@@ -176,9 +176,15 @@ public enum ToolCatalog {
                         + "Stating a lift again replaces that lift's baseline."),
                 "anyOf": [baselineSchema, ["type": "array", "items": baselineSchema]],
             ],
-            "experience": enumerated(
-                ExperienceLevel.allCases.map(\.rawValue),
-                "Roughly how long he has trained, as he describes it."),
+            "experience": [
+                "description": .string(
+                    "How much training he has behind him, in his words. "
+                        + "\(ExperienceLevel.known.map(\.rawValue).joined(separator: ", ")) are "
+                        + "the usual answers, but they are not the only ones accepted: "
+                        + "'returning after two years off' is a truer answer than any of them "
+                        + "and is recorded as written. Null if he has not said."),
+                "anyOf": [["type": "string"], ["type": "null"]],
+            ],
             "goal": string("What he is training for, in his words."),
             "constraints": string(
                 "Injuries and limitations in his words, with the nuance a list "

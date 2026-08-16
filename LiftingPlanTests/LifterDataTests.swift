@@ -37,8 +37,10 @@ struct LifterDataTests {
         #expect(baseline.exerciseID == ExerciseID(rawValue: "barbell-bench-press"))
         #expect(baseline.load?.value == 185)
         #expect(baseline.reps == 5)
-        // Comparable across units, like everything else that reasons about load.
-        #expect((baseline.estimatedOneRepMaxKilograms ?? 0) > 0)
+        // In the unit it was stated in, and nothing derived from it — what an
+        // estimated one-rep max makes of 185 × 5 depends on which formula you
+        // believe, and this app believes none of them.
+        #expect(baseline.load?.unit == .pounds)
     }
 
     @Test("An avoided pattern makes a constraint enforceable rather than advisory")
@@ -50,8 +52,8 @@ struct LifterDataTests {
         try context.saveOrThrow()
 
         let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
-        #expect(!loaded.permits(pattern: .verticalPress))
-        #expect(loaded.permits(pattern: .squat))
+        #expect(loaded.avoidedPatterns.contains(.verticalPress))
+        #expect(!loaded.avoidedPatterns.contains(.squat))
     }
 
     @Test("An avoided exercise is excluded by id")
@@ -63,8 +65,8 @@ struct LifterDataTests {
         try context.saveOrThrow()
 
         let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
-        #expect(!loaded.permits(exercise: ExerciseID(rawValue: "barbell-bench-press")))
-        #expect(loaded.permits(exercise: ExerciseID(rawValue: "push-up")))
+        #expect(loaded.avoidedExercises.contains(ExerciseID(rawValue: "barbell-bench-press")))
+        #expect(!loaded.avoidedExercises.contains(ExerciseID(rawValue: "push-up")))
     }
 
     @Test("The new models satisfy CloudKit's defaulted-property requirement")

@@ -53,6 +53,39 @@ struct ExerciseDecodingTests {
         #expect(exercise.mechanic == nil)
     }
 
+    @Test("An entry that does not grade its difficulty is ungraded, not intermediate")
+    func ungradedDifficultyStaysAbsent() throws {
+        let json = """
+        {
+          "id": "burpee",
+          "displayName": "Burpee",
+          "primaryMuscles": ["quadriceps"],
+          "equipment": "bodyweight",
+          "pattern": "plyometric",
+          "category": "plyometrics"
+        }
+        """
+        let exercise = try JSONDecoder().decode(Exercise.self, from: Data(json.utf8))
+        #expect(exercise.difficulty == nil)
+    }
+
+    @Test("A stated difficulty is carried, including one this build does not know")
+    func statedDifficultyIsCarried() throws {
+        func decode(_ stated: String) throws -> Difficulty? {
+            let json = """
+            {
+              "id": "power-clean", "displayName": "Power Clean",
+              "primaryMuscles": ["quadriceps"], "equipment": "barbell",
+              "pattern": "olympic", "category": "olympic weightlifting",
+              "difficulty": "\(stated)"
+            }
+            """
+            return try JSONDecoder().decode(Exercise.self, from: Data(json.utf8)).difficulty
+        }
+        #expect(try decode("advanced") == .advanced)
+        #expect(try decode("elite")?.rawValue == "elite")
+    }
+
     @Test("Unknown keys are ignored so a newer catalog does not break an older build")
     func unknownKeysIgnored() throws {
         let json = """

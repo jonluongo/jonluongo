@@ -78,18 +78,15 @@ struct ExerciseTrendTests {
         #expect(point.topLoad?.kilograms != Mass(value: 150, unit: .pounds).kilograms)
     }
 
-    @Test("Improving is true when the latest session's estimated 1RM beats the first")
-    func improvingComparison() throws {
+    @Test("Sessions are ordered oldest to newest and report what was lifted, not a verdict on it")
+    func sessionsAreOrderedAndUnjudged() throws {
         let earlier = Date(timeIntervalSince1970: 0)
         let later = Date(timeIntervalSince1970: 7 * 24 * 60 * 60)
 
-        // Session 1: modest weight for reps → lower estimated 1RM.
         let session1 = exercise(
             id: squat, order: 0,
             sets: [completedSet(60, .kilograms, reps: 5, at: earlier)]
         )
-        // Session 2: heavier weight for the same reps a week later → higher
-        // estimated 1RM.
         let session2 = exercise(
             id: squat, order: 1,
             sets: [completedSet(80, .kilograms, reps: 5, at: later)]
@@ -99,26 +96,10 @@ struct ExerciseTrendTests {
         let trend = try #require(trends.first { $0.exerciseID == squat })
         #expect(trend.points.count == 2)
         #expect(trend.points.map(\.date) == [earlier, later])
-        #expect(trend.isImproving)
-    }
-
-    @Test("Improving is false when the latest session is no better than the first")
-    func notImprovingWhenFlatOrWorse() throws {
-        let earlier = Date(timeIntervalSince1970: 0)
-        let later = Date(timeIntervalSince1970: 7 * 24 * 60 * 60)
-
-        let session1 = exercise(
-            id: squat, order: 0,
-            sets: [completedSet(90, .kilograms, reps: 5, at: earlier)]
-        )
-        let session2 = exercise(
-            id: squat, order: 1,
-            sets: [completedSet(70, .kilograms, reps: 5, at: later)]
-        )
-
-        let trends = ExerciseTrend.build(from: [plan(exercises: [session1, session2])])
-        let trend = try #require(trends.first { $0.exerciseID == squat })
-        #expect(!trend.isImproving)
+        #expect(trend.points.map(\.topLoad) == [
+            Mass(value: 60, unit: .kilograms), Mass(value: 80, unit: .kilograms),
+        ])
+        #expect(trend.latestLoad == Mass(value: 80, unit: .kilograms))
     }
 
     @Test("An exercise with no logged sets produces no trend")

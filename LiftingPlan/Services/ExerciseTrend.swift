@@ -1,23 +1,23 @@
 import Foundation
 import LiftingKit
 
-/// One session's top-set result for an exercise, used to plot a strength
-/// trend over time.
+/// One session's top-set result for an exercise, so a lift's sessions can be
+/// laid out over time.
 ///
 /// Built as part of `ExerciseTrend.build(from:)` and consumed by
-/// `HistoryView`'s chart and session list. Depends on: `Mass` from Domain.
+/// `HistoryView`'s chart and session list. It carries what was lifted and for
+/// how many, and nothing derived from them — no estimated one-rep max, because
+/// which formula turns a set into an estimate is a training opinion and this
+/// app holds none. Depends on: `Mass` from Domain.
 struct TrendPoint: Identifiable {
     let id = UUID()
     let date: Date
     let topLoad: Mass?
     let topReps: Int
-    /// Kept in kilograms (the Epley formula's stable comparison basis) rather
-    /// than a display unit, so callers convert once at the point of display.
-    let estimatedOneRepMaxKilograms: Double?
 }
 
 /// All logged sessions for one exercise, oldest → newest, with a best-set
-/// selection per session and an improving/flat signal across the whole span.
+/// selection per session.
 ///
 /// Built by `ExerciseTrend.build(from:)` and shown by `HistoryView`'s list and
 /// detail chart. Trends are keyed by `exerciseID`, never by name, so a renamed
@@ -27,10 +27,18 @@ struct TrendPoint: Identifiable {
 /// `PerformanceHistory.allExercises(in:)`, so the two never maintain separate
 /// copies of that traversal.
 ///
-/// Every comparison here — best set, improving — is done in kilograms
-/// (`Mass.kilograms`), never on `Mass` equality or raw `.value`: `Mass` never
-/// canonicalizes units on storage, so two sets logged in different units must
-/// be converted before they can be compared.
+/// **It selects and orders; it does not judge.** There is no `isImproving` here
+/// and no estimated one-rep max behind one. Reading whether four weeks of work
+/// went anywhere means weighing load against reps against RPE against how the
+/// lifter felt, and every formula that reduces it to one number — Epley,
+/// Brzycki, Wathan — disagrees with the next. Picking one and drawing an arrow
+/// from it would be this app deciding something it has no business deciding;
+/// the sets are all reported in the snapshot, and the judgement is the reader's.
+///
+/// The best-set comparison is done in kilograms (`Mass.kilograms`), never on
+/// `Mass` equality or raw `.value`: `Mass` never canonicalizes units on storage,
+/// so two sets logged in different units must be converted before they can be
+/// compared.
 ///
 /// Depends on: `ExerciseID`, `Mass` from Domain; `TrainingPlan`,
 /// `PlannedExercise`, `LoggedSet` from Store; `PerformanceHistory` from
@@ -43,13 +51,6 @@ struct ExerciseTrend: Identifiable {
     let points: [TrendPoint]
 
     var latestLoad: Mass? { points.last?.topLoad }
-
-    /// True if the most recent estimated 1RM beats the first recorded one.
-    var isImproving: Bool {
-        guard let first = points.first?.estimatedOneRepMaxKilograms,
-              let last = points.last?.estimatedOneRepMaxKilograms else { return false }
-        return last > first
-    }
 
     /// Build one trend per exercise id across all plans.
     static func build(from plans: [TrainingPlan]) -> [ExerciseTrend] {
@@ -66,12 +67,10 @@ struct ExerciseTrend: Identifiable {
             let topSet = logs.max { lhs, rhs in
                 (lhs.load?.kilograms ?? 0, lhs.reps) < (rhs.load?.kilograms ?? 0, rhs.reps)
             }
-            let est = logs.compactMap(\.estimatedOneRepMaxKilograms).max()
             let point = TrendPoint(
                 date: date,
                 topLoad: topSet?.load,
-                topReps: topSet?.reps ?? 0,
-                estimatedOneRepMaxKilograms: est
+                topReps: topSet?.reps ?? 0
             )
             byID[exercise.exerciseID, default: (exercise.displayName, [])].points.append(point)
         }

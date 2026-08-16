@@ -62,12 +62,3 @@ public enum Equipment: String, CaseIterable, Codable, Sendable, Identifiable {
 
     public var id: String { rawValue }
 }
-
-/// Rough training age, as the lifter describes it. Recorded, not acted on.
-public enum ExperienceLevel: String, CaseIterable, Codable, Sendable, Identifiable {
-    case beginner = "Beginner"
-    case intermediate = "Intermediate"
-    case advanced = "Advanced"
-
-    public var id: String { rawValue }
-}

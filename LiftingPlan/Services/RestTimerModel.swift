@@ -10,6 +10,15 @@ import UIKit
 /// so a casual lifter keeps a tight tempo instead of drifting. It's date-based
 /// (accurate across backgrounding) and fires a haptic, a sound, and a local
 /// notification at zero so the cue lands even with the screen locked.
+///
+/// **The screen-locked half can fail, and says so when it does.** Permission
+/// refused, permission never asked, notifications turned off in Settings — any
+/// of these leaves the countdown running on screen while the cue that was
+/// supposed to reach a pocketed phone never arrives. That failure used to be
+/// discarded at both ends, which meant the one thing this type promises could
+/// stop working permanently and silently. `errorMessage` holds what went wrong;
+/// `RestTimerBar` shows it beside the countdown, where it costs nothing to read
+/// and is in front of the lifter at the moment it matters.
 @Observable
 @MainActor
 final class RestTimerModel {
@@ -21,10 +30,21 @@ final class RestTimerModel {
     private(set) var isRunning = false
     /// Label of what the lifter just finished, shown under the timer.
     private(set) var contextLabel: String = ""
+    /// Why the screen-locked cue cannot fire, ready to show. `nil` when it can,
+    /// or when nothing has been attempted yet.
+    private(set) var errorMessage: String?
 
     private var endDate: Date?
     private var ticker: Timer?
     private let notificationID = "rest-timer-finished"
+    private let center: any RestNotificationScheduling
+
+    /// The real notification centre by default; a fake in tests, which cannot
+    /// ask a simulator for permission and must still be able to check that a
+    /// refusal is reported rather than swallowed.
+    init(center: any RestNotificationScheduling = SystemRestNotificationCenter()) {
+        self.center = center
+    }
 
     /// Fraction elapsed, 0...1 — drives the ring.
     var progress: Double {
@@ -39,8 +59,32 @@ final class RestTimerModel {
     }
 
     /// Ask for notification permission once, so the finish alert can fire in background.
-    func requestNotificationAuthorization() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    ///
+    /// Both answers are kept. A thrown error is a failure to report; a plain
+    /// refusal is the lifter's choice and not an error, but it does mean the
+    /// screen-locked cue will not arrive, and letting him believe it will is the
+    /// worse of the two. Either way the on-screen countdown is unaffected.
+    func requestNotificationAuthorization() async {
+        do {
+            let granted = try await center.requestAuthorization(options: [.alert, .sound])
+            errorMessage = granted ? nil : Self.refusedMessage
+        } catch {
+            errorMessage = Self.describe(error)
+        }
+    }
+
+    /// Clears a reported failure, after the lifter has been shown it.
+    func dismissError() {
+        errorMessage = nil
+    }
+
+    private static let refusedMessage =
+        "Notifications are off, so the rest timer can't alert you once the screen locks. "
+            + "Turn them on in Settings if you want the cue in your pocket."
+
+    private static func describe(_ error: any Error) -> String {
+        let reason = (error as? any LocalizedError)?.errorDescription ?? error.localizedDescription
+        return "The rest timer can't alert you once the screen locks: \(reason)"
     }
 
     /// Begin (or restart) a countdown of `seconds`, tied to a set the lifter just logged.
@@ -127,6 +171,13 @@ final class RestTimerModel {
         #endif
     }
 
+    /// Arms the screen-locked cue, and reports it if it could not be armed.
+    ///
+    /// The scheduling call is the one that knows whether the cue will actually
+    /// fire — permission can be withdrawn in Settings long after it was granted
+    /// — so its failure is what `errorMessage` carries. A successful arming
+    /// clears a stale message, so a lifter who fixed it in Settings stops being
+    /// told about it.
     private func scheduleFinishNotification(after seconds: Int, context: String) {
         cancelFinishNotification()
         guard seconds > 0 else { return }
@@ -137,10 +188,57 @@ final class RestTimerModel {
         content.interruptionLevel = .timeSensitive
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(seconds), repeats: false)
         let request = UNNotificationRequest(identifier: notificationID, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request)
+        Task {
+            do {
+                try await center.add(request)
+                errorMessage = nil
+            } catch {
+                errorMessage = Self.describe(error)
+            }
+        }
     }
 
     private func cancelFinishNotification() {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [notificationID])
+        center.removePendingRequests(withIdentifiers: [notificationID])
+    }
+}
+
+/// The part of the notification centre the rest timer needs, and no more.
+///
+/// It exists so the timer depends on a protocol rather than on
+/// `UNUserNotificationCenter` — a singleton that cannot be asked for permission
+/// in a test, which is why the failure this seam exposes went unnoticed and
+/// untested for as long as it did. Conform a fake to it to make arming the cue
+/// fail on demand. Both calls are throwing: an authorization request and a
+/// scheduling request each have a real failure, and each was previously
+/// discarded.
+///
+/// Depends on: `UserNotifications`.
+@MainActor
+protocol RestNotificationScheduling {
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
+    func add(_ request: UNNotificationRequest) async throws
+    func removePendingRequests(withIdentifiers identifiers: [String])
+}
+
+/// The real notification centre behind `RestNotificationScheduling`.
+///
+/// A thin forwarder and nothing else: every decision about what to do with a
+/// failure belongs to `RestTimerModel`, which is the type that knows what the
+/// failure costs. Depends on: `UNUserNotificationCenter`.
+@MainActor
+struct SystemRestNotificationCenter: RestNotificationScheduling {
+
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
+        try await UNUserNotificationCenter.current().requestAuthorization(options: options)
+    }
+
+    func add(_ request: UNNotificationRequest) async throws {
+        try await UNUserNotificationCenter.current().add(request)
+    }
+
+    func removePendingRequests(withIdentifiers identifiers: [String]) {
+        UNUserNotificationCenter.current()
+            .removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 }

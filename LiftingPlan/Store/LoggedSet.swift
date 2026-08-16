@@ -41,11 +41,4 @@ final class LoggedSet {
 
     /// A completed working set — the kind progression counts.
     var countsForProgression: Bool { isCompleted && !isWarmup }
-
-    /// Estimated one-rep max via the Epley formula, in kilograms so values
-    /// stay comparable across sets logged in different units.
-    var estimatedOneRepMaxKilograms: Double? {
-        guard let load, load.kilograms > 0, reps > 0 else { return nil }
-        return load.kilograms * (1.0 + Double(reps) / 30.0)
-    }
 }

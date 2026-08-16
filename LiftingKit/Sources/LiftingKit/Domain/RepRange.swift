@@ -15,9 +15,19 @@ import Foundation
 /// as one bound and the last as the other — the middle numbers are ignored —
 /// so `"5-3-1"` yields lower 1, upper 5.
 ///
-/// Text with no digits at all (`""`, `"AMRAP"`) has no target: both bounds
-/// are 0 and `isEmpty` is true, so a caller can tell "no target was given"
-/// apart from "the target really is zero reps".
+/// **A target that is not counted in repetitions is refused, not converted.**
+/// `"30 seconds"` names a hold, `"40 m"` names a carry, `"1:30"` names a clock;
+/// none of them names thirty, forty or ninety repetitions. Reading a number out
+/// of them produced a rep count nobody prescribed — a plank recorded as 30 reps,
+/// counted as 30 reps by every volume report that followed. This type cannot
+/// represent a duration or a distance, so it says so: no bounds, and `isEmpty`.
+/// Nothing is lost by that, because a prescription carries its rep target as the
+/// free text it was written in and reports it back unaltered; only this type's
+/// claim to have parsed reps out of it is withdrawn.
+///
+/// Text that names no target at all (`""`, `"AMRAP"`) is the same answer: both
+/// bounds are 0 and `isEmpty` is true, so a caller can tell "there is no rep
+/// count here" apart from "the target really is zero reps".
 ///
 /// Used by `PerformanceHistory` to seed a set's rep count from the plan's
 /// prescription, and by the active-workout views to prefill new sets.
@@ -31,8 +41,10 @@ public struct RepRange: Codable, Hashable, Sendable, CustomStringConvertible {
     /// The larger of the two bounds found in the source text (0 if none were found).
     public let upperBound: Int
 
-    /// True when the source text contained no digits at all, i.e. there was
-    /// no rep target to parse (as opposed to a target of literally zero reps).
+    /// True when no rep count could be read out of the source text — because it
+    /// held no digits, or because the digits it held were counting something
+    /// other than repetitions. Either way there is no rep target here, which is
+    /// not the same as a target of zero reps.
     public let isEmpty: Bool
 
     /// Parses free text into bounds. See the type doc for the parsing rules.
@@ -41,7 +53,9 @@ public struct RepRange: Codable, Hashable, Sendable, CustomStringConvertible {
             .split(whereSeparator: { !$0.isNumber })
             .compactMap { Int($0) }
 
-        guard let first = numbers.first, let last = numbers.last else {
+        guard let first = numbers.first, let last = numbers.last,
+              !Self.countsSomethingOtherThanReps(text)
+        else {
             lowerBound = 0
             upperBound = 0
             isEmpty = true
@@ -52,6 +66,33 @@ public struct RepRange: Codable, Hashable, Sendable, CustomStringConvertible {
         upperBound = max(first, last)
         isEmpty = false
     }
+
+    /// Whether the text measures its target in some unit other than repetitions.
+    ///
+    /// Two tells, and both are about *language*, not about training: a unit word
+    /// beside the number, or digits separated by a colon, which is a clock and
+    /// never a rep range. Nothing here says how long a plank should be held or
+    /// how far a carry should go — it only declines to read seconds as reps.
+    private static func countsSomethingOtherThanReps(_ text: String) -> Bool {
+        let words = text.lowercased().split(whereSeparator: { !$0.isLetter })
+        if words.contains(where: { nonRepUnits.contains(String($0)) }) { return true }
+        return text.contains(where: \.isNumber) && text.contains(":")
+    }
+
+    /// Unit words that mean the number beside them is not a rep count.
+    ///
+    /// Vocabulary, not a training opinion: no value here says what a set should
+    /// be, only what a word means. Time and distance both appear because timed
+    /// holds and loaded carries are both real work the catalog already carries,
+    /// and both were being recorded as repetitions.
+    private static let nonRepUnits: Set<String> = [
+        "s", "sec", "secs", "second", "seconds",
+        "min", "mins", "minute", "minutes",
+        "hr", "hrs", "hour", "hours",
+        "m", "meter", "meters", "metre", "metres",
+        "yd", "yds", "yard", "yards",
+        "ft", "foot", "feet",
+    ]
 
     /// A readable form: `"8-12"` for a range, `"5"` when both bounds match,
     /// `""` when the range is empty.

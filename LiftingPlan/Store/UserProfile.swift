@@ -29,7 +29,8 @@ import LiftingKit
 /// and `avoidedExercises` make the free-text `constraints` field enforceable
 /// rather than merely advisory: `constraints` still carries nuance ("my left
 /// shoulder hurts overhead") that a list cannot express, but the structured
-/// lists are what `permits(...)` can actually filter the catalog on.
+/// lists are what a reader can actually filter the catalog on — `list_exercises`
+/// does exactly that, reading them off the snapshot.
 ///
 /// Every property is optional or defaulted, as CloudKit requires.
 /// Depends on: `Mass` and `ExerciseID`, `MovementPattern` from Domain.
@@ -142,10 +143,4 @@ final class UserProfile {
     var orderedPreferredWeekdays: [Weekday] {
         Weekday.displayOrder.filter { preferredWeekdays.contains($0) }
     }
-
-    /// Whether this lifter's constraints allow the movement pattern.
-    func permits(pattern: MovementPattern) -> Bool { !avoidedPatterns.contains(pattern) }
-
-    /// Whether this lifter's constraints allow the specific exercise.
-    func permits(exercise id: ExerciseID) -> Bool { !avoidedExercises.contains(id) }
 }

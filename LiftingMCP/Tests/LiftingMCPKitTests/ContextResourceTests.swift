@@ -18,7 +18,7 @@ struct ContextResourceTests {
     func identity() throws {
         let lifter = try #require(try context()["lifter"])
 
-        #expect(lifter["experience"]?.stringValue == "Intermediate")
+        #expect(lifter["experience"]?.stringValue == "intermediate")
         #expect(lifter["goal"]?.stringValue == "Add 20 lb to the bench")
         #expect(lifter["constraints"]?.stringValue == "Left shoulder is touchy overhead")
         #expect(lifter["bodyweight"] == ["value": 182.0, "unit": "lb"])

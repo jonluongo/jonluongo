@@ -49,23 +49,6 @@ struct ExerciseHistory: Equatable {
 /// above.
 enum PerformanceHistory {
 
-    /// Most-recent logged performance for every exercise seen across `plans`
-    /// (deduplicated by exercise id, newest first).
-    static func histories(from plans: [TrainingPlan]) -> [ExerciseHistory] {
-        let loggedExercises = allExercises(in: plans)
-            .filter { !$0.completedWorkingSets.isEmpty }
-            .sorted { latestLogDate($0) > latestLogDate($1) }
-
-        var seen = Set<ExerciseID>()
-        var result: [ExerciseHistory] = []
-        for exercise in loggedExercises {
-            guard !seen.contains(exercise.exerciseID) else { continue }
-            seen.insert(exercise.exerciseID)
-            result.append(history(from: exercise))
-        }
-        return result
-    }
-
     /// The most recent logged history for one exercise, optionally ignoring a
     /// specific in-progress exercise (so today's partial log doesn't shadow itself).
     static func latestHistory(

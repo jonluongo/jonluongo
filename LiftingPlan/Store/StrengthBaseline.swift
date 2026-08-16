@@ -29,13 +29,4 @@ final class StrengthBaseline {
         self.reps = reps
         self.recordedAt = recordedAt
     }
-
-    /// Estimated one-rep max via the Epley formula, in kilograms so values
-    /// stay comparable across baselines and logged sets recorded in
-    /// different units. Computed identically to `LoggedSet.estimatedOneRepMaxKilograms`
-    /// so the two never disagree about the same weight.
-    var estimatedOneRepMaxKilograms: Double? {
-        guard let load, load.kilograms > 0, reps > 0 else { return nil }
-        return load.kilograms * (1.0 + Double(reps) / 30.0)
-    }
 }

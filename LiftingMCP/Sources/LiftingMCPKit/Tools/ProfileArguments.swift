@@ -102,13 +102,15 @@ extension ToolRunner {
         return unit
     }
 
+    /// How much training he has behind him, in whatever words he used.
+    ///
+    /// Nothing is checked against a list, because there is no list to check
+    /// against: "returning after two years off" and "lifted in college, nothing
+    /// since" are the true answers, and the three words this build happens to
+    /// recognize are suggestions on the schema, not the vocabulary. It has to be
+    /// text — a number could only be read by guessing what it counted.
     private static func experience(_ value: JSONValue) throws -> ExperienceLevel {
-        guard let level = ExperienceLevel.named(try text(value, "experience")) else {
-            throw ProfileArgumentError(
-                "'experience' has to be one of \(Self.listed(ExperienceLevel.allCases)). "
-                    + "Nothing was written.")
-        }
-        return level
+        ExperienceLevel(rawValue: try text(value, "experience"))
     }
 
     private static func weekdays(_ value: JSONValue) throws -> [Weekday] {
@@ -170,10 +172,6 @@ extension ToolRunner {
         return [value]
     }
 
-    private static func listed(_ values: [some RawRepresentable<String>]) -> String {
-        values.map { "'\($0.rawValue)'" }.joined(separator: ", ")
-    }
-
 }
 
 /// Why a profile update could not be read, as a sentence the caller can act on.
@@ -211,15 +209,6 @@ extension Equipment {
     /// The access tier a caller named, ignoring case, spacing and punctuation
     /// so 'full_gym' and 'Full gym' are the same answer.
     static func named(_ name: String) -> Equipment? {
-        let needle = ProfileNaming.normalized(name)
-        return allCases.first { ProfileNaming.normalized($0.rawValue) == needle }
-    }
-}
-
-extension ExperienceLevel {
-
-    /// The experience level a caller named, ignoring case and punctuation.
-    static func named(_ name: String) -> ExperienceLevel? {
         let needle = ProfileNaming.normalized(name)
         return allCases.first { ProfileNaming.normalized($0.rawValue) == needle }
     }

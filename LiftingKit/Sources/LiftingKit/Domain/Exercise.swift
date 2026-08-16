@@ -55,10 +55,12 @@ public struct Exercise: Codable, Hashable, Sendable, Identifiable {
     public let instructions: [String]
     /// Bundle filename of a demonstration animation, or `nil` when none ships.
     public let mediaAsset: String?
-    /// How much training experience the movement asks for. Defaults to
-    /// `.intermediate` so a catalog written before this field existed still
-    /// loads with a reasonable value rather than failing to decode.
-    public let difficulty: Difficulty
+    /// How much training experience the movement asks for. `nil` when the
+    /// catalog entry did not grade it — an entry that says nothing about how
+    /// hard a movement is has not said it is of middling difficulty, and a
+    /// reader choosing exercises for a beginner must be able to tell those
+    /// apart.
+    public let difficulty: Difficulty?
 
     /// Internal by design: outside this package an `Exercise` comes from the
     /// catalog or from decoding `exercises.json`, never from a literal, so a
@@ -76,7 +78,7 @@ public struct Exercise: Codable, Hashable, Sendable, Identifiable {
         category: ExerciseCategory,
         instructions: [String] = [],
         mediaAsset: String? = nil,
-        difficulty: Difficulty = .intermediate
+        difficulty: Difficulty? = nil
     ) {
         self.id = id
         self.displayName = displayName
@@ -108,7 +110,7 @@ public struct Exercise: Codable, Hashable, Sendable, Identifiable {
             category: try container.decode(ExerciseCategory.self, forKey: .category),
             instructions: try container.decodeIfPresent([String].self, forKey: .instructions) ?? [],
             mediaAsset: try container.decodeIfPresent(String.self, forKey: .mediaAsset),
-            difficulty: try container.decodeIfPresent(Difficulty.self, forKey: .difficulty) ?? .intermediate
+            difficulty: try container.decodeIfPresent(Difficulty.self, forKey: .difficulty)
         )
     }
 

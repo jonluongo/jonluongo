@@ -71,7 +71,7 @@ extension ToolRunner {
             "mechanic": .string(exercise.mechanic?.rawValue),
             "force": .string(exercise.force?.rawValue),
             "category": .string(exercise.category.rawValue),
-            "difficulty": .string(exercise.difficulty.rawValue),
+            "difficulty": .string(exercise.difficulty?.rawValue),
             "aliases": .array(exercise.aliases.map { .string($0) }),
         ]
     }

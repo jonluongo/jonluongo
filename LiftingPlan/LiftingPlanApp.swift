@@ -59,7 +59,7 @@ struct LiftingPlanApp: App {
                 .environment(restTimer)
                 .environment(documentInbox)
                 .environment(snapshotOutbox)
-                .task { restTimer.requestNotificationAuthorization() }
+                .task { await restTimer.requestNotificationAuthorization() }
                 // Started once, for the life of the app: anything arriving
                 // from the Mac is taken in wherever the lifter happens to be.
                 .task { documentInbox.start() }

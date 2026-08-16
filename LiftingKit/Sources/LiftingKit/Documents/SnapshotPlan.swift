@@ -7,7 +7,10 @@ import Foundation
 /// is carried exactly as it was prescribed — nothing here caps a set count,
 /// fills an empty rep range, or supplies a rest that was never given.
 /// `catalogVersion` is the catalog generation this block's exercises were
-/// selected from, which may be older than the snapshot's own.
+/// selected from, which may be older than the snapshot's own, and `nil` when
+/// nobody stamped it — a block that arrived before the stamp existed. A number
+/// invented for it would be a claim about which exercise data these IDs were
+/// chosen against, which is the one thing the stamp is for.
 ///
 /// Depends on: `Weekday`, `SnapshotWeek`.
 public struct SnapshotPlan: Codable, Hashable, Sendable {
@@ -19,7 +22,8 @@ public struct SnapshotPlan: Codable, Hashable, Sendable {
     /// When the block was finished. `nil` while it is still running.
     public let completedAt: Date?
     /// The catalog generation this block's exercise IDs were selected from.
-    public let catalogVersion: Int
+    /// `nil` when the block carries no stamp.
+    public let catalogVersion: Int?
     /// The days this block trains, which need not match the lifter's stated
     /// preference. Empty when the plan did not say.
     public let weekdays: [Weekday]
@@ -30,7 +34,7 @@ public struct SnapshotPlan: Codable, Hashable, Sendable {
 
     public init(
         title: String, goal: String, startDate: Date, weekCount: Int?,
-        completedAt: Date?, catalogVersion: Int, weekdays: [Weekday],
+        completedAt: Date?, catalogVersion: Int?, weekdays: [Weekday],
         durationMinutes: Int?, weeks: [SnapshotWeek]
     ) {
         self.title = title

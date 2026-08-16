@@ -231,11 +231,14 @@ struct CatalogIntegrityTests {
         }
     }
 
-    @Test("Every exercise carries a difficulty this build recognizes")
+    @Test("Every exercise states a difficulty, and one this build recognizes")
     func difficultyPresentAndKnown() throws {
         for exercise in try ExerciseCatalog.bundled().all {
-            #expect(exercise.difficulty.isKnown,
-                    "\(exercise.id) has unrecognized difficulty \(exercise.difficulty)")
+            // Presence is now part of the assertion: an ungraded entry stays
+            // ungraded rather than being read as intermediate, so the catalog
+            // has to say it rather than have it assumed.
+            let difficulty = try #require(exercise.difficulty, "\(exercise.id) grades no difficulty")
+            #expect(difficulty.isKnown, "\(exercise.id) has unrecognized difficulty \(difficulty)")
         }
     }
 
@@ -243,7 +246,8 @@ struct CatalogIntegrityTests {
     func difficultyIsSensible() throws {
         let catalog = try ExerciseCatalog.bundled()
         func difficulty(_ id: String) throws -> Difficulty {
-            try #require(catalog.exercise(id: ExerciseID(rawValue: id))).difficulty
+            let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: id)))
+            return try #require(exercise.difficulty)
         }
         // An Olympic lift is not a beginner movement.
         #expect(try difficulty("power-clean") == .advanced)
@@ -367,8 +371,9 @@ struct CatalogIntegrityTests {
     func plyometricDifficultyIsNotOneSizeFitsAll() throws {
         let catalog = try ExerciseCatalog.bundled()
         func difficulty(_ id: String) throws -> Difficulty {
-            try #require(catalog.exercise(id: ExerciseID(rawValue: id)),
-                        "\(id) missing from catalog").difficulty
+            let exercise = try #require(catalog.exercise(id: ExerciseID(rawValue: id)),
+                                        "\(id) missing from catalog")
+            return try #require(exercise.difficulty)
         }
         // Low-impact, rhythmic conditioning moves: genuinely beginner.
         #expect(try difficulty("jumping-jack") == .beginner)

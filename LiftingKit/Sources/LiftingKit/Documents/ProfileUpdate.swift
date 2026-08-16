@@ -44,7 +44,16 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
     /// version 1 document is still read — its tier is expanded into the
     /// equipment it stood for, and a tier this build does not recognize is
     /// carried as an equipment type rather than refused.
-    public static let currentVersion = 2
+    ///
+    /// Version 3 opened `experience` the same way: it was three fixed words, and
+    /// a lifter who is coming back after two years off is none of them. Every
+    /// version 1 and 2 document still reads, and to the same value — the three
+    /// words it could write are still recognized, only no longer the only ones
+    /// accepted. The bump is here because the reverse is not true: a build that
+    /// only knows versions 1 and 2 would choke on an experience stated in a
+    /// sentence, and being told plainly that the document is newer than it
+    /// understands is a better answer than a decoding failure on one field.
+    public static let currentVersion = 3
 
     /// The format version of this document, as written.
     public let version: Int
@@ -60,6 +69,9 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
     /// How the app renders weights. Not a training fact — it is the one thing
     /// the lifter can still set for himself in Settings.
     public let displayUnit: StatedValue<MassUnit>
+    /// How much training he has behind him, in the words he used. An open
+    /// vocabulary: "returning after two years off" is recorded as he said it
+    /// rather than rounded to the nearest of three fixed words.
     public let experience: StatedValue<ExperienceLevel>
     /// What he owns, as an open set of equipment types. Replaces the stored set
     /// wholesale rather than adding to it — a patch that could only add could

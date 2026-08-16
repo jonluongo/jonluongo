@@ -1,5 +1,37 @@
 import Testing
+import Foundation
+import UserNotifications
 @testable import LiftingPlan
+
+/// A notification centre that answers however a test needs it to.
+///
+/// The real one cannot be asked for permission in a test process, which is
+/// exactly why the discarded authorization result went unnoticed for as long as
+/// it did. Depends on: `RestNotificationScheduling`.
+@MainActor
+private final class FakeNotificationCenter: RestNotificationScheduling {
+    var authorizationAnswer: Result<Bool, any Error> = .success(true)
+    var schedulingError: (any Error)?
+    private(set) var scheduled: [UNNotificationRequest] = []
+    private(set) var removed: [String] = []
+
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
+        try authorizationAnswer.get()
+    }
+
+    func add(_ request: UNNotificationRequest) async throws {
+        if let schedulingError { throw schedulingError }
+        scheduled.append(request)
+    }
+
+    func removePendingRequests(withIdentifiers identifiers: [String]) {
+        removed.append(contentsOf: identifiers)
+    }
+}
+
+private struct NotificationsOff: LocalizedError {
+    var errorDescription: String? { "Notifications are not allowed"}
+}
 
 @MainActor
 @Suite("Rest timer math")
@@ -41,5 +73,78 @@ struct RestTimerTests {
         timer.start(seconds: 65, context: "")
         #expect(timer.formattedRemaining == "1:05")
         timer.stop()
+    }
+}
+
+/// What happens to the half of this type that can actually fail.
+///
+/// The screen-locked cue is the whole reason the timer touches notifications at
+/// all, and both of its failures were being thrown away — so it could stop
+/// working permanently while the app said nothing.
+@MainActor
+@Suite("Rest timer notification failures")
+struct RestTimerNotificationTests {
+
+    @Test("A refused permission is reported rather than discarded")
+    func refusedPermissionIsReported() async {
+        let center = FakeNotificationCenter()
+        center.authorizationAnswer = .success(false)
+        let timer = RestTimerModel(center: center)
+
+        await timer.requestNotificationAuthorization()
+
+        let message = timer.errorMessage
+        #expect(message?.contains("screen locks") == true)
+    }
+
+    @Test("A granted permission reports nothing")
+    func grantedPermissionIsSilent() async {
+        let timer = RestTimerModel(center: FakeNotificationCenter())
+
+        await timer.requestNotificationAuthorization()
+
+        #expect(timer.errorMessage == nil)
+    }
+
+    @Test("An error asking for permission is surfaced with its reason")
+    func authorizationErrorIsSurfaced() async {
+        let center = FakeNotificationCenter()
+        center.authorizationAnswer = .failure(NotificationsOff())
+        let timer = RestTimerModel(center: center)
+
+        await timer.requestNotificationAuthorization()
+
+        #expect(timer.errorMessage?.contains("Notifications are not allowed") == true)
+    }
+
+    @Test("A cue that could not be armed is reported, and dismissing clears it")
+    func schedulingFailureIsReported() async throws {
+        let center = FakeNotificationCenter()
+        center.schedulingError = NotificationsOff()
+        let timer = RestTimerModel(center: center)
+
+        timer.start(seconds: 90, context: "Bench — set 2")
+        try await Task.sleep(for: .milliseconds(50))
+        timer.stop()
+
+        #expect(timer.errorMessage?.contains("Notifications are not allowed") == true)
+        timer.dismissError()
+        #expect(timer.errorMessage == nil)
+    }
+
+    @Test("Arming the cue successfully clears a message from an earlier failure")
+    func successClearsAStaleMessage() async throws {
+        let center = FakeNotificationCenter()
+        center.authorizationAnswer = .success(false)
+        let timer = RestTimerModel(center: center)
+        await timer.requestNotificationAuthorization()
+        #expect(timer.errorMessage != nil)
+
+        timer.start(seconds: 90, context: "Squat")
+        try await Task.sleep(for: .milliseconds(50))
+        timer.stop()
+
+        #expect(timer.errorMessage == nil)
+        #expect(center.scheduled.count == 1)
     }
 }

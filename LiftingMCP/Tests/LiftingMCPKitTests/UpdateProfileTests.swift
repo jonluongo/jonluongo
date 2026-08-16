@@ -41,7 +41,23 @@ struct UpdateProfileTests {
         #expect(written.preferredDurationMinutes == .stated(60))
         #expect(written.displayUnit == .stated(.kilograms))
         #expect(report["writtenTo"]?.stringValue == documents.profileUpdateLocation)
-        #expect(report["recorded"]?["experience"]?["value"]?.stringValue == "Advanced")
+        #expect(report["recorded"]?["experience"]?["value"]?.stringValue == "advanced")
+    }
+
+    @Test("Experience no fixed vocabulary could hold is recorded, not refused")
+    func describedExperienceIsRecorded() throws {
+        // The three-word enum this replaced had no way to say it, so the call
+        // was refused and the fact was written down nowhere.
+        let (outcome, documents) = try update(["experience": "returning after two years off"])
+        let written = try #require(documents.lastWrittenProfileUpdate)
+
+        #expect(outcome.failureMessage == nil)
+        #expect(
+            written.experience
+                == .stated(ExperienceLevel(rawValue: "returning after two years off")))
+        #expect(
+            outcome.report?["recorded"]?["experience"]?["value"]?.stringValue
+                == "returning after two years off")
     }
 
     @Test("Free text is recorded in his words, not tidied")

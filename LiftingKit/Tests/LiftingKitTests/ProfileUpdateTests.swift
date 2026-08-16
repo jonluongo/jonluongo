@@ -85,6 +85,34 @@ struct ProfileUpdateTests {
         #expect(decoded.equipment == .unchanged)
     }
 
+    @Test("Experience a fixed vocabulary could not hold is recorded rather than refused")
+    func describedExperienceIsRecorded() throws {
+        let json = """
+            {"version": 3, "id": "11111111-2222-3333-4444-555555555555",
+             "generatedAt": "2023-11-14T22:13:20Z",
+             "experience": "returning after two years off"}
+            """
+
+        let decoded = try ProfileUpdate.makeDecoder()
+            .decode(ProfileUpdate.self, from: Data(json.utf8))
+
+        #expect(decoded.experience == .stated(ExperienceLevel(rawValue: "returning after two years off")))
+        #expect(try encodedJSON(roundTrip(decoded)).contains("returning after two years off"))
+    }
+
+    @Test("A version 2 update's capitalized experience still reads as the same level")
+    func legacyExperienceCasingStillReads() throws {
+        let json = """
+            {"version": 2, "id": "11111111-2222-3333-4444-555555555555",
+             "generatedAt": "2023-11-14T22:13:20Z", "experience": "Intermediate"}
+            """
+
+        let decoded = try ProfileUpdate.makeDecoder()
+            .decode(ProfileUpdate.self, from: Data(json.utf8))
+
+        #expect(decoded.experience == .stated(.intermediate))
+    }
+
     @Test("An update that names no fact at all says so rather than pretending to change one")
     func emptyUpdateStatesNothing() throws {
         #expect(try update().statesNothing)

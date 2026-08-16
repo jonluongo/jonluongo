@@ -126,14 +126,17 @@ struct PlanMappingTests {
         #expect(PerformanceHistory.history(from: single).repTargetUpper == 5)
     }
 
-    @Test("Estimated 1RM uses the Epley formula, in kilograms")
-    func epley() throws {
-        let set = LoggedSet(setIndex: 0, load: Mass(value: 100, unit: .kilograms), reps: 10)
-        // 100 * (1 + 10/30) = 133.33…
-        let est = try #require(set.estimatedOneRepMaxKilograms)
-        #expect(abs(est - 133.333) < 0.01)
-
-        let bodyweight = LoggedSet(setIndex: 0, load: nil, reps: 12)
-        #expect(bodyweight.estimatedOneRepMaxKilograms == nil)
+    @Test("A hold prescribed in seconds is not turned into a rep target")
+    func timedPrescriptionIsNotARepTarget() {
+        let plank = PlannedExercise(
+            exerciseID: ExerciseID(rawValue: "plank"), displayName: "Plank",
+            order: 0, targetSets: 3, repRange: "30 seconds", restSeconds: 60
+        )
+        // It used to come back as 30 — a rep target nobody prescribed, seeded
+        // into the log and counted as 30 reps by everything downstream.
+        #expect(PerformanceHistory.history(from: plank).repTargetUpper == 0)
+        #expect(RepPrescription.seededReps(for: "30 seconds") == nil)
+        // The prescription itself is untouched: it is shown as it was written.
+        #expect(RepPrescription.targetText(for: "30 seconds") == "30 seconds")
     }
 }

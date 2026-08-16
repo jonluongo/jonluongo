@@ -90,4 +90,40 @@ struct RepRangeTests {
         let decoded = try JSONDecoder().decode(RepRange.self, from: data)
         #expect(decoded == original)
     }
+
+    // MARK: - Targets that are not rep counts
+
+    @Test(
+        "A target measured in time is not read as a rep count",
+        arguments: [
+            "30 seconds", "30 sec", "30s", "45 secs", "1 minute", "2 min", "90 SECONDS",
+            "1:30", "30 second hold", "3 mins per side",
+        ]
+    )
+    func timedTargetsStateNoReps(text: String) {
+        let range = RepRange(text)
+        #expect(range.isEmpty, "\(text) named no repetitions, so none should be read out of it")
+        #expect(range.lowerBound == 0)
+        #expect(range.upperBound == 0)
+        #expect(range.description == "")
+    }
+
+    @Test(
+        "A target measured in distance is not read as a rep count",
+        arguments: ["40 m", "40 metres", "50 yards", "20 ft"]
+    )
+    func distanceTargetsStateNoReps(text: String) {
+        #expect(RepRange(text).isEmpty)
+    }
+
+    @Test(
+        "Ordinary rep prose is still read as reps",
+        arguments: [
+            "8-12 reps", "5 reps", "8 to 12", "10 each side", "12 per leg",
+            "3 x 5", "5RM", "AMRAP after 8",
+        ]
+    )
+    func repProseStillParses(text: String) {
+        #expect(!RepRange(text).isEmpty, "\(text) names a rep count and must keep parsing as one")
+    }
 }

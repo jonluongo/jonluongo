@@ -147,6 +147,39 @@ public struct Difficulty: ExtensibleTaxonomy {
     public static let known: [Difficulty] = [.beginner, .intermediate, .advanced]
 }
 
+/// How much training a lifter has behind him, in the words he used.
+///
+/// Read it from a profile or a `ProfileUpdate`; `known` is what this build
+/// recognizes and is what a picker should suggest — never what it accepts. "I am
+/// coming back after two years off" is a true and useful answer, and a
+/// vocabulary that could not hold it would force whoever recorded it to pick one
+/// of three words that say something else.
+///
+/// **Deliberately not `Difficulty`, although they share three words.**
+/// `Difficulty` grades a *movement*: how much skill and control it asks for, as
+/// stated by the bundled catalog. This grades a *person*, from what he said
+/// about himself. Merging them would put sentences about a lifter into the
+/// vocabulary a catalog picker offers, and would ask a lifter to describe
+/// himself in the grades a catalog happens to use on exercises.
+///
+/// They are canonicalized the same way, so where the vocabularies do overlap the
+/// values compare equal instead of being kept apart by casing — which is what
+/// lets a reader weigh a movement's difficulty against the lifter's experience
+/// at all. Drawing that comparison is the reader's job; nothing here draws it,
+/// and nothing here ranks one level above another.
+///
+/// Depends on: `ExtensibleTaxonomy`.
+public struct ExperienceLevel: ExtensibleTaxonomy {
+    public let rawValue: String
+    public init(rawValue: String) { self.rawValue = Self.canonicalized(rawValue) }
+
+    public static let beginner = ExperienceLevel(rawValue: "beginner")
+    public static let intermediate = ExperienceLevel(rawValue: "intermediate")
+    public static let advanced = ExperienceLevel(rawValue: "advanced")
+
+    public static let known: [ExperienceLevel] = [.beginner, .intermediate, .advanced]
+}
+
 /// The broad kind of work — lifting, cardio, or stretching.
 ///
 /// Filter on it through `ExerciseFilter` when a question is only about
