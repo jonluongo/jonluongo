@@ -8,13 +8,33 @@ import LiftingKit
 /// treats as a project — it owns its weeks. A plan is finite by design, so
 /// finishing one is a real event a future block can respond to.
 ///
-/// Every property has a default, as CloudKit requires.
+/// **The coach's own words are part of the block.** `notes` is what he wrote
+/// alongside the plan, and it is the one thing here nobody else could have
+/// written. It used to be accepted by the document and dropped before it reached
+/// this record, which is why it is stated as its own property rather than folded
+/// into `goal`: a goal is what the block is for, a note is what he wants read.
+///
+/// Every property has a default or is optional, as CloudKit requires. A store
+/// written before a field existed keeps every row it had and reads the new field
+/// as absent, which was verified by reconstructing such a store on disk and
+/// reopening it under this schema rather than by reading the code.
 /// Depends on: `Weekday`.
 @Model
 final class TrainingPlan {
     var title: String = ""
     var goal: String = ""
+    /// What the coach wrote alongside the block, in his own words. `nil` when
+    /// the plan stated none. An empty string is a note he wrote empty, which is
+    /// a different thing and is kept as written.
+    var notes: String?
+    /// When this block became the lifter's current one — which is when it
+    /// arrived, not anything the plan itself decided.
     var startDate: Date = Date()
+    /// When the plan was written, as its document stated. `nil` for a block that
+    /// did not arrive as a document. Kept beside `startDate` rather than instead
+    /// of it: a plan written on Friday and imported on Monday has two dates, and
+    /// reading one for the other misdates the block.
+    var generatedAt: Date?
     /// How many weeks the block runs. `nil` until a plan says.
     var weekCount: Int?
     var completedAt: Date?
@@ -44,14 +64,17 @@ final class TrainingPlan {
     var weeks: [TrainingWeek]? = []
 
     init(
-        title: String = "", goal: String = "", startDate: Date = Date(),
+        title: String = "", goal: String = "", notes: String? = nil,
+        startDate: Date = Date(), generatedAt: Date? = nil,
         weekCount: Int? = nil, weekdays: Set<Weekday> = [],
         durationMinutes: Int? = nil, catalogVersion: Int? = nil,
         sourceDocumentID: UUID? = nil
     ) {
         self.title = title
         self.goal = goal
+        self.notes = notes
         self.startDate = startDate
+        self.generatedAt = generatedAt
         self.weekCount = weekCount
         self.weekdayRawValues = weekdays.map(\.rawValue).sorted()
         self.durationMinutes = durationMinutes

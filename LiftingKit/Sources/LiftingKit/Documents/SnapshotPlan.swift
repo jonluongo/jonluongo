@@ -12,11 +12,26 @@ import Foundation
 /// invented for it would be a claim about which exercise data these IDs were
 /// chosen against, which is the one thing the stamp is for.
 ///
+/// **The coach's own words come back with it.** `notes` is the block-level note
+/// he wrote alongside the plan, carried here so he can read what he told this
+/// lifter last time rather than reconstructing it. `nil` means the plan stated
+/// none; an empty string means he wrote an empty one, and the two are not the
+/// same answer.
+///
 /// Depends on: `Weekday`, `SnapshotWeek`.
 public struct SnapshotPlan: Codable, Hashable, Sendable {
     public let title: String
     public let goal: String
+    /// What the coach wrote alongside the block, in his own words. `nil` when
+    /// the plan stated none — never an empty string standing in for silence.
+    public let notes: String?
+    /// When the block became the lifter's current one, which is when it arrived.
     public let startDate: Date
+    /// When the plan was written, as its document stated. `nil` for a block that
+    /// did not arrive as a document. It is not `startDate`: a plan can be
+    /// written days before the phone takes it in, and reading one for the other
+    /// misdates every block.
+    public let generatedAt: Date?
     /// How many weeks the block runs. `nil` when the plan did not say.
     public let weekCount: Int?
     /// When the block was finished. `nil` while it is still running.
@@ -33,13 +48,16 @@ public struct SnapshotPlan: Codable, Hashable, Sendable {
     public let weeks: [SnapshotWeek]
 
     public init(
-        title: String, goal: String, startDate: Date, weekCount: Int?,
+        title: String, goal: String, notes: String? = nil, startDate: Date,
+        generatedAt: Date? = nil, weekCount: Int?,
         completedAt: Date?, catalogVersion: Int?, weekdays: [Weekday],
         durationMinutes: Int?, weeks: [SnapshotWeek]
     ) {
         self.title = title
         self.goal = goal
+        self.notes = notes
         self.startDate = startDate
+        self.generatedAt = generatedAt
         self.weekCount = weekCount
         self.completedAt = completedAt
         self.catalogVersion = catalogVersion

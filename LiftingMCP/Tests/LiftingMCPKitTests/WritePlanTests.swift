@@ -43,6 +43,25 @@ struct WritePlanTests {
         #expect(report["writtenTo"]?.stringValue == documents.planLocation)
     }
 
+    @Test("The note the coach wrote lands in the document and comes back in the report")
+    func noteIsWrittenAndReported() throws {
+        let note = "Three heavy weeks then a deload. Tell me if the shoulder complains."
+        let (outcome, documents) = try plan([
+            "title": "Autumn strength", "notes": .string(note), "days": [Self.squatDay],
+        ])
+        let report = try #require(outcome.report)
+
+        #expect(documents.lastWrittenPlan?.notes == note)
+        #expect(report["plan"]?["notes"]?.stringValue == note)
+    }
+
+    @Test("A plan written with no note states none rather than an empty one")
+    func absentNoteStaysAbsent() throws {
+        let (_, documents) = try plan(["days": [Self.squatDay]])
+
+        #expect(documents.lastWrittenPlan?.notes == nil)
+    }
+
     @Test("Every prescribed value is recorded exactly, none of it adjusted")
     func valuesAreRecordedVerbatim() throws {
         let (_, documents) = try plan(["days": [Self.squatDay]])

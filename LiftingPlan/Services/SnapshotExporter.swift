@@ -101,9 +101,17 @@ enum SnapshotExporter {
         )
     }
 
+    /// One block, including the note its author wrote about it.
+    ///
+    /// `notes` goes back out because the coach who reads this snapshot is the
+    /// coach who wrote the note, and a block whose own words are missing from
+    /// the record reads as a block nobody said anything about. `generatedAt` is
+    /// when the plan was written, carried beside the `startDate` it arrived on;
+    /// both are `nil`-safe absences rather than one standing in for the other.
     private static func snapshot(of plan: TrainingPlan) -> SnapshotPlan {
         SnapshotPlan(
-            title: plan.title, goal: plan.goal, startDate: plan.startDate,
+            title: plan.title, goal: plan.goal, notes: plan.notes,
+            startDate: plan.startDate, generatedAt: plan.generatedAt,
             weekCount: plan.weekCount, completedAt: plan.completedAt,
             catalogVersion: plan.catalogVersion, weekdays: plan.orderedWeekdays,
             durationMinutes: plan.durationMinutes,

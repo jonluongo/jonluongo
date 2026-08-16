@@ -12,14 +12,23 @@ import LiftingKit
 ///
 /// The block-level facts live here rather than being passed alongside, so a
 /// caller cannot hand the mapping a plan's days and someone else's goal.
-/// Absences stay absent: an unnamed block has an empty `title`, and a week the
-/// plan did not name has a `nil` `label`.
+/// Absences stay absent: an unnamed block has an empty `title`, a week the
+/// plan did not name has a `nil` `label`, and a block the coach wrote no note
+/// about has `nil` `notes` rather than an empty one.
 struct PlanBlueprint: Equatable {
     /// Short name for the block. Empty when the plan did not name it.
     var title: String = ""
     var goal: String = ""
+    /// What the coach wrote alongside the block, in his own words. `nil` when
+    /// the plan stated none — and carried rather than dropped, because it is the
+    /// one thing in a plan nobody but its author could have written.
+    var notes: String?
     /// How long a session in this block runs. `nil` when the plan did not say.
     var durationMinutes: Int?
+    /// When the plan was written, as its document stated. `nil` when the block
+    /// did not come from one. Distinct from the start date the mapping is given,
+    /// which is when it arrived.
+    var generatedAt: Date?
     /// The block's weeks, in the order they are to be trained. A week's
     /// position here is its ordinal.
     var weeks: [WeekBlueprint]
@@ -42,11 +51,13 @@ extension PlanBlueprint {
     /// week to say so. The week this makes has no label and is not a deload,
     /// because the caller said neither.
     init(
-        title: String = "", goal: String = "", durationMinutes: Int? = nil,
+        title: String = "", goal: String = "", notes: String? = nil,
+        durationMinutes: Int? = nil, generatedAt: Date? = nil,
         days: [DayBlueprint]
     ) {
         self.init(
-            title: title, goal: goal, durationMinutes: durationMinutes,
+            title: title, goal: goal, notes: notes,
+            durationMinutes: durationMinutes, generatedAt: generatedAt,
             weeks: [WeekBlueprint(days: days)]
         )
     }
@@ -144,7 +155,9 @@ extension PlanBlueprint {
         let plan = TrainingPlan(
             title: title,
             goal: goal,
+            notes: notes,
             startDate: startDate,
+            generatedAt: generatedAt,
             weekCount: weekCount,
             weekdays: Set(days.map(\.weekday)),
             durationMinutes: durationMinutes,
@@ -209,15 +222,24 @@ extension PlanBlueprint {
     ///
     /// This is a rename, not a transformation. Every value crosses unchanged
     /// and in the order the document gave it — including a day with no
-    /// exercises, which is a rest day the plan named rather than a gap to fill.
+    /// exercises, which is a rest day the plan named rather than a gap to fill,
+    /// and including the coach's `notes`, which this used to drop on the floor.
     /// It performs no validation: `PlanImporter` confirms the exercise IDs
     /// exist *before* building a blueprint, so nothing half-mapped can reach
     /// the store.
+    ///
+    /// **Everything the document states about the block crosses.** The keys it
+    /// does not are the two that describe the document rather than the training
+    /// — `version`, which is spent the moment the document is read, and `id`,
+    /// which `PlanImporter` stamps on as `sourceDocumentID` so a re-import is a
+    /// no-op.
     init(document: PlanDocument) {
         self.init(
             title: document.title,
             goal: document.goal,
+            notes: document.notes,
             durationMinutes: document.durationMinutes,
+            generatedAt: document.generatedAt,
             weeks: document.weeks.map { week in
                 WeekBlueprint(
                     label: week.label,

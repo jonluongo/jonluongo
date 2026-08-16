@@ -15,6 +15,8 @@ import Testing
 struct SnapshotWireShapeTests {
 
     private static let instant = Date(timeIntervalSince1970: 1_700_000_000)
+    /// A day earlier than `instant`: a plan is written before it arrives.
+    private static let written = Date(timeIntervalSince1970: 1_699_913_600)
 
     /// One plan with a per-set prescription, a stated effort, a counted set and
     /// a held one — everything whose wire shape a reader depends on.
@@ -51,7 +53,8 @@ struct SnapshotWireShapeTests {
         return TrainingSnapshot(
             catalogVersion: 5, generatedAt: Self.instant,
             plans: [SnapshotPlan(
-                title: "Block", goal: "", startDate: Self.instant, weekCount: 1,
+                title: "Block", goal: "", notes: "Three heavy weeks, then a deload.",
+                startDate: Self.instant, generatedAt: Self.written, weekCount: 1,
                 completedAt: nil, catalogVersion: 5, weekdays: [.monday],
                 durationMinutes: nil,
                 weeks: [SnapshotWeek(
@@ -62,12 +65,18 @@ struct SnapshotWireShapeTests {
         )
     }
 
-    /// The encoded document as untyped JSON, which is all a consumer has.
-    private func encodedExercise() throws -> [String: Any] {
+    /// The encoded block as untyped JSON, which is all a consumer has.
+    private func encodedPlan() throws -> [String: Any] {
         let data = try TrainingSnapshot.makeEncoder().encode(snapshot())
         let root = try #require(
             try JSONSerialization.jsonObject(with: data) as? [String: Any])
         let plans = try #require(root["plans"] as? [[String: Any]])
+        return try #require(plans.first)
+    }
+
+    /// The encoded document as untyped JSON, which is all a consumer has.
+    private func encodedExercise() throws -> [String: Any] {
+        let plans = try [encodedPlan()]
         let weeks = try #require(plans.first?["weeks"] as? [[String: Any]])
         let days = try #require(weeks.first?["days"] as? [[String: Any]])
         let exercises = try #require(days.first?["exercises"] as? [[String: Any]])
@@ -75,6 +84,38 @@ struct SnapshotWireShapeTests {
     }
 
     // MARK: - The keys a reader reads
+
+    @Test("The coach's note is written under 'notes', beside the block's title")
+    func planNoteIsOnTheWire() throws {
+        let plan = try encodedPlan()
+
+        #expect(plan["notes"] as? String == "Three heavy weeks, then a deload.")
+        #expect(plan["title"] as? String == "Block")
+    }
+
+    @Test("When a plan was written is on the wire beside when it started")
+    func planWrittenDateIsOnTheWire() throws {
+        let plan = try encodedPlan()
+
+        #expect(plan["generatedAt"] as? String == "2023-11-13T22:13:20Z")
+        #expect(plan["startDate"] as? String == "2023-11-14T22:13:20Z")
+    }
+
+    @Test("A block with no note writes no key rather than an empty string")
+    func absentNoteWritesNoKey() throws {
+        let bare = SnapshotPlan(
+            title: "", goal: "", startDate: Self.instant, weekCount: nil,
+            completedAt: nil, catalogVersion: nil, weekdays: [], durationMinutes: nil,
+            weeks: [])
+        let snapshot = TrainingSnapshot(
+            catalogVersion: 5, generatedAt: Self.instant, plans: [bare])
+        let data = try TrainingSnapshot.makeEncoder().encode(snapshot)
+        let root = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let plan = try #require((root["plans"] as? [[String: Any]])?.first)
+
+        #expect(plan["notes"] == nil, "he wrote none; an empty string would say he wrote one")
+        #expect(plan["generatedAt"] == nil)
+    }
 
     @Test("A prescribed set is written under 'prescribedSets', set by set")
     func prescribedSetsAreOnTheWire() throws {
@@ -223,6 +264,30 @@ struct SnapshotWireShapeTests {
         #expect(carried.distance == Distance(value: 40, unit: .metres))
         #expect(carried.reps == 0)
         #expect(carried.durationSeconds == nil)
+    }
+
+    @Test("A hand-written block's note and written date decode as stated")
+    func handWrittenPlanNoteDecodes() throws {
+        let json = Self.handWritten.replacingOccurrences(
+            of: "\"title\": \"Block\", \"goal\": \"\",",
+            with: "\"title\": \"Block\", \"goal\": \"\", \"notes\": \"Eat.\", "
+                + "\"generatedAt\": \"2023-11-13T22:13:20Z\",")
+        let decoded = try TrainingSnapshot.makeDecoder()
+            .decode(TrainingSnapshot.self, from: Data(json.utf8))
+
+        #expect(decoded.plans.first?.notes == "Eat.")
+        #expect(decoded.plans.first?.generatedAt == Self.written)
+    }
+
+    @Test("A snapshot written before a block could carry a note reads as having none")
+    func olderSnapshotHasNoNote() throws {
+        let decoded = try TrainingSnapshot.makeDecoder()
+            .decode(TrainingSnapshot.self, from: Data(Self.handWritten.utf8))
+        let plan = try #require(decoded.plans.first)
+
+        #expect(plan.notes == nil)
+        #expect(plan.generatedAt == nil)
+        #expect(plan.title == "Block", "everything it did state still reads")
     }
 
     @Test("A snapshot written before durations or distances existed reads as having none")
