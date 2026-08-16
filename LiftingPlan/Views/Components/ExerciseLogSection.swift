@@ -44,7 +44,7 @@ struct ExerciseLogSection: View {
         Group {
             if let notes = exercise.notes, !notes.isEmpty {
                 Text(notes)
-                    .font(.footnote)
+                    .font(.barbellSupport)
                     .foregroundStyle(.secondary)
             }
 
@@ -52,7 +52,7 @@ struct ExerciseLogSection: View {
             // it did not, and nothing invites the lifter to fill the gap in.
             if let restLabel = RestPrescription.label(seconds: exercise.restSeconds) {
                 Label(restLabel, systemImage: "timer")
-                    .font(.subheadline.weight(.medium))
+                    .font(.barbellSupport)
                     .foregroundStyle(.secondary)
             }
 
@@ -60,7 +60,7 @@ struct ExerciseLogSection: View {
             // prescription is already stated in full in the section header, and
             // repeating it once per set would say nothing new.
             if PrescriptionSummary.setsDiffer(in: exercise) {
-                perSetPrescription
+                PrescriptionLines(sets: prescribedSets, unit: profile.displayUnit)
             }
 
             columnHeader
@@ -92,47 +92,33 @@ struct ExerciseLogSection: View {
                 onAddSet(exercise, false)
             } label: {
                 Label("Add Set", systemImage: "plus")
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
+                    .font(.barbellSupport)
+                    .frame(maxWidth: .infinity, minHeight: TapTarget.minimum)
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
         }
     }
 
-    /// The sets the plan asked for, one line each, above the table they are
-    /// logged in. Shown only when they differ, since that is the only case a
-    /// single summary line cannot state without inventing a figure.
-    private var perSetPrescription: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            ForEach(Array(prescribedSets.enumerated()), id: \.offset) { index, set in
-                let line = PrescriptionSummary.text(for: set, unit: profile.displayUnit)
-                if !line.isEmpty {
-                    HStack(spacing: 8) {
-                        Text("\(index + 1)")
-                            .font(.caption2.weight(.bold).monospacedDigit())
-                            .frame(width: 14, alignment: .trailing)
-                        Text(line).font(.caption)
-                    }
-                }
-            }
-        }
-        .foregroundStyle(.secondary)
-    }
-
     /// The column names. The last-but-one names the unit the rows under it are
     /// actually recorded in — seconds for a hold, the prescribed distance unit
     /// for a carry, repetitions otherwise — so the number the lifter types is
     /// the number the log keeps.
+    ///
+    /// The widths come from `SetTableMetrics`, which `SetRowView` reads too:
+    /// they were the same three numbers written out in both files, and a header
+    /// that stops sitting over its column is a table that lies about what it
+    /// contains.
     private var columnHeader: some View {
-        HStack(spacing: 8) {
-            Text("SET").frame(width: 30)
+        HStack(spacing: SetTableMetrics.columnGutter) {
+            Text("SET").frame(width: SetTableMetrics.setColumnWidth)
             Text("PREVIOUS").frame(maxWidth: .infinity)
-            Text(profile.displayUnit.rawValue.uppercased()).frame(width: 62)
-            Text(workColumnName).frame(width: 62)
-            Image(systemName: "checkmark").frame(width: 30)
+            Text(profile.displayUnit.rawValue.uppercased())
+                .frame(width: SetTableMetrics.entryColumnWidth)
+            Text(workColumnName).frame(width: SetTableMetrics.entryColumnWidth)
+            Image(systemName: "checkmark").frame(width: SetTableMetrics.checkColumnWidth)
         }
-        .font(.caption2.weight(.semibold))
+        .font(.barbellLabel)
         .foregroundStyle(.secondary)
     }
 

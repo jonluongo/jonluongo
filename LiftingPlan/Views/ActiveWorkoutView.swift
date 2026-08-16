@@ -61,15 +61,12 @@ struct ActiveWorkoutView: View {
                 }
 
                 Section {
-                    Button {
+                    // Green is this button's one named exception to the accent:
+                    // finishing is completion, and completion is green
+                    // everywhere else in the app.
+                    PrimaryActionButton(title: "Finish Workout", tint: .green) {
                         showingFinishConfirm = true
-                    } label: {
-                        Text("Finish Workout")
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.green)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
                 }
@@ -110,7 +107,7 @@ struct ActiveWorkoutView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            HStack(spacing: 10) {
+            HStack(spacing: Spacing.standard) {
                 Button {
                     close()
                 } label: {
@@ -118,7 +115,7 @@ struct ActiveWorkoutView: View {
                 }
                 TimelineView(.periodic(from: startDate, by: 1)) { timeline in
                     Text(elapsedString(timeline.date))
-                        .font(.subheadline.weight(.semibold).monospacedDigit())
+                        .font(.barbellSupport)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -140,8 +137,8 @@ struct ActiveWorkoutView: View {
     private var progressBar: some View {
         ProgressView(value: Double(completedSets), total: Double(max(totalSets, 1)))
             .tint(.accentColor)
-            .padding(.horizontal)
-            .padding(.bottom, 4)
+            .padding(.horizontal, Spacing.section)
+            .padding(.bottom, Spacing.tight)
     }
 
     // MARK: - Actions
@@ -276,47 +273,5 @@ struct ActiveWorkoutView: View {
     private func elapsedString(_ now: Date) -> String {
         let seconds = max(0, Int(now.timeIntervalSince(startDate)))
         return String(format: "%d:%02d", seconds / 60, seconds % 60)
-    }
-}
-
-/// Section header for an exercise: icon, name, and an overflow menu.
-private struct ExerciseHeaderView: View {
-    let exercise: PlannedExercise
-    var onAddWarmup: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Color.accentColor.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: "dumbbell.fill")
-                    .font(.footnote)
-                    .foregroundStyle(Color.accentColor)
-            }
-            VStack(alignment: .leading, spacing: 1) {
-                Text(exercise.displayName)
-                    .font(.headline)
-                    .foregroundStyle(Color.accentColor)
-                // What the plan prescribed, stated the way it was written: a
-                // count and a rep target when the sets are alike, and only the
-                // count when they are not — the set rows below say the rest.
-                Text("\(PrescriptionSummary.text(for: exercise))\(exercise.tempo.map { " · tempo \($0)" } ?? "")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Menu {
-                Button { onAddWarmup() } label: {
-                    Label("Add Warmup Set", systemImage: "flame")
-                }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 32, height: 32)
-            }
-        }
-        .padding(.vertical, 4)
     }
 }

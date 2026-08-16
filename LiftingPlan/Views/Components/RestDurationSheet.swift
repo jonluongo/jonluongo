@@ -35,28 +35,25 @@ struct RestDurationSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
+            VStack(spacing: Spacing.major) {
                 HStack(spacing: 0) {
                     wheel(selection: $minutes, unit: "min")
                     wheel(selection: $seconds, unit: "s")
                 }
                 .frame(maxHeight: 180)
 
-                Button {
+                PrimaryActionButton(
+                    title: "Start \(RestPrescription.durationText(total))",
+                    systemImage: "timer"
+                ) {
                     onStart(total)
                     dismiss()
-                } label: {
-                    Label("Start \(RestPrescription.durationText(total))", systemImage: "timer")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
                 }
-                .buttonStyle(.borderedProminent)
                 .disabled(total == 0)
 
                 Spacer(minLength: 0)
             }
-            .padding()
+            .padding(Spacing.section)
             .navigationTitle("Rest Timer")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -52,23 +52,22 @@ private struct TrendRow: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(trend.displayName).font(.headline)
+            VStack(alignment: .leading, spacing: Spacing.tight) {
+                Text(trend.displayName).font(.barbellTitle)
                 Text("\(trend.points.count) session\(trend.points.count == 1 ? "" : "s")")
-                    .font(.caption)
+                    .font(.barbellSupport)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .trailing, spacing: Spacing.tight) {
                 if let latest = trend.latestLoad {
                     let converted = latest.converted(to: unit)
                     Text("\(converted.value.compactString) \(unit.rawValue)")
-                        .font(.subheadline.weight(.semibold))
-                        .monospacedDigit()
+                        .font(.barbellSupport)
                 }
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, Spacing.tight)
     }
 }
 
@@ -109,7 +108,7 @@ struct ExerciseTrendDetailView: View {
                         )
                     }
                     .frame(height: 200)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, Spacing.snug)
                 }
             }
 
@@ -122,12 +121,11 @@ struct ExerciseTrendDetailView: View {
                         if let load = point.topLoad {
                             let converted = load.converted(to: unit)
                             Text("\(converted.value.compactString) \(unit.rawValue) × \(point.topReps)")
-                                .monospacedDigit()
                         } else {
-                            Text("\(point.topReps) reps").monospacedDigit()
+                            Text("\(point.topReps) reps")
                         }
                     }
-                    .font(.subheadline)
+                    .font(.barbellSupport)
                 }
             }
         }

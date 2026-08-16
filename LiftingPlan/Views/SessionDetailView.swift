@@ -53,17 +53,14 @@ struct SessionDetailView: View {
         .navigationTitle(day.weekday.fullName)
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
-            Button {
+            PrimaryActionButton(
+                title: day.completedAt != nil ? "Repeat Workout" : "Start Workout",
+                systemImage: "play.fill"
+            ) {
                 showingWorkout = true
-            } label: {
-                Label(day.completedAt != nil ? "Repeat Workout" : "Start Workout", systemImage: "play.fill")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
             }
-            .buttonStyle(.borderedProminent)
             .disabled(day.orderedExercises.isEmpty)
-            .padding()
+            .padding(Spacing.section)
             .background(.bar)
         }
         .fullScreenCover(isPresented: $showingWorkout) {
@@ -90,15 +87,15 @@ struct ExercisePreviewRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: Spacing.tight) {
             HStack {
-                Text(exercise.displayName).font(.headline)
+                Text(exercise.displayName).font(.barbellTitle)
                 Spacer()
                 if isComplete {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                 }
             }
-            HStack(spacing: 10) {
+            HStack(spacing: Spacing.standard) {
                 Label(PrescriptionSummary.text(for: exercise), systemImage: "repeat")
                 if let rest = exercise.restSeconds {
                     Label("\(rest)s rest", systemImage: "timer")
@@ -107,26 +104,19 @@ struct ExercisePreviewRow: View {
                     Label(tempo, systemImage: "metronome")
                 }
             }
-            .font(.caption)
+            .font(.barbellSupport)
             .foregroundStyle(.secondary)
 
             if PrescriptionSummary.setsDiffer(in: exercise) {
-                ForEach(Array(exercise.prescribedSets.enumerated()), id: \.offset) { index, set in
-                    let line = PrescriptionSummary.text(for: set, unit: unit)
-                    if !line.isEmpty {
-                        Text("\(index + 1)  \(line)")
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                PrescriptionLines(sets: exercise.prescribedSets, unit: unit)
             }
 
             if let notes = exercise.notes, !notes.isEmpty {
                 Text(notes)
-                    .font(.caption)
+                    .font(.barbellSupport)
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, Spacing.tight)
     }
 }

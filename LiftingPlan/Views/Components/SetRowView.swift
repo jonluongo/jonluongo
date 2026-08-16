@@ -101,21 +101,23 @@ struct SetRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: SetTableMetrics.columnGutter) {
             // Set badge — tap to toggle warmup.
             Button {
                 set.isWarmup.toggle()
             } label: {
                 Text(set.isWarmup ? "W" : "\(workingNumber)")
-                    .font(.subheadline.weight(.bold))
-                    .monospacedDigit()
+                    .font(.barbellSupport)
                     .foregroundStyle(set.isWarmup ? .orange : .primary)
-                    .frame(width: 30, height: 28)
+                    .frame(
+                        width: SetTableMetrics.setColumnWidth,
+                        height: SetTableMetrics.controlHeight
+                    )
             }
             .buttonStyle(.plain)
 
             Text(previousText)
-                .font(.footnote)
+                .font(.barbellSupport)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
                 .lineLimit(1)
@@ -128,9 +130,12 @@ struct SetRowView: View {
                 complete()
             } label: {
                 Image(systemName: set.isCompleted ? "checkmark.square.fill" : "square")
-                    .font(.title3)
+                    .font(.barbellMetric)
                     .foregroundStyle(set.isCompleted ? .green : .secondary)
-                    .frame(width: 30, height: 28)
+                    .frame(
+                        width: SetTableMetrics.checkColumnWidth,
+                        height: SetTableMetrics.controlHeight
+                    )
             }
             .buttonStyle(.plain)
         }
@@ -147,14 +152,16 @@ struct SetRowView: View {
         TextField(placeholder, text: text)
             .keyboardType(isDecimal ? .decimalPad : .numberPad)
             .multilineTextAlignment(.center)
-            .font(.body.weight(.semibold))
-            .monospacedDigit()
+            // The weight and the work are what this screen is for, and they are
+            // read at arm's length: they are the type ramp's Metric, which is
+            // the role that exists for exactly these two fields.
+            .font(.barbellMetric)
             // A prescribed target like "8-12" is wider than a logged number;
             // shrink it rather than truncate the prescription.
             .lineLimit(1)
             .minimumScaleFactor(0.6)
-            .frame(width: 62, height: 34)
-            .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 8))
+            .frame(width: SetTableMetrics.entryColumnWidth, height: SetTableMetrics.entryHeight)
+            .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: Radius.small))
     }
 
     private func complete() {

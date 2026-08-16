@@ -131,38 +131,43 @@ private struct PlanHeaderCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Spacing.snug) {
             // No placeholder when there is no goal: the goal is Claude's to
             // record, and an empty field would read as one the lifter forgot
             // to fill in.
             if !plan.goal.isEmpty {
                 Text(plan.goal)
-                    .font(.headline)
+                    .font(.barbellTitle)
             }
             if let position {
                 Text(position)
-                    .font(.subheadline.weight(.medium))
+                    .font(.barbellSupport)
             }
 
             // A week with no days asserts nothing — not "0 days", and not a
             // progress bar confidently reading 0% of nothing.
             if !days.isEmpty {
                 Text(shape)
-                    .font(.caption)
+                    .font(.barbellSupport)
                     .foregroundStyle(.secondary)
 
                 ProgressView(value: Double(completedCount), total: Double(days.count)) {
                     Text("\(completedCount) of \(days.count) sessions done")
-                        .font(.caption)
+                        .font(.barbellSupport)
                 }
                 .tint(.accentColor)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.tight)
     }
 }
 
 /// A single day row in the week list.
+///
+/// The shape is `IconCircleRow`, shared with the logging screen's exercise
+/// header. A finished session changes glyph and hue together and nothing else —
+/// the circle used to change brightness too, which read as a second change
+/// nobody meant.
 private struct WorkoutDayRow: View {
     let day: WorkoutDay
 
@@ -175,22 +180,11 @@ private struct WorkoutDayRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(isCompleted ? Color.green.opacity(0.15) : Color.accentColor.opacity(0.12))
-                    .frame(width: 44, height: 44)
-                Image(systemName: isCompleted ? "checkmark" : "dumbbell.fill")
-                    .foregroundStyle(isCompleted ? .green : .accentColor)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(day.weekday.fullName).font(.headline)
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-        .padding(.vertical, 4)
+        IconCircleRow(
+            systemImage: isCompleted ? "checkmark" : "dumbbell.fill",
+            tint: isCompleted ? .green : .accentColor,
+            title: day.weekday.fullName,
+            subtitle: subtitle
+        )
     }
 }
