@@ -59,7 +59,7 @@ struct DocumentInboxTests {
     ) -> PlanDocument {
         PlanDocument(
             id: id, catalogVersion: 5, generatedAt: Self.instant,
-            title: "Strength block", goal: "Bigger bench", weekCount: 4,
+            title: "Strength block", goal: "Bigger bench",
             durationMinutes: 60,
             days: [
                 PlanDocumentDay(

@@ -20,7 +20,8 @@ extension ToolRunner {
     /// that has already been applied is applied in its turn rather than
     /// mistaken for it.
     func makeUpdate(from arguments: JSONValue) throws -> ProfileUpdate {
-        ProfileUpdate(
+        try Self.refuseUnknownFacts(in: arguments)
+        return ProfileUpdate(
             id: UUID(),
             generatedAt: now(),
             displayUnit: try Self.stated(arguments, "displayUnit", Self.massUnit),
@@ -36,6 +37,27 @@ extension ToolRunner {
                 arguments, "preferredDurationMinutes",
                 { try Self.wholeNumber($0, "preferredDurationMinutes") })
         )
+    }
+
+    /// Throws when the call names a fact this document cannot hold.
+    ///
+    /// Refused rather than dropped, and refused before anything is written: a
+    /// key quietly ignored here is reported back as "Recorded" while the fact
+    /// is written down nowhere, which is the failure a caller cannot detect and
+    /// therefore cannot correct. The facts it can hold come from the document
+    /// itself, so a field added there is not one this keeps rejecting.
+    ///
+    /// Keys are checked in sorted order, so the same call always names the same
+    /// key rather than a different one each time.
+    private static func refuseUnknownFacts(in arguments: JSONValue) throws {
+        let unknown = (arguments.objectValue ?? [:]).keys.sorted()
+            .first { !ProfileUpdate.statedKeys.contains($0) }
+        guard let unknown else { return }
+        throw ProfileArgumentError(
+            "'\(unknown)' is not a fact this profile can record, so it would have been dropped "
+                + "without anyone noticing. Nothing was written. What it records is: "
+                + "\(ProfileUpdate.statedKeys.sorted().joined(separator: ", ")). Anything else "
+                + "the lifter has told you can go in 'constraints' or 'goal', in his words.")
     }
 
     /// The three-way read the whole design rests on: a key that is not there

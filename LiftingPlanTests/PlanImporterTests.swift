@@ -46,7 +46,7 @@ struct PlanImporterTests {
     ) -> PlanDocument {
         PlanDocument(
             id: id, catalogVersion: 5, generatedAt: Self.instant,
-            title: title, goal: "Bigger bench", weekCount: 4,
+            title: title, goal: "Bigger bench",
             durationMinutes: 60, notes: "Keep pressing volume moderate.",
             days: days ?? [
                 PlanDocumentDay(
@@ -82,7 +82,9 @@ struct PlanImporterTests {
 
         #expect(plan.title == "Strength block")
         #expect(plan.goal == "Bigger bench")
-        #expect(plan.weekCount == 4)
+        // One week was stated, so the block runs one week. The count is the
+        // weeks that arrived, not a number the document was taken on trust for.
+        #expect(plan.weekCount == 1)
         #expect(plan.durationMinutes == 60)
         #expect(plan.startDate == Self.instant)
         #expect(plan.completedAt == nil)
@@ -200,6 +202,182 @@ struct PlanImporterTests {
         let day = try #require(plan.orderedWeeks.first?.orderedDays.first)
         #expect(day.weekday == .sunday)
         #expect(day.orderedExercises.isEmpty)
+    }
+
+    // MARK: - A block is more than one week
+
+    /// One week of the block at a stated load, so eight of them are eight
+    /// genuinely different weeks rather than the same week eight times.
+    private func week(
+        _ label: String?, load: Double, isDeload: Bool = false
+    ) -> PlanDocumentWeek {
+        PlanDocumentWeek(
+            label: label, isDeload: isDeload,
+            days: [PlanDocumentDay(
+                weekday: .monday, focus: "Lower",
+                exercises: [exercise(suggestedLoad: Mass(value: load, unit: .pounds))]
+            )]
+        )
+    }
+
+    private func block(_ weeks: [PlanDocumentWeek], id: UUID = UUID()) -> PlanDocument {
+        PlanDocument(
+            id: id, catalogVersion: 5, generatedAt: Self.instant,
+            title: "Eight-week block", goal: "Bigger bench", weeks: weeks
+        )
+    }
+
+    @Test("An eight-week block imports as eight weeks, each with its own days")
+    func eightWeekBlockImportsAsEightWeeks() throws {
+        // The exact case that used to lose seven weeks in silence.
+        let context = try context()
+        let weeks = (0..<8).map { week("Week \($0 + 1)", load: 275 + Double($0) * 10) }
+
+        let plan = try PlanImporter.import(
+            block(weeks), into: context, catalog: try catalog(), importedAt: Self.instant
+        )
+
+        #expect(plan.orderedWeeks.count == 8)
+        #expect(plan.weekCount == 8)
+        #expect(plan.orderedWeeks.map(\.ordinal) == Array(1...8))
+        #expect(plan.orderedWeeks.allSatisfy { $0.orderedDays.count == 1 })
+
+        let loads: [Double?] = plan.orderedWeeks.map {
+            $0.orderedDays.first?.orderedExercises.first?.suggestedLoad?.value
+        }
+        let expected: [Double?] = (0..<8).map { 275 + Double($0) * 10 }
+        #expect(loads == expected, "each week keeps the load it was prescribed")
+    }
+
+    @Test("A deload week imports with its flag and its label intact")
+    func deloadWeekImports() throws {
+        let context = try context()
+        let plan = try PlanImporter.import(
+            block([
+                week("Accumulation", load: 315),
+                week("Back off", load: 225, isDeload: true),
+            ]),
+            into: context, catalog: try catalog()
+        )
+
+        #expect(plan.orderedWeeks.map(\.isDeload) == [false, true])
+        #expect(plan.orderedWeeks.map(\.label) == ["Accumulation", "Back off"])
+    }
+
+    @Test("A week the plan did not name arrives unnamed rather than called 'Week 1'")
+    func unnamedWeekStaysUnnamed() throws {
+        let context = try context()
+        let plan = try PlanImporter.import(
+            block([week(nil, load: 275)]), into: context, catalog: try catalog()
+        )
+
+        #expect(plan.orderedWeeks.first?.label == "")
+    }
+
+    @Test("The block trains every day any of its weeks trains")
+    func trainingDaysCoverEveryWeek() throws {
+        let context = try context()
+        let thursday = PlanDocumentWeek(days: [
+            PlanDocumentDay(weekday: .thursday, exercises: [exercise()])
+        ])
+        let plan = try PlanImporter.import(
+            block([week("Accumulation", load: 275), thursday]),
+            into: context, catalog: try catalog()
+        )
+
+        #expect(plan.orderedWeekdays == [.monday, .thursday])
+    }
+
+    @Test("A multi-week block survives being written to the store and read back")
+    func multiWeekBlockPersists() throws {
+        let context = try context()
+        try PlanImporter.import(
+            block((0..<8).map { week("Week \($0 + 1)", load: 275) }),
+            into: context, catalog: try catalog()
+        )
+
+        let stored = try #require(try plans(in: context).first)
+        #expect(stored.orderedWeeks.count == 8)
+        #expect(try context.fetch(FetchDescriptor<TrainingWeek>()).count == 8)
+        // Eight weeks of one day each, not one week of eight days.
+        #expect(try context.fetch(FetchDescriptor<WorkoutDay>()).count == 8)
+    }
+
+    @Test("The plan screen opens on the first week that still has work in it")
+    func weekSelectionFollowsRealMultiWeekData() throws {
+        // The display side derives the current week from what has been logged.
+        // Real multi-week data has to satisfy it, not just hand-built weeks.
+        let context = try context()
+        let plan = try PlanImporter.import(
+            block([
+                week("Accumulation", load: 275),
+                week("Intensification", load: 295),
+                week("Deload", load: 205, isDeload: true),
+            ]),
+            into: context, catalog: try catalog()
+        )
+
+        #expect(PlanWeekSelection.currentWeekOrdinal(in: plan.orderedWeeks) == 1)
+
+        // Finish every session of week 1.
+        for day in plan.orderedWeeks[0].orderedDays { day.completedAt = Self.instant }
+        try context.saveOrThrow()
+
+        #expect(PlanWeekSelection.currentWeekOrdinal(in: plan.orderedWeeks) == 2)
+        #expect(plan.orderedWeeks.map(PlanWeekSelection.title(for:))
+            == ["Week 1 · Accumulation", "Week 2 · Intensification", "Week 3 · Deload"])
+    }
+
+    @Test("A single-week document in the older shape still imports")
+    func olderSingleWeekDocumentStillImports() throws {
+        let json = """
+        {
+          "version": 1, "catalogVersion": 5,
+          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "title": "Strength block", "weekCount": 1,
+          "days": [{
+            "weekday": 2, "focus": "Push",
+            "exercises": [{
+              "exerciseID": "barbell-bench-press",
+              "displayName": "Barbell Bench Press", "sets": 5
+            }]
+          }]
+        }
+        """
+        let document = try PlanDocument.makeDecoder()
+            .decode(PlanDocument.self, from: Data(json.utf8))
+        let context = try context()
+
+        let plan = try PlanImporter.import(document, into: context, catalog: try catalog())
+
+        #expect(plan.title == "Strength block")
+        #expect(plan.orderedWeeks.count == 1)
+        #expect(plan.orderedWeeks.first?.ordinal == 1)
+        #expect(plan.orderedWeeks.first?.label == "")
+        #expect(plan.orderedWeeks.first?.orderedDays.map(\.weekday) == [.monday])
+        #expect(try firstExercise(of: plan).targetSets == 5)
+    }
+
+    @Test("An unknown exercise in a later week fails the whole block")
+    func unknownExerciseInALaterWeekImportsNothing() throws {
+        let context = try context()
+        let bad = PlanDocumentWeek(days: [
+            PlanDocumentDay(
+                weekday: .monday,
+                exercises: [exercise(exerciseID: ExerciseID(rawValue: "zercher-good-morning"))]
+            )
+        ])
+
+        #expect(throws: (any Error).self) {
+            try PlanImporter.import(
+                block([week("Accumulation", load: 275), bad]),
+                into: context, catalog: try catalog()
+            )
+        }
+
+        #expect(try plans(in: context).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<TrainingWeek>()).isEmpty)
     }
 
     // MARK: - The one thing the import checks

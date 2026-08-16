@@ -105,7 +105,7 @@ private func makeSnapshot(catalogVersion: Int = 5) -> TrainingSnapshot {
 private func makePlan(id: UUID = UUID(), title: String = "Strength block") -> PlanDocument {
     PlanDocument(
         id: id, catalogVersion: 5, generatedAt: instant, title: title,
-        goal: "Bigger bench", weekCount: 4, durationMinutes: 60,
+        goal: "Bigger bench", durationMinutes: 60,
         notes: "Keep pressing volume moderate.",
         days: [
             PlanDocumentDay(

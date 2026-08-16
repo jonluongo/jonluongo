@@ -28,7 +28,7 @@ struct WritePlanTests {
     @Test("The plan lands in the folder and comes back as it was written")
     func writesAndReturnsThePlan() throws {
         let (outcome, documents) = try plan([
-            "title": "Autumn strength", "goal": "Bigger squat", "weekCount": 4,
+            "title": "Autumn strength", "goal": "Bigger squat", "weekCount": 1,
             "durationMinutes": 60, "notes": "Eat.", "days": [Self.squatDay],
         ])
         let report = try #require(outcome.report)
@@ -36,7 +36,9 @@ struct WritePlanTests {
 
         #expect(written.title == "Autumn strength")
         #expect(written.goal == "Bigger squat")
-        #expect(written.weekCount == 4)
+        // Stated as 1 and one week was sent, so it agrees rather than being
+        // taken on trust.
+        #expect(written.weekCount == 1)
         #expect(report["plan"]?["title"]?.stringValue == "Autumn strength")
         #expect(report["writtenTo"]?.stringValue == documents.planLocation)
     }
@@ -44,7 +46,7 @@ struct WritePlanTests {
     @Test("Every prescribed value is recorded exactly, none of it adjusted")
     func valuesAreRecordedVerbatim() throws {
         let (_, documents) = try plan(["days": [Self.squatDay]])
-        let exercise = try #require(documents.lastWrittenPlan?.days.first?.exercises.first)
+        let exercise = try #require(documents.lastWrittenPlan?.everyDay.first?.exercises.first)
 
         #expect(exercise.sets == 7)
         #expect(exercise.repRange == "3-5")
@@ -63,7 +65,7 @@ struct WritePlanTests {
                 ]],
             ]]
         ])
-        let exercise = try #require(documents.lastWrittenPlan?.days.first?.exercises.first)
+        let exercise = try #require(documents.lastWrittenPlan?.everyDay.first?.exercises.first)
 
         #expect(exercise.restSeconds == nil)
         #expect(exercise.suggestedLoad == nil)
@@ -74,7 +76,155 @@ struct WritePlanTests {
     func emptyDayIsWritten() throws {
         let (_, documents) = try plan(["days": [["weekday": "wednesday", "focus": "Rest"]]])
 
-        #expect(documents.lastWrittenPlan?.days.first?.exercises.isEmpty == true)
+        #expect(documents.lastWrittenPlan?.everyDay.first?.exercises.isEmpty == true)
+    }
+
+    // MARK: - A block is more than one week
+
+    /// One week of the block, at a stated load, so eight of them are eight
+    /// genuinely different weeks rather than the same week eight times.
+    private static func week(
+        _ label: String, load: Double, isDeload: Bool = false
+    ) -> JSONValue {
+        [
+            "label": .string(label), "isDeload": .bool(isDeload),
+            "days": [[
+                "weekday": "monday", "focus": "Lower",
+                "exercises": [[
+                    "exerciseID": "barbell-squat", "displayName": "Barbell Squat",
+                    "sets": 5, "repRange": "5",
+                    "suggestedLoad": ["value": .number(load), "unit": "lb"],
+                ]],
+            ]],
+        ]
+    }
+
+    @Test("An eight-week block is written as eight weeks, each with its own days")
+    func eightWeeksAreWrittenAsEight() throws {
+        let weeks: [JSONValue] = (0..<8).map {
+            Self.week("Week \($0 + 1)", load: 275 + Double($0) * 10)
+        }
+        let (outcome, documents) = try plan([
+            "title": "Eight-week block", "weeks": .array(weeks),
+        ])
+
+        #expect(outcome.failureMessage == nil)
+        let reported = try #require(outcome.report?["plan"]?["weeks"]?.arrayValue)
+        #expect(reported.count == 8, "seven weeks must not vanish")
+        #expect(reported.first?["days"]?.arrayValue?.count == 1)
+        #expect(documents.lastWrittenPlan != nil)
+    }
+
+    @Test("Each week keeps the load it was written with, so they differ")
+    func weeksKeepTheirOwnLoads() throws {
+        let (outcome, _) = try plan([
+            "weeks": [Self.week("Accumulation", load: 275), Self.week("Peak", load: 315)]
+        ])
+        let reported = try #require(outcome.report?["plan"]?["weeks"]?.arrayValue)
+        let loads = reported.map {
+            $0["days"]?.arrayValue?.first?["exercises"]?.arrayValue?
+                .first?["suggestedLoad"]?["value"]
+        }
+
+        #expect(loads == [.number(275), .number(315)])
+    }
+
+    @Test("A deload week arrives with its flag and its label intact")
+    func deloadWeekSurvives() throws {
+        let (outcome, _) = try plan([
+            "weeks": [
+                Self.week("Accumulation", load: 315),
+                Self.week("Back off", load: 225, isDeload: true),
+            ]
+        ])
+        let reported = try #require(outcome.report?["plan"]?["weeks"]?.arrayValue)
+
+        #expect(reported.first?["isDeload"] == .bool(false))
+        #expect(reported.last?["isDeload"] == .bool(true))
+        #expect(reported.last?["label"] == .string("Back off"))
+    }
+
+    @Test("A week the plan did not name carries no label rather than an invented one")
+    func unlabelledWeekStaysUnlabelled() throws {
+        let (outcome, _) = try plan(["weeks": [["days": [Self.squatDay]]]])
+        let reported = try #require(outcome.report?["plan"]?["weeks"]?.arrayValue)
+
+        // Read through `objectValue`, since the subscript answers `nil` for an
+        // explicit null and this is exactly the difference being asserted.
+        #expect(reported.first?.objectValue?["label"] == .null)
+        #expect(reported.first?["isDeload"] == .bool(false))
+    }
+
+    @Test("A block written as bare days is one week, as it always was")
+    func bareDaysAreOneWeek() throws {
+        let (outcome, _) = try plan(["days": [Self.squatDay]])
+        let reported = try #require(outcome.report?["plan"]?["weeks"]?.arrayValue)
+
+        #expect(reported.count == 1)
+        #expect(reported.first?["days"]?.arrayValue?.count == 1)
+    }
+
+    @Test("A stated weekCount that disagrees with the weeks sent is refused, not ignored")
+    func weekCountThatDisagreesIsRefused() throws {
+        let (outcome, documents) = try plan([
+            "weekCount": 8, "weeks": [Self.week("Accumulation", load: 275)],
+        ])
+        let message = try #require(outcome.failureMessage)
+
+        #expect(message.contains("8"))
+        #expect(message.contains("1"))
+        #expect(documents.lastWrittenPlan == nil, "an ignored field is how seven weeks vanished")
+    }
+
+    // MARK: - Refused rather than discarded
+
+    @Test("A key the format does not have is refused with the key named")
+    func unknownExerciseKeyIsNamed() throws {
+        let (outcome, documents) = try plan([
+            "days": [[
+                "weekday": "monday",
+                "exercises": [[
+                    "exerciseID": "barbell-squat", "displayName": "Barbell Squat",
+                    "sets": 5, "dropSets": 2,
+                ]],
+            ]]
+        ])
+        let message = try #require(outcome.failureMessage)
+
+        #expect(message.contains("dropSets"))
+        #expect(documents.lastWrittenPlan == nil, "a refused plan must write nothing")
+    }
+
+    @Test("An unknown key at the top of the plan is refused too")
+    func unknownBlockKeyIsNamed() throws {
+        let (outcome, documents) = try plan([
+            "periodizationModel": "block", "days": [Self.squatDay],
+        ])
+
+        #expect(try #require(outcome.failureMessage).contains("periodizationModel"))
+        #expect(documents.lastWrittenPlan == nil)
+    }
+
+    @Test("An unknown key inside a week is refused")
+    func unknownWeekKeyIsNamed() throws {
+        let (outcome, documents) = try plan([
+            "weeks": [["intensityWave": "ascending", "days": [Self.squatDay]]]
+        ])
+
+        #expect(try #require(outcome.failureMessage).contains("intensityWave"))
+        #expect(documents.lastWrittenPlan == nil)
+    }
+
+    @Test("Both weeks and days at once is refused rather than one being dropped")
+    func weeksAndDaysTogetherAreRefused() throws {
+        let (outcome, documents) = try plan([
+            "weeks": [Self.week("Accumulation", load: 275)], "days": [Self.squatDay],
+        ])
+        let message = try #require(outcome.failureMessage)
+
+        #expect(message.contains("weeks"))
+        #expect(message.contains("days"))
+        #expect(documents.lastWrittenPlan == nil)
     }
 
     // MARK: - The one thing it checks
@@ -144,14 +294,14 @@ struct WritePlanTests {
     func weekdayByName() throws {
         let (_, documents) = try plan(["days": [["weekday": "thursday"]]])
 
-        #expect(documents.lastWrittenPlan?.days.first?.weekday == .thursday)
+        #expect(documents.lastWrittenPlan?.everyDay.first?.weekday == .thursday)
     }
 
     @Test("A weekday given as Calendar's number is understood")
     func weekdayByNumber() throws {
         let (_, documents) = try plan(["days": [["weekday": 5]]])
 
-        #expect(documents.lastWrittenPlan?.days.first?.weekday == .thursday)
+        #expect(documents.lastWrittenPlan?.everyDay.first?.weekday == .thursday)
     }
 
     @Test("A weekday that is neither is refused with the offending value named")

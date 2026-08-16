@@ -9,6 +9,11 @@ import Foundation
 /// the phone cannot disagree about how a date is written. The app maps it into
 /// SwiftData with `PlanImporter`, which checks one thing and changes nothing.
 ///
+/// **A block is a list of weeks, and the weeks may differ.** That is what makes
+/// periodization sayable: week 3 can prescribe heavier work than week 1 and
+/// week 4 can be a deload, rather than one week being repeated by whoever reads
+/// it. A block of a single week states a single week.
+///
 /// Nothing in this format is a suggestion to be adjusted. A set count, a rest,
 /// a rep range, and a load are recorded exactly as written; `id` is the
 /// document's stable identity, so importing the same plan twice is a no-op
@@ -17,14 +22,23 @@ import Foundation
 /// written against older catalog data is detectable rather than silently
 /// reinterpreted.
 ///
-/// Depends on: `Weekday`, `ExerciseID`, and `Mass` from `Domain`. Pure value
-/// types by design — the macOS server writes these and must never link
-/// SwiftData, so the mapping into the store lives in the app.
+/// **A key this format does not have is refused, not dropped** — see
+/// `DocumentRefusal`. A silently ignored key tells the writer a prescription
+/// landed when none of it did.
+///
+/// Depends on: `Weekday`, `ExerciseID`, and `Mass` from `Domain`, and
+/// `DocumentRefusal`. Pure value types by design — the macOS server writes
+/// these and must never link SwiftData, so the mapping into the store lives in
+/// the app.
 public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
 
     /// The format version this build writes. Bump it when a reader would need
     /// to behave differently, not for an additive field.
-    public static let currentVersion = 1
+    ///
+    /// Version 2 made the block a list of weeks. Version 1 stated one week as a
+    /// bare `days` array, which is still read — that shape is now the way a
+    /// single-week block is written, so there is one rule rather than two.
+    public static let currentVersion = 2
 
     /// The format version of this document, as written.
     public let version: Int
@@ -41,16 +55,24 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     public let title: String
     /// What the block is for, in the coach's words. May be empty.
     public let goal: String
-    /// How many weeks the block runs. `nil` when the plan did not say.
-    public let weekCount: Int?
     /// How long a session in this block runs. `nil` when the plan did not say.
     public let durationMinutes: Int?
     /// Anything the coach wants the lifter to read alongside the plan. `nil`
     /// when there is none.
     public let notes: String?
-    /// The block's training days, in the order they should be read. A day with
-    /// no exercises is a rest day, not an omission.
-    public let days: [PlanDocumentDay]
+    /// The block's weeks, in the order they are to be trained. A week's
+    /// position in this list is its ordinal, so two weeks cannot claim to be
+    /// week 3.
+    public let weeks: [PlanDocumentWeek]
+
+    /// How many weeks the block runs: the number of weeks it states.
+    ///
+    /// Derived rather than stored, because a separately stated count is a
+    /// number that can disagree with the document holding it — and the reader
+    /// that believed the count over the content is how seven weeks of a
+    /// declared eight-week block used to vanish. A document may still *state*
+    /// `weekCount`, and it is checked against this rather than ignored.
+    public var weekCount: Int { weeks.count }
 
     public init(
         version: Int = PlanDocument.currentVersion,
@@ -59,10 +81,9 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         generatedAt: Date,
         title: String = "",
         goal: String = "",
-        weekCount: Int? = nil,
         durationMinutes: Int? = nil,
         notes: String? = nil,
-        days: [PlanDocumentDay] = []
+        weeks: [PlanDocumentWeek] = []
     ) {
         self.version = version
         self.id = id
@@ -70,29 +91,110 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         self.generatedAt = generatedAt
         self.title = title
         self.goal = goal
-        self.weekCount = weekCount
         self.durationMinutes = durationMinutes
         self.notes = notes
-        self.days = days
+        self.weeks = weeks
     }
+
+    /// A block of one week, stated as its days.
+    ///
+    /// The single-week case is the ordinary one and must not become verbose to
+    /// write. The week it makes carries no label and is not a deload, because
+    /// the caller said neither.
+    public init(
+        version: Int = PlanDocument.currentVersion,
+        id: UUID,
+        catalogVersion: Int,
+        generatedAt: Date,
+        title: String = "",
+        goal: String = "",
+        durationMinutes: Int? = nil,
+        notes: String? = nil,
+        days: [PlanDocumentDay]
+    ) {
+        self.init(
+            version: version, id: id, catalogVersion: catalogVersion,
+            generatedAt: generatedAt, title: title, goal: goal,
+            durationMinutes: durationMinutes, notes: notes,
+            weeks: [PlanDocumentWeek(days: days)]
+        )
+    }
+
+    /// Spelled out rather than left to synthesis: the reader needs to know
+    /// every key this format has in order to refuse one it does not.
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case version, id, catalogVersion, generatedAt
+        case title, goal, durationMinutes, notes, weeks
+    }
+
+    /// The two keys a single-week block may state instead of `weeks`. Version 1
+    /// wrote both; both are still read, and `weekCount` is checked rather than
+    /// ignored.
+    private enum SingleWeekCodingKeys: String, CodingKey {
+        case days, weekCount
+    }
+
+    private static let acceptedKeys: Set<String> =
+        Set(CodingKeys.allCases.map(\.stringValue)).union(["days", "weekCount"])
 
     /// Decoding requires only what makes a document a document: its format
     /// version, the catalog generation it was written against, its identity,
     /// and when it was written. Everything else is optional, because a plan
     /// that does not state a title, a length, or a rest is stating an absence
     /// — and a decoder that supplied one would be inventing a prescription.
+    ///
+    /// The order of the checks is the order of the questions: a document from a
+    /// later format is refused as such before any of its keys are held against
+    /// it, since a key this build has never heard of is exactly what a later
+    /// format is made of and "unknown key" would misdirect.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         version = try container.decode(Int.self, forKey: .version)
+        guard version <= Self.currentVersion else {
+            throw DocumentRefusal.laterVersion(version, understood: Self.currentVersion)
+        }
+        try decoder.refuseUnknownKeys(besides: Self.acceptedKeys)
+
         id = try container.decode(UUID.self, forKey: .id)
         catalogVersion = try container.decode(Int.self, forKey: .catalogVersion)
         generatedAt = try container.decode(Date.self, forKey: .generatedAt)
         title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
         goal = try container.decodeIfPresent(String.self, forKey: .goal) ?? ""
-        weekCount = try container.decodeIfPresent(Int.self, forKey: .weekCount)
         durationMinutes = try container.decodeIfPresent(Int.self, forKey: .durationMinutes)
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
-        days = try container.decodeIfPresent([PlanDocumentDay].self, forKey: .days) ?? []
+        weeks = try Self.weeks(from: decoder, container)
+    }
+
+    /// The block's weeks, however the block stated them.
+    ///
+    /// A bare `days` array is one week — the shape version 1 wrote, and the
+    /// short way to say a single-week block. Stating both is refused rather
+    /// than resolved: a reader that picked one would drop the other, and there
+    /// is no telling which the writer meant.
+    private static func weeks(
+        from decoder: any Decoder, _ container: KeyedDecodingContainer<CodingKeys>
+    ) throws -> [PlanDocumentWeek] {
+        let single = try decoder.container(keyedBy: SingleWeekCodingKeys.self)
+        let stated = try container.decodeIfPresent([PlanDocumentWeek].self, forKey: .weeks)
+        let days = try single.decodeIfPresent([PlanDocumentDay].self, forKey: .days)
+
+        if stated != nil, days != nil {
+            throw DocumentRefusal.contradiction(
+                "This plan states both 'weeks' and 'days', and only one of them can be the "
+                    + "block. Nothing was taken in. Send 'weeks' — a single-week block is one "
+                    + "entry in it — or send 'days' alone.")
+        }
+        let weeks = stated ?? days.map { [PlanDocumentWeek(days: $0)] } ?? []
+
+        if let claimed = try single.decodeIfPresent(Int.self, forKey: .weekCount),
+            claimed != weeks.count {
+            throw DocumentRefusal.contradiction(
+                "This plan says it runs \(claimed) weeks but states \(weeks.count). Nothing was "
+                    + "taken in, because the weeks it does not state would simply be missing. "
+                    + "Send one entry in 'weeks' for every week of the block, each with its own "
+                    + "days; 'weekCount' is then whatever you sent and need not be stated.")
+        }
+        return weeks
     }
 
     /// The encoder both clients use. ISO 8601 dates and sorted keys, so a plan
@@ -113,102 +215,47 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     }
 }
 
-/// One training day of a `PlanDocument`.
+/// One week of a `PlanDocument`.
 ///
-/// Read `exercises` in the order given — that is the order the work is meant to
-/// be done in, and nothing downstream re-sorts it. An empty `exercises` is a
-/// rest day the plan named on purpose, not a day that failed to be filled in.
+/// **Weeks are stated one at a time because they differ.** A block that ramps
+/// says so by prescribing more in week 3 than in week 1, and a deload says so
+/// with `isDeload` — the flag `TrainingWeek` and `SnapshotWeek` have always
+/// carried and nothing could previously write. A week's ordinal is its position
+/// in the document's `weeks`, so nothing has to reconcile a stated number with
+/// where the week actually sits.
 ///
-/// Depends on: `Weekday`, `PlanDocumentExercise`.
-public struct PlanDocumentDay: Codable, Hashable, Sendable {
-    public let weekday: Weekday
-    /// Short label such as "Push". May be empty.
-    public let focus: String
-    /// How long this session runs. `nil` when the plan did not say.
-    public let durationMinutes: Int?
-    public let exercises: [PlanDocumentExercise]
+/// Depends on: `PlanDocumentDay`, `DocumentRefusal`.
+public struct PlanDocumentWeek: Codable, Hashable, Sendable {
 
-    public init(
-        weekday: Weekday, focus: String = "", durationMinutes: Int? = nil,
-        exercises: [PlanDocumentExercise] = []
-    ) {
-        self.weekday = weekday
-        self.focus = focus
-        self.durationMinutes = durationMinutes
-        self.exercises = exercises
+    /// What the plan calls this week, such as "Accumulation". `nil` when the
+    /// plan did not name it — a week with no name has no name, and "Week 1" is
+    /// the reader's way of saying where it sits, not something the plan said.
+    public let label: String?
+    /// Whether the plan marks this week as a deload. `false` when it did not
+    /// say so, which is the whole of what can be known: a week not called a
+    /// deload is not one.
+    public let isDeload: Bool
+    /// This week's training days, in the order they should be read. A day with
+    /// no exercises is a rest day, not an omission.
+    public let days: [PlanDocumentDay]
+
+    public init(label: String? = nil, isDeload: Bool = false, days: [PlanDocumentDay] = []) {
+        self.label = label
+        self.isDeload = isDeload
+        self.days = days
     }
 
-    /// Only `weekday` is required: a day that cannot say when it happens is not
-    /// a day, while a day with no focus and no stated length is perfectly
-    /// ordinary.
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case label, isDeload, days
+    }
+
+    /// Nothing is required: a week that says only what it trains is an ordinary
+    /// week. An unknown key is refused, as everywhere else in this format.
     public init(from decoder: any Decoder) throws {
+        try decoder.refuseUnknownKeys(besides: Set(CodingKeys.allCases.map(\.stringValue)))
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        weekday = try container.decode(Weekday.self, forKey: .weekday)
-        focus = try container.decodeIfPresent(String.self, forKey: .focus) ?? ""
-        durationMinutes = try container.decodeIfPresent(Int.self, forKey: .durationMinutes)
-        exercises = try container.decodeIfPresent(
-            [PlanDocumentExercise].self, forKey: .exercises) ?? []
-    }
-}
-
-/// One prescribed movement in a `PlanDocument`.
-///
-/// `exerciseID` is the identity that matters and the only value the import
-/// checks — history is keyed on it, so an ID the catalog does not know would
-/// fragment a lift's history irreparably. `displayName` is carried for display
-/// only; never resolve or match an exercise by it.
-///
-/// Every other field is recorded verbatim. `restSeconds` and `suggestedLoad`
-/// are `nil` rather than zero when none was prescribed, and `repRange` is empty
-/// rather than a default when none was stated — parse it with `RepRange`.
-///
-/// Depends on: `ExerciseID`, `Mass`.
-public struct PlanDocumentExercise: Codable, Hashable, Sendable {
-    public let exerciseID: ExerciseID
-    /// For display only. Never an identity or a join key.
-    public let displayName: String
-    /// Prescribed working sets, exactly as written.
-    public let sets: Int
-    /// The rep target as written, e.g. "8-12" or "5". Empty when none was
-    /// prescribed.
-    public let repRange: String
-    /// Prescribed rest between sets, in seconds. `nil` when none was prescribed
-    /// — not zero, which would read as "rest none".
-    public let restSeconds: Int?
-    /// The load to work with, in the unit it was written in. `nil` when the
-    /// plan left it to the lifter.
-    public let suggestedLoad: Mass?
-    /// Rep tempo such as "3-0-1-0". `nil` when none was given.
-    public let tempo: String?
-    public let notes: String?
-
-    public init(
-        exerciseID: ExerciseID, displayName: String, sets: Int,
-        repRange: String = "", restSeconds: Int? = nil, suggestedLoad: Mass? = nil,
-        tempo: String? = nil, notes: String? = nil
-    ) {
-        self.exerciseID = exerciseID
-        self.displayName = displayName
-        self.sets = sets
-        self.repRange = repRange
-        self.restSeconds = restSeconds
-        self.suggestedLoad = suggestedLoad
-        self.tempo = tempo
-        self.notes = notes
-    }
-
-    /// The identity, the name, and the set count are required; a prescription
-    /// that cannot say which movement or how much work is not a prescription.
-    /// The rest is optional so that an absence stays an absence.
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        exerciseID = try container.decode(ExerciseID.self, forKey: .exerciseID)
-        displayName = try container.decode(String.self, forKey: .displayName)
-        sets = try container.decode(Int.self, forKey: .sets)
-        repRange = try container.decodeIfPresent(String.self, forKey: .repRange) ?? ""
-        restSeconds = try container.decodeIfPresent(Int.self, forKey: .restSeconds)
-        suggestedLoad = try container.decodeIfPresent(Mass.self, forKey: .suggestedLoad)
-        tempo = try container.decodeIfPresent(String.self, forKey: .tempo)
-        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        label = try container.decodeIfPresent(String.self, forKey: .label)
+        isDeload = try container.decodeIfPresent(Bool.self, forKey: .isDeload) ?? false
+        days = try container.decodeIfPresent([PlanDocumentDay].self, forKey: .days) ?? []
     }
 }

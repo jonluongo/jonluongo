@@ -37,7 +37,6 @@ struct PlanDocumentTests {
             generatedAt: Self.instant,
             title: "Strength block",
             goal: "Bigger bench",
-            weekCount: 4,
             durationMinutes: 60,
             notes: "Shoulder is still touchy; keep pressing volume moderate.",
             days: days ?? [
@@ -61,8 +60,16 @@ struct PlanDocumentTests {
         return try PlanDocument.makeDecoder().decode(PlanDocument.self, from: data)
     }
 
+    private func decoded(_ json: String) throws -> PlanDocument {
+        try PlanDocument.makeDecoder().decode(PlanDocument.self, from: Data(json.utf8))
+    }
+
+    private func days(of document: PlanDocument) throws -> [PlanDocumentDay] {
+        try #require(document.weeks.first).days
+    }
+
     private func firstExercise(in document: PlanDocument) throws -> PlanDocumentExercise {
-        let day = try #require(document.days.first)
+        let day = try #require(try days(of: document).first)
         return try #require(day.exercises.first)
     }
 
@@ -88,11 +95,217 @@ struct PlanDocumentTests {
         let decoded = try roundTrip(document())
         #expect(decoded.title == "Strength block")
         #expect(decoded.goal == "Bigger bench")
-        #expect(decoded.weekCount == 4)
         #expect(decoded.durationMinutes == 60)
         #expect(decoded.notes == "Shoulder is still touchy; keep pressing volume moderate.")
-        #expect(decoded.days.map(\.weekday) == [.monday, .thursday])
-        #expect(decoded.days.map(\.focus) == ["Push", "Pull"])
+        #expect(try days(of: decoded).map(\.weekday) == [.monday, .thursday])
+        #expect(try days(of: decoded).map(\.focus) == ["Push", "Pull"])
+    }
+
+    // MARK: - A block is more than one week
+
+    /// One week at a stated load, so eight of them are eight different weeks
+    /// rather than the same week eight times.
+    private func week(_ label: String?, load: Double, isDeload: Bool = false)
+        -> PlanDocumentWeek {
+        PlanDocumentWeek(
+            label: label, isDeload: isDeload,
+            days: [PlanDocumentDay(
+                weekday: .monday, focus: "Lower",
+                exercises: [exercise(suggestedLoad: Mass(value: load, unit: .pounds))]
+            )]
+        )
+    }
+
+    private func block(_ weeks: [PlanDocumentWeek]) -> PlanDocument {
+        PlanDocument(
+            id: documentID, catalogVersion: 5, generatedAt: Self.instant,
+            title: "Eight-week block", weeks: weeks
+        )
+    }
+
+    @Test("An eight-week block round-trips as eight weeks, each with its own days")
+    func eightWeeksSurvive() throws {
+        let weeks = (0..<8).map { week("Week \($0 + 1)", load: 275 + Double($0) * 10) }
+        let decoded = try roundTrip(block(weeks))
+
+        #expect(decoded.weeks.count == 8, "seven weeks must not vanish")
+        #expect(decoded.weeks == weeks)
+
+        let loads: [Double?] = decoded.weeks.map {
+            $0.days.first?.exercises.first?.suggestedLoad?.value
+        }
+        let expected: [Double?] = (0..<8).map { 275 + Double($0) * 10 }
+        #expect(loads == expected)
+    }
+
+    @Test("weekCount is the weeks the block states, never a number that can disagree")
+    func weekCountIsDerived() throws {
+        #expect(try roundTrip(block((0..<8).map { week("W\($0)", load: 275) })).weekCount == 8)
+        #expect(try roundTrip(block([])).weekCount == 0)
+        #expect(try roundTrip(document()).weekCount == 1)
+    }
+
+    @Test("A deload week arrives with its flag intact")
+    func deloadSurvives() throws {
+        let decoded = try roundTrip(block([
+            week("Accumulation", load: 315), week("Back off", load: 225, isDeload: true),
+        ]))
+
+        #expect(decoded.weeks.map(\.isDeload) == [false, true])
+        #expect(decoded.weeks.map(\.label) == ["Accumulation", "Back off"])
+    }
+
+    @Test("A week the plan did not name has no label rather than an invented one")
+    func unnamedWeekHasNoLabel() throws {
+        let decoded = try roundTrip(block([week(nil, load: 275)]))
+
+        #expect(decoded.weeks.first?.label == nil)
+        #expect(decoded.weeks.first?.isDeload == false)
+    }
+
+    // MARK: - Older documents still read
+
+    @Test("A single-week document in the older shape still decodes, as one week")
+    func versionOneDocumentStillDecodes() throws {
+        let json = """
+        {
+          "version": 1,
+          "catalogVersion": 5,
+          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "title": "Strength block",
+          "weekCount": 1,
+          "days": [{
+            "weekday": 2,
+            "focus": "Push",
+            "exercises": [{
+              "exerciseID": "barbell-bench-press",
+              "displayName": "Barbell Bench Press",
+              "sets": 5
+            }]
+          }]
+        }
+        """
+        let decoded = try decoded(json)
+
+        #expect(decoded.version == 1)
+        #expect(decoded.weeks.count == 1)
+        #expect(decoded.weeks.first?.label == nil)
+        #expect(decoded.weeks.first?.isDeload == false)
+        #expect(try days(of: decoded).map(\.focus) == ["Push"])
+        #expect(try firstExercise(in: decoded).sets == 5)
+    }
+
+    @Test("A weekCount that disagrees with the weeks stated is refused, not ignored")
+    func statedWeekCountIsChecked() throws {
+        // The exact document the audit found: eight weeks declared, one week
+        // written, seven silently lost.
+        let json = """
+        {
+          "version": 1, "catalogVersion": 5,
+          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "weekCount": 8,
+          "days": [{"weekday": 2}]
+        }
+        """
+        let error = #expect(throws: DocumentRefusal.self) { try decoded(json) }
+        let message = try #require(error?.errorDescription)
+        #expect(message.contains("8"))
+        #expect(message.contains("1"))
+    }
+
+    @Test("A document from a later format is refused as such, naming both versions")
+    func laterVersionIsRefused() throws {
+        let json = """
+        {
+          "version": 99, "catalogVersion": 5,
+          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "weeks": [], "somethingNewerClaudeSends": true
+        }
+        """
+        let error = #expect(throws: DocumentRefusal.self) { try decoded(json) }
+
+        // Named as a version, not as an unknown key: the unknown key is what a
+        // later format is made of, and complaining about it would misdirect.
+        #expect(error == .laterVersion(99, understood: PlanDocument.currentVersion))
+        #expect(try #require(error?.errorDescription).contains("99"))
+    }
+
+    // MARK: - Refused rather than discarded
+
+    @Test("A key the format does not have is refused, naming the key")
+    func unknownKeyIsRefusedByName() throws {
+        let json = """
+        {
+          "version": 2, "catalogVersion": 5,
+          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "periodizationModel": "block",
+          "weeks": []
+        }
+        """
+        let error = #expect(throws: DocumentRefusal.self) { try decoded(json) }
+
+        #expect(error == .unknownKey("periodizationModel", location: ""))
+        #expect(try #require(error?.errorDescription).contains("periodizationModel"))
+    }
+
+    @Test("An unknown key deep in the document is refused, and says where it sat")
+    func unknownKeyInsideAnExerciseIsRefused() throws {
+        let json = """
+        {
+          "version": 2, "catalogVersion": 5,
+          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "weeks": [{"days": [{
+            "weekday": 2,
+            "exercises": [{
+              "exerciseID": "barbell-bench-press", "displayName": "Bench", "sets": 3,
+              "dropSets": 2
+            }]
+          }]}]
+        }
+        """
+        let error = #expect(throws: DocumentRefusal.self) { try decoded(json) }
+        let message = try #require(error?.errorDescription)
+
+        #expect(message.contains("dropSets"))
+        #expect(message.contains("weeks → 0 → days → 0 → exercises → 0"))
+    }
+
+    @Test("An unknown key in a week is refused too")
+    func unknownKeyInsideAWeekIsRefused() throws {
+        let json = """
+        {
+          "version": 2, "catalogVersion": 5,
+          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "weeks": [{"intensityWave": "ascending", "days": []}]
+        }
+        """
+        #expect(throws: DocumentRefusal.unknownKey("intensityWave", location: "weeks → 0")) {
+            try decoded(json)
+        }
+    }
+
+    @Test("Stating both weeks and days is refused rather than one being dropped")
+    func weeksAndDaysTogetherAreRefused() throws {
+        let json = """
+        {
+          "version": 2, "catalogVersion": 5,
+          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "weeks": [{"days": []}],
+          "days": [{"weekday": 2}]
+        }
+        """
+        let error = #expect(throws: DocumentRefusal.self) { try decoded(json) }
+        let message = try #require(error?.errorDescription)
+
+        #expect(message.contains("weeks"))
+        #expect(message.contains("days"))
     }
 
     // MARK: - Nothing is rewritten
@@ -187,8 +400,8 @@ struct PlanDocumentTests {
             weekday: .sunday, focus: "Rest", durationMinutes: nil, exercises: []
         )
         let decoded = try roundTrip(document(days: [restDay]))
-        #expect(decoded.days.count == 1)
-        #expect(decoded.days.first?.exercises.isEmpty == true)
+        #expect(try days(of: decoded).count == 1)
+        #expect(try days(of: decoded).first?.exercises.isEmpty == true)
     }
 
     @Test("A document that says nothing about length or focus decodes rather than failing")
@@ -214,11 +427,10 @@ struct PlanDocumentTests {
 
         #expect(decoded.title == "")
         #expect(decoded.goal == "")
-        #expect(decoded.weekCount == nil)
         #expect(decoded.durationMinutes == nil)
         #expect(decoded.notes == nil)
-        #expect(decoded.days.first?.focus == "")
-        #expect(decoded.days.first?.durationMinutes == nil)
+        #expect(try days(of: decoded).first?.focus == "")
+        #expect(try days(of: decoded).first?.durationMinutes == nil)
 
         let exercise = try firstExercise(in: decoded)
         #expect(exercise.sets == 5)
@@ -229,8 +441,8 @@ struct PlanDocumentTests {
         #expect(exercise.notes == nil)
     }
 
-    @Test("A document with no days decodes as empty rather than failing")
-    func absentDaysDecodeAsEmpty() throws {
+    @Test("A document with no weeks at all decodes as empty rather than failing")
+    func absentWeeksDecodeAsEmpty() throws {
         let json = """
         {
           "version": 1, "catalogVersion": 5,
@@ -238,27 +450,10 @@ struct PlanDocumentTests {
           "generatedAt": "2023-11-14T22:13:20Z"
         }
         """
-        let decoded = try PlanDocument.makeDecoder()
-            .decode(PlanDocument.self, from: Data(json.utf8))
-        #expect(decoded.days.isEmpty)
+        let decoded = try decoded(json)
+        #expect(decoded.weeks.isEmpty)
+        #expect(decoded.weekCount == 0)
         #expect(decoded.generatedAt == Self.instant)
-    }
-
-    @Test("A field a newer writer added is ignored rather than failing the decode")
-    func unknownFieldsAreIgnored() throws {
-        let json = """
-        {
-          "version": 1, "catalogVersion": 5,
-          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
-          "generatedAt": "2023-11-14T22:13:20Z",
-          "title": "Strength block",
-          "periodizationModel": "block",
-          "days": []
-        }
-        """
-        let decoded = try PlanDocument.makeDecoder()
-            .decode(PlanDocument.self, from: Data(json.utf8))
-        #expect(decoded.title == "Strength block")
     }
 
     @Test("A document missing its identity or version does not decode at all")

@@ -1,60 +1,5 @@
 import Foundation
 
-/// What one field of a `ProfileUpdate` says about a standing fact.
-///
-/// Read it with `resolved(from:)`, passing what is currently stored. The three
-/// cases exist because "say nothing about this" and "this is no longer known"
-/// are different instructions, and a two-case model would force one of them to
-/// masquerade as the other: an update that could only set values could never
-/// take back a fact recorded in error, and one that treated every absent field
-/// as a clear would wipe the profile on every partial update.
-///
-/// On the wire, `unchanged` is the key being absent and `unstated` is the key
-/// present with a JSON `null`.
-///
-/// Depends on: Foundation only.
-public enum StatedValue<Value: Hashable & Sendable>: Hashable, Sendable {
-
-    /// The update said nothing about this fact. Whatever is stored stands.
-    case unchanged
-    /// The update stated this value. It replaces whatever is stored.
-    case stated(Value)
-    /// The update said this fact is no longer known. Whatever is stored goes.
-    case unstated
-
-    /// What should be stored after this update, given what is stored now.
-    ///
-    /// `nil` out means not known. A caller whose storage cannot hold absence —
-    /// a free-text field where empty already means "not said" — writes
-    /// `resolved(from: current) ?? ""` and says so.
-    public func resolved(from current: Value?) -> Value? {
-        switch self {
-        case .unchanged: current
-        case .stated(let value): value
-        case .unstated: nil
-        }
-    }
-
-    /// The value this field states, or `nil` when it states none. For a caller
-    /// reporting back what an update contained rather than applying it.
-    public var stated: Value? {
-        if case .stated(let value) = self { return value }
-        return nil
-    }
-
-    /// Whether this field asks for no change at all.
-    public var isUnchanged: Bool { self == .unchanged }
-
-    /// This field laid over an earlier one: what it says if it says anything,
-    /// and what the earlier one said if it does not.
-    ///
-    /// For folding two updates into one when the second was written before the
-    /// first had been applied.
-    public func superseding(_ earlier: StatedValue<Value>) -> StatedValue<Value> {
-        isUnchanged ? earlier : self
-    }
-}
-
 /// A change to the lifter's standing facts, as Claude learned them in
 /// conversation.
 ///
@@ -184,17 +129,42 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
 
     /// Spelled out rather than synthesized: this type writes both halves of
     /// `Codable` by hand, so nothing generates these.
-    private enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey, CaseIterable {
         case version, id, generatedAt
         case displayUnit, experience, equipmentAccess, goal, constraints
         case avoidedPatterns, avoidedExercises, preferredWeekdays, preferredDurationMinutes
     }
 
+    /// The facts an update may state, as they are written on the wire.
+    ///
+    /// Public because the MCP server takes these same names as its tool
+    /// arguments and must refuse a key this document could not hold. Read from
+    /// the coding keys rather than retyped, so a fact added here cannot be one
+    /// the server keeps rejecting.
+    public static let statedKeys: Set<String> = Set(
+        CodingKeys.allCases.map(\.stringValue)
+    ).subtracting(["version", "id", "generatedAt"])
+
+    /// Every key the document itself may carry: the facts, plus the three
+    /// things that make it a document.
+    private static let acceptedKeys: Set<String> =
+        Set(CodingKeys.allCases.map(\.stringValue))
+
     /// Only the three facts about the document itself are required. Every
     /// standing fact is three-way: absent, stated, or explicitly `null`.
+    ///
+    /// A key this format does not have is refused rather than dropped — an
+    /// update reported as recorded while a fact in it was quietly discarded is
+    /// worse than one that was refused and could be sent again. A document from
+    /// a later format is refused as such, before any of its keys are held
+    /// against it.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         version = try container.decode(Int.self, forKey: .version)
+        guard version <= Self.currentVersion else {
+            throw DocumentRefusal.laterVersion(version, understood: Self.currentVersion)
+        }
+        try decoder.refuseUnknownKeys(besides: Self.acceptedKeys)
         id = try container.decode(UUID.self, forKey: .id)
         generatedAt = try container.decode(Date.self, forKey: .generatedAt)
         displayUnit = try container.decodeStated(MassUnit.self, forKey: .displayUnit)

@@ -179,6 +179,29 @@ struct UpdateProfileTests {
         #expect(try #require(outcome.failureMessage).contains("whole number"))
     }
 
+    @Test("A fact this format cannot hold is refused with the key named, not dropped")
+    func unknownFieldIsNamedRatherThanDropped() throws {
+        // Silently dropped, this reads as "Recorded" while the lifter's weight
+        // is never written down anywhere.
+        let (outcome, documents) = try update([
+            "goal": "Bigger bench", "bodyweight": ["value": 180.0, "unit": "lb"],
+        ])
+        let message = try #require(outcome.failureMessage)
+
+        #expect(message.contains("bodyweight"))
+        #expect(documents.lastWrittenProfileUpdate == nil, "a refused update must write nothing")
+    }
+
+    @Test("An unknown key is refused even when every other field is good")
+    func unknownFieldRefusesTheWholeUpdate() throws {
+        let (outcome, documents) = try update([
+            "experience": "Advanced", "goal": "Bigger bench", "trainingAge": 12,
+        ])
+
+        #expect(try #require(outcome.failureMessage).contains("trainingAge"))
+        #expect(documents.lastWrittenProfileUpdate == nil)
+    }
+
     @Test("A folder that cannot be written to is reported rather than passing for success")
     func brokenFolderIsReported() throws {
         let documents = InMemoryDocuments(snapshot: fixtureSnapshot())

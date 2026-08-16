@@ -44,6 +44,13 @@ enum PlanImportError: Error, LocalizedError, Equatable {
 /// because a partial import that silently drops a movement is worse than a
 /// clean failure — it looks like a plan.
 ///
+/// **Every week the document states is imported.** A block of eight weeks
+/// becomes eight `TrainingWeek`s in the order written, each with its own days,
+/// its own label and its own deload flag. Nothing repeats a week to fill a
+/// block out. A document whose keys this build does not know never reaches
+/// here at all: it is refused while being read, with the key named — see
+/// `DocumentRefusal`.
+///
 /// Depends on: `PlanDocument` and `ExerciseCatalogProviding` from LiftingKit,
 /// `PlanBlueprint`, and the `Store/` models.
 enum PlanImporter {
@@ -97,7 +104,7 @@ enum PlanImporter {
         in document: PlanDocument,
         using catalog: any ExerciseCatalogProviding
     ) throws {
-        for day in document.days {
+        for day in document.weeks.flatMap(\.days) {
             for exercise in day.exercises where catalog.exercise(id: exercise.exerciseID) == nil {
                 throw PlanImportError.unknownExercise(exercise.exerciseID)
             }

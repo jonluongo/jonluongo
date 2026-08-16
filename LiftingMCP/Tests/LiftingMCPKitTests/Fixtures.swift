@@ -315,6 +315,13 @@ final class InMemoryDocuments: TrainingDocuments, @unchecked Sendable {
     }
 }
 
+extension PlanDocument {
+
+    /// Every training day of the block, in order, for an assertion that does
+    /// not care which week a day sits in.
+    var everyDay: [PlanDocumentDay] { weeks.flatMap(\.days) }
+}
+
 // MARK: - Calling a tool in a test
 
 func makeRunner(

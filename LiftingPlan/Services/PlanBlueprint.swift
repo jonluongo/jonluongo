@@ -12,22 +12,66 @@ import LiftingKit
 ///
 /// The block-level facts live here rather than being passed alongside, so a
 /// caller cannot hand the mapping a plan's days and someone else's goal.
-/// Absences stay absent: an unnamed block has an empty `title`, and a block
-/// that did not say how many weeks it runs has a `nil` `weekCount`.
+/// Absences stay absent: an unnamed block has an empty `title`, and a week the
+/// plan did not name has a `nil` `label`.
 struct PlanBlueprint: Equatable {
     /// Short name for the block. Empty when the plan did not name it.
     var title: String = ""
     var goal: String = ""
-    /// How many weeks the block runs, as prescribed. `nil` when the plan did
-    /// not say. This is what the plan claims about its own length, not a count
-    /// of the concrete weeks below.
-    var weekCount: Int?
     /// How long a session in this block runs. `nil` when the plan did not say.
     var durationMinutes: Int?
-    var days: [DayBlueprint]
+    /// The block's weeks, in the order they are to be trained. A week's
+    /// position here is its ordinal.
+    var weeks: [WeekBlueprint]
+
+    /// How many weeks the block runs: the weeks it actually holds. Derived
+    /// rather than carried, so a stated length and the training that arrived
+    /// cannot disagree.
+    var weekCount: Int { weeks.count }
+
+    /// Every training day of the block, in order. The days a block trains are a
+    /// restatement of the days it prescribes, across all of its weeks.
+    var days: [DayBlueprint] { weeks.flatMap(\.days) }
 }
 
-/// One training day within a `PlanBlueprint`. Depends on: `Weekday` from
+extension PlanBlueprint {
+
+    /// A block of a single week, stated as its days.
+    ///
+    /// The single-week case is the ordinary one and should not have to name a
+    /// week to say so. The week this makes has no label and is not a deload,
+    /// because the caller said neither.
+    init(
+        title: String = "", goal: String = "", durationMinutes: Int? = nil,
+        days: [DayBlueprint]
+    ) {
+        self.init(
+            title: title, goal: goal, durationMinutes: durationMinutes,
+            weeks: [WeekBlueprint(days: days)]
+        )
+    }
+}
+
+/// One week within a `PlanBlueprint`.
+///
+/// Weeks are held one at a time because they differ — a deload prescribes
+/// genuinely less work than the week before it, not the same work at a lower
+/// load. `label` is `nil` when the plan did not name the week: "Week 3" is
+/// where a week sits, which the reader knows, not something the plan said.
+/// Depends on: `DayBlueprint`.
+struct WeekBlueprint: Equatable {
+    var label: String?
+    var isDeload: Bool
+    var days: [DayBlueprint]
+
+    init(label: String? = nil, isDeload: Bool = false, days: [DayBlueprint]) {
+        self.label = label
+        self.isDeload = isDeload
+        self.days = days
+    }
+}
+
+/// One training day within a `WeekBlueprint`. Depends on: `Weekday` from
 /// Domain, `ExerciseBlueprint`.
 struct DayBlueprint: Equatable {
     var weekday: Weekday
@@ -57,7 +101,7 @@ struct ExerciseBlueprint: Equatable {
 
 extension PlanBlueprint {
     /// Build the SwiftData object graph for this blueprint: a new `TrainingPlan`
-    /// holding a single `TrainingWeek` (ordinal 1) whose days are these.
+    /// holding one `TrainingWeek` per week, in the order they were given.
     ///
     /// **Every value is recorded exactly as given.** Nothing here clamps,
     /// floors, caps, or substitutes: 10 sets stay 10 sets, a 12-minute rest
@@ -67,10 +111,11 @@ extension PlanBlueprint {
     /// function will ever have, and a silently altered prescription is
     /// indistinguishable from the one that was actually written.
     ///
-    /// A `PlanBlueprint` only ever describes one week's worth of training, so
-    /// this maps it into exactly one concrete week rather than inventing
-    /// additional weeks; prescribing genuinely different work across a
-    /// multi-week block (e.g. a deload) is out of scope here.
+    /// **Weeks are mapped one for one.** An eight-week block becomes eight
+    /// weeks, each with the days it actually prescribes; a week is never
+    /// repeated to fill a block out, and a week that was not written is not
+    /// invented. A week's ordinal is its position, so nothing has to reconcile
+    /// a stated number with where the week sits.
     ///
     /// `catalogVersion` is the `ExerciseCatalogProviding.version` these
     /// exercises were selected from; it is stamped onto the plan so a later
@@ -97,30 +142,40 @@ extension PlanBlueprint {
             durationMinutes: durationMinutes,
             catalogVersion: catalogVersion
         )
-        let week = TrainingWeek(ordinal: 1)
-        week.days = days.map { day in
-            let workoutDay = WorkoutDay(
-                weekday: day.weekday,
-                focus: day.focus,
-                durationMinutes: day.durationMinutes
+        plan.weeks = weeks.enumerated().map { index, week in
+            let trainingWeek = TrainingWeek(
+                ordinal: index + 1,
+                // The store holds an unnamed week as an empty label, which is
+                // what it already means there; no name is invented for it.
+                label: week.label ?? "",
+                isDeload: week.isDeload
             )
-            workoutDay.exercises = day.exercises.enumerated().map { exIndex, ex in
-                PlannedExercise(
-                    exerciseID: ex.exerciseID,
-                    displayName: ex.displayName,
-                    order: exIndex,
-                    targetSets: ex.sets,
-                    repRange: ex.repRange,
-                    suggestedLoad: ex.suggestedLoad,
-                    restSeconds: ex.restSeconds,
-                    tempo: ex.tempo,
-                    notes: ex.notes
-                )
-            }
-            return workoutDay
+            trainingWeek.days = week.days.map(Self.makeWorkoutDay)
+            return trainingWeek
         }
-        plan.weeks = [week]
         return plan
+    }
+
+    private static func makeWorkoutDay(_ day: DayBlueprint) -> WorkoutDay {
+        let workoutDay = WorkoutDay(
+            weekday: day.weekday,
+            focus: day.focus,
+            durationMinutes: day.durationMinutes
+        )
+        workoutDay.exercises = day.exercises.enumerated().map { exIndex, ex in
+            PlannedExercise(
+                exerciseID: ex.exerciseID,
+                displayName: ex.displayName,
+                order: exIndex,
+                targetSets: ex.sets,
+                repRange: ex.repRange,
+                suggestedLoad: ex.suggestedLoad,
+                restSeconds: ex.restSeconds,
+                tempo: ex.tempo,
+                notes: ex.notes
+            )
+        }
+        return workoutDay
     }
 }
 
@@ -139,25 +194,32 @@ extension PlanBlueprint {
         self.init(
             title: document.title,
             goal: document.goal,
-            weekCount: document.weekCount,
             durationMinutes: document.durationMinutes,
-            days: document.days.map { day in
-                DayBlueprint(
-                    weekday: day.weekday,
-                    focus: day.focus,
-                    durationMinutes: day.durationMinutes,
-                    exercises: day.exercises.map { exercise in
-                        ExerciseBlueprint(
-                            exerciseID: exercise.exerciseID,
-                            displayName: exercise.displayName,
-                            repRange: exercise.repRange,
-                            sets: exercise.sets,
-                            restSeconds: exercise.restSeconds,
-                            suggestedLoad: exercise.suggestedLoad,
-                            tempo: exercise.tempo,
-                            notes: exercise.notes
-                        )
-                    }
+            weeks: document.weeks.map { week in
+                WeekBlueprint(
+                    label: week.label,
+                    isDeload: week.isDeload,
+                    days: week.days.map(Self.dayBlueprint)
+                )
+            }
+        )
+    }
+
+    private static func dayBlueprint(_ day: PlanDocumentDay) -> DayBlueprint {
+        DayBlueprint(
+            weekday: day.weekday,
+            focus: day.focus,
+            durationMinutes: day.durationMinutes,
+            exercises: day.exercises.map { exercise in
+                ExerciseBlueprint(
+                    exerciseID: exercise.exerciseID,
+                    displayName: exercise.displayName,
+                    repRange: exercise.repRange,
+                    sets: exercise.sets,
+                    restSeconds: exercise.restSeconds,
+                    suggestedLoad: exercise.suggestedLoad,
+                    tempo: exercise.tempo,
+                    notes: exercise.notes
                 )
             }
         )

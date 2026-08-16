@@ -19,29 +19,35 @@ extension ToolRunner {
     /// capped, no rest clamped, no empty rep range filled, no load seeded. A
     /// prescription that states no rest is written with none.
     ///
+    /// **A block is a list of weeks and they may differ.** Week 3 can prescribe
+    /// heavier work than week 1 and week 4 can be a deload; each week states its
+    /// own days. A single-week block states one week. Nothing here repeats a
+    /// week or fills one in — an unstated week is a week that was not written.
+    ///
+    /// **A key this format does not have fails the call with the key named**,
+    /// rather than being dropped. A dropped key is reported as "Written" while
+    /// the lifter never sees the prescription, which is worse than a refusal
+    /// that can be read and corrected.
+    ///
     /// The document's identity, catalog version and timestamp are supplied
     /// here rather than asked for: they are facts about the write, and this is
     /// the code that knows them. `id` is fresh on every call, so two plans
     /// written in a row are two plans on the phone rather than one silently
     /// re-imported.
     func writePlan(_ arguments: JSONValue) -> ToolOutcome {
-        guard let days = arguments["days"]?.arrayValue else {
+        guard arguments["weeks"] != nil || arguments["days"] != nil else {
             return .failure(
-                "write_plan needs a 'days' array — the training days of the block. A day with "
-                    + "no exercises is a rest day and is fine; leaving 'days' out entirely is "
-                    + "not a plan, so nothing was written.")
-        }
-
-        var normalizedDays: [JSONValue] = []
-        for day in days {
-            switch Self.normalizeWeekday(in: day) {
-            case .normalized(let normalized): normalizedDays.append(normalized)
-            case .refused(let message): return .failure(message)
-            }
+                "write_plan needs a 'weeks' array — one entry per week of the block, each with "
+                    + "its own 'days'. A block of a single week is one entry. A day with no "
+                    + "exercises is a rest day and is fine; leaving the block's training out "
+                    + "entirely is not a plan, so nothing was written.")
         }
 
         var fields = arguments.objectValue ?? [:]
-        fields["days"] = .array(normalizedDays)
+        switch Self.normalizedTraining(in: fields) {
+        case .normalized(let normalized): fields = normalized
+        case .refused(let message): return .failure(message)
+        }
         fields["version"] = .integer(PlanDocument.currentVersion)
         fields["id"] = .string(UUID().uuidString)
         fields["catalogVersion"] = .integer(catalog.version)
@@ -51,6 +57,8 @@ extension ToolRunner {
         do {
             document = try JSONValue.object(fields)
                 .decoded(as: PlanDocument.self, using: PlanDocument.makeDecoder())
+        } catch let refusal as DocumentRefusal {
+            return .failure(refusal.errorDescription ?? "\(refusal)")
         } catch {
             return .failure(Self.describe(decodingFailure: error))
         }
@@ -73,10 +81,12 @@ extension ToolRunner {
                     + "will not see this plan.")
         }
 
+        let days = document.weeks.flatMap(\.days)
         return .report([
             "writtenTo": .string(documents.planLocation),
-            "dayCount": .integer(document.days.count),
-            "exerciseCount": .integer(document.days.reduce(0) { $0 + $1.exercises.count }),
+            "weekCount": .integer(document.weekCount),
+            "dayCount": .integer(days.count),
+            "exerciseCount": .integer(days.reduce(0) { $0 + $1.exercises.count }),
             "note": "Written. The app imports it the next time it is opened or comes forward.",
             "plan": Self.reported(document),
         ])
@@ -87,7 +97,7 @@ extension ToolRunner {
     private static func firstUnknownExercise(
         in document: PlanDocument, using catalog: any ExerciseCatalogProviding
     ) -> ExerciseID? {
-        for day in document.days {
+        for day in document.weeks.flatMap(\.days) {
             for exercise in day.exercises where catalog.exercise(id: exercise.exerciseID) == nil {
                 return exercise.exerciseID
             }
@@ -97,13 +107,62 @@ extension ToolRunner {
 
     // MARK: - Weekdays, however they were written
 
+    /// The call's fields with every weekday written as the number `Weekday`
+    /// decodes from, wherever the block stated its training.
+    ///
+    /// A block may state `weeks`, each with its own days, or bare `days` for a
+    /// single week. Both are normalized here so the document decoder sees one
+    /// shape; stating both is left to the decoder, which refuses it.
+    private static func normalizedTraining(
+        in fields: [String: JSONValue]
+    ) -> FieldNormalization {
+        var fields = fields
+        if let weeks = fields["weeks"]?.arrayValue {
+            var normalized: [JSONValue] = []
+            for week in weeks {
+                guard var members = week.objectValue else {
+                    // Not an object at all: leave it for the decoder, whose
+                    // complaint about the shape is the accurate one.
+                    normalized.append(week)
+                    continue
+                }
+                if let days = members["days"]?.arrayValue {
+                    switch normalizedDays(days) {
+                    case .normalized(let days): members["days"] = days
+                    case .refused(let message): return .refused(message)
+                    }
+                }
+                normalized.append(.object(members))
+            }
+            fields["weeks"] = .array(normalized)
+        }
+        if let days = fields["days"]?.arrayValue {
+            switch normalizedDays(days) {
+            case .normalized(let days): fields["days"] = days
+            case .refused(let message): return .refused(message)
+            }
+        }
+        return .normalized(fields)
+    }
+
+    private static func normalizedDays(_ days: [JSONValue]) -> DayNormalization {
+        var normalized: [JSONValue] = []
+        for day in days {
+            switch normalizeWeekday(in: day) {
+            case .normalized(let day): normalized.append(day)
+            case .refused(let message): return .refused(message)
+            }
+        }
+        return .normalized(.array(normalized))
+    }
+
     /// Turns a day's `weekday` into the number `Weekday` decodes from.
     ///
     /// `Weekday` is stored as `Calendar`'s 1-based numbering, which is exact
     /// and easy to get wrong from memory, so a name is accepted too. This
     /// translates at the edge rather than loosening the shared type — the phone
     /// and the server must keep decoding the document identically.
-    private static func normalizeWeekday(in day: JSONValue) -> WeekdayNormalization {
+    private static func normalizeWeekday(in day: JSONValue) -> DayNormalization {
         var fields = day.objectValue ?? [:]
         guard let raw = day["weekday"] else {
             return .refused(
@@ -132,7 +191,8 @@ extension ToolRunner {
     // MARK: - Reporting back
 
     /// The plan as it was written, so the caller sees what landed rather than
-    /// what it sent.
+    /// what it sent — including the weeks, which is the whole point of writing
+    /// a block rather than a week.
     private static func reported(_ document: PlanDocument) -> JSONValue {
         [
             "id": .string(document.id.uuidString),
@@ -144,25 +204,34 @@ extension ToolRunner {
             "weekCount": .integer(document.weekCount),
             "durationMinutes": .integer(document.durationMinutes),
             "notes": .string(document.notes),
-            "days": .array(
-                document.days.map { day in
+            "weeks": .array(
+                document.weeks.enumerated().map { ordinal, week in
                     [
-                        "weekday": .string(day.weekday.fullName),
-                        "focus": .string(day.focus),
-                        "durationMinutes": .integer(day.durationMinutes),
-                        "exercises": .array(
-                            day.exercises.map {
-                                [
-                                    "exerciseID": .string($0.exerciseID.rawValue),
-                                    "displayName": .string($0.displayName),
-                                    "sets": .integer($0.sets),
-                                    "repRange": .string($0.repRange),
-                                    "restSeconds": .integer($0.restSeconds),
-                                    "suggestedLoad": .mass($0.suggestedLoad),
-                                    "tempo": .string($0.tempo),
-                                    "notes": .string($0.notes),
-                                ]
-                            }),
+                        "ordinal": .integer(ordinal + 1),
+                        "label": .string(week.label),
+                        "isDeload": .bool(week.isDeload),
+                        "days": .array(week.days.map(reported(day:))),
+                    ]
+                }),
+        ]
+    }
+
+    private static func reported(day: PlanDocumentDay) -> JSONValue {
+        [
+            "weekday": .string(day.weekday.fullName),
+            "focus": .string(day.focus),
+            "durationMinutes": .integer(day.durationMinutes),
+            "exercises": .array(
+                day.exercises.map {
+                    [
+                        "exerciseID": .string($0.exerciseID.rawValue),
+                        "displayName": .string($0.displayName),
+                        "sets": .integer($0.sets),
+                        "repRange": .string($0.repRange),
+                        "restSeconds": .integer($0.restSeconds),
+                        "suggestedLoad": .mass($0.suggestedLoad),
+                        "tempo": .string($0.tempo),
+                        "notes": .string($0.notes),
                     ]
                 }),
         ]
@@ -171,7 +240,8 @@ extension ToolRunner {
     /// A decoding failure said in terms of the argument that caused it.
     ///
     /// `DecodingError`'s own description names coding paths and Swift types,
-    /// which is not something a caller can act on.
+    /// which is not something a caller can act on. A `DocumentRefusal` never
+    /// reaches here — it already says what to do about it.
     private static func describe(decodingFailure error: any Error) -> String {
         let detail: String
         switch error as? DecodingError {
@@ -185,7 +255,8 @@ extension ToolRunner {
             detail = "\(error)"
         }
         return "That plan could not be read, so nothing was written: \(detail) Every exercise "
-            + "needs 'exerciseID', 'displayName' and 'sets'; every day needs 'weekday'."
+            + "needs 'exerciseID', 'displayName' and 'sets'; every day needs 'weekday'; every "
+            + "week needs 'days'."
     }
 
     private static func location(_ context: DecodingError.Context) -> String {
@@ -194,15 +265,18 @@ extension ToolRunner {
     }
 }
 
-/// What reading a day's `weekday` produced: a day whose weekday is now the
+/// What rewriting part of a call produced: the part with every weekday now the
 /// number the document decodes, or a sentence saying why it could not be.
 ///
 /// A local result type rather than `Result`, because the failure here is a
 /// message for Claude rather than an `Error` anything catches.
-private enum WeekdayNormalization {
-    case normalized(JSONValue)
+private enum Normalization<Value> {
+    case normalized(Value)
     case refused(String)
 }
+
+private typealias FieldNormalization = Normalization<[String: JSONValue]>
+private typealias DayNormalization = Normalization<JSONValue>
 
 extension Weekday {
 

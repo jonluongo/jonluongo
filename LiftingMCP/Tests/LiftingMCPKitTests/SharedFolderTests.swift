@@ -57,9 +57,9 @@ struct SharedFolderTests {
         // real decode the phone performs and not a second one written here.
         let read = try #require(try folder.readPlan())
         #expect(read.title == "Autumn strength")
-        #expect(read.days.first?.weekday == .monday)
-        #expect(read.days.first?.exercises.first?.sets == 5)
-        #expect(read.days.first?.exercises.first?.suggestedLoad
+        #expect(read.everyDay.first?.weekday == .monday)
+        #expect(read.everyDay.first?.exercises.first?.sets == 5)
+        #expect(read.everyDay.first?.exercises.first?.suggestedLoad
             == Mass(value: 315, unit: .pounds))
     }
 
