@@ -102,9 +102,17 @@ struct SetRowView: View {
 
     var body: some View {
         HStack(spacing: SetTableMetrics.columnGutter) {
-            // Set badge — tap to toggle warmup.
-            Button {
-                set.isWarmup.toggle()
+            // The set badge names what the row is, and changing that is a
+            // deliberate choice from a menu rather than a toggle under a
+            // fingertip. It used to flip on a single tap: a mis-tap eight
+            // points from a number field silently took a set out of the
+            // lifter's working volume and out of everything the coach reads,
+            // with nothing on screen to say it had happened.
+            Menu {
+                Picker("Kind of set", selection: kind) {
+                    Text("Working set").tag(false)
+                    Text("Warm-up").tag(true)
+                }
             } label: {
                 Text(set.isWarmup ? "W" : "\(workingNumber)")
                     .font(.barbellSupport)
@@ -113,8 +121,12 @@ struct SetRowView: View {
                         width: SetTableMetrics.setColumnWidth,
                         height: SetTableMetrics.controlHeight
                     )
+                    .contentShape(.rect)
             }
-            .buttonStyle(.plain)
+            .accessibilityLabel(
+                set.isWarmup ? "Warm-up set" : "Working set \(workingNumber)"
+            )
+            .accessibilityHint("Changes whether this set counts as working volume")
 
             Text(previousText)
                 .font(.barbellSupport)
@@ -136,9 +148,25 @@ struct SetRowView: View {
                         width: SetTableMetrics.checkColumnWidth,
                         height: SetTableMetrics.controlHeight
                     )
+                    .contentShape(.rect)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(completionLabel)
+            .accessibilityAddTraits(set.isCompleted ? [.isSelected] : [])
         }
+    }
+
+    /// Whether this row counts as working volume. Written through a picker so
+    /// the change is stated rather than stumbled into.
+    private var kind: Binding<Bool> {
+        Binding(get: { set.isWarmup }, set: { set.isWarmup = $0 })
+    }
+
+    /// Spoken aloud, this control has to say which set it completes — every row
+    /// on the screen is otherwise identical to it.
+    private var completionLabel: String {
+        let which = set.isWarmup ? "warm-up set" : "set \(workingNumber)"
+        return set.isCompleted ? "Completed \(which)" : "Complete \(which)"
     }
 
     /// Whether the field the lifter types into holds a distance, which is the

@@ -132,6 +132,23 @@ struct ActiveWorkoutView: View {
             Button("Finish") { showingFinishConfirm = true }
                 .fontWeight(.semibold)
         }
+        // A number pad has no return key, so without this the only way out of a
+        // weight field is to scroll the list — which is a poor thing to require
+        // of someone holding the phone in one hand between sets.
+        ToolbarItemGroup(placement: .keyboard) {
+            Spacer()
+            Button("Done") { dismissKeyboard() }
+        }
+    }
+
+    /// Resigns whatever field is first responder. The entry fields live inside
+    /// `SetRowView`, several levels down and one per set, so threading a
+    /// `FocusState` binding to each of them would cost more than it is worth
+    /// for a button that always means the same thing.
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+        )
     }
 
     private var progressBar: some View {
