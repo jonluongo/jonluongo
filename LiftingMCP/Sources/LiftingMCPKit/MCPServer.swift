@@ -199,6 +199,14 @@ public struct MCPServer: Sendable {
         that suggests a progression or judges whether a program is balanced, \
         because those are your calls to make from the data, not the server's.
 
+        **The app asks him nothing.** It has no setup screen and no form; you \
+        are the interface. A fact that reads as null is one nobody has stated, \
+        not a default and not an empty answer — never assume a value for one. \
+        When he tells you something standing — his gym, an injury, when he can \
+        train — write it down with \(ToolCatalog.updateProfile), or the next \
+        conversation starts from nothing again. That tool merges: send only \
+        what you just learned.
+
         Always take exercise IDs from \(ToolCatalog.listExercises) verbatim. \
         \(ToolCatalog.writePlan) rejects an ID the catalog does not have, \
         because training history is keyed on exercise identity.

@@ -1,13 +1,19 @@
 import SwiftUI
 import SwiftData
 
-/// Decides between first-run setup and the main app, and guarantees a single
-/// `UserProfile` record exists.
+/// Opens straight into the app, and guarantees a single `UserProfile` record
+/// exists.
+///
+/// **There is no onboarding.** The app asks the lifter nothing — every training
+/// question belongs in conversation with Claude, who records the answers through
+/// the shared folder — so the first launch shows the tabs, empty, rather than a
+/// form. The profile record is still created, because everything else hangs off
+/// it; it simply starts with nothing in it.
 struct RootView: View {
     @Environment(\.modelContext) private var context
-    /// The inbox that imports arriving plans. Optional so a preview need not
-    /// supply one; the app always does.
-    @Environment(PlanInbox.self) private var planInbox: PlanInbox?
+    /// The inbox that takes in arriving documents. Optional so a preview need
+    /// not supply one; the app always does.
+    @Environment(DocumentInbox.self) private var documentInbox: DocumentInbox?
     /// The outbox that writes the snapshot out. Optional for the same reason.
     @Environment(SnapshotOutbox.self) private var snapshotOutbox: SnapshotOutbox?
     @Query private var allProfiles: [UserProfile]
@@ -17,15 +23,10 @@ struct RootView: View {
     var body: some View {
         Group {
             if let profile = allProfiles.first {
-                if profile.hasCompletedSetup {
-                    MainTabView(profile: profile)
-                } else {
-                    NavigationStack {
-                        SetupView(profile: profile, isOnboarding: true)
-                    }
-                }
+                MainTabView(profile: profile)
             } else {
-                ProgressView("Setting up…")
+                // Only ever seen for the instant it takes to insert the record.
+                ProgressView()
                     .task { ensureProfileExists() }
             }
         }
@@ -34,13 +35,13 @@ struct RootView: View {
         } message: {
             Text(saveErrorMessage ?? "")
         }
-        // A plan that could not be imported is shown rather than swallowed: an
+        // Something that could not be read is shown rather than swallowed: an
         // unreadable plan otherwise looks identical to not having been sent
         // one, and the lifter would wait for something that already arrived.
-        .alert("Couldn't Import Plan", isPresented: planErrorAlertBinding) {
-            Button("OK", role: .cancel) { planInbox?.dismissError() }
+        .alert("Couldn't Read What Claude Sent", isPresented: inboxErrorAlertBinding) {
+            Button("OK", role: .cancel) { documentInbox?.dismissError() }
         } message: {
-            Text(planInbox?.errorMessage ?? "")
+            Text(documentInbox?.errorMessage ?? "")
         }
         // The mirror of the alert above, for the same reason. A snapshot that
         // never left the phone breaks the loop permanently and invisibly: the
@@ -59,10 +60,10 @@ struct RootView: View {
         Binding(get: { saveErrorMessage != nil }, set: { if !$0 { saveErrorMessage = nil } })
     }
 
-    private var planErrorAlertBinding: Binding<Bool> {
+    private var inboxErrorAlertBinding: Binding<Bool> {
         Binding(
-            get: { planInbox?.errorMessage != nil },
-            set: { if !$0 { planInbox?.dismissError() } }
+            get: { documentInbox?.errorMessage != nil },
+            set: { if !$0 { documentInbox?.dismissError() } }
         )
     }
 
@@ -84,7 +85,7 @@ struct RootView: View {
     }
 }
 
-/// The main three-tab experience once setup is done.
+/// The three tabs, which is the whole app.
 struct MainTabView: View {
     let profile: UserProfile
 

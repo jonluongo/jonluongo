@@ -102,6 +102,28 @@ struct ICloudDocumentTransportTests {
         #expect(try transport(container: container).readPlan() == nil)
     }
 
+    @Test("A profile update left in the container's Documents folder is read back")
+    func readsProfileUpdateFromDocumentsFolder() throws {
+        let container = try temporaryContainer()
+        defer { try? FileManager.default.removeItem(at: container) }
+        let documents = container.appending(path: "Documents")
+        try FileManager.default.createDirectory(at: documents, withIntermediateDirectories: true)
+        let written = ProfileUpdate(
+            id: UUID(), generatedAt: Self.instant, equipmentAccess: .stated(.fullGym))
+        try DocumentFolder(directory: documents).writeProfileUpdate(written)
+
+        #expect(try transport(container: container).readProfileUpdate() == written)
+    }
+
+    @Test("Reading a profile update with no iCloud container throws rather than reporting none")
+    func readProfileUpdateWithoutContainerThrows() {
+        // Same distinction as the plan: an unavailable container must not
+        // return nil, because nil means "nothing has been recorded yet".
+        #expect(throws: ICloudTransportError.self) {
+            try transport(container: nil).readProfileUpdate()
+        }
+    }
+
     @Test("A malformed plan in the container throws rather than reading as no plan")
     func malformedPlanInContainerThrows() throws {
         let container = try temporaryContainer()

@@ -8,18 +8,25 @@ time.
 Claude reads your training log and writes plans back into the app.
 
 ```
-  Claude (Mac)                              LiftingPlan (iPhone)
-      │                                            │
-      │  reads snapshot.json  ◀────────────────────┤  written when the app backgrounds
-      │                                            │
-      │  writes plan.json     ────────────────────▶│  imported, shown as tables
-      │                                            │
-      │                                            │  you fill them in at the gym
-      └───────────────── next conversation ◀───────┘
+  Claude (Mac)                                 LiftingPlan (iPhone)
+      │                                               │
+      │  reads snapshot.json  ◀───────────────────────┤  written when the app backgrounds
+      │                                               │
+      │  writes plan.json     ───────────────────────▶│  imported, shown as tables
+      │  writes profile-update.json ─────────────────▶│  applied to your profile
+      │                                               │
+      │                                               │  you fill them in at the gym
+      └──────────────────── next conversation ◀───────┘
 ```
 
-Both files live in the app's iCloud Documents folder, so Apple does the syncing.
-No server, no account, nothing to run.
+All three files live in the app's iCloud Documents folder, so Apple does the
+syncing. No server, no account, nothing to run.
+
+**The app asks you nothing.** There is no setup screen and no form. What days
+you train, how long you have, what you're chasing, what gear you own, what your
+shoulder does overhead — you say it in conversation, and Claude writes it down
+with `update_profile`. That is the whole reason the loop has a second inbound
+file.
 
 **The rhythm is plan at the desk, train at the gym.** A local MCP server is
 reachable by Claude on this Mac, not by Claude on your phone in a squat rack.
@@ -57,12 +64,16 @@ Restart Claude Desktop. To point it somewhere else, add
 
 **3. Run the app on your iPhone once, and background it.**
 
+It opens straight to the tabs — empty, because nothing has been planned yet.
+There is nothing to fill in. Swipe up to the Home Screen; that is what writes
+the snapshot.
+
 This is the step that cannot be skipped, and it must be a **real device** — the
 simulator has no iCloud account, so the shared folder never appears.
 
 Until the app has backgrounded at least once on your phone,
 `~/Library/Mobile Documents/iCloud~com~jonluongo~LiftingPlan/Documents` does not
-exist and every tool will tell you so.
+exist and the tools that read your log will tell you so.
 
 ## What Claude can do
 
@@ -73,9 +84,12 @@ exist and every tool will tell you so.
 | `recent_sessions` | What you have been doing lately |
 | `volume_by_muscle` | Set and rep totals per muscle over a window |
 | `write_plan` | Writes a plan to your phone |
+| `update_profile` | Writes down what you said about yourself |
 
 Plus an always-present summary: who you are, your equipment, your constraints,
-your current block, your working weights.
+your current block, your working weights — with anything you have not said
+reported as `null` and named outright, so it reads as unknown rather than as a
+default.
 
 **Every one of these reports. None of them recommends.** There is deliberately
 no "suggest progression" or "check balance" tool. Reporting that your bench has
@@ -97,6 +111,17 @@ does not cap your sets, fill in a rep range, or object to an unbalanced week. A
 set logged against it survive. There is no confirmation dialog — Claude decides
 — but nothing is destroyed.
 
+**A profile update merges.** Claude sends only what he just learned; every other
+fact stays as it was. A fact he sends as `null` goes back to not-known, which is
+how something recorded wrongly gets taken back rather than replaced with another
+guess. Lists — the movements you avoid, the days you train — are sent whole, so
+they replace rather than pile up. Two updates written before your phone has
+synced fold into one; nothing is lost between them.
+
+**lb or kg is yours.** It is the one setting left in the app, because it is
+about how numbers are drawn rather than about training. Claude can set it too;
+whoever set it last wins.
+
 **Volume reports carry `snapshotAgeDays`.** A window anchored at now against a
 week-old snapshot reads as zero volume, which would otherwise look like you
 stopped training rather than like stale data.
@@ -110,5 +135,7 @@ it, wait a moment.
 **Catalog fails to load** — the binary got separated from its resource bundle.
 Rebuild, or move both together.
 
-**A plan never arrives on the phone** — check the file actually landed in the
-Documents folder above. The app watches that folder and imports on arrival.
+**A plan or a profile update never arrives on the phone** — check the file
+actually landed in the Documents folder above. The app watches that folder for
+`plan.json` and `profile-update.json` and takes them in on arrival. Anything it
+cannot read it says so in an alert rather than ignoring.

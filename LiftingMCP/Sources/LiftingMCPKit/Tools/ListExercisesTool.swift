@@ -28,11 +28,15 @@ extension ToolRunner {
         var matches = query.map { catalog.search($0, limit: catalog.all.count) } ?? catalog.all
         matches = matches.filter(requested.matches)
         if let profile {
-            let available = Set(profile.availableEquipment)
+            // Equipment narrows only when it is known. Nobody has necessarily
+            // said what gym he has — the app never asks — and an unknown answer
+            // must not narrow to nothing, which would read as a lifter who can
+            // perform no exercise at all.
+            let available = profile.availableEquipment.map(Set.init)
             let avoidedPatterns = Set(profile.avoidedPatterns)
             let avoidedExercises = Set(profile.avoidedExercises)
             matches = matches.filter {
-                available.contains($0.equipment)
+                (available?.contains($0.equipment) ?? true)
                     && !avoidedPatterns.contains($0.pattern)
                     && !avoidedExercises.contains($0.id)
             }
@@ -83,7 +87,9 @@ extension ToolRunner {
             "pattern": .taxonomy(Self.ordered(requested.patterns)),
             "muscle": .taxonomy(Self.ordered(requested.muscles)),
             "equipment": .taxonomy(Self.ordered(requested.equipment)),
-            "lifterEquipment": profile.map { .taxonomy($0.availableEquipment) } ?? .null,
+            // Null for two different reasons — no profile at all, or a profile
+            // that has not said — and the note says which.
+            "lifterEquipment": profile?.availableEquipment.map { .taxonomy($0) } ?? .null,
             "avoidedPatterns": profile.map { .taxonomy($0.avoidedPatterns) } ?? .null,
             "avoidedExercises": profile.map {
                 .array($0.avoidedExercises.map { .string($0.rawValue) })
@@ -101,10 +107,16 @@ extension ToolRunner {
             return "Nothing was narrowed: includeUnavailable was set, so this is the whole "
                 + "catalog including movements the lifter said he avoids or has no equipment for."
         }
-        guard snapshot.profile != nil else {
-            return "This lifter has not been set up yet, so nothing is known about his equipment "
-                + "or what he avoids and nothing was narrowed. Every entry here is in the "
-                + "catalog; not all of them are necessarily ones he can perform."
+        guard let profile = snapshot.profile else {
+            return "Nothing is recorded about this lifter, so nothing is known about his "
+                + "equipment or what he avoids and nothing was narrowed. Every entry here is in "
+                + "the catalog; not all of them are necessarily ones he can perform."
+        }
+        guard profile.availableEquipment != nil else {
+            return "He has not said what equipment he has, so nothing was narrowed by it — that "
+                + "is unknown, not empty. What he avoids was still applied; see appliedFilter. "
+                + "Ask him, and record it with \(ToolCatalog.updateProfile), or pass 'equipment' "
+                + "here to narrow this one call. Use these IDs verbatim in write_plan."
         }
         return "Narrowed to what this lifter can perform — see appliedFilter. Pass "
             + "includeUnavailable to see what was left out. Use these IDs verbatim in write_plan."

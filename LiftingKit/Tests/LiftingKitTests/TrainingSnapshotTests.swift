@@ -51,7 +51,7 @@ struct TrainingSnapshotTests {
             avoidedPatterns: avoidedPatterns,
             avoidedExercises: [ExerciseID(rawValue: "barbell-upright-row")],
             preferredWeekdays: [.monday, .thursday], preferredDurationMinutes: 60,
-            hasCompletedSetup: true, updatedAt: Self.instant
+            updatedAt: Self.instant
         )
         return TrainingSnapshot(
             catalogVersion: 5, generatedAt: Self.instant, profile: profile,
@@ -168,7 +168,6 @@ struct TrainingSnapshotTests {
             "avoidedPatterns": ["anti-rotation"],
             "avoidedExercises": [],
             "preferredWeekdays": [],
-            "hasCompletedSetup": true,
             "updatedAt": "2023-11-14T22:13:20Z"
           }
         }
@@ -207,6 +206,74 @@ struct TrainingSnapshotTests {
         #expect(decoded.profile == nil)
         #expect(decoded.plans.isEmpty)
         #expect(decoded.generatedAt == Self.instant)
+    }
+
+    @Test("A lifter who has stated nothing about himself reads as unknown, not as a default")
+    func unstatedProfileFactsAreAbsent() throws {
+        // The whole point of the optionals: the app asks him nothing, so an
+        // untouched profile must not tell a reader "full gym, intermediate".
+        let blank = SnapshotProfile(
+            displayUnit: .pounds, experience: nil, equipmentAccess: nil,
+            availableEquipment: nil, goal: "", constraints: "", bodyweight: nil,
+            avoidedPatterns: [], avoidedExercises: [], preferredWeekdays: [],
+            preferredDurationMinutes: nil, updatedAt: Self.instant
+        )
+        let decoded = try roundTrip(
+            TrainingSnapshot(catalogVersion: 5, generatedAt: Self.instant, profile: blank)
+        )
+        let profile = try #require(decoded.profile)
+
+        #expect(profile.experience == nil)
+        #expect(profile.equipmentAccess == nil)
+        // Not an empty list: "he can perform nothing" is a far stronger claim
+        // than "nobody has said what he has".
+        #expect(profile.availableEquipment == nil)
+        #expect(profile == blank)
+    }
+
+    @Test("An unknown equipment access writes no key rather than a stated default")
+    func unstatedEquipmentWritesNoKey() throws {
+        let blank = SnapshotProfile(
+            displayUnit: .pounds, experience: nil, equipmentAccess: nil,
+            availableEquipment: nil, goal: "", constraints: "", bodyweight: nil,
+            avoidedPatterns: [], avoidedExercises: [], preferredWeekdays: [],
+            preferredDurationMinutes: nil, updatedAt: Self.instant
+        )
+        let data = try TrainingSnapshot.makeEncoder().encode(
+            TrainingSnapshot(catalogVersion: 5, generatedAt: Self.instant, profile: blank))
+        let json = String(decoding: data, as: UTF8.self)
+
+        #expect(!json.contains("equipmentAccess"))
+        #expect(!json.contains("availableEquipment"))
+        #expect(!json.contains("experience"))
+    }
+
+    @Test("A profile written before these facts were known decodes as not knowing them")
+    func profileWithoutStatedFactsDecodes() throws {
+        let json = """
+        {
+          "version": 1,
+          "catalogVersion": 5,
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "profile": {
+            "displayUnit": "lb",
+            "goal": "",
+            "constraints": "",
+            "avoidedPatterns": [],
+            "avoidedExercises": [],
+            "preferredWeekdays": [],
+            "updatedAt": "2023-11-14T22:13:20Z"
+          }
+        }
+        """
+        let profile = try #require(
+            try TrainingSnapshot.makeDecoder()
+                .decode(TrainingSnapshot.self, from: Data(json.utf8)).profile)
+
+        #expect(profile.experience == nil)
+        #expect(profile.equipmentAccess == nil)
+        #expect(profile.availableEquipment == nil)
+        #expect(profile.displayUnit == .pounds)
     }
 
     @Test("An unprescribed rest stays absent rather than becoming a number")

@@ -60,6 +60,9 @@ public struct ToolRunner: Sendable {
         case ToolCatalog.recentSessions: withSnapshot { recentSessions(arguments, in: $0) }
         case ToolCatalog.volumeByMuscle: withSnapshot { volumeByMuscle(arguments, in: $0) }
         case ToolCatalog.writePlan: writePlan(arguments)
+        // The only two tools that do not read the snapshot: both write into
+        // the shared folder, and neither has anything to ask the log.
+        case ToolCatalog.updateProfile: updateProfile(arguments)
         default:
             .failure(
                 "There is no tool called '\(name)'. This server offers: "

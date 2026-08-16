@@ -12,8 +12,6 @@ struct PlanOverviewView: View {
 
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
-    @State private var showingEditSetup = false
-
     private var currentPlan: TrainingPlan? { plans.first }
 
     var body: some View {
@@ -24,25 +22,11 @@ struct PlanOverviewView: View {
                 ContentUnavailableView {
                     Label("No plan yet", systemImage: "dumbbell")
                 } description: {
-                    Text("Your training is planned in conversation with Claude. Once a plan is written, it lands here — your week, your sessions, and every set you log against them.\n\nUntil then there is nothing to show. Your setup, your history, and the exercise catalog are all here and ready.")
+                    Text("Your training is planned in conversation with Claude. Once a plan is written, it lands here — your week, your sessions, and every set you log against them.\n\nUntil then there is nothing to show. Nothing to fill in either: tell Claude what you're after and he writes it down.")
                 }
             }
         }
         .navigationTitle("This Week")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingEditSetup = true
-                } label: {
-                    Label("Edit Setup", systemImage: "slider.horizontal.3")
-                }
-            }
-        }
-        .sheet(isPresented: $showingEditSetup) {
-            NavigationStack {
-                SetupView(profile: profile, isOnboarding: false)
-            }
-        }
     }
 
     @ViewBuilder

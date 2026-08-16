@@ -97,13 +97,47 @@ struct ContextResourceTests {
         #expect(try #require(try context()["note"]?.stringValue).contains(ToolCatalog.listExercises))
     }
 
-    @Test("A lifter who has not been set up yet is described honestly, not invented")
+    @Test("A lifter nothing is recorded about is described honestly, not invented")
     func noProfileIsHonest() throws {
         let report = try context(profile: nil)
 
         // Reported as JSON null rather than as an invented profile.
         #expect(report.objectValue?["lifter"] == .null)
-        #expect(try #require(report["note"]?.stringValue).contains("has not"))
+        let note = try #require(report["note"]?.stringValue)
+        #expect(note.contains("Nothing has been recorded"))
+        #expect(note.contains(ToolCatalog.updateProfile))
+    }
+
+    @Test("A fact nobody has stated reads as null, never as a plausible default")
+    func unstatedFactsAreNull() throws {
+        // The app has no setup screen, so this is the ordinary state of a
+        // lifter early in a conversation — and "Full gym, Intermediate" here
+        // would be the server asserting something nobody ever said.
+        let report = try context(
+            profile: fixtureProfile(
+                experience: nil, equipmentAccess: nil, availableEquipment: nil))
+        let lifter = try #require(report["lifter"])
+
+        #expect(lifter.objectValue?["experience"] == .null)
+        #expect(lifter.objectValue?["equipmentAccess"] == .null)
+        #expect(lifter.objectValue?["availableEquipment"] == .null)
+    }
+
+    @Test("The facts nobody has stated are named, not left to be noticed one null at a time")
+    func unstatedFactsAreNamed() throws {
+        let report = try context(
+            profile: fixtureProfile(
+                experience: nil, equipmentAccess: nil, availableEquipment: nil))
+
+        #expect(report["lifter"]?["unstated"] == ["equipmentAccess", "experience"])
+        let note = try #require(report["note"]?.stringValue)
+        #expect(note.contains("equipmentAccess"))
+        #expect(note.contains(ToolCatalog.updateProfile))
+    }
+
+    @Test("A lifter who has stated everything is not nagged about it")
+    func fullyStatedProfileNamesNothing() throws {
+        #expect(try context()["lifter"]?["unstated"] == .array([]))
     }
 
     @Test("It stays small enough to carry every turn")

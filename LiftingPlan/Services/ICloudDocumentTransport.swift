@@ -27,8 +27,9 @@ enum ICloudTransportError: Error, LocalizedError, Equatable {
 /// The loop's transport on the phone: the app's iCloud Documents folder.
 ///
 /// Build one and hand it to whatever drives the loop — `LiftingPlanApp` writes
-/// the snapshot through it when the app backgrounds, and `PlanInbox` reads
-/// plans through it. Both machines are signed into the same Apple ID, so the
+/// the snapshot through it when the app backgrounds, and `DocumentInbox` reads
+/// plans and profile updates through it. Both machines are signed into the same
+/// Apple ID, so the
 /// Mac writing into the same container is all the syncing this needs; there is
 /// no server and no account to manage.
 ///
@@ -42,9 +43,10 @@ enum ICloudTransportError: Error, LocalizedError, Equatable {
 /// `url(forUbiquityContainerIdentifier:)` as a call that must not run on the
 /// main thread: it can take seconds to set iCloud up on first use, and a scene
 /// transition is as much the main thread as a view update is. Every method that
-/// reaches the resolution — `writeSnapshot(_:)`, `readPlan()`, and
-/// `documentsFolder()` — must therefore be reached from a background task.
-/// `SnapshotOutbox` and `PlanInbox` are the two callers, and both do.
+/// reaches the resolution — `writeSnapshot(_:)`, `readPlan()`,
+/// `readProfileUpdate()`, and `documentsFolder()` — must therefore be reached
+/// from a background task. `SnapshotOutbox` and `DocumentInbox` are the two
+/// callers, and both do.
 ///
 /// Depends on: `DocumentTransport` and `DocumentFolder` from `LiftingKit`, and
 /// `FileManager`'s ubiquity container lookup.
@@ -89,6 +91,10 @@ struct ICloudDocumentTransport: DocumentTransport {
 
     func readPlan() throws -> PlanDocument? {
         try documentsFolder().readPlan()
+    }
+
+    func readProfileUpdate() throws -> ProfileUpdate? {
+        try documentsFolder().readProfileUpdate()
     }
 
     /// The shared folder inside the container, for a caller that has to watch

@@ -14,6 +14,17 @@ Claude writes a plan, the app shows an empty state. If you find yourself adding
 code that decides what someone should train, stop: that is the one thing this
 app does not do.
 
+**The app also asks the lifter nothing.** There is no onboarding, no setup
+screen, and no settings form for a training question — days, session length,
+goal, equipment, experience and injuries are all things Claude asks better in
+conversation, and he records them with the `update_profile` tool. The one
+preference left in Settings is lb/kg, which is about how a number is drawn
+rather than about training. A profile that has been told nothing must read as
+*not known*, never as a plausible default: `experience` and `equipmentAccess`
+are optional for exactly that reason, and `availableEquipment` is absent rather
+than empty when nobody has said. Do not add a form, and do not add a default
+that asserts something about a lifter nobody ever asked.
+
 The single thing the app insists on is data integrity — real `ExerciseID`s,
 because history is keyed by exercise identity and a fabricated key fragments a
 lift's history irreparably. That is not a decision, it is the difference

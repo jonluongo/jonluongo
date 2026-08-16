@@ -62,12 +62,17 @@ snapshot file and must never link SwiftData.
 - **`Services/`**
   - `PlanBlueprint` — plain-value plan representation and the single mapping
     into SwiftData, which records what it is handed without alteration.
+  - `DocumentInbox` / `ProfileUpdater` — the inbound half of the loop: a plan
+    and a profile update arrive in the shared folder, and this is what applies
+    them. `ProfileUpdater` is the only way a fact about the lifter is stored.
   - `PerformanceHistory` — the one hierarchy traversal; joins logs on
     `ExerciseID`.
   - `ExerciseTrend` — per-exercise top-set and estimated-1RM series.
   - `RestTimerModel` — the date-based pace timer.
-- **`Views/`** — `SetupView`, `PlanOverviewView`, `SessionDetailView`,
+- **`Views/`** — `RootView`, `PlanOverviewView`, `SessionDetailView`,
   `ActiveWorkoutView`, `HistoryView`, `SettingsView`, plus small components.
+  There is deliberately no setup or onboarding view: the app asks the lifter
+  nothing, and `SettingsView` holds only the lb/kg preference and the reset.
 
 `LiftingKit/Sources/LiftingKit/Catalog/Resources/assembly-rules.json` is inert
 reference material for Claude. No Swift code decodes it, by design.

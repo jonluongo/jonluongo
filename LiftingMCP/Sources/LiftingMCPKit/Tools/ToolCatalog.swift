@@ -1,4 +1,5 @@
 import Foundation
+import LiftingKit
 
 /// One tool as Claude sees it before calling it.
 ///
@@ -43,10 +44,11 @@ public enum ToolCatalog {
     public static let recentSessions = "recent_sessions"
     public static let volumeByMuscle = "volume_by_muscle"
     public static let writePlan = "write_plan"
+    public static let updateProfile = "update_profile"
 
     public static let definitions: [ToolDefinition] = [
         listExercisesDefinition, exerciseHistoryDefinition, recentSessionsDefinition,
-        volumeByMuscleDefinition, writePlanDefinition,
+        volumeByMuscleDefinition, writePlanDefinition, updateProfileDefinition,
     ]
 
     // MARK: - Reading the catalog
@@ -193,6 +195,55 @@ public enum ToolCatalog {
         )
     )
 
+    // MARK: - Writing down who he is
+
+    static let updateProfileDefinition = ToolDefinition(
+        name: updateProfile,
+        title: "Update profile",
+        description: """
+            Records what you have learned about the lifter — his gym, his \
+            experience, his goal, his injuries, when he trains. The app asks him \
+            none of this, so what he tells you is written here or it is not \
+            written at all. Pass only the fields you have just learned: anything \
+            you leave out keeps the value it already has. Pass null for a field \
+            to return it to not-known, which is how a fact recorded in error is \
+            taken back. Lists replace rather than add, so send the whole list \
+            each time.
+            """,
+        inputSchema: object([
+            "equipmentAccess": enumerated(
+                Equipment.allCases.map(\.rawValue),
+                "The gym he has, as a coarse tier. Null if he has not said."),
+            "experience": enumerated(
+                ExperienceLevel.allCases.map(\.rawValue),
+                "Roughly how long he has trained, as he describes it."),
+            "goal": string("What he is training for, in his words."),
+            "constraints": string(
+                "Injuries and limitations in his words, with the nuance a list "
+                    + "cannot hold, e.g. 'left shoulder hurts overhead'."),
+            "avoidedPatterns": stringOrList(
+                "Movement patterns to keep out of his training entirely, e.g. "
+                    + "'vertical press'. This is the enforceable half of an injury — "
+                    + "list_exercises and the app both filter on it."),
+            "avoidedExercises": stringOrList(
+                "Specific exercise IDs to keep out, taken verbatim from list_exercises."),
+            "preferredWeekdays": [
+                "description": .string(
+                    "The days he says he wants to train, as names ('monday') or as "
+                        + "Calendar's numbering where 1 is Sunday and 7 is Saturday."),
+                "anyOf": [
+                    ["type": "array", "items": ["anyOf": [["type": "string"], ["type": "integer"]]]],
+                    ["type": "string"], ["type": "integer"],
+                ],
+            ],
+            "preferredDurationMinutes": integer("How long he wants a session to run."),
+            "displayUnit": enumerated(
+                MassUnit.allCases.map(\.rawValue),
+                "How the app should render weights. A display setting, not a "
+                    + "training fact — he can also change it himself."),
+        ])
+    )
+
     // MARK: - Schema shorthand
 
     private static func object(
@@ -213,6 +264,17 @@ public enum ToolCatalog {
 
     private static func boolean(_ description: String) -> JSONValue {
         ["type": "boolean", "description": .string(description)]
+    }
+
+    /// A closed set of exact strings, or `null` to take the fact back. The
+    /// values come from the taxonomy itself rather than being retyped, so a
+    /// tier added later cannot be advertised wrongly.
+    private static func enumerated(_ values: [String], _ description: String) -> JSONValue {
+        [
+            "type": ["string", "null"],
+            "description": .string(description),
+            "enum": .array(values.map { .string($0) } + [.null]),
+        ]
     }
 
     /// One value or several — Claude writes `"muscle": "chest"` as readily as

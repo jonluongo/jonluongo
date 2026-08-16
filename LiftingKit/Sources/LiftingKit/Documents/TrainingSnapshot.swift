@@ -33,8 +33,10 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     public let catalogVersion: Int
     /// When the snapshot was produced. A reader uses it to judge staleness.
     public let generatedAt: Date
-    /// The lifter's standing facts. `nil` when he has not been set up yet —
-    /// an empty store is a normal state, not an error.
+    /// The lifter's standing facts. `nil` when the store holds no profile
+    /// record at all — an empty store is a normal state, not an error. A
+    /// profile that is present but says nothing about him is `nil` in every
+    /// field instead, which is a different and equally normal state.
     public let profile: SnapshotProfile?
     /// Bodyweight readings, oldest first. Empty when none were recorded.
     public let bodyMetrics: [SnapshotBodyMetric]
@@ -102,24 +104,40 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
 /// constraints, and when he wants to train.
 ///
 /// Read it to know who a plan is for. It is a record of what he said, not a
-/// conclusion drawn from it. `availableEquipment` is the one derived field —
-/// the concrete equipment types `equipmentAccess` granted at export time, kept
-/// so a reader need not re-derive them and so the answer stays true even if
-/// the tiers are later changed.
+/// conclusion drawn from it — and the app asks him nothing, so everything here
+/// arrived through a `ProfileUpdate` Claude wrote after learning it.
+///
+/// **A fact nobody has stated is absent, never a default.** `experience` and
+/// `equipmentAccess` are optional because "he has not said" and "he said full
+/// gym" are different answers, and a reader given the second when the first is
+/// true will plan confidently for a lifter who does not exist. Free text and
+/// lists say the same thing with an empty value, which is documented on each.
+///
+/// `availableEquipment` is the one derived field — the concrete equipment types
+/// `equipmentAccess` granted at export time, kept so a reader need not re-derive
+/// them and so the answer stays true even if the tiers are later changed. It is
+/// `nil` exactly when `equipmentAccess` is: an empty list would read as a lifter
+/// who can perform nothing, which is a much stronger claim than not knowing.
 ///
 /// Depends on: `Mass`, `ExerciseID`, `MovementPattern`, `EquipmentType`,
 /// `Equipment`, `ExperienceLevel`, `Weekday`.
 public struct SnapshotProfile: Codable, Hashable, Sendable {
 
-    /// What new entries default to and how weights are shown. It never
-    /// rewrites what was already logged.
+    /// How weights are shown and what new entries are entered in. It never
+    /// rewrites what was already logged. Always present: the app has to render
+    /// a number somehow, so this is a display setting rather than a claim about
+    /// the lifter.
     public let displayUnit: MassUnit
-    public let experience: ExperienceLevel
-    public let equipmentAccess: Equipment
+    /// Rough training age, as he described it. `nil` when he has not said.
+    public let experience: ExperienceLevel?
+    /// The gym he has, as he described it. `nil` when he has not said.
+    public let equipmentAccess: Equipment?
     /// The equipment types `equipmentAccess` granted when this was written.
-    public let availableEquipment: [EquipmentType]
+    /// `nil` when `equipmentAccess` is — not known, as distinct from none.
+    public let availableEquipment: [EquipmentType]?
+    /// What he is training for, in his own words. Empty means he has not said.
     public let goal: String
-    /// Injuries and limitations, in the lifter's own words.
+    /// Injuries and limitations, in his own words. Empty means he has not said.
     public let constraints: String
     /// The last bodyweight entered, in the unit entered. `nil` until set.
     public let bodyweight: Mass?
@@ -129,15 +147,20 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
     public let preferredWeekdays: [Weekday]
     /// How long he wants a session to run. `nil` means he has not said.
     public let preferredDurationMinutes: Int?
-    public let hasCompletedSetup: Bool
+    /// The last `ProfileUpdate` this profile took in. A writer reads it to tell
+    /// an update still waiting in the folder from one already applied, which is
+    /// the difference between folding a new update onto it and re-imposing
+    /// facts the lifter may have changed since. `nil` when none has been
+    /// applied.
+    public let appliedProfileUpdateID: UUID?
     public let updatedAt: Date
 
     public init(
-        displayUnit: MassUnit, experience: ExperienceLevel, equipmentAccess: Equipment,
-        availableEquipment: [EquipmentType], goal: String, constraints: String,
+        displayUnit: MassUnit, experience: ExperienceLevel?, equipmentAccess: Equipment?,
+        availableEquipment: [EquipmentType]?, goal: String, constraints: String,
         bodyweight: Mass?, avoidedPatterns: [MovementPattern],
         avoidedExercises: [ExerciseID], preferredWeekdays: [Weekday],
-        preferredDurationMinutes: Int?, hasCompletedSetup: Bool, updatedAt: Date
+        preferredDurationMinutes: Int?, appliedProfileUpdateID: UUID? = nil, updatedAt: Date
     ) {
         self.displayUnit = displayUnit
         self.experience = experience
@@ -150,7 +173,7 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
         self.avoidedExercises = avoidedExercises
         self.preferredWeekdays = preferredWeekdays
         self.preferredDurationMinutes = preferredDurationMinutes
-        self.hasCompletedSetup = hasCompletedSetup
+        self.appliedProfileUpdateID = appliedProfileUpdateID
         self.updatedAt = updatedAt
     }
 }

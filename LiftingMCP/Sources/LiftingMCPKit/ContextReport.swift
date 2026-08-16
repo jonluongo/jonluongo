@@ -37,22 +37,43 @@ struct ContextReport {
 
     // MARK: - Who he is
 
+    /// Who he is, with the facts nobody has stated left as `null`.
+    ///
+    /// A `null` here means he has not said, not that the answer is nothing.
+    /// The app asks him nothing, so an unfilled field is the ordinary state of
+    /// a lifter early in a conversation — and reporting a plausible default
+    /// instead would be this server asserting something about him that nobody
+    /// ever said.
     private var lifter: JSONValue {
         guard let profile = snapshot.profile else { return .null }
         return [
-            "experience": .string(profile.experience.rawValue),
+            "experience": .string(profile.experience?.rawValue),
             "goal": .string(profile.goal),
             "constraints": .string(profile.constraints),
-            "equipmentAccess": .string(profile.equipmentAccess.rawValue),
-            "availableEquipment": .taxonomy(profile.availableEquipment),
+            "equipmentAccess": .string(profile.equipmentAccess?.rawValue),
+            "availableEquipment": profile.availableEquipment.map { .taxonomy($0) } ?? .null,
             "avoidedPatterns": .taxonomy(profile.avoidedPatterns),
             "avoidedExercises": .array(profile.avoidedExercises.map { .string($0.rawValue) }),
             "preferredWeekdays": .array(profile.preferredWeekdays.map { .string($0.fullName) }),
             "preferredDurationMinutes": .integer(profile.preferredDurationMinutes),
             "displayUnit": .string(profile.displayUnit.rawValue),
             "bodyweight": .mass(profile.bodyweight ?? snapshot.bodyMetrics.last?.bodyweight),
-            "hasCompletedSetup": .bool(profile.hasCompletedSetup),
+            "unstated": .array(Self.unstatedFacts(of: profile).map { .string($0) }),
         ]
+    }
+
+    /// The facts nobody has stated yet, named rather than left for a reader to
+    /// notice one `null` at a time. This is the list to close in conversation,
+    /// and `\(ToolCatalog.updateProfile)` is what closes it.
+    private static func unstatedFacts(of profile: SnapshotProfile) -> [String] {
+        var missing: [String] = []
+        if profile.equipmentAccess == nil { missing.append("equipmentAccess") }
+        if profile.experience == nil { missing.append("experience") }
+        if profile.goal.isEmpty { missing.append("goal") }
+        if profile.constraints.isEmpty { missing.append("constraints") }
+        if profile.preferredWeekdays.isEmpty { missing.append("preferredWeekdays") }
+        if profile.preferredDurationMinutes == nil { missing.append("preferredDurationMinutes") }
+        return missing
     }
 
     // MARK: - What he is on
@@ -124,16 +145,27 @@ struct ContextReport {
     // MARK: - Where to go for more
 
     private var note: String {
-        let opening =
-            snapshot.profile == nil
-            ? "This lifter has not been set up yet — no equipment, goal or constraints have "
-                + "been recorded, so nothing about him should be assumed. "
-            : ""
-        return opening
+        opening
             + "This is a summary. For depth: \(ToolCatalog.listExercises) for real exercise "
             + "IDs he can perform, \(ToolCatalog.exerciseHistory) for every set on one "
             + "movement, \(ToolCatalog.recentSessions) for full session detail, and "
             + "\(ToolCatalog.volumeByMuscle) for set and rep totals. Write a plan with "
             + "\(ToolCatalog.writePlan), using IDs from \(ToolCatalog.listExercises) verbatim."
+    }
+
+    /// What to say before the summary when there is nothing, or not enough, to
+    /// summarize. The app has no setup screen, so an empty profile is a
+    /// conversation that has not happened rather than a step he skipped.
+    private var opening: String {
+        guard let profile = snapshot.profile else {
+            return "Nothing has been recorded about this lifter — the app asks him nothing, so "
+                + "everything known about him comes from what he tells you. Assume nothing; ask, "
+                + "then write it down with \(ToolCatalog.updateProfile). "
+        }
+        let unstated = Self.unstatedFacts(of: profile)
+        guard !unstated.isEmpty else { return "" }
+        return "He has not stated: \(unstated.joined(separator: ", ")). Those read as null "
+            + "above and are genuinely unknown, not defaults — do not assume a value for one. "
+            + "Record what he tells you with \(ToolCatalog.updateProfile). "
     }
 }

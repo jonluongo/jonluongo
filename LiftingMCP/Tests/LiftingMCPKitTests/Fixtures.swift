@@ -70,17 +70,19 @@ func fixtureCatalog(version: Int = 5) throws -> ExerciseCatalog {
 // MARK: - The snapshot
 
 func fixtureProfile(
-    equipmentAccess: Equipment = .fullGym,
-    availableEquipment: [EquipmentType] = [
+    experience: ExperienceLevel? = .intermediate,
+    equipmentAccess: Equipment? = .fullGym,
+    availableEquipment: [EquipmentType]? = [
         .bodyweight, .barbell, .dumbbell, .plate, .band, .kettlebell,
         .medicineBall, .machine, .cable, .ezBar, .trapBar, .sled, .cardioMachine, .other,
     ],
     avoidedPatterns: [MovementPattern] = [],
-    avoidedExercises: [ExerciseID] = []
+    avoidedExercises: [ExerciseID] = [],
+    appliedProfileUpdateID: UUID? = nil
 ) -> SnapshotProfile {
     SnapshotProfile(
         displayUnit: .pounds,
-        experience: .intermediate,
+        experience: experience,
         equipmentAccess: equipmentAccess,
         availableEquipment: availableEquipment,
         goal: "Add 20 lb to the bench",
@@ -90,7 +92,7 @@ func fixtureProfile(
         avoidedExercises: avoidedExercises,
         preferredWeekdays: [.monday, .thursday],
         preferredDurationMinutes: 60,
-        hasCompletedSetup: true,
+        appliedProfileUpdateID: appliedProfileUpdateID,
         updatedAt: daysAgo(60)
     )
 }
@@ -264,6 +266,7 @@ final class InMemoryDocuments: TrainingDocuments, @unchecked Sendable {
     private let lock = NSLock()
     private var snapshot: TrainingSnapshot?
     private var written: PlanDocument?
+    private var writtenProfileUpdate: ProfileUpdate?
     private var failure: (any Error)?
 
     struct Broken: Error, LocalizedError {
@@ -276,8 +279,10 @@ final class InMemoryDocuments: TrainingDocuments, @unchecked Sendable {
 
     var snapshotLocation: String { "/fixture/Documents/snapshot.json" }
     var planLocation: String { "/fixture/Documents/plan.json" }
+    var profileUpdateLocation: String { "/fixture/Documents/profile-update.json" }
 
     var lastWrittenPlan: PlanDocument? { lock.withLock { written } }
+    var lastWrittenProfileUpdate: ProfileUpdate? { lock.withLock { writtenProfileUpdate } }
 
     func breakTransport() { lock.withLock { failure = Broken() } }
 
@@ -292,6 +297,20 @@ final class InMemoryDocuments: TrainingDocuments, @unchecked Sendable {
         try lock.withLock {
             if let failure { throw failure }
             written = plan
+        }
+    }
+
+    func writeProfileUpdate(_ update: ProfileUpdate) throws {
+        try lock.withLock {
+            if let failure { throw failure }
+            writtenProfileUpdate = update
+        }
+    }
+
+    func readProfileUpdate() throws -> ProfileUpdate? {
+        try lock.withLock {
+            if let failure { throw failure }
+            return writtenProfileUpdate
         }
     }
 }

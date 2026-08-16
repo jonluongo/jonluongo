@@ -127,7 +127,22 @@ struct ListExercisesTests {
         #expect(applied["avoidedPatterns"] == ["hinge"])
     }
 
-    @Test("A lifter who has not been set up yet is narrowed by nothing, and told so")
+    @Test("Equipment nobody has stated narrows nothing, rather than narrowing to nothing")
+    func unknownEquipmentNarrowsNothing() throws {
+        // The trap this guards: treating "not known" as an empty equipment set
+        // would return zero exercises and read as a lifter who can perform no
+        // movement at all. What he avoids still applies.
+        let report = try list([:], profile: fixtureProfile(
+            equipmentAccess: nil, availableEquipment: nil,
+            avoidedExercises: [ExerciseID(rawValue: "barbell-deadlift")]))
+
+        #expect(try ids(report).count == 7)
+        #expect(!(try ids(report).contains("barbell-deadlift")))
+        #expect(report["appliedFilter"]?.objectValue?["lifterEquipment"] == .null)
+        #expect(try #require(report["note"]?.stringValue).contains("has not said"))
+    }
+
+    @Test("A lifter nothing is recorded about is narrowed by nothing, and told so")
     func noProfileNarrowsByNothing() throws {
         let report = try list([:], profile: nil)
 

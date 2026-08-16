@@ -2,27 +2,35 @@ import Foundation
 import OSLog
 import LiftingKit
 
-/// Announces a `plan.json` arriving in the app's iCloud Documents folder.
+/// Announces a document Claude wrote arriving in the app's iCloud Documents
+/// folder.
 ///
-/// Hand one to `PlanInbox`, which starts it; it does the rest. A file syncing
-/// in from another device does not reliably fire ordinary filesystem events, so
-/// this uses `NSMetadataQuery` over the ubiquitous documents scope — the same
-/// mechanism the Files app uses to notice a document appear.
+/// Hand one to `DocumentInbox`, which starts it; it does the rest. A file
+/// syncing in from another device does not reliably fire ordinary filesystem
+/// events, so this uses `NSMetadataQuery` over the ubiquitous documents scope —
+/// the same mechanism the Files app uses to notice a document appear.
+///
+/// **It watches for every inbound document, not one of them.** The plan and the
+/// profile update sync independently, so a watcher scoped to one file name would
+/// leave the other sitting in the folder until something else happened to wake
+/// the app. The names come from `DocumentFolder.inboundFilenames` rather than
+/// being retyped here, so a document the server learns to write cannot be one
+/// the phone never notices.
 ///
 /// **A file that is announced is not necessarily a file that is here.** iCloud
 /// advertises an item before its contents have been fetched, so this asks for
-/// the download and announces only once the item reports itself current. A
+/// the download and announces only once an item reports itself current. A
 /// caller reading a placeholder would see an error where the honest answer is
 /// "not yet".
 ///
 /// Depends on: `NSMetadataQuery`, `FileManager`'s ubiquity downloads, and
-/// `DocumentFolder`'s file name from `LiftingKit`. Main-actor bound because
+/// `DocumentFolder`'s file names from `LiftingKit`. Main-actor bound because
 /// `NSMetadataQuery` delivers on the main run loop.
 @MainActor
-final class UbiquitousPlanWatcher: PlanArrivalWatching {
+final class UbiquitousDocumentWatcher: DocumentArrivalWatching {
 
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "LiftingPlan", category: "plan-watch"
+        subsystem: Bundle.main.bundleIdentifier ?? "LiftingPlan", category: "document-watch"
     )
 
     private let query = NSMetadataQuery()
@@ -33,14 +41,14 @@ final class UbiquitousPlanWatcher: PlanArrivalWatching {
         guard !query.isStarted else { return }
         self.onArrival = onArrival
 
-        // Scoped to the one file name both sides agreed on, so an unrelated
-        // document in the container never wakes the importer.
+        // Scoped to the file names both sides agreed on, so an unrelated
+        // document in the container never wakes the inbox.
         query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
         query.predicate = NSPredicate(
-            format: "%K == %@", NSMetadataItemFSNameKey, DocumentFolder.planFilename
+            format: "%K IN %@", NSMetadataItemFSNameKey, DocumentFolder.inboundFilenames
         )
-        // The first gather reports what is already there, which is how a plan
-        // that arrived while the app was closed gets imported at launch.
+        // The first gather reports what is already there, which is how anything
+        // that arrived while the app was closed is taken in at launch.
         observe(.NSMetadataQueryDidFinishGathering)
         observe(.NSMetadataQueryDidUpdate)
         query.start()
@@ -66,8 +74,12 @@ final class UbiquitousPlanWatcher: PlanArrivalWatching {
         observers.append(observer)
     }
 
-    /// Announces an arrival if the plan is downloaded, and asks for it if it is
+    /// Announces an arrival if anything is downloaded, and asks for whatever is
     /// not.
+    ///
+    /// One announcement covers however many documents landed: the inbox reads
+    /// everything waiting on each one, so there is nothing to be gained by
+    /// saying which file moved.
     ///
     /// Updates are paused while the results are read, because the query mutates
     /// them on the main run loop and a caller walking them meanwhile would see
@@ -86,7 +98,7 @@ final class UbiquitousPlanWatcher: PlanArrivalWatching {
         }
         if isReadyToImport, let onArrival {
             // Announced from a task rather than inline: the handler reads the
-            // document, which resolves the iCloud container, and this runs on
+            // documents, which resolves the iCloud container, and this runs on
             // the main run loop where that must not happen.
             Task { await onArrival() }
         }
@@ -104,14 +116,17 @@ final class UbiquitousPlanWatcher: PlanArrivalWatching {
     /// The failure is logged rather than propagated because there is no caller
     /// to propagate to and nothing for the lifter to do: iCloud retries, and
     /// the query announces again when the contents land. Nothing is lost — the
-    /// plan stays in the folder until it can be read.
+    /// document stays in the folder until it can be read.
     private func requestDownload(of item: NSMetadataItem) {
         guard let url = item.value(forAttribute: NSMetadataItemURLKey) as? URL else { return }
         do {
             try FileManager.default.startDownloadingUbiquitousItem(at: url)
         } catch {
             Self.logger.error(
-                "Could not start downloading the plan: \(error.localizedDescription, privacy: .public)"
+                """
+                Could not start downloading \(url.lastPathComponent, privacy: .public): \
+                \(error.localizedDescription, privacy: .public)
+                """
             )
         }
     }

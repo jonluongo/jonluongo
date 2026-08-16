@@ -7,7 +7,7 @@ import LiftingKit
 /// A watcher that fires when a test tells it to, standing in for iCloud
 /// announcing that a file arrived.
 @MainActor
-private final class ManualPlanWatcher: PlanArrivalWatching {
+private final class ManualArrivalWatcher: DocumentArrivalWatching {
     private var onArrival: (@MainActor () async -> Void)?
     private(set) var isWatching = false
 
@@ -29,8 +29,8 @@ private final class ManualPlanWatcher: PlanArrivalWatching {
 }
 
 @MainActor
-@Suite("Plan inbox")
-struct PlanInboxTests {
+@Suite("Document inbox")
+struct DocumentInboxTests {
 
     // MARK: - Fixtures
 
@@ -55,7 +55,7 @@ struct PlanInboxTests {
 
     private func document(
         id: UUID = UUID(),
-        exerciseID: ExerciseID = PlanInboxTests.benchPress
+        exerciseID: ExerciseID = DocumentInboxTests.benchPress
     ) -> PlanDocument {
         PlanDocument(
             id: id, catalogVersion: 5, generatedAt: Self.instant,
@@ -78,10 +78,10 @@ struct PlanInboxTests {
 
     private func inbox(
         transport: any DocumentTransport,
-        watcher: ManualPlanWatcher,
+        watcher: ManualArrivalWatcher,
         context: ModelContext
-    ) throws -> PlanInbox {
-        PlanInbox(
+    ) throws -> DocumentInbox {
+        DocumentInbox(
             transport: transport, watcher: watcher, context: context, catalog: try catalog()
         )
     }
@@ -97,7 +97,7 @@ struct PlanInboxTests {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         let context = try context()
-        let watcher = ManualPlanWatcher()
+        let watcher = ManualArrivalWatcher()
         let inbox = try inbox(transport: folder, watcher: watcher, context: context)
         let written = document()
         try folder.writePlan(written)
@@ -115,7 +115,7 @@ struct PlanInboxTests {
     func startingBeginsWatching() async throws {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
-        let watcher = ManualPlanWatcher()
+        let watcher = ManualArrivalWatcher()
         let inbox = try inbox(transport: folder, watcher: watcher, context: try context())
 
         inbox.start()
@@ -127,7 +127,7 @@ struct PlanInboxTests {
     func stoppingEndsWatching() async throws {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
-        let watcher = ManualPlanWatcher()
+        let watcher = ManualArrivalWatcher()
         let inbox = try inbox(transport: folder, watcher: watcher, context: try context())
 
         inbox.start()
@@ -141,7 +141,7 @@ struct PlanInboxTests {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         let context = try context()
-        let watcher = ManualPlanWatcher()
+        let watcher = ManualArrivalWatcher()
         let inbox = try inbox(transport: folder, watcher: watcher, context: context)
         try folder.writePlan(document())
 
@@ -159,7 +159,7 @@ struct PlanInboxTests {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         let context = try context()
-        let watcher = ManualPlanWatcher()
+        let watcher = ManualArrivalWatcher()
         let inbox = try inbox(transport: folder, watcher: watcher, context: context)
 
         inbox.start()
@@ -176,7 +176,7 @@ struct PlanInboxTests {
         try Data("{ this is not a plan".utf8)
             .write(to: folder.url.appending(path: DocumentFolder.planFilename))
         let context = try context()
-        let watcher = ManualPlanWatcher()
+        let watcher = ManualArrivalWatcher()
         let inbox = try inbox(transport: folder, watcher: watcher, context: context)
 
         inbox.start()
@@ -192,7 +192,7 @@ struct PlanInboxTests {
         defer { try? FileManager.default.removeItem(at: folder.url) }
         try folder.writePlan(document(exerciseID: ExerciseID(rawValue: "moon-press")))
         let context = try context()
-        let watcher = ManualPlanWatcher()
+        let watcher = ManualArrivalWatcher()
         let inbox = try inbox(transport: folder, watcher: watcher, context: context)
 
         inbox.start()
@@ -209,7 +209,7 @@ struct PlanInboxTests {
         defer { try? FileManager.default.removeItem(at: folder.url) }
         try Data("not a plan".utf8)
             .write(to: folder.url.appending(path: DocumentFolder.planFilename))
-        let watcher = ManualPlanWatcher()
+        let watcher = ManualArrivalWatcher()
         let inbox = try inbox(transport: folder, watcher: watcher, context: try context())
 
         inbox.start()
@@ -226,13 +226,124 @@ struct PlanInboxTests {
             resolveContainer: { _ in nil }
         )
         let context = try context()
-        let watcher = ManualPlanWatcher()
+        let watcher = ManualArrivalWatcher()
         let inbox = try inbox(transport: transport, watcher: watcher, context: context)
 
         inbox.start()
         await watcher.announceArrival()
 
-        #expect(inbox.errorMessage != nil)
+        let message = try #require(inbox.errorMessage)
         #expect(try storedPlans(in: context).isEmpty)
+        // One unreachable container is one problem, not two, even though both
+        // reads failed on it.
+        #expect(!message.contains("\n\n"))
+    }
+
+    // MARK: - A profile update arrives the same way a plan does
+
+    private func storedProfiles(in context: ModelContext) throws -> [UserProfile] {
+        try context.fetch(FetchDescriptor<UserProfile>())
+    }
+
+    private func profileUpdate(id: UUID = UUID()) -> ProfileUpdate {
+        ProfileUpdate(
+            id: id, generatedAt: Self.instant, displayUnit: .stated(.pounds),
+            experience: .stated(.advanced), equipmentAccess: .stated(.dumbbellsOnly),
+            goal: .stated("Bigger bench")
+        )
+    }
+
+    @Test("A profile update that arrives is applied, not merely received")
+    func arrivingProfileUpdateIsApplied() async throws {
+        // The failure this guards is silent: an update that lands in the folder
+        // and never reaches the store leaves the snapshot reporting the old
+        // facts, so Claude believes he recorded something he did not.
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        let context = try context()
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: context)
+        try folder.writeProfileUpdate(profileUpdate())
+
+        inbox.start()
+        await watcher.announceArrival()
+
+        let profile = try #require(try storedProfiles(in: context).first)
+        #expect(profile.experience == .advanced)
+        #expect(profile.equipmentAccess == .dumbbellsOnly)
+        #expect(profile.goal == "Bigger bench")
+        #expect(inbox.errorMessage == nil)
+    }
+
+    @Test("A plan and a profile update waiting together both land in one pass")
+    func bothDocumentsLandTogether() async throws {
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        let context = try context()
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: context)
+        try folder.writePlan(document())
+        try folder.writeProfileUpdate(profileUpdate())
+
+        inbox.start()
+        await watcher.announceArrival()
+
+        #expect(try storedPlans(in: context).count == 1)
+        #expect(try storedProfiles(in: context).first?.experience == .advanced)
+    }
+
+    @Test("An unreadable plan does not stop a perfectly good profile update landing")
+    func oneBadDocumentDoesNotBlockTheOther() async throws {
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        try Data("{ this is not a plan".utf8)
+            .write(to: folder.url.appending(path: DocumentFolder.planFilename))
+        try folder.writeProfileUpdate(profileUpdate())
+        let context = try context()
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: context)
+
+        inbox.start()
+        await watcher.announceArrival()
+
+        #expect(inbox.errorMessage != nil)
+        #expect(try storedProfiles(in: context).first?.experience == .advanced)
+    }
+
+    @Test("A malformed profile update surfaces an error rather than passing for none at all")
+    func malformedProfileUpdateSurfacesAnError() async throws {
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        try Data("{ not an update".utf8)
+            .write(to: folder.url.appending(path: DocumentFolder.profileUpdateFilename))
+        let context = try context()
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: context)
+
+        inbox.start()
+        await watcher.announceArrival()
+
+        #expect(inbox.errorMessage != nil)
+    }
+
+    @Test("The same update arriving twice is applied once, so a later change is not undone")
+    func sameUpdateArrivingTwiceAppliesOnce() async throws {
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        let context = try context()
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: context)
+        try folder.writeProfileUpdate(profileUpdate())
+
+        inbox.start()
+        await watcher.announceArrival()
+        // Something the lifter changed for himself after the update landed.
+        let profile = try #require(try storedProfiles(in: context).first)
+        profile.displayUnit = .kilograms
+        try context.saveOrThrow()
+        await watcher.announceArrival()
+
+        #expect(try storedProfiles(in: context).count == 1)
+        #expect(try storedProfiles(in: context).first?.displayUnit == .kilograms)
     }
 }

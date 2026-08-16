@@ -15,11 +15,12 @@ struct LiftingPlanApp: App {
     @State private var restTimer = RestTimerModel()
     private let container: ModelContainer
     /// The shared iCloud folder both machines see. The snapshot goes out
-    /// through it and plans come in through it; nothing else in the app knows
-    /// there is a file involved.
+    /// through it and plans and profile updates come in through it; nothing
+    /// else in the app knows there is a file involved.
     private let transport: ICloudDocumentTransport
-    /// Imports a plan the moment one lands, so no refresh is ever asked for.
-    @State private var planInbox: PlanInbox
+    /// Takes in a plan or a profile update the moment one lands, so no refresh
+    /// is ever asked for.
+    @State private var documentInbox: DocumentInbox
     /// Writes the snapshot out, and remembers when it could not.
     @State private var snapshotOutbox: SnapshotOutbox
 
@@ -42,8 +43,8 @@ struct LiftingPlanApp: App {
         // looked up when a document actually moves.
         let transport = ICloudDocumentTransport()
         self.transport = transport
-        _planInbox = State(initialValue: PlanInbox(
-            transport: transport, watcher: UbiquitousPlanWatcher(),
+        _documentInbox = State(initialValue: DocumentInbox(
+            transport: transport, watcher: UbiquitousDocumentWatcher(),
             context: container.mainContext, catalog: catalog
         ))
         _snapshotOutbox = State(initialValue: SnapshotOutbox(
@@ -56,12 +57,12 @@ struct LiftingPlanApp: App {
             RootView()
                 .environment(\.exerciseCatalog, catalog)
                 .environment(restTimer)
-                .environment(planInbox)
+                .environment(documentInbox)
                 .environment(snapshotOutbox)
                 .task { restTimer.requestNotificationAuthorization() }
-                // Started once, for the life of the app: a plan arriving from
-                // the Mac is imported wherever the lifter happens to be.
-                .task { planInbox.start() }
+                // Started once, for the life of the app: anything arriving
+                // from the Mac is taken in wherever the lifter happens to be.
+                .task { documentInbox.start() }
         }
         .modelContainer(container)
         // Exporting on background, rather than behind a button, is what keeps

@@ -141,8 +141,7 @@ struct SnapshotExporterTests {
             bodyweight: Mass(value: 82, unit: .kilograms),
             avoidedPatterns: [.verticalPress],
             avoidedExercises: [ExerciseID(rawValue: "barbell-upright-row")],
-            preferredWeekdays: [.monday, .thursday], preferredDurationMinutes: 45,
-            hasCompletedSetup: true
+            preferredWeekdays: [.monday, .thursday], preferredDurationMinutes: 45
         ))
         try context.saveOrThrow()
 
@@ -158,10 +157,48 @@ struct SnapshotExporterTests {
         #expect(profile.avoidedExercises == [ExerciseID(rawValue: "barbell-upright-row")])
         #expect(profile.preferredWeekdays == [.monday, .thursday])
         #expect(profile.preferredDurationMinutes == 45)
-        #expect(profile.hasCompletedSetup)
         // Derived from the access tier at export time, so a reader need not
         // re-derive it.
-        #expect(Set(profile.availableEquipment) == EquipmentAccess.permitted(for: .dumbbellsOnly))
+        #expect(
+            profile.availableEquipment.map(Set.init)
+                == EquipmentAccess.permitted(for: .dumbbellsOnly))
+    }
+
+    @Test("The last applied profile update is carried, so the writer can tell what has landed")
+    func appliedUpdateIsCarried() throws {
+        // Without it the Mac cannot tell an update still waiting in the folder
+        // from one already taken in, and would re-impose facts on every write.
+        let identity = UUID()
+        let context = try context()
+        context.insert(UserProfile(appliedProfileUpdateID: identity))
+        try context.saveOrThrow()
+
+        let profile = try #require(
+            try SnapshotExporter.export(from: context, catalogVersion: 5).profile
+        )
+        #expect(profile.appliedProfileUpdateID == identity)
+    }
+
+    @Test("A profile nobody has filled in exports as unknown, not as a plausible default")
+    func unstatedProfileFactsExportAsAbsent() throws {
+        // The app asks him nothing, so this is what a real first launch looks
+        // like. Exporting "Full gym, Intermediate" here would hand Claude an
+        // assertion about the lifter that no one ever made, indistinguishable
+        // from one he did.
+        let context = try context()
+        context.insert(UserProfile())
+        try context.saveOrThrow()
+
+        let profile = try #require(
+            try SnapshotExporter.export(from: context, catalogVersion: 5).profile
+        )
+        #expect(profile.experience == nil)
+        #expect(profile.equipmentAccess == nil)
+        // Not an empty list: that would say he can perform nothing.
+        #expect(profile.availableEquipment == nil)
+        #expect(profile.goal.isEmpty)
+        #expect(profile.preferredWeekdays.isEmpty)
+        #expect(profile.preferredDurationMinutes == nil)
     }
 
     @Test("A movement pattern this build does not know survives the export")

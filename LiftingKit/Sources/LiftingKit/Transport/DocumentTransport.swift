@@ -1,10 +1,13 @@
 import Foundation
 
-/// How the app hands a snapshot out and takes a plan in.
+/// How the app hands a snapshot out and takes a plan or a profile update in.
 ///
 /// Hold one of these wherever the loop is driven — the app writes a
-/// `TrainingSnapshot` when it backgrounds and reads a `PlanDocument` when one
-/// arrives — and hand a fake to it in tests. Nothing above this protocol knows
+/// `TrainingSnapshot` when it backgrounds and reads a `PlanDocument` or a
+/// `ProfileUpdate` when one arrives — and hand a fake to it in tests. There are
+/// two inbound documents because Claude does two things with what he learns:
+/// he prescribes training, and he records standing facts about the lifter, who
+/// is never asked for them by the app. Nothing above this protocol knows
 /// about files, URLs, or iCloud, which is the point: when the loop stops being
 /// two machines on one Apple ID and becomes a hosted relay, a second
 /// conformance is the only thing that changes. Both document formats, the
@@ -36,9 +39,14 @@ public protocol DocumentTransport: Sendable {
     /// Throws when a plan is present but unreadable. Absence is not a failure;
     /// corruption is.
     func readPlan() throws -> PlanDocument?
+
+    /// The profile update waiting to be applied, or `nil` when there is none.
+    ///
+    /// Same contract as `readPlan()`: absence is ordinary, corruption throws.
+    func readProfileUpdate() throws -> ProfileUpdate?
 }
 
-/// The two documents of the loop, living side by side in one directory.
+/// The documents of the loop, living side by side in one directory.
 ///
 /// Build one with the directory both machines can see — on the phone that is
 /// the app's iCloud Documents folder, on the Mac the same container under
@@ -59,6 +67,15 @@ public struct DocumentFolder: DocumentTransport {
     public static let snapshotFilename = "snapshot.json"
     /// The name the server writes and the app reads.
     public static let planFilename = "plan.json"
+    /// The other name the server writes and the app reads: what Claude has
+    /// learned about the lifter. A separate file rather than a section of the
+    /// plan, because facts about a lifter outlive any one training block.
+    public static let profileUpdateFilename = "profile-update.json"
+
+    /// Every file the server writes and the app watches for. A caller that has
+    /// to notice arrivals reads this rather than restating the names, so a
+    /// document that is written but never watched for cannot happen.
+    public static let inboundFilenames = [planFilename, profileUpdateFilename]
 
     private let directory: URL
 
@@ -85,6 +102,11 @@ public struct DocumentFolder: DocumentTransport {
         return try PlanDocument.makeDecoder().decode(PlanDocument.self, from: data)
     }
 
+    public func readProfileUpdate() throws -> ProfileUpdate? {
+        guard let data = try contents(of: Self.profileUpdateFilename) else { return nil }
+        return try ProfileUpdate.makeDecoder().decode(ProfileUpdate.self, from: data)
+    }
+
     // MARK: - The server's direction
 
     /// The snapshot the app last wrote, or `nil` when it has not written one.
@@ -100,6 +122,18 @@ public struct DocumentFolder: DocumentTransport {
     public func writePlan(_ plan: PlanDocument) throws {
         let data = try PlanDocument.makeEncoder().encode(plan)
         try data.write(to: directory.appending(path: Self.planFilename), options: .atomic)
+    }
+
+    /// Puts a profile update where the app will pick it up, replacing any
+    /// earlier one.
+    ///
+    /// Replacing is safe because each update carries its own identity and the
+    /// app applies an identity once: an update that has already landed is not
+    /// re-imposed when a newer one supersedes the file.
+    public func writeProfileUpdate(_ update: ProfileUpdate) throws {
+        let data = try ProfileUpdate.makeEncoder().encode(update)
+        try data.write(
+            to: directory.appending(path: Self.profileUpdateFilename), options: .atomic)
     }
 
     // MARK: - Absence, told apart from failure

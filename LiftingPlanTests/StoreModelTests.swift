@@ -158,8 +158,8 @@ struct StoreModelTests {
         #expect(loaded.displayUnit == .kilograms)
         #expect(loaded.experience == .advanced)
         #expect(loaded.equipmentAccess == .dumbbellsOnly)
-        #expect(loaded.permittedEquipment.contains(.dumbbell))
-        #expect(!loaded.permittedEquipment.contains(.barbell))
+        #expect(loaded.permittedEquipment?.contains(.dumbbell) == true)
+        #expect(loaded.permittedEquipment?.contains(.barbell) == false)
     }
 
     @Test("A profile round-trips the schedule the lifter stated in setup")
@@ -185,7 +185,23 @@ struct StoreModelTests {
         let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
         #expect(loaded.preferredWeekdays.isEmpty)
         #expect(loaded.preferredDurationMinutes == nil)
-        #expect(!loaded.hasCompletedSetup)
+    }
+
+    @Test("A profile nobody has told anything stores nothing, not a default gym or level")
+    func profileStatesNothingByDefault() throws {
+        // Nothing asks the lifter these questions any more, so the untouched
+        // record has to be able to say "not known" rather than defaulting to a
+        // claim about him.
+        let context = try context()
+        context.insert(UserProfile())
+        try context.saveOrThrow()
+
+        let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
+        #expect(loaded.experience == nil)
+        #expect(loaded.equipmentAccess == nil)
+        #expect(loaded.permittedEquipment == nil)
+        #expect(loaded.goal.isEmpty)
+        #expect(loaded.appliedProfileUpdateID == nil)
     }
 
     @Test("Defaults state no training opinion, only 'not specified'")

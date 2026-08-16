@@ -2,29 +2,42 @@ import Foundation
 import SwiftData
 import LiftingKit
 
-/// Who the lifter is: the standing facts he has stated about himself, his
+/// Who the lifter is: the standing facts that have been recorded about him, his
 /// equipment, and when he wants to train.
 ///
 /// This is a record of what he said, not a set of conclusions drawn from it —
 /// what to do with these facts is decided elsewhere. Read it to answer
 /// questions about the lifter.
 ///
+/// **The app never asks him any of this.** There is no setup screen and no
+/// form; every training fact here arrived as a `ProfileUpdate` Claude wrote
+/// after learning it in conversation, applied by `ProfileUpdater`. That is why
+/// `experience` and `equipmentAccess` are optional: a fresh profile is empty,
+/// and "nobody has said" must not be storable only as "full gym, intermediate".
+/// A default there would be an assertion about him that no one ever made.
+///
 /// Exactly one instance is expected. CloudKit forbids unique constraints, so
 /// that invariant is enforced in application code rather than by the schema.
 /// `displayUnit` controls what new entries default to and how weights are
-/// shown; it never rewrites what was already logged. `avoidedPatterns` and
-/// `avoidedExercises` make the free-text `constraints` field enforceable
+/// shown; it never rewrites what was already logged, and it is the one thing
+/// here the lifter can still set for himself, in Settings. `avoidedPatterns`
+/// and `avoidedExercises` make the free-text `constraints` field enforceable
 /// rather than merely advisory: `constraints` still carries nuance ("my left
 /// shoulder hurts overhead") that a list cannot express, but the structured
 /// lists are what `permits(...)` can actually filter the catalog on.
 ///
-/// Every property has a default, as CloudKit requires.
+/// Every property is optional or defaulted, as CloudKit requires.
 /// Depends on: `Mass` and `ExerciseID`, `MovementPattern` from Domain.
 @Model
 final class UserProfile {
+    /// Not a training opinion, and not a claim about the lifter — the app has
+    /// to render a number in some unit before anyone has said which.
     private var displayUnitRaw: String = MassUnit.pounds.rawValue
-    private var experienceRaw: String = ExperienceLevel.intermediate.rawValue
-    private var equipmentAccessRaw: String = Equipment.fullGym.rawValue
+    /// `nil` until someone states it. Never a stand-in level.
+    private var experienceRaw: String?
+    /// `nil` until someone states it. Never a stand-in tier.
+    private var equipmentAccessRaw: String?
+    /// What he is training for, in his words. Empty means he has not said.
     var goal: String = ""
     /// Injuries and constraints, in the lifter's own words. Fed to the model.
     var constraints: String = ""
@@ -38,21 +51,24 @@ final class UserProfile {
     private var preferredWeekdayRawValues: [Int] = []
     /// How long he wants a session to run. `nil` means he has not said.
     var preferredDurationMinutes: Int?
-    var hasCompletedSetup: Bool = false
+    /// The last `ProfileUpdate` applied to this profile, so an update sitting
+    /// in the shared folder is applied once rather than re-imposed at every
+    /// launch over something changed since.
+    var appliedProfileUpdateID: UUID?
     var updatedAt: Date = Date()
 
     init(
         displayUnit: MassUnit = .pounds,
-        experience: ExperienceLevel = .intermediate,
-        equipmentAccess: Equipment = .fullGym,
+        experience: ExperienceLevel? = nil,
+        equipmentAccess: Equipment? = nil,
         goal: String = "", constraints: String = "", bodyweight: Mass? = nil,
         avoidedPatterns: Set<MovementPattern> = [], avoidedExercises: Set<ExerciseID> = [],
         preferredWeekdays: Set<Weekday> = [], preferredDurationMinutes: Int? = nil,
-        hasCompletedSetup: Bool = false
+        appliedProfileUpdateID: UUID? = nil
     ) {
         self.displayUnitRaw = displayUnit.rawValue
-        self.experienceRaw = experience.rawValue
-        self.equipmentAccessRaw = equipmentAccess.rawValue
+        self.experienceRaw = experience?.rawValue
+        self.equipmentAccessRaw = equipmentAccess?.rawValue
         self.goal = goal
         self.constraints = constraints
         self.bodyweight = bodyweight
@@ -60,7 +76,7 @@ final class UserProfile {
         self.avoidedExerciseRawValues = avoidedExercises.map(\.rawValue).sorted()
         self.preferredWeekdayRawValues = preferredWeekdays.map(\.rawValue).sorted()
         self.preferredDurationMinutes = preferredDurationMinutes
-        self.hasCompletedSetup = hasCompletedSetup
+        self.appliedProfileUpdateID = appliedProfileUpdateID
         self.updatedAt = Date()
     }
 
@@ -69,35 +85,42 @@ final class UserProfile {
         set { displayUnitRaw = newValue.rawValue }
     }
 
-    var experience: ExperienceLevel {
-        get { ExperienceLevel(rawValue: experienceRaw) ?? .intermediate }
-        set { experienceRaw = newValue.rawValue }
+    /// Rough training age, as he described it. `nil` means nobody has said.
+    var experience: ExperienceLevel? {
+        get { experienceRaw.flatMap(ExperienceLevel.init(rawValue:)) }
+        set { experienceRaw = newValue?.rawValue }
     }
 
-    var equipmentAccess: Equipment {
-        get { Equipment(rawValue: equipmentAccessRaw) ?? .fullGym }
-        set { equipmentAccessRaw = newValue.rawValue }
+    /// The gym he has, as he described it. `nil` means nobody has said.
+    var equipmentAccess: Equipment? {
+        get { equipmentAccessRaw.flatMap(Equipment.init(rawValue:)) }
+        set { equipmentAccessRaw = newValue?.rawValue }
     }
 
-    /// The equipment types this lifter can actually train with.
-    var permittedEquipment: Set<EquipmentType> {
-        EquipmentAccess.permitted(for: equipmentAccess)
+    /// The equipment types this lifter can actually train with, or `nil` when
+    /// nobody has said what he has.
+    ///
+    /// `nil` rather than an empty set on purpose: an empty set says he can
+    /// perform nothing, which is a far stronger claim than not knowing, and a
+    /// reader filtering on it would find no exercise at all.
+    var permittedEquipment: Set<EquipmentType>? {
+        equipmentAccess.map(EquipmentAccess.permitted(for:))
     }
 
-    /// Movement patterns excluded from plan generation, e.g. for an injury.
+    /// Movement patterns excluded from his training, e.g. for an injury.
     var avoidedPatterns: Set<MovementPattern> {
         get { Set(avoidedPatternRawValues.map(MovementPattern.init(rawValue:))) }
         set { avoidedPatternRawValues = newValue.map(\.rawValue).sorted() }
     }
 
-    /// Specific exercises excluded from plan generation, e.g. a substitution
+    /// Specific exercises excluded from his training, e.g. a substitution
     /// the lifter has already ruled out.
     var avoidedExercises: Set<ExerciseID> {
         get { Set(avoidedExerciseRawValues.map(ExerciseID.init(rawValue:))) }
         set { avoidedExerciseRawValues = newValue.map(\.rawValue).sorted() }
     }
 
-    /// The days the lifter wants to train, as stated in setup. This is his
+    /// The days the lifter wants to train, as last stated. This is his
     /// availability, not a schedule the app chose; an empty set means he has
     /// not said yet. A `TrainingPlan` records the days it actually trains,
     /// which need not match.
