@@ -1,14 +1,19 @@
-# Connecting Claude to LiftingPlan
+# Connecting Claude to Barbell
 
 How to point Claude Desktop at your training data, and what to expect the first
 time.
+
+The app is called **Barbell** on the Home Screen. The Xcode project, the bundle
+identifier and the iCloud container are all still `LiftingPlan` — renaming those
+would orphan the data already on the phone, so the name changed and nothing
+else did.
 
 ## What this gives you
 
 Claude reads your training log and writes plans back into the app.
 
 ```
-  Claude (Mac)                                 LiftingPlan (iPhone)
+  Claude (Mac)                                    Barbell (iPhone)
       │                                               │
       │  reads snapshot.json  ◀───────────────────────┤  written when the app backgrounds
       │                                               │
@@ -83,6 +88,7 @@ exist and the tools that read your log will tell you so.
 | `exercise_history` | Every set you have logged for one movement, in order |
 | `recent_sessions` | What you have been doing lately |
 | `volume_by_muscle` | Set, rep and seconds-held totals per muscle over a window |
+| `unstated_facts` | Which facts the record can hold about you, and which are still empty |
 | `write_plan` | Writes a block to your phone — every week of it |
 | `update_profile` | Writes down what you said about yourself, what you weigh, and what you can already lift |
 
@@ -90,6 +96,20 @@ Plus an always-present summary: who you are, your equipment, your constraints,
 your current block, your working weights — with anything you have not said
 reported as `null` and named outright, so it reads as unknown rather than as a
 default.
+
+**You should not have to know which facts to volunteer.** That was the loop's
+last real hole: nothing told Claude that your equipment, your bodyweight or what
+you can currently lift had never been stated, so either you knew to say all of it
+unprompted or he planned without it. `unstated_facts` names every fact the record
+can hold and which of them are currently empty, the handshake tells him the tool
+is there, and `write_plan` reports what was still empty at the moment a plan
+landed. All three read one list, so they cannot disagree.
+
+It reports empty fields and stops there. **What to ask, in what order, and
+whether a gap matters for the block he is about to write is Claude's call** —
+"your equipment is unstated" is a fact about the record, and "ask about equipment
+before writing a split" is a training opinion, which is exactly the kind of thing
+this app does not hold.
 
 **Every one of these reports. None of them recommends.** There is deliberately
 no "suggest progression" or "check balance" tool. Reporting that your bench has

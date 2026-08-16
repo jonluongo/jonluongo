@@ -207,6 +207,17 @@ public struct MCPServer: Sendable {
         conversation starts from nothing again. That tool merges: send only \
         what you just learned.
 
+        **The record has gaps, and it will not mention them on its own.** \
+        \(ToolCatalog.unstatedFacts) lists every fact this record can hold about \
+        him — his equipment, what he weighs, what he can already lift, his \
+        experience, his goal, his injuries, when and how long he can train — and \
+        which of them are currently empty. Early on that is most of them, and \
+        nothing in a report will say so unless you look: an empty field simply \
+        reads as null. The same list rides along in the context resource, but \
+        whether your client attaches a resource is your client's behaviour, so \
+        the tool is there when it does not. It reports empty fields; which of \
+        them matter, and whether to ask, is yours.
+
         Always take exercise IDs from \(ToolCatalog.listExercises) verbatim. \
         \(ToolCatalog.writePlan) rejects an ID the catalog does not have, \
         because training history is keyed on exercise identity.

@@ -89,6 +89,7 @@ extension ToolRunner {
             "exerciseCount": .integer(days.reduce(0) { $0 + $1.exercises.count }),
             "note": "Written. The app imports it the next time it is opened or comes forward.",
             "plan": Self.reported(document),
+            "unstatedWhenWritten": unstatedWhenWritten(),
         ])
     }
 

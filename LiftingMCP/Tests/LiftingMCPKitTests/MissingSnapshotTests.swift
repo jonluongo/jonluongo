@@ -13,6 +13,7 @@ struct MissingSnapshotTests {
     private static let readingTools = [
         ToolCatalog.listExercises, ToolCatalog.exerciseHistory,
         ToolCatalog.recentSessions, ToolCatalog.volumeByMuscle,
+        ToolCatalog.unstatedFacts,
     ]
 
     @Test("Every reading tool fails rather than reporting an empty result",

@@ -45,10 +45,12 @@ public enum ToolCatalog {
     public static let volumeByMuscle = "volume_by_muscle"
     public static let writePlan = "write_plan"
     public static let updateProfile = "update_profile"
+    public static let unstatedFacts = "unstated_facts"
 
     public static let definitions: [ToolDefinition] = [
         listExercisesDefinition, exerciseHistoryDefinition, recentSessionsDefinition,
-        volumeByMuscleDefinition, writePlanDefinition, updateProfileDefinition,
+        volumeByMuscleDefinition, unstatedFactsDefinition, writePlanDefinition,
+        updateProfileDefinition,
     ]
 
     // MARK: - Reading the catalog
@@ -129,6 +131,32 @@ public enum ToolCatalog {
         inputSchema: object(
             ["weeks": integer("How many weeks back from now to count. Defaults to 4.")]
         )
+    )
+
+    // MARK: - Reading what nobody has said
+
+    /// **This names empty fields. It does not name questions to ask.** The
+    /// difference is the architecture: "equipment and bodyweight are unstated"
+    /// is a fact about the record, and "ask about equipment before writing a
+    /// split" is a training opinion. The first belongs here; the second is
+    /// Claude's, and putting it in a tool description would be this app deciding
+    /// how coaching goes.
+    static let unstatedFactsDefinition = ToolDefinition(
+        name: unstatedFacts,
+        title: "Unstated facts",
+        description: """
+            Which facts about the lifter this record can hold, and which of them \
+            nobody has stated yet: the equipment he owns, what he weighs, what he \
+            can already lift, his experience, his goal, his injuries, and when and \
+            how long he can train. The app has no setup screen and asks him none \
+            of it, so an unstated fact is a conversation that has not happened \
+            rather than an answer of 'none' — and nothing else in this server will \
+            volunteer that a field is empty. Call it when you want to know what is \
+            not known. It reports empty fields and nothing more: which of them \
+            matter for what you are about to write, and whether to ask at all, is \
+            yours to judge. \(updateProfile) is what closes one.
+            """,
+        inputSchema: object([:])
     )
 
     // MARK: - Writing down who he is

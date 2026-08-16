@@ -1,8 +1,13 @@
-# LiftingPlan
+# Barbell
 
 An iOS app for training seriously: it holds the exercise catalog, records what
 you were prescribed, paces your rest between sets with automatic timers, logs
 every set you lift, and shows you what your lifts are doing over time.
+
+The Xcode project, the scheme, the bundle identifier and the iCloud container
+are all still named `LiftingPlan`. Only the name on the Home Screen changed —
+renaming an identifier would orphan the container and the data already on the
+device.
 
 **The app makes no training decisions.** It is the legos, the record, and the
 interface. Claude does the planning — over MCP — and the app stores whatever

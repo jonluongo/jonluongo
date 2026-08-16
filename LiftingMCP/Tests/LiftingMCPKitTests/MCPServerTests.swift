@@ -65,14 +65,14 @@ struct MCPServerTests {
 
     // MARK: - The tools
 
-    @Test("tools/list advertises exactly the six tools, each with a schema")
+    @Test("tools/list advertises exactly the seven tools, each with a schema")
     func toolsListIsComplete() throws {
         let tools = try #require(
             try ask(try makeServer(), request("tools/list"))?["result"]?["tools"]?.arrayValue)
         let names = tools.compactMap { $0["name"]?.stringValue }.sorted()
 
         #expect(names == [
-            "exercise_history", "list_exercises", "recent_sessions",
+            "exercise_history", "list_exercises", "recent_sessions", "unstated_facts",
             "update_profile", "volume_by_muscle", "write_plan",
         ])
         #expect(tools.allSatisfy { $0["inputSchema"]?["type"]?.stringValue == "object" })

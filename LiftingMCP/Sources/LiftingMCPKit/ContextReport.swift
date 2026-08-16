@@ -56,27 +56,21 @@ struct ContextReport {
             "preferredWeekdays": .array(profile.preferredWeekdays.map { .string($0.fullName) }),
             "preferredDurationMinutes": .integer(profile.preferredDurationMinutes),
             "displayUnit": .string(profile.displayUnit.rawValue),
-            "bodyweight": .mass(profile.bodyweight ?? snapshot.bodyMetrics.last?.bodyweight),
-            "unstated": .array(Self.unstatedFacts(of: profile).map { .string($0) }),
+            "bodyweight": .mass(LifterFacts.latestBodyweight(in: snapshot)),
+            "unstated": .array(unstatedFacts.map { .string($0) }),
         ]
     }
 
     /// The facts nobody has stated yet, named rather than left for a reader to
-    /// notice one `null` at a time. This is the list to close in conversation,
-    /// and `\(ToolCatalog.updateProfile)` is what closes it.
-    private static func unstatedFacts(of profile: SnapshotProfile) -> [String] {
-        var missing: [String] = []
-        if profile.availableEquipment == nil { missing.append("equipment") }
-        if profile.experience == nil { missing.append("experience") }
-        if profile.goal.isEmpty { missing.append("goal") }
-        if profile.constraints.isEmpty { missing.append("constraints") }
-        // Nameable now that there is a way to close it: nothing could write a
-        // bodyweight at all before, so reporting it as missing would only have
-        // pointed at a hole with no way through.
-        if profile.bodyweight == nil { missing.append("bodyweight") }
-        if profile.preferredWeekdays.isEmpty { missing.append("preferredWeekdays") }
-        if profile.preferredDurationMinutes == nil { missing.append("preferredDurationMinutes") }
-        return missing
+    /// notice one `null` at a time.
+    ///
+    /// Read from `LifterFacts` rather than worked out here, so this list and the
+    /// one `unstated_facts` reports are the same list. Two places
+    /// counting the record's empty fields separately would eventually disagree,
+    /// and a reader told one thing by the resource and another by the tool has
+    /// no way to tell which is right.
+    private var unstatedFacts: [String] {
+        LifterFacts.unstated(in: snapshot).map(\.name)
     }
 
     // MARK: - What he is on
@@ -169,15 +163,18 @@ struct ContextReport {
     /// summarize. The app has no setup screen, so an empty profile is a
     /// conversation that has not happened rather than a step he skipped.
     private var opening: String {
-        guard let profile = snapshot.profile else {
+        guard snapshot.profile != nil else {
             return "Nothing has been recorded about this lifter — the app asks him nothing, so "
-                + "everything known about him comes from what he tells you. Assume nothing; ask, "
-                + "then write it down with \(ToolCatalog.updateProfile). "
+                + "everything known about him comes from what he tells you. Not one fact this "
+                + "record can hold is stated; \(ToolCatalog.unstatedFacts) names them and says "
+                + "what each holds. Assume nothing; ask, then write it down with "
+                + "\(ToolCatalog.updateProfile). "
         }
-        let unstated = Self.unstatedFacts(of: profile)
+        let unstated = unstatedFacts
         guard !unstated.isEmpty else { return "" }
         return "He has not stated: \(unstated.joined(separator: ", ")). Those read as null "
             + "above and are genuinely unknown, not defaults — do not assume a value for one. "
-            + "Record what he tells you with \(ToolCatalog.updateProfile). "
+            + "\(ToolCatalog.unstatedFacts) says what each of them holds. Record what he tells "
+            + "you with \(ToolCatalog.updateProfile). "
     }
 }

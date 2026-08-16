@@ -12,6 +12,59 @@ import LiftingKit
 
 extension ToolRunner {
 
+    /// Which facts about the lifter had no value on record at the moment this
+    /// plan was written.
+    ///
+    /// Reported on success because this is where it is worth knowing: the plan
+    /// has landed, and learning now that nobody ever stated his equipment is
+    /// something that can still be acted on. It says what was empty and nothing
+    /// else — it does not withhold the plan, warn, or suggest that a fact should
+    /// have been gathered first. A plan written for a lifter nothing is known
+    /// about is a plan this server writes without comment.
+    ///
+    /// **A snapshot that cannot be read answers `null`, never an empty list.**
+    /// `write_plan` deliberately does not need a snapshot, so a first plan for a
+    /// lifter whose phone has never backgrounded still writes; reporting `[]`
+    /// there would say every fact was stated, which is the one wrong answer.
+    /// `null` says the same thing the rest of this server's nulls say — nobody
+    /// knows.
+    func unstatedWhenWritten() -> JSONValue {
+        do {
+            guard let snapshot = try documents.readSnapshot() else {
+                return Self.factsUnknown("the app has not written a snapshot yet")
+            }
+            let unstated = LifterFacts.unstated(in: snapshot).map(\.name)
+            guard !unstated.isEmpty else {
+                return [
+                    "facts": .array([]),
+                    "note": .string(
+                        "Every fact this record can hold about the lifter was stated when this "
+                            + "plan was written."),
+                ]
+            }
+            return [
+                "facts": .array(unstated.map { .string($0) }),
+                "note": .string(
+                    "This plan was written while those facts had no value on record — nobody has "
+                        + "stated them, which is not an answer of 'none'. "
+                        + "\(ToolCatalog.unstatedFacts) says what each of them holds and "
+                        + "\(ToolCatalog.updateProfile) records one."),
+            ]
+        } catch {
+            return Self.factsUnknown(error.localizedDescription)
+        }
+    }
+
+    private static func factsUnknown(_ reason: String) -> JSONValue {
+        [
+            "facts": .null,
+            "note": .string(
+                "The plan was written, but the lifter's record could not be read (\(reason)), so "
+                    + "this cannot say which facts about him were unstated at the time. That is "
+                    + "unknown rather than none."),
+        ]
+    }
+
     /// The plan as it was written, so the caller sees what landed rather than
     /// what it sent — including the weeks, which is the whole point of writing
     /// a block rather than a week.

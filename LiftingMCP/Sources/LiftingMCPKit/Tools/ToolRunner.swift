@@ -59,6 +59,7 @@ public struct ToolRunner: Sendable {
         case ToolCatalog.exerciseHistory: withSnapshot { exerciseHistory(arguments, in: $0) }
         case ToolCatalog.recentSessions: withSnapshot { recentSessions(arguments, in: $0) }
         case ToolCatalog.volumeByMuscle: withSnapshot { volumeByMuscle(arguments, in: $0) }
+        case ToolCatalog.unstatedFacts: withSnapshot { unstatedFacts(in: $0) }
         case ToolCatalog.writePlan: writePlan(arguments)
         // The only two tools that do not read the snapshot: both write into
         // the shared folder, and neither has anything to ask the log.
@@ -111,8 +112,8 @@ public struct ToolRunner: Sendable {
         No training snapshot yet, so there is nothing to report on. This is not \
         a lifter with no history — it is a file that has not been written.
 
-        LiftingPlan writes snapshot.json when the app moves to the background. \
-        On your iPhone: open LiftingPlan, then swipe up to the Home Screen and \
+        Barbell writes snapshot.json when the app moves to the background. \
+        On your iPhone: open Barbell, then swipe up to the Home Screen and \
         wait a few seconds for iCloud to sync. Then try again.
 
         Looked for: \(location)
