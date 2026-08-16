@@ -110,13 +110,17 @@ struct RootView: View {
 }
 
 /// The three tabs, which is the whole app.
+///
+/// Today is the front door. It replaced a Plan tab that rendered every week of
+/// a block identically: the block is what today is part of, so it is reached
+/// through a link on Today rather than standing beside it.
 struct MainTabView: View {
     let profile: UserProfile
 
     var body: some View {
         TabView {
-            Tab("Plan", systemImage: "dumbbell.fill") {
-                NavigationStack { PlanOverviewView(profile: profile) }
+            Tab("Today", systemImage: "dumbbell.fill") {
+                NavigationStack { TodayView(profile: profile) }
             }
             Tab("History", systemImage: "chart.line.uptrend.xyaxis") {
                 NavigationStack { HistoryView(profile: profile) }
