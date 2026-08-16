@@ -46,6 +46,10 @@ struct TodayView: View {
             }
         }
         .navigationTitle("Today")
+        // Which day "today" is. Without it the title is a label rather than an
+        // answer, and every relative word under it — "Rest day", "Tomorrow" —
+        // is anchored to nothing.
+        .navigationSubtitle(TodayPhrasing.todayLine(now))
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { now = Date() }
         }

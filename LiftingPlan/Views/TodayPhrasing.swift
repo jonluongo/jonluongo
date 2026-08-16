@@ -105,4 +105,17 @@ enum TodayPhrasing {
         guard prescribed > 0 else { return nil }
         return "\(finished) of \(prescribed) session\(prescribed == 1 ? "" : "s") logged"
     }
+
+    /// `"Sunday, 16 August"` — the day the screen is talking about.
+    ///
+    /// The screen was titled "Today" and never said which day that was, so
+    /// "Rest day" and "Tomorrow · Push" had nothing to anchor to: a word like
+    /// *tomorrow* only means something once *today* has been stated. The
+    /// weekday leads because training is scheduled by weekday — "Sunday" is the
+    /// part a lifter checks against what the block prescribes.
+    static func todayLine(_ now: Date, locale: Locale = .autoupdatingCurrent) -> String {
+        now.formatted(
+            .dateTime.weekday(.wide).day().month(.wide).locale(locale)
+        )
+    }
 }
