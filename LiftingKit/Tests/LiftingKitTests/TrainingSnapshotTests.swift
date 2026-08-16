@@ -44,7 +44,7 @@ struct TrainingSnapshotTests {
             weekdays: [.monday, .thursday], durationMinutes: 60, weeks: [week]
         )
         let profile = SnapshotProfile(
-            displayUnit: .pounds, experience: .intermediate, equipmentAccess: .fullGym,
+            displayUnit: .pounds, experience: .intermediate,
             availableEquipment: availableEquipment, goal: "Get stronger",
             constraints: "Left shoulder hurts overhead",
             bodyweight: Mass(value: 182, unit: .pounds),
@@ -213,7 +213,7 @@ struct TrainingSnapshotTests {
         // The whole point of the optionals: the app asks him nothing, so an
         // untouched profile must not tell a reader "full gym, intermediate".
         let blank = SnapshotProfile(
-            displayUnit: .pounds, experience: nil, equipmentAccess: nil,
+            displayUnit: .pounds, experience: nil,
             availableEquipment: nil, goal: "", constraints: "", bodyweight: nil,
             avoidedPatterns: [], avoidedExercises: [], preferredWeekdays: [],
             preferredDurationMinutes: nil, updatedAt: Self.instant
@@ -224,7 +224,6 @@ struct TrainingSnapshotTests {
         let profile = try #require(decoded.profile)
 
         #expect(profile.experience == nil)
-        #expect(profile.equipmentAccess == nil)
         // Not an empty list: "he can perform nothing" is a far stronger claim
         // than "nobody has said what he has".
         #expect(profile.availableEquipment == nil)
@@ -234,7 +233,7 @@ struct TrainingSnapshotTests {
     @Test("An unknown equipment access writes no key rather than a stated default")
     func unstatedEquipmentWritesNoKey() throws {
         let blank = SnapshotProfile(
-            displayUnit: .pounds, experience: nil, equipmentAccess: nil,
+            displayUnit: .pounds, experience: nil,
             availableEquipment: nil, goal: "", constraints: "", bodyweight: nil,
             avoidedPatterns: [], avoidedExercises: [], preferredWeekdays: [],
             preferredDurationMinutes: nil, updatedAt: Self.instant
@@ -271,7 +270,6 @@ struct TrainingSnapshotTests {
                 .decode(TrainingSnapshot.self, from: Data(json.utf8)).profile)
 
         #expect(profile.experience == nil)
-        #expect(profile.equipmentAccess == nil)
         #expect(profile.availableEquipment == nil)
         #expect(profile.displayUnit == .pounds)
     }

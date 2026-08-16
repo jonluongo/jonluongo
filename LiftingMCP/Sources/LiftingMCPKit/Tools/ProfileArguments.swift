@@ -26,7 +26,7 @@ extension ToolRunner {
             generatedAt: now(),
             displayUnit: try Self.stated(arguments, "displayUnit", Self.massUnit),
             experience: try Self.stated(arguments, "experience", Self.experience),
-            equipmentAccess: try Self.stated(arguments, "equipmentAccess", Self.equipment),
+            equipment: try Self.stated(arguments, "equipment", Self.equipmentOwned),
             goal: try Self.stated(arguments, "goal", { try Self.text($0, "goal") }),
             constraints: try Self.stated(
                 arguments, "constraints", { try Self.text($0, "constraints") }),
@@ -35,7 +35,9 @@ extension ToolRunner {
             preferredWeekdays: try Self.stated(arguments, "preferredWeekdays", Self.weekdays),
             preferredDurationMinutes: try Self.stated(
                 arguments, "preferredDurationMinutes",
-                { try Self.wholeNumber($0, "preferredDurationMinutes") })
+                { try Self.wholeNumber($0, "preferredDurationMinutes") }),
+            bodyweight: try Self.readings(arguments["bodyweight"]),
+            baselines: try baselines(arguments["baselines"])
         )
     }
 
@@ -76,7 +78,7 @@ extension ToolRunner {
         return .stated(try parse(raw))
     }
 
-    private static func text(_ value: JSONValue, _ key: String) throws -> String {
+    static func text(_ value: JSONValue, _ key: String) throws -> String {
         guard let text = value.stringValue else {
             throw ProfileArgumentError(
                 "'\(key)' has to be text, in the lifter's own words. Nothing was written.")
@@ -84,7 +86,7 @@ extension ToolRunner {
         return text
     }
 
-    private static func wholeNumber(_ value: JSONValue, _ key: String) throws -> Int {
+    static func wholeNumber(_ value: JSONValue, _ key: String) throws -> Int {
         guard let number = value.intValue else {
             throw ProfileArgumentError(
                 "'\(key)' has to be a whole number. Nothing was written.")
@@ -107,16 +109,6 @@ extension ToolRunner {
                     + "Nothing was written.")
         }
         return level
-    }
-
-    private static func equipment(_ value: JSONValue) throws -> Equipment {
-        guard let access = Equipment.named(try text(value, "equipmentAccess")) else {
-            throw ProfileArgumentError(
-                "'equipmentAccess' has to be one of \(Self.listed(Equipment.allCases)). It is a "
-                    + "coarse description of the gym he has; use \(ToolCatalog.listExercises)'s "
-                    + "'equipment' parameter to narrow a search. Nothing was written.")
-        }
-        return access
     }
 
     private static func weekdays(_ value: JSONValue) throws -> [Weekday] {
@@ -170,7 +162,7 @@ extension ToolRunner {
 
     /// A list, tolerating a bare value in place of a one-element array — the
     /// same latitude `list_exercises` gives its filters.
-    private static func list(_ value: JSONValue, _ key: String) throws -> [JSONValue] {
+    static func list(_ value: JSONValue, _ key: String) throws -> [JSONValue] {
         if case .array(let entries) = value { return entries }
         if case .object = value {
             throw ProfileArgumentError("'\(key)' has to be a list. Nothing was written.")

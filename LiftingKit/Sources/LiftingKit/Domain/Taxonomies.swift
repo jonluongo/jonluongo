@@ -55,13 +55,10 @@ public struct EquipmentType: ExtensibleTaxonomy {
     public static let suspension = EquipmentType(rawValue: "suspension")
     public static let sled = EquipmentType(rawValue: "sled")
     public static let cardioMachine = EquipmentType(rawValue: "cardio machine")
-    /// A swimming pool. Deliberately absent from every `EquipmentAccess` tier
-    /// today — no tier answers "does the lifter have pool access", so an
-    /// exercise tagged `.pool` is not reported as available to anyone. That is
-    /// the honest state until a pool-access question exists; folding swimming
-    /// into `.other`/`.cardioMachine` instead would make it reachable by
-    /// lifters with a "full gym" who may have no pool, which is the same
-    /// equipment-mismatch defect this taxonomy exists to prevent.
+    /// A swimming pool. Absent from every `EquipmentAccess` shorthand tier, and
+    /// rightly so — nothing about "full gym" says there is a pool in the
+    /// building. A lifter who has one says he owns it, and swim work becomes
+    /// available to him and to nobody else.
     public static let pool = EquipmentType(rawValue: "pool")
     public static let other = EquipmentType(rawValue: "other")
 

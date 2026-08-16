@@ -25,7 +25,7 @@ struct UpdateProfileTests {
     @Test("The update lands in the folder and comes back as it was written")
     func writesAndReturnsTheUpdate() throws {
         let (outcome, documents) = try update([
-            "equipmentAccess": "Full gym", "experience": "Advanced",
+            "equipment": "Full gym", "experience": "Advanced",
             "goal": "Add 20 lb to the bench", "constraints": "Left shoulder hurts overhead",
             "preferredWeekdays": ["monday", "thursday"], "preferredDurationMinutes": 60,
             "displayUnit": "kg",
@@ -33,7 +33,7 @@ struct UpdateProfileTests {
         let report = try #require(outcome.report)
         let written = try #require(documents.lastWrittenProfileUpdate)
 
-        #expect(written.equipmentAccess == .stated(.fullGym))
+        #expect(written.equipment.stated.map(Set.init) == EquipmentAccess.permitted(for: .fullGym))
         #expect(written.experience == .stated(.advanced))
         #expect(written.goal == .stated("Add 20 lb to the bench"))
         #expect(written.constraints == .stated("Left shoulder hurts overhead"))
@@ -59,23 +59,24 @@ struct UpdateProfileTests {
     func omittedFieldsAreUntouched() throws {
         // This is what lets Claude record one thing it just learned without
         // restating, and possibly clobbering, everything else.
-        let (_, documents) = try update(["equipmentAccess": "Full gym"])
+        let (_, documents) = try update(["equipment": "Full gym"])
         let written = try #require(documents.lastWrittenProfileUpdate)
 
         #expect(written.experience == .unchanged)
         #expect(written.goal == .unchanged)
         #expect(written.preferredWeekdays == .unchanged)
+        #expect(written.bodyweight.isEmpty)
     }
 
     @Test("A field sent as null returns the fact to not-known, not to a default")
     func nullTakesTheFactBack() throws {
-        let (outcome, documents) = try update(["equipmentAccess": .null])
+        let (outcome, documents) = try update(["equipment": .null])
         let written = try #require(documents.lastWrittenProfileUpdate)
 
-        #expect(written.equipmentAccess == .unstated)
+        #expect(written.equipment == .unstated)
         #expect(written.experience == .unchanged)
         #expect(
-            outcome.report?["recorded"]?["equipmentAccess"]?["state"]?.stringValue
+            outcome.report?["recorded"]?["equipment"]?["state"]?.stringValue
                 == "returned to not known")
     }
 
@@ -100,14 +101,16 @@ struct UpdateProfileTests {
 
     // MARK: - Written however he said it
 
-    @Test("An access tier written loosely is understood rather than refused")
-    func equipmentIsReadLoosely() throws {
+    @Test("A tier used as shorthand is expanded into the equipment it stands for")
+    func equipmentTierIsShorthand() throws {
         #expect(
-            try update(["equipmentAccess": "full gym"]).1
-                .lastWrittenProfileUpdate?.equipmentAccess == .stated(.fullGym))
+            try update(["equipment": "full gym"]).1
+                .lastWrittenProfileUpdate?.equipment.stated.map(Set.init)
+                == EquipmentAccess.permitted(for: .fullGym))
         #expect(
-            try update(["equipmentAccess": "dumbbells_only"]).1
-                .lastWrittenProfileUpdate?.equipmentAccess == .stated(.dumbbellsOnly))
+            try update(["equipment": "dumbbells_only"]).1
+                .lastWrittenProfileUpdate?.equipment.stated.map(Set.init)
+                == EquipmentAccess.permitted(for: .dumbbellsOnly))
     }
 
     @Test("A weekday is understood as a name or as Calendar's numbering, as write_plan does")
@@ -133,12 +136,16 @@ struct UpdateProfileTests {
 
     // MARK: - What is refused
 
-    @Test("An invented access tier is refused, naming the tiers that exist")
-    func unknownEquipmentIsRefused() throws {
-        let (outcome, documents) = try update(["equipmentAccess": "commercial gym"])
+    @Test("Equipment this build has never heard of is recorded, not refused")
+    func unknownEquipmentIsRecorded() throws {
+        // Refusing here would refuse a true fact about the lifter at the exact
+        // moment someone is trying to write it down.
+        let (outcome, documents) = try update(["equipment": ["barbell", "reverse hyper"]])
+        let written = try #require(documents.lastWrittenProfileUpdate)
 
-        #expect(documents.lastWrittenProfileUpdate == nil)
-        #expect(try #require(outcome.failureMessage).contains("Full gym"))
+        #expect(
+            written.equipment.stated?.contains(EquipmentType(rawValue: "reverse hyper")) == true)
+        #expect(outcome.report != nil)
     }
 
     @Test("An avoided exercise the catalog does not have is refused, naming the ID")
@@ -184,11 +191,11 @@ struct UpdateProfileTests {
         // Silently dropped, this reads as "Recorded" while the lifter's weight
         // is never written down anywhere.
         let (outcome, documents) = try update([
-            "goal": "Bigger bench", "bodyweight": ["value": 180.0, "unit": "lb"],
+            "goal": "Bigger bench", "restingHeartRate": 52,
         ])
         let message = try #require(outcome.failureMessage)
 
-        #expect(message.contains("bodyweight"))
+        #expect(message.contains("restingHeartRate"))
         #expect(documents.lastWrittenProfileUpdate == nil, "a refused update must write nothing")
     }
 
@@ -253,10 +260,10 @@ struct UpdateProfileTests {
         // drop the first call's facts while reporting them as written.
         let documents = try twoUpdates(
             ["goal": "Bigger bench", "constraints": "Left shoulder"],
-            ["equipmentAccess": "Full gym"])
+            ["equipment": "Full gym"])
         let written = try #require(documents.lastWrittenProfileUpdate)
 
-        #expect(written.equipmentAccess == .stated(.fullGym))
+        #expect(written.equipment.stated?.contains(.barbell) == true)
         #expect(written.goal == .stated("Bigger bench"))
         #expect(written.constraints == .stated("Left shoulder"))
     }

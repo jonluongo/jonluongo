@@ -15,19 +15,36 @@ import Foundation
 /// field it sets to `null` returns to not-known, which is how a fact recorded in
 /// error is taken back rather than merely overwritten with another guess.
 ///
+/// **Two of its facts are series rather than values.** `bodyweight` and
+/// `baselines` are lists of records, each keyed on what it is about — a
+/// bodyweight reading on its day, a baseline on its lift. A record for a key the
+/// store does not have is added and one for a key it has replaces that entry, so
+/// appending to the series and correcting a mistaken entry are the same verb and
+/// no history is ever silently dropped. They are not `StatedValue` fields, and
+/// deliberately: a wholesale replacement is exactly what would destroy the trend
+/// the first time Claude recorded a single weigh-in.
+///
 /// `id` is the update's stable identity: an update already applied is applied
 /// once, so a document left sitting in the folder does not keep re-imposing
 /// itself over a later change.
 ///
-/// Depends on: `StatedValue`, `MassUnit`, `ExperienceLevel`, `Equipment`,
-/// `MovementPattern`, `ExerciseID`, and `Weekday`. Pure value types by design —
-/// the macOS server writes these and must never link SwiftData, so the mapping
-/// into the store lives in the app.
+/// Depends on: `StatedValue`, `MassUnit`, `ExperienceLevel`, `EquipmentType`,
+/// `MovementPattern`, `ExerciseID`, `Weekday`, `BodyweightReading` and
+/// `BaselineStatement`. Pure value types by design — the macOS server writes
+/// these and must never link SwiftData, so the mapping into the store lives in
+/// the app.
 public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
 
     /// The format version this build writes. Bump it when a reader would need
     /// to behave differently, not for an additive field.
-    public static let currentVersion = 1
+    ///
+    /// Version 2 replaced the coarse `equipmentAccess` tier with `equipment`,
+    /// the open set of what the lifter actually owns, and added the two facts
+    /// nothing could previously write at all: `bodyweight` and `baselines`. A
+    /// version 1 document is still read — its tier is expanded into the
+    /// equipment it stood for, and a tier this build does not recognize is
+    /// carried as an equipment type rather than refused.
+    public static let currentVersion = 2
 
     /// The format version of this document, as written.
     public let version: Int
@@ -35,14 +52,20 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
     /// nothing the second time.
     public let id: UUID
     /// When the update was written. The app records when it *arrived*
-    /// separately, since an update can be written before it is applied.
+    /// separately, since an update can be written before it is applied. It is
+    /// also the day a bodyweight reading or a baseline that named no date
+    /// belongs to.
     public let generatedAt: Date
 
     /// How the app renders weights. Not a training fact — it is the one thing
     /// the lifter can still set for himself in Settings.
     public let displayUnit: StatedValue<MassUnit>
     public let experience: StatedValue<ExperienceLevel>
-    public let equipmentAccess: StatedValue<Equipment>
+    /// What he owns, as an open set of equipment types. Replaces the stored set
+    /// wholesale rather than adding to it — a patch that could only add could
+    /// never record a gym membership that lapsed. An empty set is a lifter who
+    /// owns nothing; `unstated` is a lifter nobody has asked.
+    public let equipment: StatedValue<[EquipmentType]>
     /// What he is training for, in his words. Cleared to no stated goal.
     public let goal: StatedValue<String>
     /// Injuries and limitations, in his words. Cleared to no stated constraint.
@@ -58,6 +81,12 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
     public let preferredWeekdays: StatedValue<[Weekday]>
     /// How long he wants a session to run.
     public let preferredDurationMinutes: StatedValue<Int>
+    /// Bodyweight readings to record, each on its own day. Empty when this
+    /// update says nothing about his weight — never a clearing of the series.
+    public let bodyweight: [BodyweightReading]
+    /// Starting strength to record, each on its own lift. Empty when this update
+    /// states none.
+    public let baselines: [BaselineStatement]
 
     public init(
         version: Int = ProfileUpdate.currentVersion,
@@ -65,36 +94,40 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
         generatedAt: Date,
         displayUnit: StatedValue<MassUnit> = .unchanged,
         experience: StatedValue<ExperienceLevel> = .unchanged,
-        equipmentAccess: StatedValue<Equipment> = .unchanged,
+        equipment: StatedValue<[EquipmentType]> = .unchanged,
         goal: StatedValue<String> = .unchanged,
         constraints: StatedValue<String> = .unchanged,
         avoidedPatterns: StatedValue<[MovementPattern]> = .unchanged,
         avoidedExercises: StatedValue<[ExerciseID]> = .unchanged,
         preferredWeekdays: StatedValue<[Weekday]> = .unchanged,
-        preferredDurationMinutes: StatedValue<Int> = .unchanged
+        preferredDurationMinutes: StatedValue<Int> = .unchanged,
+        bodyweight: [BodyweightReading] = [],
+        baselines: [BaselineStatement] = []
     ) {
         self.version = version
         self.id = id
         self.generatedAt = generatedAt
         self.displayUnit = displayUnit
         self.experience = experience
-        self.equipmentAccess = equipmentAccess
+        self.equipment = equipment
         self.goal = goal
         self.constraints = constraints
         self.avoidedPatterns = avoidedPatterns
         self.avoidedExercises = avoidedExercises
         self.preferredWeekdays = preferredWeekdays
         self.preferredDurationMinutes = preferredDurationMinutes
+        self.bodyweight = bodyweight
+        self.baselines = baselines
     }
 
     /// Whether this update would change nothing at all. An empty patch is not
     /// an error — it is a caller that learned nothing — but it is worth being
     /// able to say so rather than reporting a write that meant nothing.
     public var statesNothing: Bool {
-        displayUnit.isUnchanged && experience.isUnchanged && equipmentAccess.isUnchanged
+        displayUnit.isUnchanged && experience.isUnchanged && equipment.isUnchanged
             && goal.isUnchanged && constraints.isUnchanged && avoidedPatterns.isUnchanged
             && avoidedExercises.isUnchanged && preferredWeekdays.isUnchanged
-            && preferredDurationMinutes.isUnchanged
+            && preferredDurationMinutes.isUnchanged && bodyweight.isEmpty && baselines.isEmpty
     }
 
     /// This update laid over one that has not been applied yet.
@@ -106,6 +139,11 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
     /// keeps *this* update's identity and timestamp, because it is the document
     /// that will actually be written.
     ///
+    /// The two series fold record by record on their own keys, so a weigh-in
+    /// from the earlier update survives a later one about a different day and is
+    /// corrected by a later one about the same day — the same rule the app
+    /// applies when it stores them.
+    ///
     /// Only correct against an update that is genuinely still waiting. Folding
     /// in one the phone has already applied would re-impose facts the lifter
     /// may have changed since.
@@ -116,131 +154,34 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
             generatedAt: generatedAt,
             displayUnit: displayUnit.superseding(earlier.displayUnit),
             experience: experience.superseding(earlier.experience),
-            equipmentAccess: equipmentAccess.superseding(earlier.equipmentAccess),
+            equipment: equipment.superseding(earlier.equipment),
             goal: goal.superseding(earlier.goal),
             constraints: constraints.superseding(earlier.constraints),
             avoidedPatterns: avoidedPatterns.superseding(earlier.avoidedPatterns),
             avoidedExercises: avoidedExercises.superseding(earlier.avoidedExercises),
             preferredWeekdays: preferredWeekdays.superseding(earlier.preferredWeekdays),
             preferredDurationMinutes: preferredDurationMinutes.superseding(
-                earlier.preferredDurationMinutes)
+                earlier.preferredDurationMinutes),
+            bodyweight: Self.folded(bodyweight, over: earlier.bodyweight, keyedBy: \.date),
+            baselines: Self.folded(baselines, over: earlier.baselines, keyedBy: \.exerciseID)
         )
     }
 
-    /// Spelled out rather than synthesized: this type writes both halves of
-    /// `Codable` by hand, so nothing generates these.
-    private enum CodingKeys: String, CodingKey, CaseIterable {
-        case version, id, generatedAt
-        case displayUnit, experience, equipmentAccess, goal, constraints
-        case avoidedPatterns, avoidedExercises, preferredWeekdays, preferredDurationMinutes
-    }
-
-    /// The facts an update may state, as they are written on the wire.
-    ///
-    /// Public because the MCP server takes these same names as its tool
-    /// arguments and must refuse a key this document could not hold. Read from
-    /// the coding keys rather than retyped, so a fact added here cannot be one
-    /// the server keeps rejecting.
-    public static let statedKeys: Set<String> = Set(
-        CodingKeys.allCases.map(\.stringValue)
-    ).subtracting(["version", "id", "generatedAt"])
-
-    /// Every key the document itself may carry: the facts, plus the three
-    /// things that make it a document.
-    private static let acceptedKeys: Set<String> =
-        Set(CodingKeys.allCases.map(\.stringValue))
-
-    /// Only the three facts about the document itself are required. Every
-    /// standing fact is three-way: absent, stated, or explicitly `null`.
-    ///
-    /// A key this format does not have is refused rather than dropped — an
-    /// update reported as recorded while a fact in it was quietly discarded is
-    /// worse than one that was refused and could be sent again. A document from
-    /// a later format is refused as such, before any of its keys are held
-    /// against it.
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        version = try container.decode(Int.self, forKey: .version)
-        guard version <= Self.currentVersion else {
-            throw DocumentRefusal.laterVersion(version, understood: Self.currentVersion)
+    /// The earlier records with these laid over them: one about a key the
+    /// earlier list does not have is appended, and one about a key it does have
+    /// takes that record's place. Order is the earlier list's, so a series stays
+    /// in the order it was built up in.
+    private static func folded<Record, Key: Hashable>(
+        _ later: [Record], over earlier: [Record], keyedBy key: (Record) -> Key
+    ) -> [Record] {
+        var folded = earlier
+        for record in later {
+            if let existing = folded.firstIndex(where: { key($0) == key(record) }) {
+                folded[existing] = record
+            } else {
+                folded.append(record)
+            }
         }
-        try decoder.refuseUnknownKeys(besides: Self.acceptedKeys)
-        id = try container.decode(UUID.self, forKey: .id)
-        generatedAt = try container.decode(Date.self, forKey: .generatedAt)
-        displayUnit = try container.decodeStated(MassUnit.self, forKey: .displayUnit)
-        experience = try container.decodeStated(ExperienceLevel.self, forKey: .experience)
-        equipmentAccess = try container.decodeStated(Equipment.self, forKey: .equipmentAccess)
-        goal = try container.decodeStated(String.self, forKey: .goal)
-        constraints = try container.decodeStated(String.self, forKey: .constraints)
-        avoidedPatterns = try container.decodeStated(
-            [MovementPattern].self, forKey: .avoidedPatterns)
-        avoidedExercises = try container.decodeStated(
-            [ExerciseID].self, forKey: .avoidedExercises)
-        preferredWeekdays = try container.decodeStated(
-            [Weekday].self, forKey: .preferredWeekdays)
-        preferredDurationMinutes = try container.decodeStated(
-            Int.self, forKey: .preferredDurationMinutes)
-    }
-
-    public func encode(to encoder: any Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(version, forKey: .version)
-        try container.encode(id, forKey: .id)
-        try container.encode(generatedAt, forKey: .generatedAt)
-        try container.encodeStated(displayUnit, forKey: .displayUnit)
-        try container.encodeStated(experience, forKey: .experience)
-        try container.encodeStated(equipmentAccess, forKey: .equipmentAccess)
-        try container.encodeStated(goal, forKey: .goal)
-        try container.encodeStated(constraints, forKey: .constraints)
-        try container.encodeStated(avoidedPatterns, forKey: .avoidedPatterns)
-        try container.encodeStated(avoidedExercises, forKey: .avoidedExercises)
-        try container.encodeStated(preferredWeekdays, forKey: .preferredWeekdays)
-        try container.encodeStated(preferredDurationMinutes, forKey: .preferredDurationMinutes)
-    }
-
-    /// The encoder both clients use. ISO 8601 dates and sorted keys, so an
-    /// update is diffable and a Mac and a phone cannot disagree about an
-    /// instant.
-    public static func makeEncoder() -> JSONEncoder {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        return encoder
-    }
-
-    /// The matching decoder. Use it rather than a bare `JSONDecoder`, whose
-    /// default date strategy would reject everything `makeEncoder()` writes.
-    public static func makeDecoder() -> JSONDecoder {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return decoder
-    }
-}
-
-extension KeyedDecodingContainer {
-
-    /// The three-way reading `StatedValue` needs, which no `decodeIfPresent`
-    /// can give: that one answers `nil` for a missing key and for an explicit
-    /// `null` alike, and the whole point here is telling those apart.
-    fileprivate func decodeStated<Value: Decodable & Hashable & Sendable>(
-        _ type: Value.Type, forKey key: Key
-    ) throws -> StatedValue<Value> {
-        guard contains(key) else { return .unchanged }
-        if try decodeNil(forKey: key) { return .unstated }
-        return .stated(try decode(Value.self, forKey: key))
-    }
-}
-
-extension KeyedEncodingContainer {
-
-    /// The mirror: `unchanged` writes no key at all, `unstated` writes `null`.
-    fileprivate mutating func encodeStated<Value: Encodable & Hashable & Sendable>(
-        _ stated: StatedValue<Value>, forKey key: Key
-    ) throws {
-        switch stated {
-        case .unchanged: break
-        case .stated(let value): try encode(value, forKey: key)
-        case .unstated: try encodeNil(forKey: key)
-        }
+        return folded
     }
 }

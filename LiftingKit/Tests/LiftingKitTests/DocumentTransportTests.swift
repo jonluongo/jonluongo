@@ -85,7 +85,6 @@ private func makeSnapshot(catalogVersion: Int = 5) -> TrainingSnapshot {
         generatedAt: instant,
         profile: SnapshotProfile(
             displayUnit: .pounds, experience: .intermediate,
-            equipmentAccess: .fullGym,
             availableEquipment: [EquipmentType(rawValue: "barbell")],
             goal: "Bigger bench", constraints: "Left shoulder is touchy",
             bodyweight: Mass(value: 182, unit: .pounds),
@@ -126,7 +125,7 @@ private func makePlan(id: UUID = UUID(), title: String = "Strength block") -> Pl
 private func makeProfileUpdate(id: UUID = UUID()) -> ProfileUpdate {
     ProfileUpdate(
         id: id, generatedAt: instant, experience: .stated(.advanced),
-        equipmentAccess: .stated(.dumbbellsOnly), goal: .stated("Bigger bench"),
+        equipment: .stated([.dumbbell, .plate]), goal: .stated("Bigger bench"),
         constraints: .unstated, preferredWeekdays: .stated([.monday, .thursday]),
         preferredDurationMinutes: .stated(45)
     )

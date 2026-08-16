@@ -18,13 +18,13 @@ struct ProfileUpdateTests {
 
     private func update(
         experience: StatedValue<ExperienceLevel> = .unchanged,
-        equipmentAccess: StatedValue<Equipment> = .unchanged,
+        equipment: StatedValue<[EquipmentType]> = .unchanged,
         goal: StatedValue<String> = .unchanged,
         preferredDurationMinutes: StatedValue<Int> = .unchanged
     ) throws -> ProfileUpdate {
         ProfileUpdate(
             id: try #require(Self.identity), generatedAt: Self.instant,
-            experience: experience, equipmentAccess: equipmentAccess, goal: goal,
+            experience: experience, equipment: equipment, goal: goal,
             preferredDurationMinutes: preferredDurationMinutes
         )
     }
@@ -43,7 +43,7 @@ struct ProfileUpdateTests {
     @Test("An update carrying all three states round-trips with each one intact")
     func allThreeStatesRoundTrip() throws {
         let original = try update(
-            experience: .stated(.advanced), equipmentAccess: .unstated,
+            experience: .stated(.advanced), equipment: .unstated,
             goal: .stated("Bigger bench")
         )
 
@@ -51,7 +51,7 @@ struct ProfileUpdateTests {
 
         #expect(decoded == original)
         #expect(decoded.experience == .stated(.advanced))
-        #expect(decoded.equipmentAccess == .unstated)
+        #expect(decoded.equipment == .unstated)
         #expect(decoded.preferredDurationMinutes == .unchanged)
     }
 
@@ -61,20 +61,20 @@ struct ProfileUpdateTests {
 
         #expect(json.contains("\"goal\""))
         #expect(!json.contains("\"experience\""))
-        #expect(!json.contains("\"equipmentAccess\""))
+        #expect(!json.contains("\"equipment\""))
     }
 
     @Test("A field the update takes back writes an explicit null, not an absent key")
     func unstatedFieldWritesNull() throws {
-        let json = try encodedJSON(try update(equipmentAccess: .unstated))
+        let json = try encodedJSON(try update(equipment: .unstated))
 
-        #expect(json.contains("\"equipmentAccess\" : null"))
+        #expect(json.contains("\"equipment\" : null"))
     }
 
     @Test("An absent key and an explicit null decode differently")
     func absentAndNullAreDifferent() throws {
         let json = """
-            {"version": 1, "id": "11111111-2222-3333-4444-555555555555",
+            {"version": 2, "id": "11111111-2222-3333-4444-555555555555",
              "generatedAt": "2023-11-14T22:13:20Z", "experience": null}
             """
 
@@ -82,7 +82,7 @@ struct ProfileUpdateTests {
             .decode(ProfileUpdate.self, from: Data(json.utf8))
 
         #expect(decoded.experience == .unstated)
-        #expect(decoded.equipmentAccess == .unchanged)
+        #expect(decoded.equipment == .unchanged)
     }
 
     @Test("An update that names no fact at all says so rather than pretending to change one")
@@ -90,12 +90,12 @@ struct ProfileUpdateTests {
         #expect(try update().statesNothing)
         #expect(!(try update(goal: .stated("")).statesNothing))
         // Taking a fact back is a change, not an absence of one.
-        #expect(!(try update(equipmentAccess: .unstated).statesNothing))
+        #expect(!(try update(equipment: .unstated).statesNothing))
     }
 
     @Test("An update that cannot say what or when it is fails to decode")
     func identityAndTimestampAreRequired() {
-        let json = #"{"version": 1, "goal": "Bigger bench"}"#
+        let json = #"{"version": 2, "goal": "Bigger bench"}"#
 
         #expect(throws: (any Error).self) {
             try ProfileUpdate.makeDecoder().decode(ProfileUpdate.self, from: Data(json.utf8))
@@ -119,7 +119,7 @@ struct ProfileUpdateTests {
     @Test("An unstated field returns the fact to not-known rather than to a default")
     func unstatedResolvesToNothing() {
         #expect(StatedValue<Int>.unstated.resolved(from: 45) == nil)
-        #expect(StatedValue<Equipment>.unstated.resolved(from: .fullGym) == nil)
+        #expect(StatedValue<[EquipmentType]>.unstated.resolved(from: [.barbell]) == nil)
     }
 
     // MARK: - Unknown values still round-trip
@@ -135,6 +135,85 @@ struct ProfileUpdateTests {
         )
 
         #expect(try roundTrip(original).avoidedPatterns == .stated([unknown, .hinge]))
+    }
+
+    @Test("Equipment this build has never heard of round-trips rather than rejecting the update")
+    func unknownEquipmentSurvives() throws {
+        // Refusing the document here would refuse a true fact about the lifter
+        // at the exact moment someone is trying to record it.
+        let unknown = EquipmentType(rawValue: "reverse hyper")
+        #expect(!unknown.isKnown)
+
+        let decoded = try roundTrip(try update(equipment: .stated([.barbell, unknown])))
+
+        #expect(decoded.equipment == .stated([.barbell, unknown]))
+    }
+
+    @Test("An unrecognized value in the old tier key is carried, not rejected")
+    func unknownLegacyTierIsCarried() throws {
+        let json = """
+            {"version": 1, "id": "11111111-2222-3333-4444-555555555555",
+             "generatedAt": "2023-11-14T22:13:20Z", "equipmentAccess": "commercial gym"}
+            """
+
+        let decoded = try ProfileUpdate.makeDecoder()
+            .decode(ProfileUpdate.self, from: Data(json.utf8))
+
+        #expect(decoded.equipment == .stated([EquipmentType(rawValue: "commercial gym")]))
+    }
+
+    // MARK: - Reading a document written before the format widened
+
+    @Test("A version 1 update's tier is read as the equipment it stands for")
+    func legacyTierBecomesTheTypesItStandsFor() throws {
+        let json = """
+            {"version": 1, "id": "11111111-2222-3333-4444-555555555555",
+             "generatedAt": "2023-11-14T22:13:20Z", "equipmentAccess": "Dumbbells only"}
+            """
+
+        let decoded = try ProfileUpdate.makeDecoder()
+            .decode(ProfileUpdate.self, from: Data(json.utf8))
+        let owned = try #require(decoded.equipment.stated)
+
+        #expect(Set(owned) == EquipmentAccess.permitted(for: .dumbbellsOnly))
+    }
+
+    @Test("A version 1 update that takes the tier back still takes the equipment back")
+    func legacyTierNullStillClears() throws {
+        let json = """
+            {"version": 1, "id": "11111111-2222-3333-4444-555555555555",
+             "generatedAt": "2023-11-14T22:13:20Z", "equipmentAccess": null}
+            """
+
+        let decoded = try ProfileUpdate.makeDecoder()
+            .decode(ProfileUpdate.self, from: Data(json.utf8))
+
+        #expect(decoded.equipment == .unstated)
+    }
+
+    @Test("An update stating both the tier and the owned set is refused rather than resolved")
+    func bothEquipmentKeysAreRefused() {
+        let json = """
+            {"version": 2, "id": "11111111-2222-3333-4444-555555555555",
+             "generatedAt": "2023-11-14T22:13:20Z",
+             "equipmentAccess": "Full gym", "equipment": ["barbell"]}
+            """
+
+        #expect(throws: DocumentRefusal.self) {
+            try ProfileUpdate.makeDecoder().decode(ProfileUpdate.self, from: Data(json.utf8))
+        }
+    }
+
+    @Test("An update from a later format is refused whole rather than read in part")
+    func laterVersionIsRefused() {
+        let json = """
+            {"version": 99, "id": "11111111-2222-3333-4444-555555555555",
+             "generatedAt": "2023-11-14T22:13:20Z", "goal": "Bigger bench"}
+            """
+
+        #expect(throws: DocumentRefusal.self) {
+            try ProfileUpdate.makeDecoder().decode(ProfileUpdate.self, from: Data(json.utf8))
+        }
     }
 }
 

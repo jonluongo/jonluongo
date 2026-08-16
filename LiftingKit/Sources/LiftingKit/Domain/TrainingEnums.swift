@@ -41,8 +41,19 @@ public enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable, Compara
     }
 }
 
-/// What equipment the lifter has access to — a fact about his gym, which
-/// `EquipmentAccess` turns into the concrete `EquipmentType`s it grants.
+/// A coarse description of a gym, offered as shorthand for the equipment such a
+/// gym usually holds.
+///
+/// **It is never what is stored.** What a lifter owns is an open set of
+/// `EquipmentType`, because a real gym is not a tier: "barbell and bands but no
+/// rack" is none of these, and forcing it into the nearest one either grants him
+/// machines he does not have or denies him the bar he does. Use a tier only to
+/// say several types at once — `EquipmentAccess.permitted(for:)` expands one
+/// into the types it stands for — and expect the expansion, not the tier, to be
+/// what is recorded and what anything filters on.
+///
+/// Because it is never stored, a description this list does not have can never
+/// reject a document; it is simply not one of the shorthands on offer.
 public enum Equipment: String, CaseIterable, Codable, Sendable, Identifiable {
     case fullGym = "Full gym"
     case dumbbellsOnly = "Dumbbells only"

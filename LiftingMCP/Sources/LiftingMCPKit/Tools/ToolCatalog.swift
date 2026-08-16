@@ -127,19 +127,55 @@ public enum ToolCatalog {
         name: updateProfile,
         title: "Update profile",
         description: """
-            Records what you have learned about the lifter — his gym, his \
-            experience, his goal, his injuries, when he trains. The app asks him \
-            none of this, so what he tells you is written here or it is not \
-            written at all. Pass only the fields you have just learned: anything \
-            you leave out keeps the value it already has. Pass null for a field \
-            to return it to not-known, which is how a fact recorded in error is \
-            taken back. Lists replace rather than add, so send the whole list \
-            each time.
+            Records what you have learned about the lifter — the equipment he \
+            has, what he weighs, what he can already lift, his experience, his \
+            goal, his injuries, when he trains. The app asks him none of this, \
+            so what he tells you is written here or it is not written at all. \
+            Pass only the fields you have just learned: anything you leave out \
+            keeps the value it already has. Pass null for a field to return it \
+            to not-known, which is how a fact recorded in error is taken back. \
+            Lists replace rather than add, so send the whole list each time — \
+            except bodyweight and baselines, which are series: each record you \
+            send is filed under its day or its lift, adding a new one and \
+            correcting one already there, so the history is never overwritten.
             """,
         inputSchema: object([
-            "equipmentAccess": enumerated(
-                Equipment.allCases.map(\.rawValue),
-                "The gym he has, as a coarse tier. Null if he has not said."),
+            "equipment": [
+                "description": .string(
+                    "What he actually owns, as a list of equipment types — "
+                        + "\(EquipmentType.known.map(\.rawValue).joined(separator: ", ")). "
+                        + "A real gym is not a tier: send exactly what he has, e.g. "
+                        + "['barbell', 'plate', 'band'] for a garage with no cable stack. "
+                        + "The coarse tiers "
+                        + "\(Equipment.allCases.map(\.rawValue).joined(separator: ", ")) "
+                        + "are accepted in the same list as shorthand and expand into the "
+                        + "types they stand for. Null if he has not said — that is unknown, "
+                        + "not 'owns nothing', and an empty list is 'owns nothing'."),
+                "anyOf": [
+                    ["type": "array", "items": ["type": "string"]],
+                    ["type": "string"], ["type": "null"],
+                ],
+            ],
+            "bodyweight": [
+                "description": .string(
+                    "What he weighs, as {\"value\": 182, \"unit\": \"lb\"}. This is a dated "
+                        + "series, not one number: pass a list to record several weigh-ins, "
+                        + "and add \"date\" (ISO 8601, UTC) to file one on the day it happened "
+                        + "rather than today. Stating a day again corrects that day's reading; "
+                        + "a new day is added, so the trend is never overwritten."),
+                "anyOf": [massSchema, ["type": "array", "items": massSchema]],
+            ],
+            "baselines": [
+                "description": .string(
+                    "What he can already do on a lift, before any of it is logged — the load "
+                        + "anchor a first block has nothing else to work from. Each is "
+                        + "{\"exerciseID\": …, \"load\": {\"value\": …, \"unit\": …}, "
+                        + "\"reps\": …}, with an optional ISO 8601 \"recordedAt\". Leave out "
+                        + "\"load\" for bodyweight work. Take exerciseID verbatim from "
+                        + "\(listExercises); an ID the catalog does not have is refused. "
+                        + "Stating a lift again replaces that lift's baseline."),
+                "anyOf": [baselineSchema, ["type": "array", "items": baselineSchema]],
+            ],
             "experience": enumerated(
                 ExperienceLevel.allCases.map(\.rawValue),
                 "Roughly how long he has trained, as he describes it."),

@@ -248,7 +248,7 @@ struct DocumentInboxTests {
     private func profileUpdate(id: UUID = UUID()) -> ProfileUpdate {
         ProfileUpdate(
             id: id, generatedAt: Self.instant, displayUnit: .stated(.pounds),
-            experience: .stated(.advanced), equipmentAccess: .stated(.dumbbellsOnly),
+            experience: .stated(.advanced), equipment: .stated([.dumbbell, .plate]),
             goal: .stated("Bigger bench")
         )
     }
@@ -270,7 +270,7 @@ struct DocumentInboxTests {
 
         let profile = try #require(try storedProfiles(in: context).first)
         #expect(profile.experience == .advanced)
-        #expect(profile.equipmentAccess == .dumbbellsOnly)
+        #expect(profile.ownedEquipment.map(Set.init) == [.dumbbell, .plate])
         #expect(profile.goal == "Bigger bench")
         #expect(inbox.errorMessage == nil)
     }

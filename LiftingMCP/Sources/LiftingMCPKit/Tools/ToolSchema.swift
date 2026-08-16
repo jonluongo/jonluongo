@@ -55,6 +55,35 @@ extension ToolCatalog {
         ]
     }
 
+    /// A weight, which always carries the unit it was entered in — nothing here
+    /// converts one, and a bare number could only be read by guessing.
+    static var massSchema: JSONValue {
+        [
+            "type": "object",
+            "properties": [
+                "value": ["type": "number"],
+                "unit": ["type": "string", "enum": .array(
+                    MassUnit.allCases.map { .string($0.rawValue) })],
+                "date": ["type": "string", "description": "ISO 8601, UTC. Optional."],
+            ],
+            "required": ["value", "unit"],
+        ]
+    }
+
+    /// One stated starting point on one lift.
+    static var baselineSchema: JSONValue {
+        [
+            "type": "object",
+            "properties": [
+                "exerciseID": ["type": "string"],
+                "load": massSchema,
+                "reps": ["type": "integer"],
+                "recordedAt": ["type": "string", "description": "ISO 8601, UTC. Optional."],
+            ],
+            "required": ["exerciseID", "reps"],
+        ]
+    }
+
     /// A day, as either of the two ways a weekday is legibly written.
     static func weekday(_ description: String) -> JSONValue {
         [

@@ -50,7 +50,6 @@ struct ContextReport {
             "experience": .string(profile.experience?.rawValue),
             "goal": .string(profile.goal),
             "constraints": .string(profile.constraints),
-            "equipmentAccess": .string(profile.equipmentAccess?.rawValue),
             "availableEquipment": profile.availableEquipment.map { .taxonomy($0) } ?? .null,
             "avoidedPatterns": .taxonomy(profile.avoidedPatterns),
             "avoidedExercises": .array(profile.avoidedExercises.map { .string($0.rawValue) }),
@@ -67,10 +66,14 @@ struct ContextReport {
     /// and `\(ToolCatalog.updateProfile)` is what closes it.
     private static func unstatedFacts(of profile: SnapshotProfile) -> [String] {
         var missing: [String] = []
-        if profile.equipmentAccess == nil { missing.append("equipmentAccess") }
+        if profile.availableEquipment == nil { missing.append("equipment") }
         if profile.experience == nil { missing.append("experience") }
         if profile.goal.isEmpty { missing.append("goal") }
         if profile.constraints.isEmpty { missing.append("constraints") }
+        // Nameable now that there is a way to close it: nothing could write a
+        // bodyweight at all before, so reporting it as missing would only have
+        // pointed at a hole with no way through.
+        if profile.bodyweight == nil { missing.append("bodyweight") }
         if profile.preferredWeekdays.isEmpty { missing.append("preferredWeekdays") }
         if profile.preferredDurationMinutes == nil { missing.append("preferredDurationMinutes") }
         return missing

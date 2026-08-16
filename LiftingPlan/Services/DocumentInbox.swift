@@ -128,7 +128,7 @@ final class DocumentInbox {
         do {
             // Nothing waiting is the normal state, not something to report.
             if let update = try await Self.readProfileUpdate(from: transport) {
-                try ProfileUpdater.apply(update, to: context)
+                try ProfileUpdater.apply(update, to: context, catalog: catalog)
             }
         } catch {
             failures.append(Self.describe(error))

@@ -64,17 +64,16 @@ enum SnapshotExporter {
 
     /// The profile, with what nobody has stated left absent.
     ///
-    /// `experience`, `equipmentAccess` and the equipment derived from it cross
-    /// as `nil` when they have not been stated. This is the one place that
-    /// could quietly turn "not known" into a plausible default on the way out,
-    /// and a reader given "Full gym, Intermediate" about someone who never said
-    /// so has no way to tell it from a fact. `availableEquipment` is `nil` for
-    /// the same reason rather than empty: empty says he can perform nothing.
+    /// `experience` and the equipment he owns cross as `nil` when they have not
+    /// been stated. This is the one place that could quietly turn "not known"
+    /// into a plausible default on the way out, and a reader given "Full gym,
+    /// Intermediate" about someone who never said so has no way to tell it from
+    /// a fact. `availableEquipment` is `nil` for the same reason rather than
+    /// empty: empty says he can perform nothing.
     private static func snapshot(of profile: UserProfile) -> SnapshotProfile {
         SnapshotProfile(
             displayUnit: profile.displayUnit,
             experience: profile.experience,
-            equipmentAccess: profile.equipmentAccess,
             availableEquipment: profile.permittedEquipment?
                 .sorted { $0.rawValue < $1.rawValue },
             goal: profile.goal,

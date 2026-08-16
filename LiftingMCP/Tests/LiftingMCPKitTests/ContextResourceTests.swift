@@ -31,12 +31,10 @@ struct ContextResourceTests {
     func equipmentAndConstraints() throws {
         let lifter = try #require(try context(
             profile: fixtureProfile(
-                equipmentAccess: .dumbbellsOnly,
                 availableEquipment: [.bodyweight, .dumbbell, .plate],
                 avoidedPatterns: [.hinge],
                 avoidedExercises: [ExerciseID(rawValue: "barbell-deadlift")]))["lifter"])
 
-        #expect(lifter["equipmentAccess"]?.stringValue == "Dumbbells only")
         #expect(lifter["availableEquipment"] == ["bodyweight", "dumbbell", "plate"])
         #expect(lifter["avoidedPatterns"] == ["hinge"])
         #expect(lifter["avoidedExercises"] == ["barbell-deadlift"])
@@ -115,11 +113,10 @@ struct ContextResourceTests {
         // would be the server asserting something nobody ever said.
         let report = try context(
             profile: fixtureProfile(
-                experience: nil, equipmentAccess: nil, availableEquipment: nil))
+                experience: nil, availableEquipment: nil))
         let lifter = try #require(report["lifter"])
 
         #expect(lifter.objectValue?["experience"] == .null)
-        #expect(lifter.objectValue?["equipmentAccess"] == .null)
         #expect(lifter.objectValue?["availableEquipment"] == .null)
     }
 
@@ -127,11 +124,11 @@ struct ContextResourceTests {
     func unstatedFactsAreNamed() throws {
         let report = try context(
             profile: fixtureProfile(
-                experience: nil, equipmentAccess: nil, availableEquipment: nil))
+                experience: nil, availableEquipment: nil))
 
-        #expect(report["lifter"]?["unstated"] == ["equipmentAccess", "experience"])
+        #expect(report["lifter"]?["unstated"] == ["equipment", "experience"])
         let note = try #require(report["note"]?.stringValue)
-        #expect(note.contains("equipmentAccess"))
+        #expect(note.contains("equipment"))
         #expect(note.contains(ToolCatalog.updateProfile))
     }
 

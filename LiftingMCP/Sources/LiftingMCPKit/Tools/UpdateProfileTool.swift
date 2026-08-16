@@ -16,16 +16,30 @@ extension ToolRunner {
     /// ("actually I have a rack now") without restating, and possibly
     /// clobbering, everything else. A field set to `null` returns that fact to
     /// not-known, which is how something recorded in error is taken back rather
-    /// than replaced with a second guess. A list — avoided patterns, avoided
-    /// exercises, preferred days — replaces the stored list wholesale rather
-    /// than adding to it, since a patch that could only add could never record
-    /// a shoulder that healed.
+    /// than replaced with a second guess. A list — the equipment he owns,
+    /// avoided patterns, avoided exercises, preferred days — replaces the stored
+    /// list wholesale rather than adding to it, since a patch that could only
+    /// add could never record a shoulder that healed.
     ///
-    /// Two things are checked and nothing is changed: an avoided exercise must
-    /// be a real catalog ID, and an avoided pattern must be one the catalog
-    /// actually uses. Both would otherwise be recorded as a filter that silently
-    /// excludes nothing, which is worse than a refusal because it reads as
-    /// having worked. Everything else is recorded verbatim.
+    /// **Bodyweight and baselines are series, and behave differently on
+    /// purpose.** Each record is filed under what it is about — a weigh-in under
+    /// its day, a baseline under its lift — so sending one adds it where there
+    /// was none and corrects it where there was one, and a trend is never
+    /// destroyed by recording a single weigh-in.
+    ///
+    /// **His gym is what he owns, not a tier.** `equipment` takes the concrete
+    /// types, so "barbell and bands but no rack" is sayable; the coarse tiers
+    /// are accepted as shorthand and expand into the types they stand for. A
+    /// type this build has never heard of is recorded rather than refused — it
+    /// is a true fact about him, and it grants no catalog movement, which is
+    /// honest.
+    ///
+    /// Three things are checked and nothing is changed: an avoided exercise and
+    /// a baseline must each name a real catalog ID, and an avoided pattern must
+    /// be one the catalog actually uses. The first two would key history on an
+    /// identity nothing else will ever join; the third would be recorded as a
+    /// filter that silently excludes nothing, which is worse than a refusal
+    /// because it reads as having worked. Everything else is recorded verbatim.
     func updateProfile(_ arguments: JSONValue) -> ToolOutcome {
         let update: ProfileUpdate
         do {
@@ -133,7 +147,23 @@ extension ToolRunner {
         [
             "displayUnit": described(update.displayUnit) { .string($0.rawValue) },
             "experience": described(update.experience) { .string($0.rawValue) },
-            "equipmentAccess": described(update.equipmentAccess) { .string($0.rawValue) },
+            "equipment": described(update.equipment) { .taxonomy($0) },
+            "bodyweight": described(
+                update.bodyweight.map { reading in
+                    [
+                        "date": .date(reading.resolvedDate(from: update.generatedAt)),
+                        "mass": .mass(reading.mass),
+                    ]
+                }),
+            "baselines": described(
+                update.baselines.map { baseline in
+                    [
+                        "exerciseID": .string(baseline.exerciseID.rawValue),
+                        "load": .mass(baseline.load),
+                        "reps": .integer(baseline.reps),
+                        "recordedAt": .date(baseline.resolvedDate(from: update.generatedAt)),
+                    ]
+                }),
             "goal": described(update.goal) { .string($0) },
             "constraints": described(update.constraints) { .string($0) },
             "avoidedPatterns": described(update.avoidedPatterns) { .taxonomy($0) },
@@ -157,5 +187,16 @@ extension ToolRunner {
         case .unstated: ["state": "returned to not known"]
         case .stated(let value): ["state": "recorded", "value": render(value)]
         }
+    }
+
+    /// A series, in the two states a series has. There is no third: a list of
+    /// records adds to and corrects what is stored, and an update that carries
+    /// none of them says nothing about it rather than taking the series back.
+    /// Every record is shown with the date it will actually be filed under, so
+    /// the caller sees what the phone will do rather than what it sent.
+    private static func described(_ records: [JSONValue]) -> JSONValue {
+        records.isEmpty
+            ? ["state": "left as it was"]
+            : ["state": "recorded", "value": .array(records)]
     }
 }

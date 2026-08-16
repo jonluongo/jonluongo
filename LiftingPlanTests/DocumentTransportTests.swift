@@ -109,7 +109,7 @@ struct ICloudDocumentTransportTests {
         let documents = container.appending(path: "Documents")
         try FileManager.default.createDirectory(at: documents, withIntermediateDirectories: true)
         let written = ProfileUpdate(
-            id: UUID(), generatedAt: Self.instant, equipmentAccess: .stated(.fullGym))
+            id: UUID(), generatedAt: Self.instant, equipment: .stated([.barbell, .cable]))
         try DocumentFolder(directory: documents).writeProfileUpdate(written)
 
         #expect(try transport(container: container).readProfileUpdate() == written)

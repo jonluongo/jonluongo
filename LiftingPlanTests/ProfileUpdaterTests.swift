@@ -20,11 +20,17 @@ struct ProfileUpdaterTests {
         ModelContext(try StoreContainer.inMemory())
     }
 
+    /// The real bundled catalog. The one thing an apply checks is that a
+    /// baseline names an exercise that exists in it.
+    private func catalog() throws -> ExerciseCatalog {
+        try ExerciseCatalog.bundled()
+    }
+
     private func update(
         id: UUID = UUID(),
         displayUnit: StatedValue<MassUnit> = .unchanged,
         experience: StatedValue<ExperienceLevel> = .unchanged,
-        equipmentAccess: StatedValue<Equipment> = .unchanged,
+        equipment: StatedValue<[EquipmentType]> = .unchanged,
         goal: StatedValue<String> = .unchanged,
         constraints: StatedValue<String> = .unchanged,
         avoidedPatterns: StatedValue<[MovementPattern]> = .unchanged,
@@ -34,7 +40,7 @@ struct ProfileUpdaterTests {
     ) -> ProfileUpdate {
         ProfileUpdate(
             id: id, generatedAt: Self.instant, displayUnit: displayUnit,
-            experience: experience, equipmentAccess: equipmentAccess, goal: goal,
+            experience: experience, equipment: equipment, goal: goal,
             constraints: constraints, avoidedPatterns: avoidedPatterns,
             avoidedExercises: avoidedExercises, preferredWeekdays: preferredWeekdays,
             preferredDurationMinutes: preferredDurationMinutes
@@ -56,17 +62,17 @@ struct ProfileUpdaterTests {
         let profile = try ProfileUpdater.apply(
             update(
                 displayUnit: .stated(.kilograms), experience: .stated(.beginner),
-                equipmentAccess: .stated(.homeMinimal), goal: .stated("Get stronger"),
+                equipment: .stated([.dumbbell, .band]), goal: .stated("Get stronger"),
                 constraints: .stated("Left shoulder hurts overhead"),
                 avoidedPatterns: .stated([.verticalPress]),
                 avoidedExercises: .stated([ExerciseID(rawValue: "barbell-upright-row")]),
                 preferredWeekdays: .stated([.monday, .thursday]),
                 preferredDurationMinutes: .stated(45)),
-            to: context)
+            to: context, catalog: try catalog())
 
         #expect(profile.displayUnit == .kilograms)
         #expect(profile.experience == .beginner)
-        #expect(profile.equipmentAccess == .homeMinimal)
+        #expect(profile.ownedEquipment.map(Set.init) == [.dumbbell, .band])
         #expect(profile.goal == "Get stronger")
         #expect(profile.constraints == "Left shoulder hurts overhead")
         #expect(profile.avoidedPatterns == [.verticalPress])
@@ -80,16 +86,17 @@ struct ProfileUpdaterTests {
         let context = try context()
 
         let profile = try ProfileUpdater.apply(
-            update(equipmentAccess: .stated(.fullGym)), to: context)
+            update(equipment: .stated([.barbell, .cable])), to: context, catalog: try catalog())
 
         #expect(try profiles(in: context).count == 1)
-        #expect(profile.equipmentAccess == .fullGym)
+        #expect(profile.ownedEquipment.map(Set.init) == [.barbell, .cable])
     }
 
     @Test("The change is saved, not merely made in memory")
     func theChangeIsSaved() throws {
         let context = try context()
-        try ProfileUpdater.apply(update(goal: .stated("Bigger bench")), to: context)
+        try ProfileUpdater.apply(
+            update(goal: .stated("Bigger bench")), to: context, catalog: try catalog())
 
         // Refetched rather than read back off the returned object.
         #expect(try profiles(in: context).first?.goal == "Bigger bench")
@@ -102,14 +109,14 @@ struct ProfileUpdaterTests {
     func omittedFactsSurvive() throws {
         let context = try context()
         context.insert(UserProfile(
-            experience: .advanced, equipmentAccess: .fullGym, goal: "Get stronger",
+            experience: .advanced, ownedEquipment: [.barbell, .cable], goal: "Get stronger",
             preferredWeekdays: [.monday]))
         try context.saveOrThrow()
 
         let profile = try ProfileUpdater.apply(
-            update(equipmentAccess: .stated(.dumbbellsOnly)), to: context)
+            update(equipment: .stated([.dumbbell])), to: context, catalog: try catalog())
 
-        #expect(profile.equipmentAccess == .dumbbellsOnly)
+        #expect(profile.ownedEquipment.map(Set.init) == [.dumbbell])
         #expect(profile.experience == .advanced)
         #expect(profile.goal == "Get stronger")
         #expect(profile.preferredWeekdays == [.monday])
@@ -121,18 +128,18 @@ struct ProfileUpdaterTests {
         // removable, and 'Full gym' is not a way to say 'nobody has said'.
         let context = try context()
         context.insert(UserProfile(
-            experience: .advanced, equipmentAccess: .fullGym, goal: "Get stronger",
+            experience: .advanced, ownedEquipment: [.barbell, .cable], goal: "Get stronger",
             preferredDurationMinutes: 60))
         try context.saveOrThrow()
 
         let profile = try ProfileUpdater.apply(
             update(
-                experience: .unstated, equipmentAccess: .unstated, goal: .unstated,
+                experience: .unstated, equipment: .unstated, goal: .unstated,
                 preferredDurationMinutes: .unstated),
-            to: context)
+            to: context, catalog: try catalog())
 
         #expect(profile.experience == nil)
-        #expect(profile.equipmentAccess == nil)
+        #expect(profile.ownedEquipment == nil)
         #expect(profile.permittedEquipment == nil)
         #expect(profile.goal.isEmpty)
         #expect(profile.preferredDurationMinutes == nil)
@@ -146,7 +153,7 @@ struct ProfileUpdaterTests {
         try context.saveOrThrow()
 
         let profile = try ProfileUpdater.apply(
-            update(avoidedPatterns: .stated([.hinge])), to: context)
+            update(avoidedPatterns: .stated([.hinge])), to: context, catalog: try catalog())
 
         #expect(profile.avoidedPatterns == [.hinge])
     }
@@ -158,7 +165,7 @@ struct ProfileUpdaterTests {
         try context.saveOrThrow()
 
         let profile = try ProfileUpdater.apply(
-            update(avoidedPatterns: .stated([])), to: context)
+            update(avoidedPatterns: .stated([])), to: context, catalog: try catalog())
 
         #expect(profile.avoidedPatterns.isEmpty)
     }
@@ -171,7 +178,8 @@ struct ProfileUpdaterTests {
         context.insert(UserProfile(displayUnit: .kilograms))
         try context.saveOrThrow()
 
-        let profile = try ProfileUpdater.apply(update(displayUnit: .unstated), to: context)
+        let profile = try ProfileUpdater.apply(
+            update(displayUnit: .unstated), to: context, catalog: try catalog())
 
         #expect(profile.displayUnit == .pounds)
     }
@@ -184,12 +192,16 @@ struct ProfileUpdaterTests {
         // it is announced again at every launch.
         let context = try context()
         let identity = UUID()
-        try ProfileUpdater.apply(update(id: identity, displayUnit: .stated(.pounds)), to: context)
+        try ProfileUpdater.apply(
+            update(id: identity, displayUnit: .stated(.pounds)), to: context,
+            catalog: try catalog())
         let profile = try #require(try profiles(in: context).first)
         profile.displayUnit = .kilograms
         try context.saveOrThrow()
 
-        try ProfileUpdater.apply(update(id: identity, displayUnit: .stated(.pounds)), to: context)
+        try ProfileUpdater.apply(
+            update(id: identity, displayUnit: .stated(.pounds)), to: context,
+            catalog: try catalog())
 
         #expect(try profiles(in: context).first?.displayUnit == .kilograms)
         #expect(try profiles(in: context).count == 1)
@@ -198,8 +210,10 @@ struct ProfileUpdaterTests {
     @Test("A different update is applied even after an earlier one")
     func laterUpdateStillApplies() throws {
         let context = try context()
-        try ProfileUpdater.apply(update(goal: .stated("Bigger bench")), to: context)
-        try ProfileUpdater.apply(update(goal: .stated("Bigger squat")), to: context)
+        try ProfileUpdater.apply(
+            update(goal: .stated("Bigger bench")), to: context, catalog: try catalog())
+        try ProfileUpdater.apply(
+            update(goal: .stated("Bigger squat")), to: context, catalog: try catalog())
 
         #expect(try profiles(in: context).first?.goal == "Bigger squat")
     }
@@ -212,7 +226,8 @@ struct ProfileUpdaterTests {
 
         let applied = Date(timeIntervalSince1970: 1_800_000_000)
         let profile = try ProfileUpdater.apply(
-            update(goal: .stated("Bigger bench")), to: context, appliedAt: applied)
+            update(goal: .stated("Bigger bench")), to: context, catalog: try catalog(),
+            appliedAt: applied)
 
         #expect(profile.updatedAt == applied)
     }

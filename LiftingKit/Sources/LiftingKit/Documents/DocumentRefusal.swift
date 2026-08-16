@@ -35,6 +35,12 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
     /// Two things the document says that cannot both be true, said in full.
     case contradiction(String)
 
+    /// A key this format has, written in a shape it cannot be read in — such as
+    /// a `null` where a dated series belongs. Refused rather than read as an
+    /// absence, because "no readings" and "forget every reading" are different
+    /// instructions and neither should be inferred from the other.
+    case unreadableValue(String)
+
     public var errorDescription: String? {
         switch self {
         case .unknownKey(let key, let location):
@@ -47,6 +53,8 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
                 + "parts this build recognizes would silently discard the rest. Write version "
                 + "\(understood), or update the app."
         case .contradiction(let detail):
+            detail
+        case .unreadableValue(let detail):
             detail
         }
     }

@@ -71,7 +71,6 @@ func fixtureCatalog(version: Int = 5) throws -> ExerciseCatalog {
 
 func fixtureProfile(
     experience: ExperienceLevel? = .intermediate,
-    equipmentAccess: Equipment? = .fullGym,
     availableEquipment: [EquipmentType]? = [
         .bodyweight, .barbell, .dumbbell, .plate, .band, .kettlebell,
         .medicineBall, .machine, .cable, .ezBar, .trapBar, .sled, .cardioMachine, .other,
@@ -83,7 +82,6 @@ func fixtureProfile(
     SnapshotProfile(
         displayUnit: .pounds,
         experience: experience,
-        equipmentAccess: equipmentAccess,
         availableEquipment: availableEquipment,
         goal: "Add 20 lb to the bench",
         constraints: "Left shoulder is touchy overhead",

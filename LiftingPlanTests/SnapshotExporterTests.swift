@@ -136,8 +136,8 @@ struct SnapshotExporterTests {
     func profileIsExported() throws {
         let context = try context()
         context.insert(UserProfile(
-            displayUnit: .kilograms, experience: .advanced, equipmentAccess: .dumbbellsOnly,
-            goal: "Get stronger", constraints: "Left shoulder hurts overhead",
+            displayUnit: .kilograms, experience: .advanced,
+            ownedEquipment: [.dumbbell, .plate], goal: "Get stronger", constraints: "Left shoulder hurts overhead",
             bodyweight: Mass(value: 82, unit: .kilograms),
             avoidedPatterns: [.verticalPress],
             avoidedExercises: [ExerciseID(rawValue: "barbell-upright-row")],
@@ -150,18 +150,14 @@ struct SnapshotExporterTests {
         )
         #expect(profile.displayUnit == .kilograms)
         #expect(profile.experience == .advanced)
-        #expect(profile.equipmentAccess == .dumbbellsOnly)
         #expect(profile.goal == "Get stronger")
         #expect(profile.constraints == "Left shoulder hurts overhead")
         #expect(profile.avoidedPatterns == [.verticalPress])
         #expect(profile.avoidedExercises == [ExerciseID(rawValue: "barbell-upright-row")])
         #expect(profile.preferredWeekdays == [.monday, .thursday])
         #expect(profile.preferredDurationMinutes == 45)
-        // Derived from the access tier at export time, so a reader need not
-        // re-derive it.
-        #expect(
-            profile.availableEquipment.map(Set.init)
-                == EquipmentAccess.permitted(for: .dumbbellsOnly))
+        // What he owns, and bodyweight besides — a push-up needs none of it.
+        #expect(profile.availableEquipment.map(Set.init) == [.dumbbell, .plate, .bodyweight])
     }
 
     @Test("The last applied profile update is carried, so the writer can tell what has landed")
@@ -193,7 +189,6 @@ struct SnapshotExporterTests {
             try SnapshotExporter.export(from: context, catalogVersion: 5).profile
         )
         #expect(profile.experience == nil)
-        #expect(profile.equipmentAccess == nil)
         // Not an empty list: that would say he can perform nothing.
         #expect(profile.availableEquipment == nil)
         #expect(profile.goal.isEmpty)

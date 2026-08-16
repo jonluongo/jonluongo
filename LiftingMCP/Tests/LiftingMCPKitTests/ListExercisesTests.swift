@@ -83,8 +83,7 @@ struct ListExercisesTests {
 
     @Test("A lifter with only his bodyweight is not shown barbell movements")
     func filtersToAvailableEquipment() throws {
-        let report = try list([:], profile: fixtureProfile(
-            equipmentAccess: .bodyweight, availableEquipment: [.bodyweight]))
+        let report = try list([:], profile: fixtureProfile(availableEquipment: [.bodyweight]))
 
         #expect(try ids(report) == ["push-up"])
     }
@@ -109,7 +108,7 @@ struct ListExercisesTests {
         let report = try list(
             ["includeUnavailable": true],
             profile: fixtureProfile(
-                equipmentAccess: .bodyweight, availableEquipment: [.bodyweight],
+                availableEquipment: [.bodyweight],
                 avoidedExercises: [ExerciseID(rawValue: "barbell-deadlift")]))
 
         #expect(try ids(report).count == 8)
@@ -118,8 +117,7 @@ struct ListExercisesTests {
     @Test("The report states the narrowing it applied rather than applying it silently")
     func reportsItsOwnFilter() throws {
         let report = try list(["muscle": "chest"], profile: fixtureProfile(
-            equipmentAccess: .bodyweight, availableEquipment: [.bodyweight],
-            avoidedPatterns: [.hinge]))
+            availableEquipment: [.bodyweight], avoidedPatterns: [.hinge]))
         let applied = try #require(report["appliedFilter"])
 
         #expect(applied["muscle"] == ["chest"])
@@ -133,7 +131,7 @@ struct ListExercisesTests {
         // would return zero exercises and read as a lifter who can perform no
         // movement at all. What he avoids still applies.
         let report = try list([:], profile: fixtureProfile(
-            equipmentAccess: nil, availableEquipment: nil,
+            availableEquipment: nil,
             avoidedExercises: [ExerciseID(rawValue: "barbell-deadlift")]))
 
         #expect(try ids(report).count == 7)

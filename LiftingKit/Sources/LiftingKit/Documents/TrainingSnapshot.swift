@@ -108,19 +108,20 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
 /// arrived through a `ProfileUpdate` Claude wrote after learning it.
 ///
 /// **A fact nobody has stated is absent, never a default.** `experience` and
-/// `equipmentAccess` are optional because "he has not said" and "he said full
+/// `availableEquipment` are optional because "he has not said" and "he said full
 /// gym" are different answers, and a reader given the second when the first is
 /// true will plan confidently for a lifter who does not exist. Free text and
 /// lists say the same thing with an empty value, which is documented on each.
 ///
-/// `availableEquipment` is the one derived field — the concrete equipment types
-/// `equipmentAccess` granted at export time, kept so a reader need not re-derive
-/// them and so the answer stays true even if the tiers are later changed. It is
-/// `nil` exactly when `equipmentAccess` is: an empty list would read as a lifter
-/// who can perform nothing, which is a much stronger claim than not knowing.
+/// `availableEquipment` is what he can actually train with: the open set of
+/// equipment he said he owns, and bodyweight besides. It is not a tier, because
+/// a real gym is not one — "barbell and bands but no rack" is what a lot of
+/// people train in. It is `nil`, never `[]`, when nobody has said: an empty list
+/// would read as a lifter who can perform nothing, which is a much stronger
+/// claim than not knowing.
 ///
 /// Depends on: `Mass`, `ExerciseID`, `MovementPattern`, `EquipmentType`,
-/// `Equipment`, `ExperienceLevel`, `Weekday`.
+/// `ExperienceLevel`, `Weekday`.
 public struct SnapshotProfile: Codable, Hashable, Sendable {
 
     /// How weights are shown and what new entries are entered in. It never
@@ -130,10 +131,8 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
     public let displayUnit: MassUnit
     /// Rough training age, as he described it. `nil` when he has not said.
     public let experience: ExperienceLevel?
-    /// The gym he has, as he described it. `nil` when he has not said.
-    public let equipmentAccess: Equipment?
-    /// The equipment types `equipmentAccess` granted when this was written.
-    /// `nil` when `equipmentAccess` is — not known, as distinct from none.
+    /// What he can train with: the equipment he said he owns, and bodyweight
+    /// besides. `nil` when he has not said — not known, as distinct from none.
     public let availableEquipment: [EquipmentType]?
     /// What he is training for, in his own words. Empty means he has not said.
     public let goal: String
@@ -156,7 +155,7 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
     public let updatedAt: Date
 
     public init(
-        displayUnit: MassUnit, experience: ExperienceLevel?, equipmentAccess: Equipment?,
+        displayUnit: MassUnit, experience: ExperienceLevel?,
         availableEquipment: [EquipmentType]?, goal: String, constraints: String,
         bodyweight: Mass?, avoidedPatterns: [MovementPattern],
         avoidedExercises: [ExerciseID], preferredWeekdays: [Weekday],
@@ -164,7 +163,6 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
     ) {
         self.displayUnit = displayUnit
         self.experience = experience
-        self.equipmentAccess = equipmentAccess
         self.availableEquipment = availableEquipment
         self.goal = goal
         self.constraints = constraints

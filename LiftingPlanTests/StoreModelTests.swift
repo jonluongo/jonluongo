@@ -145,21 +145,44 @@ struct StoreModelTests {
         #expect(loaded.catalogVersion == 3)
     }
 
-    @Test("A profile round-trips its display unit and access tier")
+    @Test("A profile round-trips its display unit and the equipment he owns")
     func profileRoundTrips() throws {
         let context = try context()
         context.insert(UserProfile(
             displayUnit: .kilograms, experience: .advanced,
-            equipmentAccess: .dumbbellsOnly, goal: "Bigger bench"
+            ownedEquipment: [.dumbbell, .plate], goal: "Bigger bench"
         ))
         try context.saveOrThrow()
 
         let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
         #expect(loaded.displayUnit == .kilograms)
         #expect(loaded.experience == .advanced)
-        #expect(loaded.equipmentAccess == .dumbbellsOnly)
+        #expect(loaded.ownedEquipment.map(Set.init) == [.dumbbell, .plate])
         #expect(loaded.permittedEquipment?.contains(.dumbbell) == true)
         #expect(loaded.permittedEquipment?.contains(.barbell) == false)
+    }
+
+    @Test("A gym no tier describes round-trips, including a type this build does not know")
+    func profileRoundTripsAnOpenGym() throws {
+        let context = try context()
+        let unknown = EquipmentType(rawValue: "reverse hyper")
+        context.insert(UserProfile(ownedEquipment: [.barbell, .band, unknown]))
+        try context.saveOrThrow()
+
+        let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
+        #expect(loaded.ownedEquipment.map(Set.init) == [.barbell, .band, unknown])
+        #expect(loaded.permittedEquipment?.contains(.cable) == false)
+    }
+
+    @Test("A lifter who owns nothing is not a lifter nobody has asked")
+    func owningNothingIsNotUnknown() throws {
+        let context = try context()
+        context.insert(UserProfile(ownedEquipment: []))
+        try context.saveOrThrow()
+
+        let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
+        #expect(loaded.ownedEquipment == [])
+        #expect(loaded.permittedEquipment == [.bodyweight], "he can still do a push-up")
     }
 
     @Test("A profile round-trips the schedule the lifter stated in setup")
@@ -198,7 +221,7 @@ struct StoreModelTests {
 
         let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
         #expect(loaded.experience == nil)
-        #expect(loaded.equipmentAccess == nil)
+        #expect(loaded.ownedEquipment == nil)
         #expect(loaded.permittedEquipment == nil)
         #expect(loaded.goal.isEmpty)
         #expect(loaded.appliedProfileUpdateID == nil)

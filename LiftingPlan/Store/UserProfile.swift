@@ -12,9 +12,14 @@ import LiftingKit
 /// **The app never asks him any of this.** There is no setup screen and no
 /// form; every training fact here arrived as a `ProfileUpdate` Claude wrote
 /// after learning it in conversation, applied by `ProfileUpdater`. That is why
-/// `experience` and `equipmentAccess` are optional: a fresh profile is empty,
-/// and "nobody has said" must not be storable only as "full gym, intermediate".
-/// A default there would be an assertion about him that no one ever made.
+/// `experience` and `ownedEquipment` are optional: a fresh profile is empty, and
+/// "nobody has said" must not be storable only as "full gym, intermediate". A
+/// default there would be an assertion about him that no one ever made.
+///
+/// **His gym is an open set of equipment, not a tier.** A real gym is not one:
+/// "barbell and bands but no rack" is what a great many people train in, and
+/// forcing it into the nearest tier either grants him machines he does not have
+/// or denies him the bar he does.
 ///
 /// Exactly one instance is expected. CloudKit forbids unique constraints, so
 /// that invariant is enforced in application code rather than by the schema.
@@ -35,8 +40,10 @@ final class UserProfile {
     private var displayUnitRaw: String = MassUnit.pounds.rawValue
     /// `nil` until someone states it. Never a stand-in level.
     private var experienceRaw: String?
-    /// `nil` until someone states it. Never a stand-in tier.
-    private var equipmentAccessRaw: String?
+    /// What he owns, as raw equipment-type values. `nil` until someone states
+    /// it — an empty list is a lifter who owns nothing, which is a different
+    /// answer from a lifter nobody has asked. Never a stand-in gym.
+    private var ownedEquipmentRawValues: [String]?
     /// What he is training for, in his words. Empty means he has not said.
     var goal: String = ""
     /// Injuries and constraints, in the lifter's own words. Fed to the model.
@@ -60,7 +67,7 @@ final class UserProfile {
     init(
         displayUnit: MassUnit = .pounds,
         experience: ExperienceLevel? = nil,
-        equipmentAccess: Equipment? = nil,
+        ownedEquipment: [EquipmentType]? = nil,
         goal: String = "", constraints: String = "", bodyweight: Mass? = nil,
         avoidedPatterns: Set<MovementPattern> = [], avoidedExercises: Set<ExerciseID> = [],
         preferredWeekdays: Set<Weekday> = [], preferredDurationMinutes: Int? = nil,
@@ -68,7 +75,7 @@ final class UserProfile {
     ) {
         self.displayUnitRaw = displayUnit.rawValue
         self.experienceRaw = experience?.rawValue
-        self.equipmentAccessRaw = equipmentAccess?.rawValue
+        self.ownedEquipmentRawValues = ownedEquipment?.map(\.rawValue)
         self.goal = goal
         self.constraints = constraints
         self.bodyweight = bodyweight
@@ -91,10 +98,12 @@ final class UserProfile {
         set { experienceRaw = newValue?.rawValue }
     }
 
-    /// The gym he has, as he described it. `nil` means nobody has said.
-    var equipmentAccess: Equipment? {
-        get { equipmentAccessRaw.flatMap(Equipment.init(rawValue:)) }
-        set { equipmentAccessRaw = newValue?.rawValue }
+    /// The equipment he says he owns. `nil` means nobody has said; `[]` means he
+    /// owns none. A type this build has never heard of is carried unchanged —
+    /// he owns what he says he owns.
+    var ownedEquipment: [EquipmentType]? {
+        get { ownedEquipmentRawValues?.map(EquipmentType.init(rawValue:)) }
+        set { ownedEquipmentRawValues = newValue?.map(\.rawValue) }
     }
 
     /// The equipment types this lifter can actually train with, or `nil` when
@@ -104,7 +113,7 @@ final class UserProfile {
     /// perform nothing, which is a far stronger claim than not knowing, and a
     /// reader filtering on it would find no exercise at all.
     var permittedEquipment: Set<EquipmentType>? {
-        equipmentAccess.map(EquipmentAccess.permitted(for:))
+        ownedEquipment.map(EquipmentAccess.permitted(owning:))
     }
 
     /// Movement patterns excluded from his training, e.g. for an injury.
