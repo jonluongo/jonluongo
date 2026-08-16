@@ -1,6 +1,6 @@
 import SwiftUI
 import SwiftData
-import OSLog
+import UIKit
 import LiftingKit
 
 @main
@@ -20,6 +20,8 @@ struct LiftingPlanApp: App {
     private let transport: ICloudDocumentTransport
     /// Imports a plan the moment one lands, so no refresh is ever asked for.
     @State private var planInbox: PlanInbox
+    /// Writes the snapshot out, and remembers when it could not.
+    @State private var snapshotOutbox: SnapshotOutbox
 
     init() {
         // A store or catalog that fails to open at launch is unrecoverable —
@@ -44,6 +46,9 @@ struct LiftingPlanApp: App {
             transport: transport, watcher: UbiquitousPlanWatcher(),
             context: container.mainContext, catalog: catalog
         ))
+        _snapshotOutbox = State(initialValue: SnapshotOutbox(
+            transport: transport, context: container.mainContext, catalog: catalog
+        ))
     }
 
     var body: some Scene {
@@ -52,6 +57,7 @@ struct LiftingPlanApp: App {
                 .environment(\.exerciseCatalog, catalog)
                 .environment(restTimer)
                 .environment(planInbox)
+                .environment(snapshotOutbox)
                 .task { restTimer.requestNotificationAuthorization() }
                 // Started once, for the life of the app: a plan arriving from
                 // the Mac is imported wherever the lifter happens to be.
@@ -69,29 +75,54 @@ struct LiftingPlanApp: App {
         }
     }
 
-    private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "LiftingPlan", category: "snapshot"
-    )
-
-    /// Writes the current state of the store where Claude can read it.
+    /// Writes the snapshot on the way out, and asks for the time to finish.
     ///
-    /// The failure is logged rather than propagated because there is nowhere
-    /// to propagate it to: the app is already leaving the screen, so no UI can
-    /// present it. Nothing is lost — the store is the record and the next
-    /// background writes the snapshot again — so this is handling the error,
-    /// not discarding it.
+    /// The export is a task rather than a straight call because the write
+    /// resolves the iCloud container, which must not happen on the main thread;
+    /// that also means the app could be suspended mid-write, so a background
+    /// task assertion holds it awake until the file has landed. What went wrong
+    /// is not shown here — nothing can be presented from a scene that is
+    /// leaving — but `SnapshotOutbox` keeps it, and `RootView` shows it the
+    /// next time the lifter opens the app.
     @MainActor
     private func exportSnapshot() {
-        do {
-            let snapshot = try SnapshotExporter.export(
-                from: container.mainContext, catalogVersion: catalog.version
-            )
-            try transport.writeSnapshot(snapshot)
-        } catch {
-            Self.logger.error(
-                "Snapshot export failed: \(error.localizedDescription, privacy: .public)"
-            )
+        let assertion = BackgroundExportAssertion()
+        assertion.begin()
+        Task {
+            await snapshotOutbox.exportSnapshot()
+            assertion.end()
         }
+    }
+}
+
+/// Keeps the app running long enough to finish one piece of work after it has
+/// left the screen.
+///
+/// Call `begin()` before starting work on the way to the background and `end()`
+/// when it finishes. Without it iOS may suspend the app as soon as the scene
+/// transition returns, cutting the snapshot write off part-way and leaving the
+/// coach reading a stale document. Ending it twice, or ending one that never
+/// began, does nothing.
+///
+/// Depends on: `UIApplication`'s background task assertions.
+@MainActor
+private final class BackgroundExportAssertion {
+
+    private var identifier = UIBackgroundTaskIdentifier.invalid
+
+    func begin() {
+        identifier = UIApplication.shared.beginBackgroundTask(withName: "Snapshot export") {
+            // Expiry means the system wants the time back now; releasing it is
+            // the only correct answer, and the export retries on the next
+            // background.
+            MainActor.assumeIsolated { [weak self] in self?.end() }
+        }
+    }
+
+    func end() {
+        guard identifier != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(identifier)
+        identifier = .invalid
     }
 }
 

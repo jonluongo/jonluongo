@@ -8,6 +8,8 @@ struct RootView: View {
     /// The inbox that imports arriving plans. Optional so a preview need not
     /// supply one; the app always does.
     @Environment(PlanInbox.self) private var planInbox: PlanInbox?
+    /// The outbox that writes the snapshot out. Optional for the same reason.
+    @Environment(SnapshotOutbox.self) private var snapshotOutbox: SnapshotOutbox?
     @Query private var allProfiles: [UserProfile]
 
     @State private var saveErrorMessage: String?
@@ -40,6 +42,17 @@ struct RootView: View {
         } message: {
             Text(planInbox?.errorMessage ?? "")
         }
+        // The mirror of the alert above, for the same reason. A snapshot that
+        // never left the phone breaks the loop permanently and invisibly: the
+        // app looks fine while the coach reads a document that stopped being
+        // true weeks ago. The export happens as the app leaves the screen, so
+        // this is shown on the next opening — the first moment there is anyone
+        // to show it to.
+        .alert("Couldn't Share Your Log", isPresented: exportErrorAlertBinding) {
+            Button("OK", role: .cancel) { snapshotOutbox?.dismissError() }
+        } message: {
+            Text(snapshotOutbox?.errorMessage ?? "")
+        }
     }
 
     private var errorAlertBinding: Binding<Bool> {
@@ -50,6 +63,13 @@ struct RootView: View {
         Binding(
             get: { planInbox?.errorMessage != nil },
             set: { if !$0 { planInbox?.dismissError() } }
+        )
+    }
+
+    private var exportErrorAlertBinding: Binding<Bool> {
+        Binding(
+            get: { snapshotOutbox?.errorMessage != nil },
+            set: { if !$0 { snapshotOutbox?.dismissError() } }
         )
     }
 

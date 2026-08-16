@@ -17,7 +17,12 @@ protocol PlanArrivalWatching: AnyObject {
 
     /// Begins watching. `onArrival` is called once per announcement, on the
     /// main actor. Calling it again while already watching does nothing.
-    func start(onArrival: @escaping () -> Void)
+    ///
+    /// It is `async` because handling an arrival has to leave the main actor —
+    /// reading the document resolves the iCloud container — and a watcher that
+    /// could only call back synchronously would force that work back onto the
+    /// thread it must not run on.
+    func start(onArrival: @escaping @MainActor () async -> Void)
 
     /// Stops watching and releases whatever the watch was holding.
     func stop()
@@ -78,7 +83,10 @@ final class PlanInbox {
     /// same way as one that lands mid-session — and resolving the iCloud
     /// container, which can block, stays off the launch path.
     func start() {
-        watcher.start { [weak self] in self?.importWaitingPlan() }
+        watcher.start { [weak self] in
+            guard let self else { return }
+            await self.importWaitingPlan()
+        }
     }
 
     /// Stops watching. The store keeps whatever was already imported.
@@ -98,15 +106,30 @@ final class PlanInbox {
     /// `errorMessage` is what the UI puts in front of the lifter, and the
     /// document stays in the folder, so a fixed plan imports on its next
     /// announcement.
-    func importWaitingPlan() {
+    ///
+    /// The read happens off the main actor and the import on it: resolving the
+    /// iCloud container can block for seconds and must not run on the main
+    /// thread, while `ModelContext` must. `PlanDocument` is a pure value type,
+    /// so it crosses between them.
+    func importWaitingPlan() async {
         do {
             // No plan yet is the normal state, not something to report.
-            guard let document = try transport.readPlan() else { return }
+            guard let document = try await Self.read(from: transport) else { return }
             try PlanImporter.import(document, into: context, catalog: catalog)
             errorMessage = nil
         } catch {
             errorMessage = (error as? any LocalizedError)?.errorDescription
                 ?? error.localizedDescription
         }
+    }
+
+    /// Resolves the iCloud container and reads the document, off the main
+    /// actor.
+    ///
+    /// Detached rather than a plain `async` call: whether a `nonisolated async`
+    /// function leaves the caller's actor depends on the language mode in
+    /// force, and this must leave it under every one of them.
+    private static func read(from transport: any DocumentTransport) async throws -> PlanDocument? {
+        try await Task.detached { try transport.readPlan() }.value
     }
 }

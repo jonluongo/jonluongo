@@ -27,9 +27,9 @@ final class UbiquitousPlanWatcher: PlanArrivalWatching {
 
     private let query = NSMetadataQuery()
     private var observers: [any NSObjectProtocol] = []
-    private var onArrival: (() -> Void)?
+    private var onArrival: (@MainActor () async -> Void)?
 
-    func start(onArrival: @escaping () -> Void) {
+    func start(onArrival: @escaping @MainActor () async -> Void) {
         guard !query.isStarted else { return }
         self.onArrival = onArrival
 
@@ -84,8 +84,11 @@ final class UbiquitousPlanWatcher: PlanArrivalWatching {
                 requestDownload(of: item)
             }
         }
-        if isReadyToImport {
-            onArrival?()
+        if isReadyToImport, let onArrival {
+            // Announced from a task rather than inline: the handler reads the
+            // document, which resolves the iCloud container, and this runs on
+            // the main run loop where that must not happen.
+            Task { await onArrival() }
         }
     }
 

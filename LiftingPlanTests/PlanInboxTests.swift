@@ -8,10 +8,10 @@ import LiftingKit
 /// announcing that a file arrived.
 @MainActor
 private final class ManualPlanWatcher: PlanArrivalWatching {
-    private var onArrival: (() -> Void)?
+    private var onArrival: (@MainActor () async -> Void)?
     private(set) var isWatching = false
 
-    func start(onArrival: @escaping () -> Void) {
+    func start(onArrival: @escaping @MainActor () async -> Void) {
         self.onArrival = onArrival
         isWatching = true
     }
@@ -20,9 +20,11 @@ private final class ManualPlanWatcher: PlanArrivalWatching {
         isWatching = false
     }
 
-    /// Announces an arrival the way iCloud would.
-    func announceArrival() {
-        onArrival?()
+    /// Announces an arrival the way iCloud would, and returns once the
+    /// handler has finished — the real watcher does not wait, but a test that
+    /// did not would be reading a result that has not happened yet.
+    func announceArrival() async {
+        await onArrival?()
     }
 }
 
@@ -91,7 +93,7 @@ struct PlanInboxTests {
     // MARK: - A plan that arrives is imported
 
     @Test("A plan that arrives is imported without the lifter asking for it")
-    func arrivingPlanIsImported() throws {
+    func arrivingPlanIsImported() async throws {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         let context = try context()
@@ -101,7 +103,7 @@ struct PlanInboxTests {
         try folder.writePlan(written)
 
         inbox.start()
-        watcher.announceArrival()
+        await watcher.announceArrival()
 
         let plans = try storedPlans(in: context)
         #expect(plans.count == 1)
@@ -110,7 +112,7 @@ struct PlanInboxTests {
     }
 
     @Test("Starting the inbox begins watching, so nothing has to be pulled to refresh")
-    func startingBeginsWatching() throws {
+    func startingBeginsWatching() async throws {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         let watcher = ManualPlanWatcher()
@@ -122,7 +124,7 @@ struct PlanInboxTests {
     }
 
     @Test("Stopping the inbox stops the watch")
-    func stoppingEndsWatching() throws {
+    func stoppingEndsWatching() async throws {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         let watcher = ManualPlanWatcher()
@@ -135,7 +137,7 @@ struct PlanInboxTests {
     }
 
     @Test("The same plan arriving twice imports once rather than duplicating a block")
-    func sameplanArrivingTwiceImportsOnce() throws {
+    func sameplanArrivingTwiceImportsOnce() async throws {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         let context = try context()
@@ -144,8 +146,8 @@ struct PlanInboxTests {
         try folder.writePlan(document())
 
         inbox.start()
-        watcher.announceArrival()
-        watcher.announceArrival()
+        await watcher.announceArrival()
+        await watcher.announceArrival()
 
         #expect(try storedPlans(in: context).count == 1)
     }
@@ -153,7 +155,7 @@ struct PlanInboxTests {
     // MARK: - Absence is normal, corruption is not
 
     @Test("No plan yet is the ordinary state, not an error to show the lifter")
-    func noPlanYetIsNotAnError() throws {
+    func noPlanYetIsNotAnError() async throws {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         let context = try context()
@@ -161,14 +163,14 @@ struct PlanInboxTests {
         let inbox = try inbox(transport: folder, watcher: watcher, context: context)
 
         inbox.start()
-        watcher.announceArrival()
+        await watcher.announceArrival()
 
         #expect(try storedPlans(in: context).isEmpty)
         #expect(inbox.errorMessage == nil)
     }
 
     @Test("A malformed plan surfaces an error rather than passing for no plan at all")
-    func malformedPlanSurfacesAnError() throws {
+    func malformedPlanSurfacesAnError() async throws {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         try Data("{ this is not a plan".utf8)
@@ -178,14 +180,14 @@ struct PlanInboxTests {
         let inbox = try inbox(transport: folder, watcher: watcher, context: context)
 
         inbox.start()
-        watcher.announceArrival()
+        await watcher.announceArrival()
 
         #expect(inbox.errorMessage != nil)
         #expect(try storedPlans(in: context).isEmpty)
     }
 
     @Test("A plan naming an exercise the catalog lacks reports which one, and imports nothing")
-    func unknownExerciseSurfacesTheOffendingID() throws {
+    func unknownExerciseSurfacesTheOffendingID() async throws {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         try folder.writePlan(document(exerciseID: ExerciseID(rawValue: "moon-press")))
@@ -194,7 +196,7 @@ struct PlanInboxTests {
         let inbox = try inbox(transport: folder, watcher: watcher, context: context)
 
         inbox.start()
-        watcher.announceArrival()
+        await watcher.announceArrival()
 
         let message = try #require(inbox.errorMessage)
         #expect(message.contains("moon-press"))
@@ -202,7 +204,7 @@ struct PlanInboxTests {
     }
 
     @Test("Dismissing the error clears it, so a fixed plan is not reported against")
-    func dismissingClearsTheError() throws {
+    func dismissingClearsTheError() async throws {
         let folder = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder.url) }
         try Data("not a plan".utf8)
@@ -211,14 +213,14 @@ struct PlanInboxTests {
         let inbox = try inbox(transport: folder, watcher: watcher, context: try context())
 
         inbox.start()
-        watcher.announceArrival()
+        await watcher.announceArrival()
         inbox.dismissError()
 
         #expect(inbox.errorMessage == nil)
     }
 
     @Test("A transport that cannot reach its container reports it rather than staying quiet")
-    func unreachableTransportReportsItself() throws {
+    func unreachableTransportReportsItself() async throws {
         let transport = ICloudDocumentTransport(
             containerIdentifier: "iCloud.com.jonluongo.LiftingPlan",
             resolveContainer: { _ in nil }
@@ -228,7 +230,7 @@ struct PlanInboxTests {
         let inbox = try inbox(transport: transport, watcher: watcher, context: context)
 
         inbox.start()
-        watcher.announceArrival()
+        await watcher.announceArrival()
 
         #expect(inbox.errorMessage != nil)
         #expect(try storedPlans(in: context).isEmpty)

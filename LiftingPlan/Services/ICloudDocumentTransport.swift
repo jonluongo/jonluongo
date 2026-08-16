@@ -38,9 +38,13 @@ enum ICloudTransportError: Error, LocalizedError, Equatable {
 /// `ICloudTransportError.containerUnavailable`; it never falls back to a local
 /// folder, which would look like a working export while the Mac saw nothing.
 ///
-/// Resolving asks the system for the container, which can block, so this is
-/// called on scene transitions and file-arrival events — never from a view
-/// update.
+/// **Nothing here may be called on the main actor.** Apple documents
+/// `url(forUbiquityContainerIdentifier:)` as a call that must not run on the
+/// main thread: it can take seconds to set iCloud up on first use, and a scene
+/// transition is as much the main thread as a view update is. Every method that
+/// reaches the resolution — `writeSnapshot(_:)`, `readPlan()`, and
+/// `documentsFolder()` — must therefore be reached from a background task.
+/// `SnapshotOutbox` and `PlanInbox` are the two callers, and both do.
 ///
 /// Depends on: `DocumentTransport` and `DocumentFolder` from `LiftingKit`, and
 /// `FileManager`'s ubiquity container lookup.
