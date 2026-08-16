@@ -128,6 +128,14 @@ struct ContextReport {
 
     // MARK: - What he is working with
 
+    /// What he last worked with on each lift, and — beside it — the effort the
+    /// plan had asked for on that lift.
+    ///
+    /// `rpe` is what he reported; `prescribedIntensity` is what was prescribed,
+    /// on whatever scale it was prescribed on. Both are here so the comparison
+    /// can be drawn; nothing here draws it, converts an RIR into an RPE, or
+    /// concludes that a target was met. A lift with no stated target reports
+    /// `null`, which means nobody stated one — not that it was easy.
     private var workingWeights: JSONValue {
         .array(
             TrainingLog.lastWorkingSets(in: snapshot).map { record in
@@ -137,6 +145,7 @@ struct ContextReport {
                     "load": .mass(record.loggedSet.load),
                     "reps": .integer(record.loggedSet.reps),
                     "rpe": record.loggedSet.rpe.map { .number($0) } ?? .null,
+                    "prescribedIntensity": .intensity(record.exercise.intensity),
                     "lastTrained": .date(record.loggedSet.completedAt),
                 ]
             })

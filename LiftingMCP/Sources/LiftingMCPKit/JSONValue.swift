@@ -226,6 +226,14 @@ extension JSONValue {
     public static func taxonomy(_ values: [some ExtensibleTaxonomy]) -> JSONValue {
         .array(values.map { .string($0.rawValue) })
     }
+
+    /// A prescribed effort as the scale and value it was written on, never
+    /// converted into another scale and never bounded. `nil` stays `null`,
+    /// which is how "no target was set" is told apart from an easy one.
+    public static func intensity(_ target: IntensityTarget?) -> JSONValue {
+        guard let target else { return .null }
+        return ["scale": .string(target.scale.rawValue), "value": .string(target.value)]
+    }
 }
 
 /// ISO 8601 in UTC without fractional seconds — the same shape

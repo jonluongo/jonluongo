@@ -22,8 +22,13 @@ extension ToolCatalog {
             against the catalog first; one bad ID fails the whole call with \
             that ID named and writes nothing. A key this format does not have \
             also fails the call, with the key named, rather than being dropped. \
-            Everything else is recorded exactly as you write it — no set count, \
-            rest, rep range, or load is adjusted.
+            An exercise's 'sets' is a number when every set is the same work and \
+            a list when they differ — that is how a drop set, a ramp, a back-off \
+            set or a per-set note is written. 'intensity' states how hard the \
+            work should be, on whatever scale you work in; it is recorded as \
+            written and never converted or bounded. Everything else is recorded \
+            exactly as you write it — no set count, rest, rep range, load, or \
+            effort target is adjusted.
             """,
         inputSchema: object(
             [
@@ -66,24 +71,82 @@ extension ToolCatalog {
         [
             "exerciseID": string("A real ID from list_exercises."),
             "displayName": string("The catalog's name for it, for display."),
-            "sets": integer("Prescribed working sets."),
-            "repRange": string(
-                "The rep target as written, e.g. '8-12' or '5'. Omit if you are "
-                    + "not prescribing one."),
-            "restSeconds": integer("Rest between sets. Omit if not prescribing rest."),
-            "suggestedLoad": [
-                "type": "object",
+            "sets": [
                 "description": .string(
-                    "The load to work with. Omit to leave it to the lifter."),
-                "properties": [
-                    "value": ["type": "number"],
-                    "unit": ["type": "string", "enum": ["kg", "lb"]],
+                    "How many sets, or which ones. Write a number when every set is "
+                        + "the same work — '3' with repRange '8-12' is three sets of "
+                        + "8-12, and you do not repeat yourself. Write a list when the "
+                        + "sets differ: a drop set, a ramp, a back-off set, a set with "
+                        + "its own note. A listed set that states nothing of its own is "
+                        + "prescribed what this exercise prescribes, so a ramp needs "
+                        + "only the loads."),
+                "anyOf": [
+                    ["type": "integer"],
+                    ["type": "array", "items": setSchema],
                 ],
-                "required": ["value", "unit"],
             ],
+            "repRange": string(
+                "The rep target as written, e.g. '8-12' or '5'. Applies to every "
+                    + "set that does not state its own. Omit if you are not "
+                    + "prescribing one."),
+            "restSeconds": integer("Rest between sets. Omit if not prescribing rest."),
+            "suggestedLoad": massSchema(
+                "The load to work with. Applies to every set that does not state "
+                    + "its own. Omit to leave it to the lifter."),
+            "intensity": intensitySchema(
+                "How hard this work should be. Applies to every set that does not "
+                    + "state its own. Omit if you are not prescribing an effort."),
             "tempo": string("Rep tempo such as '3-0-1-0'."),
             "notes": string("Anything specific to this movement."),
         ],
         required: ["exerciseID", "displayName", "sets"]
     )
+
+    /// One set of a prescription whose sets differ. Everything is optional:
+    /// `{}` is a legitimate set, meaning "the same as this exercise prescribes".
+    private static let setSchema = object([
+        "repRange": string("This set's reps, e.g. '5' or 'AMRAP'. Omit to use the exercise's."),
+        "suggestedLoad": massSchema("This set's load. Omit to use the exercise's."),
+        "intensity": intensitySchema("How hard this set should be. Omit to use the exercise's."),
+        "notes": string("Anything about this set alone, e.g. 'last set to failure'."),
+    ])
+
+    private static func massSchema(_ description: String) -> JSONValue {
+        [
+            "type": "object",
+            "description": .string(description),
+            "properties": [
+                "value": ["type": "number"],
+                "unit": ["type": "string", "enum": ["kg", "lb"]],
+            ],
+            "required": ["value", "unit"],
+        ]
+    }
+
+    /// A prescribed effort. `scale` is required and is not a closed list — the
+    /// three named below are the ones this build recognizes, and a scale it has
+    /// never heard of is recorded intact rather than refused. Nothing converts
+    /// between scales or bounds a value, so write the target as you would say
+    /// it: '8', '8-9', '75'.
+    private static func intensitySchema(_ description: String) -> JSONValue {
+        [
+            "type": "object",
+            "description": .string(description),
+            "properties": [
+                "scale": [
+                    "type": "string",
+                    "description": .string(
+                        "What the value is measured in. Commonly "
+                            + IntensityScale.known.map(\.rawValue).joined(separator: ", ")
+                            + ". Another scale is recorded as written."),
+                ],
+                "value": [
+                    "type": "string",
+                    "description": .string(
+                        "The target exactly as you would write it. A range stays a range."),
+                ],
+            ],
+            "required": ["scale", "value"],
+        ]
+    }
 }

@@ -62,15 +62,34 @@ extension ToolRunner {
     }
 
     /// What the plan asked for, carried beside what happened. Absences stay
-    /// absent: no rest prescribed is `null`, not zero.
+    /// absent: no rest prescribed is `null`, not zero, and no effort target is
+    /// `null` rather than an RPE nobody wrote.
+    ///
+    /// `prescribedSets` lists every set in order and in full, so a ramp or a
+    /// drop set reads as the sets it actually is — compare it index for index
+    /// with the logged sets beside it. `intensity` is the effort that was asked
+    /// for; the logged `rpe` is the effort that was given. Nothing here draws
+    /// the comparison or converts one scale into another.
     static func prescription(_ exercise: SnapshotPlannedExercise) -> JSONValue {
         [
             "sets": .integer(exercise.targetSets),
             "repRange": .string(exercise.repRange),
             "suggestedLoad": .mass(exercise.suggestedLoad),
             "restSeconds": .integer(exercise.restSeconds),
+            "intensity": .intensity(exercise.intensity),
             "tempo": .string(exercise.tempo),
             "notes": .string(exercise.notes),
+            "prescribedSets": .array(exercise.prescribedSets.map(setPrescription)),
+        ]
+    }
+
+    /// One prescribed set, exactly as it was prescribed.
+    static func setPrescription(_ set: SetPrescription) -> JSONValue {
+        [
+            "repRange": .string(set.repRange),
+            "suggestedLoad": .mass(set.suggestedLoad),
+            "intensity": .intensity(set.intensity),
+            "notes": .string(set.notes),
         ]
     }
 

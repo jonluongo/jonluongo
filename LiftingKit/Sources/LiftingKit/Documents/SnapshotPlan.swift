@@ -96,7 +96,17 @@ public struct SnapshotDay: Codable, Hashable, Sendable {
 /// `exerciseID` is the identity that matters and the only safe key to join a
 /// lift's history on; `displayName` is a copy kept so history stays readable
 /// if an exercise is later renamed or dropped from the catalog. Never match on
-/// the name. Depends on: `ExerciseID`, `Mass`, `SnapshotLoggedSet`.
+/// the name.
+///
+/// **`prescribedSets` is what was asked for, set by set, beside `loggedSets`,
+/// which is what happened.** Both are in order, so set *n* of one is the set
+/// the lifter was answering in the other. `intensity` is the effort the plan
+/// asked for; `SnapshotLoggedSet.rpe` is the effort he reported. Comparing them
+/// is the reader's job and the reason both are here — nothing in the app draws
+/// that comparison, converts between scales, or decides that a target was met.
+///
+/// Depends on: `ExerciseID`, `Mass`, `IntensityTarget`, `SetPrescription`,
+/// `SnapshotLoggedSet`.
 public struct SnapshotPlannedExercise: Codable, Hashable, Sendable {
     public let exerciseID: ExerciseID
     /// For display only. Never an identity or a join key.
@@ -113,17 +123,27 @@ public struct SnapshotPlannedExercise: Codable, Hashable, Sendable {
     /// Prescribed rest between sets, in seconds. `nil` when none was
     /// prescribed — not zero, which would read as "rest none".
     public let restSeconds: Int?
+    /// How hard the plan asked for this work to be, on the scale it stated.
+    /// `nil` when it named no target — never a zero and never inferred from
+    /// `suggestedLoad`.
+    public let intensity: IntensityTarget?
     /// Rep tempo such as "3-0-1-0". `nil` when none was given.
     public let tempo: String?
     public let notes: String?
+    /// Every set the plan prescribed, in order and stated in full — so a ramp,
+    /// a drop set or a back-off set reads as the sets it actually is rather
+    /// than as one averaged prescription. Empty when the plan prescribed no
+    /// sets at all.
+    public let prescribedSets: [SetPrescription]
     /// Sets logged against this exercise, in logging order. Includes warmups
     /// and incomplete rows; each set says which it is.
     public let loggedSets: [SnapshotLoggedSet]
 
     public init(
         exerciseID: ExerciseID, displayName: String, order: Int, targetSets: Int,
-        repRange: String, suggestedLoad: Mass?, restSeconds: Int?, tempo: String?,
-        notes: String?, loggedSets: [SnapshotLoggedSet]
+        repRange: String, suggestedLoad: Mass?, restSeconds: Int?,
+        intensity: IntensityTarget? = nil, tempo: String?, notes: String?,
+        prescribedSets: [SetPrescription] = [], loggedSets: [SnapshotLoggedSet]
     ) {
         self.exerciseID = exerciseID
         self.displayName = displayName
@@ -132,9 +152,32 @@ public struct SnapshotPlannedExercise: Codable, Hashable, Sendable {
         self.repRange = repRange
         self.suggestedLoad = suggestedLoad
         self.restSeconds = restSeconds
+        self.intensity = intensity
         self.tempo = tempo
         self.notes = notes
+        self.prescribedSets = prescribedSets
         self.loggedSets = loggedSets
+    }
+
+    /// Spelled out so a snapshot written before per-set prescriptions existed
+    /// still reads: its exercises list no sets and state no intensity, which is
+    /// the truth about a document whose format could not say either.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        exerciseID = try container.decode(ExerciseID.self, forKey: .exerciseID)
+        displayName = try container.decode(String.self, forKey: .displayName)
+        order = try container.decode(Int.self, forKey: .order)
+        targetSets = try container.decode(Int.self, forKey: .targetSets)
+        repRange = try container.decode(String.self, forKey: .repRange)
+        suggestedLoad = try container.decodeIfPresent(Mass.self, forKey: .suggestedLoad)
+        restSeconds = try container.decodeIfPresent(Int.self, forKey: .restSeconds)
+        intensity = try container.decodeIfPresent(IntensityTarget.self, forKey: .intensity)
+        tempo = try container.decodeIfPresent(String.self, forKey: .tempo)
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        prescribedSets = try container.decodeIfPresent(
+            [SetPrescription].self, forKey: .prescribedSets) ?? []
+        loggedSets = try container.decodeIfPresent(
+            [SnapshotLoggedSet].self, forKey: .loggedSets) ?? []
     }
 }
 

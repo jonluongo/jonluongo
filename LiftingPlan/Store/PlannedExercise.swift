@@ -9,8 +9,16 @@ import LiftingKit
 /// exercise is later renamed or dropped from the catalog. Never match on the
 /// name — that is the bug this field replaced.
 ///
+/// **The sets may differ from one another.** `targetSets` is always how many
+/// there are; `statedSets` holds them one at a time when the plan listed them,
+/// and is empty when it prescribed the same work throughout. Read
+/// `prescribedSets` rather than either — that is the one place a set's own
+/// statements and the exercise's are put together, and it is what the workout
+/// logger renders and the snapshot reports.
+///
 /// Every property has a default, as CloudKit requires.
-/// Depends on: `ExerciseID` and `Mass` from Domain.
+/// Depends on: `ExerciseID`, `Mass`, `IntensityTarget` and `SetPrescription`
+/// from LiftingKit, and `PrescribedSet`.
 @Model
 final class PlannedExercise {
     /// The catalog key. Resolve it through `ExerciseCatalog` for full details.
@@ -26,11 +34,19 @@ final class PlannedExercise {
     /// rest was prescribed, in which case no timer starts unless the lifter
     /// sets one himself.
     var restSeconds: Int?
+    /// How hard the work is meant to be, on whatever scale the plan stated.
+    /// `nil` when the plan named no target — never inferred from the load.
+    var intensity: IntensityTarget?
     /// Optional rep tempo like "3-0-1-0".
     var tempo: String?
     var notes: String?
 
     var day: WorkoutDay?
+
+    /// The sets the plan listed one at a time. Empty when it prescribed the
+    /// same work throughout, which is the ordinary case and stores no rows.
+    @Relationship(deleteRule: .cascade, inverse: \PrescribedSet.exercise)
+    var statedSets: [PrescribedSet]? = []
 
     @Relationship(deleteRule: .cascade, inverse: \LoggedSet.exercise)
     var loggedSets: [LoggedSet]? = []
@@ -39,7 +55,7 @@ final class PlannedExercise {
         exerciseID: ExerciseID = ExerciseID(rawValue: ""), displayName: String = "",
         order: Int = 0, targetSets: Int = 0, repRange: String = "",
         suggestedLoad: Mass? = nil, restSeconds: Int? = nil,
-        tempo: String? = nil, notes: String? = nil
+        intensity: IntensityTarget? = nil, tempo: String? = nil, notes: String? = nil
     ) {
         self.exerciseID = exerciseID
         self.displayName = displayName
@@ -48,6 +64,7 @@ final class PlannedExercise {
         self.repRange = repRange
         self.suggestedLoad = suggestedLoad
         self.restSeconds = restSeconds
+        self.intensity = intensity
         self.tempo = tempo
         self.notes = notes
     }
@@ -55,5 +72,25 @@ final class PlannedExercise {
     /// Sets that count toward progression, in logging order.
     var completedWorkingSets: [LoggedSet] {
         (loggedSets ?? []).filter(\.countsForProgression).sorted { $0.setIndex < $1.setIndex }
+    }
+
+    /// The sets the plan listed, in the order it listed them.
+    var orderedStatedSets: [PrescribedSet] {
+        (statedSets ?? []).sorted { $0.order < $1.order }
+    }
+
+    /// Every set this exercise prescribes, in order, each stated in full.
+    ///
+    /// The one thing to read when rendering the prescription or reporting it
+    /// back. A uniform prescription reads as `targetSets` copies of what the
+    /// exercise states; a listed one reads as what each set states with
+    /// anything it left out taken from the exercise. The rule lives in
+    /// `SetPrescription.everySet(...)`, shared with the document side so the
+    /// phone and the server cannot disagree about what a plan prescribed.
+    var prescribedSets: [SetPrescription] {
+        SetPrescription.everySet(
+            stated: orderedStatedSets.map(\.prescription), count: targetSets,
+            repRange: repRange, suggestedLoad: suggestedLoad, intensity: intensity
+        )
     }
 }

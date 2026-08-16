@@ -15,11 +15,16 @@ struct SetRowView: View {
     /// 1-based working-set number, ignored when the row is a warmup.
     var workingNumber: Int
     var previousText: String
-    /// The rep target the plan prescribed, shown in the reps field while it is
-    /// empty — `"8-12"`, `"AMRAP"`, or `"—"` when the plan named none. It is a
-    /// placeholder rather than a value so the prescription reaches the lifter
-    /// without the app claiming he lifted it.
+    /// The rep target the plan prescribed *for this set*, shown in the reps
+    /// field while it is empty — `"8-12"`, `"AMRAP"`, or `"—"` when the plan
+    /// named none. It is a placeholder rather than a value so the prescription
+    /// reaches the lifter without the app claiming he lifted it. Sets of one
+    /// exercise may carry different targets: a ramp and a drop set are exactly
+    /// that.
     var repTargetText: String
+    /// The load the plan prescribed for this set, shown the same way and for
+    /// the same reason. `"—"` when it prescribed none.
+    var loadTargetText: String
     var unit: MassUnit
     var onComplete: () -> Void
 
@@ -63,7 +68,7 @@ struct SetRowView: View {
                 .frame(maxWidth: .infinity)
                 .lineLimit(1)
 
-            field(text: weightText, placeholder: "—", isDecimal: true)
+            field(text: weightText, placeholder: loadTargetText, isDecimal: true)
             field(text: repsText, placeholder: repTargetText, isDecimal: false)
 
             Button {

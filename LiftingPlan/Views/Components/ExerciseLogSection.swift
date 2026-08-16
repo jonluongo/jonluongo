@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import LiftingKit
 
 /// The editable body of one exercise's section inside `ActiveWorkoutView`:
 /// notes, the prescribed rest, the set table, and "Add Set". Split out to keep
@@ -28,6 +29,11 @@ struct ExerciseLogSection: View {
         (exercise.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }
     }
 
+    /// What the plan asked of each set, in order. Read rather than rebuilt so
+    /// a ramp or a drop set shows the load and reps of the set actually being
+    /// logged rather than one figure standing in for all of them.
+    private var prescribedSets: [SetPrescription] { exercise.prescribedSets }
+
     var body: some View {
         Group {
             if let notes = exercise.notes, !notes.isEmpty {
@@ -44,6 +50,13 @@ struct ExerciseLogSection: View {
                     .foregroundStyle(.secondary)
             }
 
+            // Drawn only when the sets differ from one another. A uniform
+            // prescription is already stated in full in the section header, and
+            // repeating it once per set would say nothing new.
+            if PrescriptionSummary.setsDiffer(in: exercise) {
+                perSetPrescription
+            }
+
             columnHeader
 
             ForEach(Array(orderedSets.enumerated()), id: \.element.persistentModelID) { index, set in
@@ -51,7 +64,12 @@ struct ExerciseLogSection: View {
                     set: set,
                     workingNumber: workingNumber(at: index),
                     previousText: previousText(workingIndex: workingNumber(at: index) - 1, isWarmup: set.isWarmup),
-                    repTargetText: RepPrescription.targetText(for: exercise.repRange),
+                    repTargetText: RepPrescription.targetText(
+                        for: prescription(forWorkingNumber: workingNumber(at: index),
+                                          isWarmup: set.isWarmup)?.repRange),
+                    loadTargetText: loadTargetText(
+                        prescription(forWorkingNumber: workingNumber(at: index),
+                                     isWarmup: set.isWarmup)),
                     unit: profile.displayUnit,
                     onComplete: { onCompleteSet(exercise) }
                 )
@@ -75,6 +93,26 @@ struct ExerciseLogSection: View {
         }
     }
 
+    /// The sets the plan asked for, one line each, above the table they are
+    /// logged in. Shown only when they differ, since that is the only case a
+    /// single summary line cannot state without inventing a figure.
+    private var perSetPrescription: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(Array(prescribedSets.enumerated()), id: \.offset) { index, set in
+                let line = PrescriptionSummary.text(for: set, unit: profile.displayUnit)
+                if !line.isEmpty {
+                    HStack(spacing: 8) {
+                        Text("\(index + 1)")
+                            .font(.caption2.weight(.bold).monospacedDigit())
+                            .frame(width: 14, alignment: .trailing)
+                        Text(line).font(.caption)
+                    }
+                }
+            }
+        }
+        .foregroundStyle(.secondary)
+    }
+
     private var columnHeader: some View {
         HStack(spacing: 8) {
             Text("SET").frame(width: 30)
@@ -90,6 +128,26 @@ struct ExerciseLogSection: View {
     /// 1-based working-set number for the row at `index` (warmups don't count).
     private func workingNumber(at index: Int) -> Int {
         orderedSets.prefix(index + 1).filter { !$0.isWarmup }.count
+    }
+
+    /// What the plan asked of the working set at `workingNumber`, or `nil` when
+    /// it asked for nothing about it — a warmup, or a set the lifter added past
+    /// the ones prescribed. Nothing is stretched to cover an extra set: a
+    /// fourth row under a three-set prescription is his own, not the plan's.
+    private func prescription(
+        forWorkingNumber workingNumber: Int, isWarmup: Bool
+    ) -> SetPrescription? {
+        guard !isWarmup, prescribedSets.indices.contains(workingNumber - 1) else { return nil }
+        return prescribedSets[workingNumber - 1]
+    }
+
+    /// What an empty weight field shows: the load this set was prescribed, in
+    /// the lifter's display unit, or `"—"` when none was. A placeholder rather
+    /// than a value, so the prescription reaches him without the app claiming
+    /// he lifted it.
+    private func loadTargetText(_ prescription: SetPrescription?) -> String {
+        guard let load = prescription?.suggestedLoad else { return "—" }
+        return load.converted(to: profile.displayUnit).value.compactString
     }
 
     private func previousText(workingIndex: Int, isWarmup: Bool) -> String {

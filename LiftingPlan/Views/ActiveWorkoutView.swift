@@ -204,23 +204,26 @@ struct ActiveWorkoutView: View {
     /// Pre-populate each exercise with exactly the sets it prescribes, primed
     /// with what the plan prescribed and nothing else.
     ///
-    /// The seeded load is `exercise.suggestedLoad`; the seeded reps come from
-    /// `RepPrescription`, which fills the field only when the plan named one
-    /// number and leaves it blank — with the prescribed target shown in its
-    /// place — when the plan named a range. Neither number is ever taken from
-    /// what the lifter did last time. Last session's performance is shown
-    /// beside each row as reference (`ExerciseLogSection.previousText`), which
-    /// is what it is for; substituting it for the prescription is how the
-    /// prescription stops reaching the lifter at all. Every seeded number is
-    /// editable, because what gets logged is what he actually lifts.
+    /// **Each row is seeded from its own set's prescription, not the
+    /// exercise's average.** A ramp seeds 60, 70, 80 and a drop set seeds the
+    /// lighter fourth row, because that is what was written; collapsing them
+    /// into one figure would hand the lifter a session nobody prescribed. The
+    /// seeded reps come from `RepPrescription`, which fills the field only when
+    /// that set named one number and leaves it blank — with the prescribed
+    /// target shown in its place — when it named a range. Neither number is
+    /// ever taken from what the lifter did last time. Last session's
+    /// performance is shown beside each row as reference
+    /// (`ExerciseLogSection.previousText`), which is what it is for;
+    /// substituting it for the prescription is how the prescription stops
+    /// reaching the lifter at all. Every seeded number is editable, because
+    /// what gets logged is what he actually lifts.
     private func seedSetsIfNeeded() {
         for exercise in exercises where (exercise.loggedSets ?? []).isEmpty {
-            let prescribedReps = RepPrescription.seededReps(for: exercise.repRange)
-            for index in 0..<exercise.targetSets {
+            for (index, prescribed) in exercise.prescribedSets.enumerated() {
                 let set = LoggedSet(
                     setIndex: index,
-                    load: exercise.suggestedLoad,
-                    reps: prescribedReps ?? 0,
+                    load: prescribed.suggestedLoad,
+                    reps: RepPrescription.seededReps(for: prescribed.repRange) ?? 0,
                     isWarmup: false
                 )
                 context.insert(set)
@@ -274,7 +277,10 @@ private struct ExerciseHeaderView: View {
                 Text(exercise.displayName)
                     .font(.headline)
                     .foregroundStyle(Color.accentColor)
-                Text("\(exercise.targetSets) × \(exercise.repRange)\(exercise.tempo.map { " · tempo \($0)" } ?? "")")
+                // What the plan prescribed, stated the way it was written: a
+                // count and a rep target when the sets are alike, and only the
+                // count when they are not — the set rows below say the rest.
+                Text("\(PrescriptionSummary.text(for: exercise))\(exercise.tempo.map { " · tempo \($0)" } ?? "")")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -110,13 +110,19 @@ private func set(
 
 private func prescribed(
     _ id: String, _ name: String, order: Int, sets: Int, reps: String,
-    load: Double?, rest: Int?, logged: [SnapshotLoggedSet] = []
+    load: Double?, rest: Int?, intensity: IntensityTarget? = nil,
+    logged: [SnapshotLoggedSet] = []
 ) -> SnapshotPlannedExercise {
-    SnapshotPlannedExercise(
+    let suggested = load.map { Mass(value: $0, unit: .pounds) }
+    return SnapshotPlannedExercise(
         exerciseID: ExerciseID(rawValue: id), displayName: name, order: order,
         targetSets: sets, repRange: reps,
-        suggestedLoad: load.map { Mass(value: $0, unit: .pounds) },
-        restSeconds: rest, tempo: nil, notes: nil, loggedSets: logged
+        suggestedLoad: suggested,
+        restSeconds: rest, intensity: intensity, tempo: nil, notes: nil,
+        prescribedSets: SetPrescription.everySet(
+            stated: [], count: sets, repRange: reps,
+            suggestedLoad: suggested, intensity: intensity),
+        loggedSets: logged
     )
 }
 
@@ -199,6 +205,9 @@ private func currentPlan() -> SnapshotPlan {
                             prescribed(
                                 "barbell-bench-press", "Barbell Bench Press", order: 0,
                                 sets: 3, reps: "5", load: 225, rest: 180,
+                                // The effort the plan asked for, so it can be
+                                // read beside the effort actually logged below.
+                                intensity: IntensityTarget(scale: .rpe, value: "8"),
                                 logged: [
                                     set(0, 135, 5, at: pushDay, warmup: true),
                                     set(1, 225, 5, at: pushDay, rpe: 8),

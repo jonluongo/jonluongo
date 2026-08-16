@@ -86,8 +86,12 @@ struct DayBlueprint: Equatable {
 /// is what `PerformanceHistory` joins on; `displayName` is shown to the lifter
 /// and carried through for display only. Never resolve or match an exercise by
 /// `displayName` — collapsing that distinction back into a single free-text
-/// name is exactly the bug this type's shape exists to prevent. Depends on:
-/// `ExerciseID`, `Mass` from Domain.
+/// name is exactly the bug this type's shape exists to prevent.
+///
+/// `sets` is always how many sets there are. `statedSets` holds them one at a
+/// time when the plan listed them and is empty when it prescribed the same work
+/// throughout — the ordinary case, which stores no per-set rows. Depends on:
+/// `ExerciseID`, `Mass`, `IntensityTarget`, `SetPrescription`.
 struct ExerciseBlueprint: Equatable {
     var exerciseID: ExerciseID
     var displayName: String
@@ -97,6 +101,10 @@ struct ExerciseBlueprint: Equatable {
     var suggestedLoad: Mass?
     var tempo: String?
     var notes: String?
+    /// How hard the work should be. `nil` when the plan named no target.
+    var intensity: IntensityTarget?
+    /// The sets the plan listed one at a time, in order. Empty when uniform.
+    var statedSets: [SetPrescription] = []
 }
 
 extension PlanBlueprint {
@@ -162,20 +170,35 @@ extension PlanBlueprint {
             focus: day.focus,
             durationMinutes: day.durationMinutes
         )
-        workoutDay.exercises = day.exercises.enumerated().map { exIndex, ex in
-            PlannedExercise(
-                exerciseID: ex.exerciseID,
-                displayName: ex.displayName,
-                order: exIndex,
-                targetSets: ex.sets,
-                repRange: ex.repRange,
-                suggestedLoad: ex.suggestedLoad,
-                restSeconds: ex.restSeconds,
-                tempo: ex.tempo,
-                notes: ex.notes
+        workoutDay.exercises = day.exercises.enumerated().map(Self.makePlannedExercise)
+        return workoutDay
+    }
+
+    /// One prescription, with its sets stored one at a time only when the plan
+    /// listed them that way. A uniform prescription stores no per-set rows —
+    /// three sets of eight is a count, not three identical records to sync.
+    private static func makePlannedExercise(
+        _ order: Int, _ exercise: ExerciseBlueprint
+    ) -> PlannedExercise {
+        let planned = PlannedExercise(
+            exerciseID: exercise.exerciseID,
+            displayName: exercise.displayName,
+            order: order,
+            targetSets: exercise.sets,
+            repRange: exercise.repRange,
+            suggestedLoad: exercise.suggestedLoad,
+            restSeconds: exercise.restSeconds,
+            intensity: exercise.intensity,
+            tempo: exercise.tempo,
+            notes: exercise.notes
+        )
+        planned.statedSets = exercise.statedSets.enumerated().map { index, set in
+            PrescribedSet(
+                order: index, repRange: set.repRange, suggestedLoad: set.suggestedLoad,
+                intensity: set.intensity, notes: set.notes
             )
         }
-        return workoutDay
+        return planned
     }
 }
 
@@ -219,7 +242,9 @@ extension PlanBlueprint {
                     restSeconds: exercise.restSeconds,
                     suggestedLoad: exercise.suggestedLoad,
                     tempo: exercise.tempo,
-                    notes: exercise.notes
+                    notes: exercise.notes,
+                    intensity: exercise.intensity,
+                    statedSets: exercise.statedSets
                 )
             }
         )

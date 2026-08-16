@@ -1,4 +1,5 @@
 import SwiftUI
+import LiftingKit
 
 /// Previews a day's prescribed exercises and launches the guided workout.
 struct SessionDetailView: View {
@@ -40,7 +41,7 @@ struct SessionDetailView: View {
             } else {
                 Section {
                     ForEach(day.orderedExercises) { exercise in
-                        ExercisePreviewRow(exercise: exercise)
+                        ExercisePreviewRow(exercise: exercise, unit: profile.displayUnit)
                     }
                 } header: {
                     Text(header)
@@ -72,8 +73,16 @@ struct SessionDetailView: View {
 }
 
 /// Static preview of one prescribed exercise.
+///
+/// Everything shown here is the plan restated: the sets it asks for, the effort
+/// it asks for, and — when its sets differ from one another — each of them on
+/// its own line, since no single line can state a ramp or a drop set without
+/// naming a figure no set of it actually has.
 struct ExercisePreviewRow: View {
     let exercise: PlannedExercise
+    /// The lifter's display unit, so a prescribed load reads in the unit he
+    /// reads everything else in.
+    let unit: MassUnit
 
     private var isComplete: Bool {
         let sets = exercise.loggedSets ?? []
@@ -90,7 +99,7 @@ struct ExercisePreviewRow: View {
                 }
             }
             HStack(spacing: 10) {
-                Label("\(exercise.targetSets) × \(exercise.repRange)", systemImage: "repeat")
+                Label(PrescriptionSummary.text(for: exercise), systemImage: "repeat")
                 if let rest = exercise.restSeconds {
                     Label("\(rest)s rest", systemImage: "timer")
                 }
@@ -100,6 +109,17 @@ struct ExercisePreviewRow: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
+
+            if PrescriptionSummary.setsDiffer(in: exercise) {
+                ForEach(Array(exercise.prescribedSets.enumerated()), id: \.offset) { index, set in
+                    let line = PrescriptionSummary.text(for: set, unit: unit)
+                    if !line.isEmpty {
+                        Text("\(index + 1)  \(line)")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
 
             if let notes = exercise.notes, !notes.isEmpty {
                 Text(notes)

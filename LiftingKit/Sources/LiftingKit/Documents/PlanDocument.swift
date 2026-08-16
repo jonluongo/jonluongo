@@ -14,6 +14,12 @@ import Foundation
 /// week 4 can be a deload, rather than one week being repeated by whoever reads
 /// it. A block of a single week states a single week.
 ///
+/// **An exercise's sets may differ from one another.** That is what makes a
+/// drop set, a ramp, a back-off set and a per-set note sayable — see
+/// `PlanDocumentExercise.sets`, which is a count when the work is the same
+/// throughout and a list when it is not. `intensity` states how hard the work
+/// should be, on whatever scale the plan works in.
+///
 /// Nothing in this format is a suggestion to be adjusted. A set count, a rest,
 /// a rep range, and a load are recorded exactly as written; `id` is the
 /// document's stable identity, so importing the same plan twice is a no-op
@@ -35,10 +41,14 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     /// The format version this build writes. Bump it when a reader would need
     /// to behave differently, not for an additive field.
     ///
-    /// Version 2 made the block a list of weeks. Version 1 stated one week as a
-    /// bare `days` array, which is still read — that shape is now the way a
+    /// Version 3 let an exercise list its sets one at a time and state how hard
+    /// they should be: `sets` may now be a list rather than a count, which a
+    /// version 2 reader could not read, and `intensity` is a key it did not
+    /// have. Version 2 made the block a list of weeks. Version 1 stated one week
+    /// as a bare `days` array, which is still read — that shape is now the way a
     /// single-week block is written, so there is one rule rather than two.
-    public static let currentVersion = 2
+    /// Every one of those documents still imports.
+    public static let currentVersion = 3
 
     /// The format version of this document, as written.
     public let version: Int

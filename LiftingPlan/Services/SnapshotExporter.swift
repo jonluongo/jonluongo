@@ -127,13 +127,21 @@ enum SnapshotExporter {
         )
     }
 
+    /// One prescription and everything logged against it.
+    ///
+    /// `prescribedSets` states every set in full and in order, so a ramp or a
+    /// drop set is reported as the sets it is rather than as one prescription
+    /// that no set actually matched. `intensity` is the effort that was asked
+    /// for, carried beside the RPE each set was logged with — the app never
+    /// compares them, converts between scales, or decides a target was met.
     private static func snapshot(of exercise: PlannedExercise) -> SnapshotPlannedExercise {
         SnapshotPlannedExercise(
             exerciseID: exercise.exerciseID, displayName: exercise.displayName,
             order: exercise.order, targetSets: exercise.targetSets,
             repRange: exercise.repRange, suggestedLoad: exercise.suggestedLoad,
-            restSeconds: exercise.restSeconds, tempo: exercise.tempo,
-            notes: exercise.notes,
+            restSeconds: exercise.restSeconds, intensity: exercise.intensity,
+            tempo: exercise.tempo, notes: exercise.notes,
+            prescribedSets: exercise.prescribedSets,
             // Warmups and unfinished rows are carried too, labelled rather
             // than filtered: what was skipped is as informative as what was
             // done, and deciding what to make of it is not the app's call.
