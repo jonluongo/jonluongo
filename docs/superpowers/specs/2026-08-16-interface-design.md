@@ -164,3 +164,20 @@ carrier of meaning, correct safe-area handling.
 - In-app chat. The conversation is in Claude.
 - Any app-side training decision, including exercise substitution.
 - Apple Watch.
+
+## Recorded decision: the coach's note is block-level, and lives on Plan
+
+**2026-08-17. Owner's call.**
+
+Claude writes one note per plan. There is deliberately **no per-week and no
+per-day note**, and none should be added on the reasoning that a note about
+week 2 cannot be shown during week 2.
+
+That limitation is real and was raised: the block note shows on the Plan tab,
+so a sentence about one week is somewhere the lifter has to go and look rather
+than somewhere he trains. The alternative — showing it on Today — put it in
+front of him on all 28 days of a four-week block, including the 26 it was not
+about, and that was the clutter he asked to have removed.
+
+Neither is free, and the owner chose the simpler format over the better-placed
+note. Revisit only if it bites in use.
