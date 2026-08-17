@@ -1,8 +1,8 @@
 import SwiftUI
 import LiftingKit
 
-/// The section header for one exercise on the logging screen: icon, name, what
-/// the plan asked for, and the menu.
+/// The section header for one exercise on the logging screen: the name, what the
+/// plan asked for, and the menu.
 ///
 /// **What it does.** Says which exercise the table below it logs, and states the
 /// prescription in one line — the sets, what they ask for, the span of load
@@ -32,11 +32,16 @@ import LiftingKit
 /// what happened, so a fifth set actually performed must be recordable even
 /// though four were prescribed.
 ///
-/// **What it depends on.** `IconCircleRow` for the shape — the plan screen's
-/// day row draws the same one, and the two used to be separate code that had
-/// drifted six ways — and `PrescriptionSummary` for the words. It lives beside
-/// its twin rather than inside the screen that uses it, which is what makes a
-/// future divergence visible.
+/// **There is no icon.** Every exercise drew the same dumbbell in the same
+/// circle, so the glyph told a lifter nothing about which exercise he was
+/// looking at while indenting every name by forty-eight points. A mark
+/// identical everywhere it appears is decoration.
+///
+/// **What it depends on.** `CardHeaderRow` for the shape — a group's header
+/// draws the same one, and the two used to be separate code that had drifted six
+/// ways — and `PrescriptionSummary` for the words. It lives beside its twin
+/// rather than inside the screen that uses it, which is what makes a future
+/// divergence visible.
 struct ExerciseHeaderView: View {
     let exercise: PlannedExercise
     /// The lifter's display unit, carried down to the prescription.
@@ -54,12 +59,7 @@ struct ExerciseHeaderView: View {
     }
 
     var body: some View {
-        IconCircleRow(
-            systemImage: "dumbbell.fill",
-            tint: .accentColor,
-            title: exercise.displayName,
-            subtitle: subtitle
-        ) {
+        CardHeaderRow(title: exercise.displayName, subtitle: subtitle) {
             Menu {
                 Button { onShowInfo() } label: {
                     Label("About This Exercise", systemImage: "info.circle")

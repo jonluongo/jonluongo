@@ -41,10 +41,12 @@ struct ExerciseAboutTests {
     func statedFacts() throws {
         let facts = ExerciseAbout.facts(for: try exercise(full))
         #expect(facts.map(\.label) == [
-            "Primary", "Secondary", "Equipment", "Pattern", "Mechanic", "Difficulty",
+            "Target", "Equipment", "Pattern", "Mechanic", "Difficulty",
         ])
+        // One row, primaries ahead of secondaries — the catalog's order, which
+        // is where the emphasis now lives.
         #expect(facts.map(\.value) == [
-            "Chest", "Triceps, Shoulders", "Barbell", "Horizontal press",
+            "Chest, Triceps, Shoulders", "Barbell", "Horizontal press",
             "Compound", "Intermediate",
         ])
     }
@@ -52,9 +54,11 @@ struct ExerciseAboutTests {
     @Test("An entry that says nothing about a thing gets no row for it")
     func absenceIsAbsence() throws {
         let facts = ExerciseAbout.facts(for: try exercise(sparse))
-        #expect(facts.map(\.label) == ["Primary", "Equipment", "Pattern"])
+        #expect(facts.map(\.label) == ["Target", "Equipment", "Pattern"])
         #expect(!facts.contains { $0.label == "Difficulty" })
-        #expect(!facts.contains { $0.label == "Secondary" })
+        // An entry naming only primaries still has one Target row, not a second
+        // empty one.
+        #expect(try #require(facts.first).value == "Abdominals")
     }
 
     @Test("An entry with no instructions has none to show")

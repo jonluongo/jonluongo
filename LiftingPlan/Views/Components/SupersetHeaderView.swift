@@ -13,10 +13,16 @@ import LiftingKit
 ///
 /// **How it is used.** `ActiveWorkoutView` puts one above each group's section,
 /// where `ExerciseHeaderView` sits above an ungrouped exercise's. The two are
-/// deliberately the same shape — `IconCircleRow` — so a card that happens to be
+/// deliberately the same shape — `CardHeaderRow` — so a card that happens to be
 /// a superset does not read as a different kind of thing.
 ///
-/// **What it depends on.** `ExerciseGroup` from Services, `IconCircleRow` for
+/// **There is no icon.** Every group drew the same rotate arrows, exactly as
+/// every exercise drew the same dumbbell, so neither said which card it was
+/// above. What marks this one as a group is what it is called and the `A1` /
+/// `A2` legend under it, both of which are words rather than a glyph a lifter
+/// has to learn.
+///
+/// **What it depends on.** `ExerciseGroup` from Services, `CardHeaderRow` for
 /// the shape and `PrescriptionSummary` for the words. It writes nothing.
 struct SupersetHeaderView: View {
 
@@ -39,12 +45,7 @@ struct SupersetHeaderView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.snug) {
-            IconCircleRow(
-                systemImage: "arrow.trianglehead.2.clockwise.rotate.90",
-                tint: .accentColor,
-                title: group.title,
-                subtitle: subtitle
-            ) {
+            CardHeaderRow(title: group.title, subtitle: subtitle) {
                 Menu {
                     Button { onEditRest(group) } label: {
                         Label("Rest Timer", systemImage: "timer")

@@ -28,7 +28,9 @@ struct ExerciseFact: Identifiable, Equatable, Sendable {
 ///
 /// **What it does.** Turns an `Exercise` into the rows the info screen prints
 /// — the muscles it trains, what it is performed with, how it moves, and how
-/// hard it is graded. Only what the entry states: a movement the catalog did
+/// hard it is graded. The muscles are one row: what a movement works is one
+/// question, and ranking the answer into primary and secondary asked the reader
+/// to hold a distinction he cannot train differently. Only what the entry states: a movement the catalog did
 /// not grade produces no difficulty row, not a row reading "unknown", and an
 /// entry with no instructions produces an empty list rather than a heading with
 /// nothing under it. It states nothing about training and decides nothing —
@@ -50,12 +52,16 @@ enum ExerciseAbout {
     /// says, so it is printed rather than dropped.
     static func facts(for exercise: Exercise) -> [ExerciseFact] {
         [
-            fact("Primary", list(exercise.primaryMuscles.map(\.rawValue))),
-            // "Primary" and "Secondary", not "Primary" and "Also works": every
-            // other label on this screen names the fact rather than narrating
-            // it, and a verb phrase sitting under a noun read as two different
-            // kinds of row.
-            fact("Secondary", list(exercise.secondaryMuscles.map(\.rawValue))),
+            // One row, not two. "Primary" and "Secondary" split what a lifter
+            // reads as a single answer to a single question — what does this
+            // work? — across two rows, and the split is a ranking he cannot act
+            // on: nothing about how he benches changes because the triceps are
+            // listed second. The catalog's own order is kept, primaries ahead of
+            // secondaries, so the emphasis survives in the reading order without
+            // costing a row to state.
+            fact("Target", list(
+                exercise.primaryMuscles.map(\.rawValue)
+                    + exercise.secondaryMuscles.map(\.rawValue))),
             fact("Equipment", sentenceCased(exercise.equipment.rawValue)),
             fact("Pattern", sentenceCased(exercise.pattern.rawValue)),
             fact("Mechanic", exercise.mechanic.map { sentenceCased($0.rawValue) }),
@@ -71,8 +77,16 @@ enum ExerciseAbout {
     /// Taxonomy values joined in the order the catalog lists them, or `nil`
     /// when there are none. The order is the data's: an entry that names the
     /// chest first has said something a re-sorted list would lose.
+    ///
+    /// A value repeated — a muscle an entry lists as both primary and secondary
+    /// — is printed once, at its first position. Saying "Chest, Chest" would
+    /// read as a fault in the app rather than as the data it is.
     private static func list(_ values: [String]) -> String? {
-        let words = values.filter { !$0.isEmpty }.map(sentenceCased)
+        var seen = Set<String>()
+        let words = values
+            .filter { !$0.isEmpty }
+            .filter { seen.insert($0).inserted }
+            .map(sentenceCased)
         return words.isEmpty ? nil : words.joined(separator: ", ")
     }
 
