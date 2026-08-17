@@ -112,12 +112,12 @@ struct ExerciseRestSheet: View {
         guard let prescribedSeconds else {
             return """
                 Claude prescribed no rest here. A timer you set is your own — \
-                it doesn't change his plan.
+                it doesn't change the block.
                 """
         }
         return """
             Claude prescribed \(RestPrescription.durationText(prescribedSeconds)) here. \
-            Changing the timer doesn't change his plan.
+            Changing the timer doesn't change the block.
             """
     }
 

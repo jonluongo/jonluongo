@@ -68,7 +68,7 @@ struct TodaySessionSection: View {
 
     /// What the button below will do, said once, and only where all three
     /// things it claims are true: there is a button, the session has not been
-    /// started, and the plan prescribed rest somewhere in it.
+    /// started, and the block prescribed rest somewhere in it.
     ///
     /// A session that prescribes no rest gets no sentence rather than a longer
     /// one explaining an absence — the app never decides how long to rest, and
@@ -81,7 +81,7 @@ struct TodaySessionSection: View {
             session.orderedExercises.contains(where: { $0.restSeconds != nil })
         else { return nil }
         return """
-            Tap Start to log this session set by set. Where the plan prescribes rest, \
+            Tap Start to log this session set by set. Where the block prescribes rest, \
             checking a set off runs that rest.
             """
     }

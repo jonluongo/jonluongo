@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 import LiftingKit
 
-/// One whole block, a week at a time — a plan opened from the Plans tab.
+/// One whole block, a week at a time — a block opened from the Blocks tab.
 ///
 /// **What it does.** Names the block and repeats the coach's note, lists every
 /// week the plan states, marks the one today falls in and the ones that are
@@ -11,8 +11,8 @@ import LiftingKit
 /// cells costs more space to say less than a week does — and cannot say "week 4
 /// is a deload", which is the thing worth knowing about a block.
 ///
-/// **How it is used.** Pushed from `PlansView` with the plan to draw. It used to
-/// be the tab itself and read the newest plan out of the store, which is what
+/// **How it is used.** Pushed from `PlansView` with the block to draw. It used
+/// to be the tab itself and read the newest block out of the store, which is what
 /// made every earlier block unreachable; it is now handed the block it shows, so
 /// the same screen serves the current one and every one before it.
 ///

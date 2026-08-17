@@ -141,25 +141,25 @@ struct AccountView: View {
             } header: {
                 Text("Rest Timer")
             } footer: {
-                Text("When off, checking a set off starts no countdown. The rest Claude prescribed is still shown on every exercise — that is his plan, not a feature of the app.")
+                Text("When off, checking a set off starts no countdown. The rest Claude prescribed is still shown on every exercise — that is his prescription, not a feature of the app.")
             }
 
             Section {
                 Button(role: .destructive) {
                     showingResetConfirm = true
                 } label: {
-                    Text("Delete All Plans")
+                    Text("Delete All Blocks")
                 }
             } footer: {
-                Text("Deletes every plan and every set logged against it. Everything above is kept.")
+                Text("Deletes every block and every set logged against it. Everything above is kept.")
             }
         }
         .navigationTitle("Account")
-        .confirmationDialog("Delete all plans?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
-            Button("Delete Plans", role: .destructive) { deleteAllPlans() }
+        .confirmationDialog("Delete all blocks?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
+            Button("Delete Blocks", role: .destructive) { deleteAllPlans() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("The sets you logged go with them and don't come back. The plan itself will import again the next time Claude's plan document arrives, without them.")
+            Text("The sets you logged go with them and don't come back. The block itself will import again the next time Claude's plan document arrives, without them.")
         }
         .alert("Couldn't Save", isPresented: errorAlertBinding) {
             Button("OK", role: .cancel) {}
@@ -175,7 +175,7 @@ struct AccountView: View {
         save()
     }
 
-    /// Deletes the plans and, by cascade, every set logged against them.
+    /// Deletes the blocks and, by cascade, every set logged against them.
     ///
     /// Deliberately nothing else. `StrengthBaseline` and `BodyMetric` are what
     /// the lifter is, not what he was asked to train — Claude records them and

@@ -40,7 +40,7 @@ struct RootView: View {
             Text(saveErrorMessage ?? "")
         }
         // Something that could not be read is shown rather than swallowed: an
-        // unreadable plan otherwise looks identical to not having been sent
+        // unreadable document otherwise looks identical to not having been sent
         // one, and the lifter would wait for something that already arrived.
         .alert("Couldn't Read What Claude Sent", isPresented: inboxErrorAlertBinding) {
             Button("OK", role: .cancel) { documentInbox?.dismissError() }
@@ -111,7 +111,7 @@ struct RootView: View {
 
 /// The three tabs, which is the whole app: the day, the blocks, and the lifter.
 ///
-/// Today is the front door. Plans is every block he has been given — it was a
+/// Today is the front door. Blocks is every block he has been given — it was a
 /// link on Today until the block stopped being a detail of the day, and then a
 /// tab showing a single block, which quietly meant the one before it was
 /// unreachable the moment a new one arrived. It stands where a History tab used
@@ -133,7 +133,7 @@ struct MainTabView: View {
             Tab("Today", systemImage: "dumbbell.fill") {
                 TodayView(profile: profile)
             }
-            Tab("Plans", systemImage: "calendar") {
+            Tab("Blocks", systemImage: "calendar") {
                 NavigationStack { PlansView(profile: profile) }
             }
             Tab("Account", systemImage: "person.crop.circle") {

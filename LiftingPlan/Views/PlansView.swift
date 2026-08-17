@@ -2,27 +2,34 @@ import SwiftUI
 import SwiftData
 import LiftingKit
 
-/// Every block the lifter has been given, newest first — the Plans tab.
+/// Every block the lifter has been given, the one he is on first — the Blocks
+/// tab.
 ///
-/// **What it does.** Draws one section per plan, headed by the dates that plan
-/// covers, holding a single card: the plan itself. Tapping the card opens it in
-/// full. It exists because the tab used to show one block — the newest — and
-/// every block before it became unreachable the moment a new one arrived, even
-/// though every set logged against it is still in the record and still goes to
-/// Claude. The record was navigable in the export and nowhere on the phone.
+/// **What it does.** Groups the blocks under two headings, `Current` and
+/// `Earlier`, and draws one card each: the name, the dates, and how much of it
+/// has been logged. Tapping a card opens it in full. It exists because the tab
+/// used to show one block — the newest — and every block before it became
+/// unreachable the moment a new one arrived, even though every set logged
+/// against it is still in the record and still goes to Claude. The record was
+/// navigable in the export and nowhere on the phone.
 ///
-/// **Newest first**, because the block a lifter looks up is nearly always the
-/// one he is on or the one he just left; the rest are history and history reads
-/// backwards.
+/// **The grouping is the point.** Every block was its own section, headed by its
+/// dates, which made four blocks read as four equal things with one word of
+/// difference buried in a subtitle. One block is being trained and the rest are
+/// history; that is a difference in standing, not in quality, and a heading says
+/// it in a word without ranking anything. The glyph and the tint follow the
+/// heading — neither carries it alone, and a block behind him is drawn quietly
+/// rather than struck out, because the record cannot tell a block he finished
+/// from one a new plan replaced and must not imply it can.
 ///
 /// **How it is used.** The second tab. It reads the store directly, as a tab
-/// addressed by nothing must, and hands each plan to `BlockView` — the screen
+/// addressed by nothing must, and hands each block to `BlockView` — the screen
 /// that already drew a whole block, now reached by name instead of by being the
 /// only one.
 ///
 /// **What it depends on.** `TrainingPlan` from Store, `PlansListing` for every
-/// string it prints, and the shared `IconCircleRow` and `NoBlockView`. It writes
-/// nothing.
+/// string it prints and for the standing it groups by, and the shared
+/// `IconCircleRow` and `NoBlockView`. It writes nothing.
 struct PlansView: View {
 
     let profile: UserProfile
@@ -36,59 +43,72 @@ struct PlansView: View {
                 NoBlockView()
             } else {
                 List {
-                    ForEach(plans) { plan in
-                        Section {
-                            PlanCard(
-                                plan: plan,
-                                dateRange: PlansListing.header(for: plan, calendar: calendar),
-                                profile: profile
-                            )
-                        } header: {
-                            Text(PlansListing.header(for: plan, calendar: calendar))
-                        }
-                    }
+                    section(.current)
+                    section(.earlier)
                 }
             }
         }
-        .navigationTitle("Plans")
+        .navigationTitle("Blocks")
+    }
+
+    /// One group, or nothing at all when it holds no blocks — an empty
+    /// `Current` heading would announce a block that does not exist, which is
+    /// exactly the day after the last one ended.
+    @ViewBuilder
+    private func section(_ standing: PlansListing.Standing) -> some View {
+        let blocks = plans.filter { PlansListing.standing(of: $0) == standing }
+        if !blocks.isEmpty {
+            Section(standing.heading) {
+                ForEach(blocks) { plan in
+                    BlockCard(
+                        plan: plan,
+                        standing: standing,
+                        subtitle: PlansListing.subtitle(of: plan, calendar: calendar),
+                        profile: profile
+                    )
+                }
+            }
+        }
     }
 }
 
-/// One plan, as the single card in its own section.
+/// One block, as a card in its group.
 ///
-/// **Which block is current is said in words**, in the line under the name,
-/// exactly as a week inside a block says "This week". The tint moves with it
-/// and never carries it alone, and nothing here is a badge or a score — the app
-/// decides nothing about a block, including whether it went well.
+/// **The standing is said three ways and coloured fourth.** The heading above
+/// the card says it in a word, the glyph changes shape with it — the dumbbell
+/// the app draws training with, against a calendar for a block that is now a
+/// date — the row's own VoiceOver label repeats the word, since a heading is a
+/// separate element to a screen reader, and only then does the tint follow.
+/// Nothing here is a badge or a score: the app decides nothing about a block,
+/// including whether it went well.
 ///
-/// The card states what the plan is and how much of it has been logged, and
-/// stops. A plan that prescribes nothing yet says so rather than counting to
-/// zero, and one nobody has trained yet omits the logged count entirely.
-private struct PlanCard: View {
+/// The card states what the block is, when it ran, and how much of it has been
+/// logged, and stops. A block that prescribes nothing yet says so rather than
+/// counting to zero, and one nobody has trained yet omits the logged count
+/// entirely.
+private struct BlockCard: View {
 
     let plan: TrainingPlan
-    /// The dates the section is headed by, repeated into the row's VoiceOver
-    /// label — a header is a separate element to a screen reader, so a row that
-    /// did not say its own dates would be announced as a name with no when.
-    let dateRange: String
+    let standing: PlansListing.Standing
+    /// The dates and counts, already phrased. Passed in rather than computed
+    /// here so the whole line comes from the one place that phrases it.
+    let subtitle: String
     let profile: UserProfile
 
-    private var isCurrent: Bool { PlansListing.isCurrent(plan) }
     private var title: String { PlansListing.title(of: plan) }
-    private var summary: String { PlansListing.summary(of: plan) }
 
     var body: some View {
         NavigationLink {
             BlockView(plan: plan, profile: profile)
         } label: {
             IconCircleRow(
-                systemImage: "calendar",
-                tint: isCurrent ? .accentColor : .secondary,
+                systemImage: standing == .current ? "dumbbell.fill" : "calendar",
+                tint: standing == .current ? .accentColor : .secondary,
                 title: title,
-                subtitle: summary
+                subtitle: subtitle
             )
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(title), \(dateRange), \(summary)")
+            .accessibilityLabel("\(title), \(standing.spoken), \(subtitle)")
         }
     }
 }

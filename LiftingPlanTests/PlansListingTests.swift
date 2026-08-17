@@ -6,12 +6,13 @@ import LiftingKit
 /// Every block has to be findable, and every block has to be described without
 /// anything being invented for it.
 ///
-/// The tab used to draw one plan — the newest — so the block before it became
+/// The tab used to draw one block — the newest — so the block before it became
 /// unreachable the moment Claude sent a new one, with all of its logged sets
 /// still in the record and still going out in the export. These tests guard the
-/// two things that made the list possible: dating a block from its own weeks,
-/// and saying what it is without filling in what it does not have.
-@Suite("Plans listing")
+/// three things that made the list possible: dating a block from its own weeks,
+/// saying what it is without filling in what it does not have, and separating
+/// the block being trained from the ones behind it without judging either.
+@Suite("Blocks listing")
 struct PlansListingTests {
 
     /// A fixed calendar, so a date range is the same sentence on every machine.
@@ -24,26 +25,26 @@ struct PlansListingTests {
 
     private static let english = Locale(identifier: "en_US")
 
-    // MARK: - What a plan is called
+    // MARK: - What a block is called
 
-    @Test("A plan is called what it called itself")
+    @Test("A block is called what it called itself")
     func titleIsTheStatedTitle() {
         let plan = TrainingPlan(title: "Autumn Strength", goal: "Squat 315")
         #expect(PlansListing.title(of: plan) == "Autumn Strength")
     }
 
-    @Test("An unnamed plan is called what it is for")
+    @Test("An unnamed block is called what it is for")
     func titleFallsBackToGoal() {
         let plan = TrainingPlan(title: "", goal: "Squat 315")
         #expect(PlansListing.title(of: plan) == "Squat 315")
     }
 
-    @Test("A plan that stated neither is just a plan")
-    func titleFallsBackToPlan() {
-        #expect(PlansListing.title(of: TrainingPlan(title: "", goal: "")) == "Plan")
+    @Test("A block that stated neither is just a block")
+    func titleFallsBackToBlock() {
+        #expect(PlansListing.title(of: TrainingPlan(title: "", goal: "")) == "Block")
     }
 
-    // MARK: - The dates a section is headed by
+    // MARK: - The dates a card states
 
     @Test("A four-week block covers its start date and the twenty-seven days after it")
     func spanIsTheBlockItself() throws {
@@ -53,12 +54,12 @@ struct PlansListingTests {
         #expect(span.upperBound == date(2026, 9, 13))
     }
 
-    @Test("The heading names both ends of the block")
-    func headingNamesBothEnds() {
+    @Test("The dates name both ends of the block")
+    func datesNameBothEnds() {
         let plan = plan(startingOn: date(2026, 8, 17), weeks: 4)
-        let heading = PlansListing.header(for: plan, calendar: Self.utc, locale: Self.english)
-        #expect(heading.contains("Aug 17"))
-        #expect(heading.contains("Sep 13"))
+        let dates = PlansListing.dates(of: plan, calendar: Self.utc, locale: Self.english)
+        #expect(dates.contains("Aug 17"))
+        #expect(dates.contains("Sep 13"))
     }
 
     @Test("A block the record has closed is still dated by the days it covered")
@@ -74,7 +75,7 @@ struct PlansListingTests {
         let plan = TrainingPlan(title: "Not written yet", startDate: date(2026, 8, 17))
         #expect(PlansListing.span(of: plan, calendar: Self.utc) == nil)
         #expect(PlansListing.dateRange(of: plan, calendar: Self.utc, locale: Self.english) == nil)
-        #expect(PlansListing.header(for: plan, calendar: Self.utc, locale: Self.english)
+        #expect(PlansListing.dates(of: plan, calendar: Self.utc, locale: Self.english)
             == "No dates yet")
     }
 
@@ -83,18 +84,32 @@ struct PlansListingTests {
     @Test("The open block is the current one")
     func openBlockIsCurrent() {
         let plan = plan(startingOn: date(2026, 8, 17), weeks: 2)
-        #expect(PlansListing.isCurrent(plan))
-        #expect(PlansListing.summary(of: plan).hasPrefix("Current · "))
+        #expect(PlansListing.standing(of: plan) == .current)
     }
 
-    @Test("A superseded block is not current, and nothing is said about why it ended")
-    func closedBlockIsNotCurrent() {
+    @Test("A superseded block stands as earlier, and nothing is said about why it ended")
+    func closedBlockIsEarlier() {
         let plan = plan(startingOn: date(2026, 5, 4), weeks: 2)
         plan.completedAt = date(2026, 8, 17)
-        #expect(PlansListing.isCurrent(plan) == false)
-        // The record does not separate "finished" from "superseded", so the
-        // card does not either — it simply stops claiming to be current.
-        #expect(PlansListing.summary(of: plan).contains("Current") == false)
+        #expect(PlansListing.standing(of: plan) == .earlier)
+        // The record does not separate "finished" from "abandoned", so neither
+        // does the list: it says where the block stands and stops.
+        let said = PlansListing.Standing.earlier.heading
+            + PlansListing.Standing.earlier.spoken
+            + PlansListing.subtitle(of: plan, calendar: Self.utc, locale: Self.english)
+        for verdict in ["Complete", "Finished", "Abandoned", "Failed", "Missed"] {
+            #expect(said.localizedCaseInsensitiveContains(verdict) == false)
+        }
+    }
+
+    @Test("Each standing is said in a word, so no meaning rests on colour alone")
+    func standingsAreWords() {
+        #expect(PlansListing.Standing.current.heading == "Current")
+        #expect(PlansListing.Standing.earlier.heading == "Earlier")
+        // A heading is a separate element to a screen reader, so the row has to
+        // carry the same word itself.
+        #expect(PlansListing.Standing.current.spoken.contains("Current"))
+        #expect(PlansListing.Standing.earlier.spoken.contains("Earlier"))
     }
 
     // MARK: - What the card says
@@ -102,27 +117,42 @@ struct PlansListingTests {
     @Test("A block states how many sessions it prescribes")
     func summaryCountsSessions() {
         let plan = plan(startingOn: date(2026, 8, 17), weeks: 2, daysPerWeek: 3)
-        #expect(PlansListing.summary(of: plan) == "Current · 6 sessions")
+        #expect(PlansListing.summary(of: plan) == "6 sessions")
     }
 
     @Test("A logged session is counted once there is one")
     func summaryCountsLoggedSessions() {
         let plan = plan(startingOn: date(2026, 8, 17), weeks: 2, daysPerWeek: 3, logged: 2)
-        #expect(PlansListing.summary(of: plan) == "Current · 6 sessions · 2 logged")
+        #expect(PlansListing.summary(of: plan) == "6 sessions · 2 logged")
     }
 
     @Test("A block nobody has trained yet does not report zero logged")
     func nothingLoggedIsNotZeroLogged() {
         let plan = plan(startingOn: date(2026, 8, 17), weeks: 1, daysPerWeek: 1)
-        #expect(PlansListing.summary(of: plan) == "Current · 1 session")
+        #expect(PlansListing.summary(of: plan) == "1 session")
     }
 
     @Test("A block with no sessions says so rather than counting to zero")
     func noSessionsIsNotZeroOfZero() {
         let plan = TrainingPlan(title: "Just arrived", startDate: date(2026, 8, 17))
         let summary = PlansListing.summary(of: plan)
-        #expect(summary == "Current · No sessions yet")
+        #expect(summary == "No sessions yet")
         #expect(summary.contains("0") == false)
+    }
+
+    @Test("The line under the name is when the block ran and how much of it was logged")
+    func subtitleStatesDatesThenCounts() {
+        let plan = plan(startingOn: date(2026, 8, 17), weeks: 2, daysPerWeek: 3, logged: 2)
+        let subtitle = PlansListing.subtitle(of: plan, calendar: Self.utc, locale: Self.english)
+        #expect(subtitle.contains("Aug 17"))
+        #expect(subtitle.hasSuffix("6 sessions · 2 logged"))
+    }
+
+    @Test("A block that cannot be dated still says what it prescribes")
+    func subtitleSurvivesMissingDates() {
+        let plan = TrainingPlan(title: "Just arrived", startDate: date(2026, 8, 17))
+        #expect(PlansListing.subtitle(of: plan, calendar: Self.utc, locale: Self.english)
+            == "No dates yet · No sessions yet")
     }
 
     // MARK: - Fixtures

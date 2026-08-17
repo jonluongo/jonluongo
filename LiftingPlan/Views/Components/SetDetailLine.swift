@@ -81,7 +81,7 @@ struct SetDetailLine: View {
                         "\(IntensityPrescription.scaleName(for: intensity)) for \(spokenSetName)"
                     )
                     .accessibilityHint(
-                        "The plan asked for \(IntensityPrescription.target(for: intensity))"
+                        "The block asked for \(IntensityPrescription.target(for: intensity))"
                     )
                 // The completion column, left empty, so the field sits under
                 // the one above it rather than under the check.
