@@ -118,6 +118,10 @@ struct RootView: View {
 /// record, so that moved onto the exercise itself and the tab became the thing
 /// the app is for.
 ///
+/// The third tab is Account, and was Settings — a screen of app preferences
+/// while everything Claude knew about the lifter went unshown. The lifter is a
+/// better third tab than a gear.
+///
 /// Today carries its own stack rather than being wrapped in one here, because
 /// the week strip has to sit where the navigation bar would be.
 struct MainTabView: View {
@@ -131,8 +135,8 @@ struct MainTabView: View {
             Tab("Plan", systemImage: "calendar") {
                 NavigationStack { BlockView(profile: profile) }
             }
-            Tab("Settings", systemImage: "gearshape.fill") {
-                NavigationStack { SettingsView(profile: profile) }
+            Tab("Account", systemImage: "person.crop.circle") {
+                NavigationStack { AccountView(profile: profile) }
             }
         }
     }
