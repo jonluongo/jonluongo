@@ -18,7 +18,6 @@ struct ActiveWorkoutView: View {
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     @State private var startDate = Date()
-    @State private var showingFinishConfirm = false
     /// The exercise whose clock is being edited, and the one being read about.
     /// Both are per exercise, because both are.
     @State private var restEditing: PlannedExercise?
@@ -31,6 +30,12 @@ struct ActiveWorkoutView: View {
     private var completedSets: Int {
         exercises.reduce(0) { $0 + ($1.loggedSets ?? []).filter(\.isCompleted).count }
     }
+
+    /// Whether this session has been marked done. Not derived from how much of
+    /// it is filled in: a lifter who stops at three sets of four has finished,
+    /// and one resting between sets has not, and nothing in the record can tell
+    /// those apart. Only he can, which is what the button is for.
+    private var isLogged: Bool { day.completedAt != nil }
 
     private var errorAlertBinding: Binding<Bool> {
         Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
@@ -69,16 +74,6 @@ struct ActiveWorkoutView: View {
                     }
                 }
 
-                Section {
-                    // Green is this button's one named exception to the accent:
-                    // finishing is completion, and completion is green
-                    // everywhere else in the app.
-                    PrimaryActionButton(title: "Finish Workout", tint: .green) {
-                        showingFinishConfirm = true
-                    }
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                }
             }
             .listStyle(.insetGrouped)
             .scrollDismissesKeyboard(.interactively)
@@ -90,10 +85,6 @@ struct ActiveWorkoutView: View {
                 }
             }
             .animation(.snappy, value: restTimer.isRunning)
-            .confirmationDialog("Finish this workout?", isPresented: $showingFinishConfirm, titleVisibility: .visible) {
-                Button("Finish & Save") { finish() }
-                Button("Keep Going", role: .cancel) {}
-            }
             .alert("Couldn't Save", isPresented: errorAlertBinding) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -165,9 +156,28 @@ struct ActiveWorkoutView: View {
         // specific — it opened a picker that started a stopwatch unrelated to
         // whatever set had just been logged. The rest line on each exercise's
         // card is the control now.
+        // One action, and its word says which state the session is in. A
+        // logged session is already recorded, so the button only closes it —
+        // calling that "Finish" would ask the lifter to finish something that
+        // is finished. Un-finishing is the rare correction, so it sits in the
+        // menu rather than on the surface: it is what makes reopening mean
+        // anything, and it is not what anyone came here to press.
         ToolbarItem(placement: .topBarTrailing) {
-            Button("Finish") { showingFinishConfirm = true }
-                .fontWeight(.semibold)
+            if isLogged {
+                Menu {
+                    Button("Mark as unfinished", systemImage: "arrow.uturn.backward") {
+                        day.completedAt = nil
+                        _ = save()
+                    }
+                } label: {
+                    Text("Done").fontWeight(.semibold)
+                } primaryAction: {
+                    close()
+                }
+            } else {
+                Button("Finish") { finish() }
+                    .fontWeight(.semibold)
+            }
         }
         // A number pad has no return key, so without this the only way out of a
         // weight field is to scroll the list — which is a poor thing to require
