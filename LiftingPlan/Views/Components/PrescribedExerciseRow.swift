@@ -4,7 +4,9 @@ import LiftingKit
 /// One prescribed exercise, read before it is trained: its name, what the plan
 /// asks of it, and whether it has already been logged.
 ///
-/// **What it does.** States the plan and nothing else. The sets it asks for and
+/// **What it does.** States the plan and nothing else. Inside a group it is
+/// prefixed with the `A1` / `A2` the group's header legends, and nothing else
+/// about it changes. The sets it asks for and
 /// the effort it asks for sit beside a repeat glyph, and the rest it prescribes
 /// beside a clock — and the rest is absent when the plan prescribed none, since
 /// a session that asks for no rest shows none rather than `0s`. When the sets
@@ -30,6 +32,10 @@ struct PrescribedExerciseRow: View {
     /// The lifter's display unit, so a prescribed load reads in the unit he
     /// reads everything else in.
     let unit: MassUnit
+    /// How this movement is written within its group — `A1`, `A2` — or `nil`
+    /// when it is performed on its own, which draws exactly the row it always
+    /// drew. The common case pays nothing for the rare one.
+    var notation: String? = nil
 
     /// Whether every set logged against this exercise is ticked. Absence of
     /// rows is not completion: an exercise nobody has opened has none.
@@ -41,6 +47,13 @@ struct PrescribedExerciseRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.tight) {
             HStack {
+                if let notation {
+                    Text(notation)
+                        .font(.barbellLabel)
+                        .monospaced()
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("\(notation),")
+                }
                 Text(exercise.displayName).font(.barbellTitle)
                 Spacer()
                 if isComplete {
@@ -79,7 +92,10 @@ struct PrescribedExerciseRow: View {
     @ViewBuilder
     private var prescription: some View {
         Label(PrescriptionSummary.text(for: exercise), systemImage: "repeat")
-        if let rest = exercise.restSeconds {
+        // A movement inside a group states no rest of its own: the rest comes
+        // after the round, and the group's own line has already said how long.
+        // Repeating it here would read as this movement asking for it alone.
+        if let rest = exercise.restSeconds, notation == nil {
             Label("\(RestPrescription.durationText(rest)) rest", systemImage: "timer")
         }
     }

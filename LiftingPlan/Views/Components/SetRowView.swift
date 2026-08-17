@@ -29,8 +29,9 @@ import LiftingKit
 /// the row it always was.
 struct SetRowView: View {
     @Bindable var set: LoggedSet
-    /// 1-based working-set number, ignored when the row is a warmup.
-    var workingNumber: Int
+    /// What this row is called — the badge it draws and the name it says aloud.
+    /// A number on an exercise of its own, `A1` inside a group.
+    var identity: SetIdentity
     var previousText: String
     /// The target the plan prescribed *for this set*, shown in the second field
     /// while it is empty — `"8-12"`, `"AMRAP"`, `"30 seconds"`, or `"—"` when
@@ -130,7 +131,7 @@ struct SetRowView: View {
                     set: set,
                     detail: prescriptionDetail,
                     intensity: intensity,
-                    spokenSetName: spokenSetName
+                    spokenSetName: identity.spoken
                 )
             }
         }
@@ -150,7 +151,7 @@ struct SetRowView: View {
                     Text("Warm-up").tag(true)
                 }
             } label: {
-                Text(set.isWarmup ? "W" : "\(workingNumber)")
+                Text(identity.badge)
                     .font(.barbellSupport)
                     .foregroundStyle(set.isWarmup ? .orange : .primary)
                     .frame(
@@ -159,9 +160,7 @@ struct SetRowView: View {
                     )
                     .contentShape(.rect)
             }
-            .accessibilityLabel(
-                set.isWarmup ? "Warm-up set" : "Working set \(workingNumber)"
-            )
+            .accessibilityLabel(identity.spoken)
             .accessibilityHint("Changes whether this set counts as working volume")
 
             Text(previousText)
@@ -198,19 +197,15 @@ struct SetRowView: View {
         Binding(get: { set.isWarmup }, set: { set.isWarmup = $0 })
     }
 
-    /// How this row is named aloud. Every row on the screen is otherwise
-    /// identical, so each control on one has to say which set it belongs to.
+    /// Spoken aloud, this control has to say which set it completes. Every row
+    /// on the screen is otherwise identical, and inside a group the row's name
+    /// is the only thing that says which movement and which round it is.
     /// `self` is written out because a property body opening with `set` reads
     /// as the start of a setter to the parser.
-    private var spokenSetName: String {
-        self.set.isWarmup ? "warm-up set" : "set \(workingNumber)"
-    }
-
-    /// Spoken aloud, this control has to say which set it completes.
     private var completionLabel: String {
         self.set.isCompleted
-            ? "Completed \(spokenSetName)"
-            : "Complete \(spokenSetName)"
+            ? "Completed \(identity.spoken)"
+            : "Complete \(identity.spoken)"
     }
 
     /// Whether the field the lifter types into holds a distance, which is the

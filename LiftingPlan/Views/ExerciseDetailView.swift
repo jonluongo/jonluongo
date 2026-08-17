@@ -165,6 +165,9 @@ struct ExerciseDetailLink: View {
 
     let exercise: PlannedExercise
     let unit: MassUnit
+    /// How the movement is written within its group, or `nil` when it is
+    /// performed on its own.
+    var notation: String? = nil
 
     var body: some View {
         NavigationLink {
@@ -174,7 +177,7 @@ struct ExerciseDetailLink: View {
                 unit: unit
             )
         } label: {
-            PrescribedExerciseRow(exercise: exercise, unit: unit)
+            PrescribedExerciseRow(exercise: exercise, unit: unit, notation: notation)
         }
         .accessibilityHint("Shows this exercise and what you have lifted on it")
     }

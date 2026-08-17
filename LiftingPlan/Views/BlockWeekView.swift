@@ -55,8 +55,13 @@ struct BlockWeekView: View {
                 .font(.barbellSupport)
                 .foregroundStyle(.secondary)
         } else {
-            ForEach(day.orderedExercises) { exercise in
-                ExerciseDetailLink(exercise: exercise, unit: unit)
+            ForEach(day.entries) { entry in
+                switch entry {
+                case .exercise(let exercise):
+                    ExerciseDetailLink(exercise: exercise, unit: unit)
+                case .group(let group):
+                    PrescribedGroupRows(group: group, unit: unit)
+                }
             }
         }
     }

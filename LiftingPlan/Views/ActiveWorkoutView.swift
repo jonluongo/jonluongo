@@ -18,13 +18,17 @@ struct ActiveWorkoutView: View {
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     @State private var startDate = Date()
-    /// The exercise whose clock is being edited, and the one being read about.
-    /// Both are per exercise, because both are.
-    @State private var restEditing: PlannedExercise?
+    /// The clock being edited — an exercise's, or a group's — and the exercise
+    /// being read about.
+    @State private var restEditing: RestTarget?
     @State private var infoExercise: PlannedExercise?
     @State private var errorMessage: String?
 
     private var exercises: [PlannedExercise] { day.orderedExercises }
+
+    /// The session in the order it is trained: an exercise, or a group of them
+    /// performed as rounds. The grouping was prescribed; nothing here makes one.
+    private var entries: [SessionEntry] { day.entries }
 
     private var totalSets: Int { exercises.reduce(0) { $0 + ($1.loggedSets ?? []).count } }
     private var completedSets: Int {
@@ -51,25 +55,10 @@ struct ActiveWorkoutView: View {
                         Text("This day has no prescribed exercises to log.")
                     }
                 } else {
-                    ForEach(exercises) { exercise in
-                        Section {
-                            ExerciseLogSection(
-                                exercise: exercise,
-                                profile: profile,
-                                plans: plans,
-                                onAddSet: addSet,
-                                onDeleteSet: delete,
-                                onCompletionChanged: restChanged,
-                                onEditRest: { restEditing = $0 }
-                            )
-                        } header: {
-                            ExerciseHeaderView(
-                                exercise: exercise,
-                                onShowInfo: { infoExercise = exercise },
-                                onEditRest: { restEditing = exercise },
-                                onAddWarmup: { addSet(to: exercise, warmup: true) }
-                            )
-                            .textCase(nil)
+                    ForEach(entries) { entry in
+                        switch entry {
+                        case .exercise(let exercise): section(for: exercise)
+                        case .group(let group): section(for: group)
                         }
                     }
                 }
@@ -90,16 +79,17 @@ struct ActiveWorkoutView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
-            // Rest is prescribed per exercise, so it is edited per exercise:
-            // this sheet is opened by the rest line on the card it belongs to.
-            .sheet(item: $restEditing) { exercise in
+            // Rest is prescribed per exercise and per group, so it is edited
+            // there: this sheet is opened by the rest line on the card it
+            // belongs to, whichever kind of card that is.
+            .sheet(item: $restEditing) { target in
                 ExerciseRestSheet(
-                    exerciseName: exercise.displayName,
-                    prescribedSeconds: exercise.restSeconds,
+                    exerciseName: target.name,
+                    prescribedSeconds: target.prescribedSeconds,
                     timersEnabled: restPreferences.timersEnabled,
-                    rest: restPreferences.rest(for: exercise.exerciseID)
+                    rest: restPreferences.rest(for: target.key)
                 ) { rest in
-                    restPreferences.setRest(rest, for: exercise.exerciseID)
+                    restPreferences.setRest(rest, for: target.key)
                 }
             }
             // The same screen the exercise row pushes elsewhere in the app —
@@ -121,6 +111,56 @@ struct ActiveWorkoutView: View {
             }
         }
         .onAppear(perform: seedSetsIfNeeded)
+    }
+
+    // MARK: - One card per entry
+
+    /// An exercise performed on its own — exactly the card it has always been.
+    @ViewBuilder
+    private func section(for exercise: PlannedExercise) -> some View {
+        Section {
+            ExerciseLogSection(
+                exercise: exercise,
+                profile: profile,
+                plans: plans,
+                onAddSet: addSet,
+                onDeleteSet: delete,
+                onCompletionChanged: restChanged,
+                onEditRest: { restEditing = RestTarget(exercise: $0) }
+            )
+        } header: {
+            ExerciseHeaderView(
+                exercise: exercise,
+                onShowInfo: { infoExercise = exercise },
+                onEditRest: { restEditing = RestTarget(exercise: exercise) },
+                onAddWarmup: { addSet(to: exercise, warmup: true) }
+            )
+            .textCase(nil)
+        }
+    }
+
+    /// A group, as one card: the card is the group because the group is the unit
+    /// of work.
+    @ViewBuilder
+    private func section(for group: ExerciseGroup) -> some View {
+        Section {
+            SupersetLogSection(
+                group: group,
+                profile: profile,
+                plans: plans,
+                onAddRound: addRound,
+                onDeleteSet: delete,
+                onRoundChanged: restChanged,
+                onEditRest: { restEditing = RestTarget(group: $0) }
+            )
+        } header: {
+            SupersetHeaderView(
+                group: group,
+                onShowInfo: { infoExercise = $0 },
+                onAddWarmup: { addSet(to: $0, warmup: true) }
+            )
+            .textCase(nil)
+        }
     }
 
     // MARK: - Toolbar & chrome
@@ -224,8 +264,40 @@ struct ActiveWorkoutView: View {
         restTimer.start(seconds: seconds, context: exercise.displayName)
     }
 
+    /// Runs the group's rest when a *round* finishes, and stops it when a set of
+    /// a finished round is taken back.
+    ///
+    /// This is the one behavioural difference a group makes, and the reason the
+    /// grouping is worth expressing: resting only after the group is what a
+    /// superset is. Ticking A1 starts nothing, because the next movement of the
+    /// round follows immediately.
+    ///
+    /// How long it runs is the lifter's to say and Claude's to prescribe, in
+    /// that order — the same rule an exercise on its own follows, asked of the
+    /// exercise the round ends with, which is the one that carries the rest.
+    private func restChanged(for group: ExerciseGroup, roundCompleted: Bool) {
+        guard roundCompleted else {
+            restTimer.stop()
+            return
+        }
+        guard let key = group.restKey,
+            let seconds = restPreferences.runningSeconds(
+                prescribed: group.restSeconds, for: key)
+        else { return }
+        restTimer.start(seconds: seconds, context: group.title)
+    }
+
     private func addSet(to exercise: PlannedExercise, warmup: Bool) {
         SetSeeding.addSet(to: exercise, warmup: warmup, in: context)
+        save()
+    }
+
+    /// One more round: one row on every movement of the group, because a round
+    /// is one set of each and half a round is not a round.
+    private func addRound(to group: ExerciseGroup) {
+        for member in group.members {
+            SetSeeding.addSet(to: member, warmup: false, in: context)
+        }
         save()
     }
 
@@ -284,5 +356,35 @@ struct ActiveWorkoutView: View {
     private func elapsedString(_ now: Date) -> String {
         let seconds = max(0, Int(now.timeIntervalSince(startDate)))
         return String(format: "%d:%02d", seconds / 60, seconds % 60)
+    }
+}
+
+/// Whose clock the rest sheet is editing: one exercise's, or one group's.
+///
+/// The sheet asks the same question either way — follow the plan, run this long,
+/// or run nothing — so it takes one value rather than being written twice. A
+/// group's choice is keyed on the exercise its round ends with, which is the
+/// exercise that carries the group's rest.
+private struct RestTarget: Identifiable {
+    let id: String
+    let name: String
+    let prescribedSeconds: Int?
+    let key: ExerciseID
+
+    init(exercise: PlannedExercise) {
+        id = "exercise-\(exercise.persistentModelID)"
+        name = exercise.displayName
+        prescribedSeconds = exercise.restSeconds
+        key = exercise.exerciseID
+    }
+
+    /// `nil` for a group whose members somehow arrived without one, which the
+    /// format cannot state and no screen should crash over.
+    init?(group: ExerciseGroup) {
+        guard let key = group.restKey else { return nil }
+        id = "group-\(group.id)"
+        name = group.title
+        prescribedSeconds = group.restSeconds
+        self.key = key
     }
 }

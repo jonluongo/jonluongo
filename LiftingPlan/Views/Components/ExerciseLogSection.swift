@@ -49,16 +49,12 @@ struct ExerciseLogSection: View {
         (exercise.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }
     }
 
-    /// What the plan asked of each set, in order. Read rather than rebuilt so
-    /// a ramp or a drop set shows the load and reps of the set actually being
-    /// logged rather than one figure standing in for all of them.
-    private var prescribedSets: [SetPrescription] { exercise.prescribedSets }
-
-    /// What this exercise's work is measured in — reps, seconds, or a distance
-    /// in the unit it was prescribed in. It decides both what the column is
-    /// called and which of the three things every row here writes, and it comes
-    /// from the prescription and nothing else.
-    private var measure: WorkMeasure { WorkPrescription.measure(of: exercise) }
+    /// What each row is shown besides the numbers the lifter types: what the
+    /// plan asked of that set, and what he did on it last time. The same reader
+    /// a row inside a group is built from.
+    private var reading: SetRowPrescription {
+        SetRowPrescription(exercise: exercise, plans: plans, unit: profile.displayUnit)
+    }
 
     /// What the rest line says: the plan's rest, and the lifter's clock beside
     /// it whenever the two differ. `nil` when the plan prescribed no rest and
@@ -102,20 +98,23 @@ struct ExerciseLogSection: View {
                 .accessibilityHint("Sets the rest timer for this exercise")
             }
 
-            columnHeader
+            SetTableHeader(
+                firstColumn: "SET", measure: reading.measure, unit: profile.displayUnit)
 
             ForEach(Array(orderedSets.enumerated()), id: \.element.persistentModelID) { index, set in
                 let number = workingNumber(at: index)
-                let prescribed = prescription(forWorkingNumber: number, isWarmup: set.isWarmup)
+                let prescribed = reading.prescription(
+                    forWorkingNumber: number, isWarmup: set.isWarmup)
                 SetRowView(
                     set: set,
-                    workingNumber: number,
-                    previousText: previousText(workingIndex: number - 1, isWarmup: set.isWarmup),
+                    identity: set.isWarmup ? .warmup : .working(number),
+                    previousText: reading.previousText(
+                        workingIndex: number - 1, isWarmup: set.isWarmup),
                     repTargetText: RepPrescription.targetText(for: prescribed?.repRange),
-                    loadTargetText: loadTargetText(prescribed),
+                    loadTargetText: reading.loadTarget(prescribed),
                     prescriptionDetail: PrescriptionSummary.detail(for: prescribed, in: exercise),
                     intensity: EffortEntry.invitation(from: prescribed),
-                    measure: measure,
+                    measure: reading.measure,
                     unit: profile.displayUnit,
                     onCompletionChanged: { onCompletionChanged(exercise, $0) }
                 )
@@ -139,78 +138,8 @@ struct ExerciseLogSection: View {
         }
     }
 
-    /// The column names. The last-but-one names the unit the rows under it are
-    /// actually recorded in — seconds for a hold, the prescribed distance unit
-    /// for a carry, repetitions otherwise — so the number the lifter types is
-    /// the number the log keeps.
-    ///
-    /// The widths come from `SetTableMetrics`, which `SetRowView` reads too:
-    /// they were the same three numbers written out in both files, and a header
-    /// that stops sitting over its column is a table that lies about what it
-    /// contains.
-    private var columnHeader: some View {
-        HStack(spacing: SetTableMetrics.columnGutter) {
-            Text("SET").frame(width: SetTableMetrics.setColumnWidth)
-            Text("PREVIOUS").frame(maxWidth: .infinity)
-            Text(profile.displayUnit.rawValue.uppercased())
-                .frame(width: SetTableMetrics.entryColumnWidth)
-            Text(workColumnName).frame(width: SetTableMetrics.entryColumnWidth)
-            Image(systemName: "checkmark").frame(width: SetTableMetrics.checkColumnWidth)
-        }
-        .font(.barbellLabel)
-        .foregroundStyle(.secondary)
-    }
-
-    /// What the second field is called: the unit its rows are recorded in.
-    private var workColumnName: String {
-        switch measure {
-        case .repetitions: "REPS"
-        case .time: "SECS"
-        case .distance(let unit): unit.rawValue.uppercased()
-        }
-    }
-
     /// 1-based working-set number for the row at `index` (warmups don't count).
     private func workingNumber(at index: Int) -> Int {
         orderedSets.prefix(index + 1).filter { !$0.isWarmup }.count
-    }
-
-    /// What the plan asked of the working set at `workingNumber`, or `nil` when
-    /// it asked for nothing about it — a warmup, or a set the lifter added past
-    /// the ones prescribed. Nothing is stretched to cover an extra set: a
-    /// fourth row under a three-set prescription is his own, not the plan's.
-    private func prescription(
-        forWorkingNumber workingNumber: Int, isWarmup: Bool
-    ) -> SetPrescription? {
-        guard !isWarmup, prescribedSets.indices.contains(workingNumber - 1) else { return nil }
-        return prescribedSets[workingNumber - 1]
-    }
-
-    /// What an empty weight field shows: the load this set was prescribed, in
-    /// the lifter's display unit, or `"—"` when none was. A placeholder rather
-    /// than a value, so the prescription reaches him without the app claiming
-    /// he lifted it.
-    private func loadTargetText(_ prescription: SetPrescription?) -> String {
-        guard let load = prescription?.suggestedLoad else { return "—" }
-        return load.converted(to: profile.displayUnit).value.compactString
-    }
-
-    /// What he did on this set last time, in the unit he did it in. A hold is
-    /// reported as the seconds it was held and a carry as the distance it
-    /// covered; nothing here converts one measure into another, because they are
-    /// not the same measurement.
-    private func previousText(workingIndex: Int, isWarmup: Bool) -> String {
-        guard !isWarmup, workingIndex >= 0 else { return "—" }
-        let previous = PerformanceHistory.latestHistory(
-            for: exercise.exerciseID, excluding: exercise, from: plans
-        )?.recentSets ?? []
-        guard workingIndex < previous.count else { return "—" }
-        let record = previous[workingIndex]
-        let measured = record.durationSeconds.map { "\($0)s" } ?? record.distance?.description
-        let work = measured ?? "\(record.reps)"
-        if let load = record.load?.converted(to: profile.displayUnit), load.value > 0 {
-            return "\(load.value.compactString) × \(work)"
-        }
-        return measured != nil ? work : "\(work) reps"
     }
 }

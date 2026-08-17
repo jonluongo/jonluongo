@@ -52,8 +52,13 @@ struct TodaySessionSection: View {
                 // History tab went. A lifter reading tonight's bench press and
                 // wondering what he benched last month is already looking at
                 // the row that answers him.
-                ForEach(session.orderedExercises) { exercise in
-                    ExerciseDetailLink(exercise: exercise, unit: unit)
+                ForEach(session.entries) { entry in
+                    switch entry {
+                    case .exercise(let exercise):
+                        ExerciseDetailLink(exercise: exercise, unit: unit)
+                    case .group(let group):
+                        PrescribedGroupRows(group: group, unit: unit)
+                    }
                 }
             } else {
                 // The block moved underneath the answer. Said plainly rather
