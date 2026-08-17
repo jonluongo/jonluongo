@@ -51,7 +51,7 @@ struct ActiveWorkoutView: View {
                                 plans: plans,
                                 onAddSet: addSet,
                                 onDeleteSet: delete,
-                                onCompleteSet: startRest
+                                onCompletionChanged: restChanged
                             )
                         } header: {
                             ExerciseHeaderView(exercise: exercise, onAddWarmup: { addSet(to: exercise, warmup: true) })
@@ -73,10 +73,8 @@ struct ActiveWorkoutView: View {
             }
             .listStyle(.insetGrouped)
             .scrollDismissesKeyboard(.interactively)
-            .navigationTitle(day.focus.isEmpty ? day.weekday.fullName : day.focus)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
-            .safeAreaInset(edge: .top) { progressBar }
             .safeAreaInset(edge: .bottom) {
                 if restTimer.isRunning {
                     RestTimerBar(restTimer: restTimer)
@@ -106,18 +104,28 @@ struct ActiveWorkoutView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        // Its own item, and nothing beside it. Sharing one with the clock gave
+        // the toolbar a single background to draw around both, so the "circle"
+        // was a capsule the width of chevron-plus-gap-plus-time and the chevron
+        // sat at one end of it rather than in the middle of anything.
         ToolbarItem(placement: .topBarLeading) {
-            HStack(spacing: Spacing.standard) {
-                Button {
-                    close()
-                } label: {
-                    Image(systemName: "chevron.down")
-                }
-                TimelineView(.periodic(from: startDate, by: 1)) { timeline in
-                    Text(elapsedString(timeline.date))
-                        .font(.barbellSupport)
-                        .foregroundStyle(.secondary)
-                }
+            Button {
+                close()
+            } label: {
+                Image(systemName: "chevron.down")
+            }
+            .accessibilityLabel("Close workout")
+        }
+        // The session's running time, where the focus used to be. The focus was
+        // removed as unhelpful — the lifter picked this session and is looking
+        // at its exercises — and how long he has been training is the one thing
+        // worth a glance that nothing else on the screen says.
+        ToolbarItem(placement: .principal) {
+            TimelineView(.periodic(from: startDate, by: 1)) { timeline in
+                Text(elapsedString(timeline.date))
+                    .font(.barbellSupport)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
             }
         }
         ToolbarItem(placement: .topBarTrailing) {
@@ -151,20 +159,22 @@ struct ActiveWorkoutView: View {
         )
     }
 
-    private var progressBar: some View {
-        ProgressView(value: Double(completedSets), total: Double(max(totalSets, 1)))
-            .tint(.accentColor)
-            .padding(.horizontal, Spacing.section)
-            .padding(.bottom, Spacing.tight)
-    }
-
     // MARK: - Actions
 
-    /// Starts the pace timer for the rest this exercise prescribes. When none
-    /// was prescribed, no timer starts — the app does not invent one. The
-    /// lifter can run a timer of his own from the toolbar, which is a stopwatch
-    /// for this session and does not touch what was prescribed.
-    private func startRest(for exercise: PlannedExercise) {
+    /// Runs the rest this exercise prescribes when a set is ticked, and stops
+    /// it when one is taken back.
+    ///
+    /// Unchecking used to leave the timer running, which made the bar outlast
+    /// the thing it was counting for. A set taken back did not happen, so there
+    /// is nothing to be resting from.
+    ///
+    /// When the plan prescribed no rest, no timer starts — the app does not
+    /// invent one.
+    private func restChanged(for exercise: PlannedExercise, isCompleted: Bool) {
+        guard isCompleted else {
+            restTimer.stop()
+            return
+        }
         guard let seconds = exercise.restSeconds else { return }
         restTimer.start(seconds: seconds, context: exercise.displayName)
     }

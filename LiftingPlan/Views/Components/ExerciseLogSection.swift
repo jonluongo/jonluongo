@@ -31,7 +31,8 @@ struct ExerciseLogSection: View {
     let plans: [TrainingPlan]
     var onAddSet: (PlannedExercise, Bool) -> Void
     var onDeleteSet: (LoggedSet, PlannedExercise) -> Void
-    var onCompleteSet: (PlannedExercise) -> Void
+    /// Told which exercise, and whether the set was ticked or taken back.
+    var onCompletionChanged: (PlannedExercise, Bool) -> Void
 
     private var orderedSets: [LoggedSet] {
         (exercise.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }
@@ -79,7 +80,7 @@ struct ExerciseLogSection: View {
                     intensity: EffortEntry.invitation(from: prescribed),
                     measure: measure,
                     unit: profile.displayUnit,
-                    onComplete: { onCompleteSet(exercise) }
+                    onCompletionChanged: { onCompletionChanged(exercise, $0) }
                 )
                 .listRowBackground(set.isCompleted ? Color.green.opacity(0.12) : nil)
                 .swipeActions(edge: .trailing) {

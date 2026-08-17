@@ -55,7 +55,10 @@ struct SetRowView: View {
     /// never by what is typed.
     var measure: WorkMeasure
     var unit: MassUnit
-    var onComplete: () -> Void
+    /// Called when the check changes, with what it changed to. Unchecking is
+    /// reported as well as checking: a set taken back is a set that did not
+    /// happen, and the rest it started has nothing left to be resting from.
+    var onCompletionChanged: (Bool) -> Void
 
     private var weightText: Binding<String> {
         Binding(
@@ -233,12 +236,20 @@ struct SetRowView: View {
             .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: Radius.small))
     }
 
+    /// Ticks the set, or takes it back.
+    ///
+    /// Taking it back used to do nothing beyond clearing the tick — the rest it
+    /// had started kept counting down, outlasting the set it was counting for.
+    /// The change is reported either way now, so unchecking means what it looks
+    /// like it means.
+    ///
+    /// `completedAt` is stamped on the way in and left alone on the way out. It
+    /// is not optional, so there is no absence to write; and nothing reads it
+    /// without first asking `isCompleted`, which is what actually says whether
+    /// the set happened.
     private func complete() {
-        let wasCompleted = set.isCompleted
         set.isCompleted.toggle()
-        if set.isCompleted {
-            set.completedAt = Date()
-            if !wasCompleted { onComplete() }
-        }
+        if set.isCompleted { set.completedAt = Date() }
+        onCompletionChanged(set.isCompleted)
     }
 }
