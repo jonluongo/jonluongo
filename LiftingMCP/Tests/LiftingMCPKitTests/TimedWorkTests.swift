@@ -26,10 +26,10 @@ struct TimedWorkTests {
                 suggestedLoad: nil, intensity: nil),
             loggedSets: [
                 SnapshotLoggedSet(
-                    setIndex: 0, load: nil, reps: 0, durationSeconds: 34, rpe: nil,
+                    setIndex: 0, load: nil, reps: 0, durationSeconds: 34,
                     isCompleted: true, isWarmup: false, completedAt: daysAgo(2)),
                 SnapshotLoggedSet(
-                    setIndex: 1, load: nil, reps: 0, durationSeconds: 28, rpe: nil,
+                    setIndex: 1, load: nil, reps: 0, durationSeconds: 28,
                     isCompleted: true, isWarmup: false, completedAt: daysAgo(2)),
             ]
         )

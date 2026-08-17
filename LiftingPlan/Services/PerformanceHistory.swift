@@ -16,7 +16,6 @@ struct SetRecord: Equatable {
     /// How far it was carried, in the unit it was carried in. `nil` when it was
     /// counted or held instead.
     var distance: Distance?
-    var rpe: Double?
 }
 
 /// What the lifter most recently did on a single exercise.
@@ -74,7 +73,7 @@ enum PerformanceHistory {
         let records = exercise.completedWorkingSets.map {
             SetRecord(
                 load: $0.load, reps: $0.reps, durationSeconds: $0.durationSeconds,
-                distance: $0.distance, rpe: $0.rpe)
+                distance: $0.distance)
         }
         return ExerciseHistory(
             exerciseID: exercise.exerciseID,

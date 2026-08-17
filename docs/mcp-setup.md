@@ -169,8 +169,17 @@ them into one rep range no set of it actually has.
 "metres-per-second", "value": "0.45"}` arrives intact and is shown as written.
 The value is free text, so `"8"`, `"8-9"` and `"@9+"` all survive — choosing an
 end of a range would be the app deciding how hard you train. The snapshot reports
-the prescribed intensity directly beside the RPE you logged, which is the
-comparison a progression decision turns on and which was impossible before.
+the prescribed intensity directly beside the sets logged against it, so
+`4 × 8-10` asked for against `10/10/9/8` performed is the comparison a
+progression decision turns on.
+
+**The lifter is never asked to rate a set.** There is no RPE field in the app
+and no rating in any report: he could not tell one rep in reserve from three,
+and a number nobody can supply accurately is worse than none, because you would
+trust it. Ask him in conversation if you want more than the reps say. On screen,
+a prescribed intensity is shown on a set's own row only where you prescribed no
+load for it — `"work up to a top single at RPE 8"` is all that set has to go on,
+while a set given 100 kg has already been told how hard to work.
 
 **Timed work is prescribed in seconds and logged in seconds.**
 `"repRange": "30 seconds"` reaches your screen exactly as written, and the row

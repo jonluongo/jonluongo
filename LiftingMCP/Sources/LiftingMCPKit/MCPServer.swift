@@ -46,7 +46,7 @@ public struct MCPServer: Sendable {
     /// Answers one line of the protocol, or `nil` for a notification.
     ///
     /// Never throws and never fails to answer a request: a value that cannot be
-    /// rendered as JSON — an infinity that reached an RPE field in a corrupt
+    /// rendered as JSON — an infinity that reached a load in a corrupt
     /// snapshot, say — becomes an internal error, because a client left waiting
     /// for a reply that never comes is worse than one told the reply failed.
     public func handle(line: String) -> String? {

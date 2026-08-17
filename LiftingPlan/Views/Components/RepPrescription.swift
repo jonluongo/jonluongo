@@ -150,26 +150,4 @@ enum IntensityPrescription {
         // arrived in. Guessing at a phrasing for it would be inventing one.
         return "\(intensity.scale.rawValue) \(value)"
     }
-
-    /// What to call the scale on its own — `"RPE"`, `"RIR"`, `"% 1RM"` — for
-    /// the field that records it.
-    ///
-    /// The field was labelled "EFFORT" and the prescription above it said
-    /// "RPE 7-8". Two words for one thing, so nothing joined them, and the
-    /// owner's first question on seeing it was what effort meant. It says the
-    /// scale the plan actually named instead, which is both the answer and the
-    /// instruction.
-    static func scaleName(for intensity: IntensityTarget) -> String {
-        if intensity.scale == .rpe { return "RPE" }
-        if intensity.scale == .repsInReserve { return "RIR" }
-        if intensity.scale == .percentOfOneRepMax { return "% 1RM" }
-        return intensity.scale.rawValue.uppercased()
-    }
-
-    /// The number the plan asked for, shown in the empty field the way the rep
-    /// target is shown in the empty reps field — so the target reaches the
-    /// lifter without the app claiming he hit it.
-    static func target(for intensity: IntensityTarget) -> String {
-        intensity.value.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
 }

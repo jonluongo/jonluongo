@@ -14,7 +14,7 @@ struct TrainingSnapshotTests {
 
     private func loggedSet(load: Mass?) -> SnapshotLoggedSet {
         SnapshotLoggedSet(
-            setIndex: 0, load: load, reps: 5, rpe: 8.5,
+            setIndex: 0, load: load, reps: 5,
             isCompleted: true, isWarmup: false, completedAt: Self.instant
         )
     }

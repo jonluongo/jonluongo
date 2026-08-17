@@ -89,7 +89,7 @@ public enum ToolCatalog {
         title: "Exercise history",
         description: """
             Every set ever logged for one movement, oldest first, with the load, \
-            reps, RPE, and what was prescribed at the time. A set held for time \
+            reps, and what was prescribed at the time. A set held for time \
             reports 'durationSeconds' and no reps; a set carried for distance \
             reports 'distance' as a value and its unit and no reps; a counted set \
             reports reps and nulls for both — no two of them are ever the same \

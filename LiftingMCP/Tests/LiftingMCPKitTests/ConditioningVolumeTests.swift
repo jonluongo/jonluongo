@@ -48,7 +48,7 @@ struct ConditioningVolumeTests {
     ) -> SnapshotLoggedSet {
         SnapshotLoggedSet(
             setIndex: index, load: load, reps: reps, durationSeconds: seconds,
-            distance: distance, rpe: nil, isCompleted: true, isWarmup: warmup,
+            distance: distance, isCompleted: true, isWarmup: warmup,
             completedAt: daysAgo(2))
     }
 

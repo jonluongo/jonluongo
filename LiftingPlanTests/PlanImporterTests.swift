@@ -499,7 +499,7 @@ struct PlanImporterTests {
         logged.loggedSets = [
             LoggedSet(
                 setIndex: 0, load: Mass(value: 225, unit: .pounds), reps: 5,
-                rpe: 8.5, isCompleted: true
+                isCompleted: true
             )
         ]
         try context.saveOrThrow()

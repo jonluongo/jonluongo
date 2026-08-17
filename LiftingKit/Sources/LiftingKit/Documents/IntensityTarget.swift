@@ -41,10 +41,11 @@ public struct IntensityScale: ExtensibleTaxonomy {
 /// app's to normalize.
 ///
 /// **How it is used.** A `PlanDocumentExercise` or a `SetPrescription` carries
-/// one; the snapshot reports it back beside the RPE the lifter actually logged,
-/// which is the comparison every real progression decision turns on. An
-/// exercise that states no target has `nil` — never a zero and never one
-/// inferred from a load.
+/// one, and the snapshot reports it back beside the sets that were logged
+/// against it — the lifter is asked for no rating of his own, so what the plan
+/// asked for is read against the reps and load he actually put up. An exercise
+/// that states no target has `nil` — never a zero and never one inferred from a
+/// load.
 ///
 /// **What it depends on.** `IntensityScale` and `DocumentRefusal`. Nothing
 /// converts between scales, bounds a value, or decides which scale is

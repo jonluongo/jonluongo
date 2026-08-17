@@ -146,8 +146,8 @@ struct PerSetPrescriptionTests {
 
     // MARK: - Reported back beside what was logged
 
-    @Test("The prescribed intensity appears in the snapshot beside the logged RPE")
-    func snapshotCarriesIntensityBesideRPE() throws {
+    @Test("The prescribed intensity appears in the snapshot beside what was logged")
+    func snapshotCarriesIntensityBesideTheSets() throws {
         let context = try context()
         let plan = try PlanImporter.import(
             document([
@@ -160,9 +160,8 @@ struct PerSetPrescriptionTests {
         )
         let exercise = try #require(
             plan.orderedWeeks.first?.orderedDays.first?.orderedExercises.first)
-        for (index, rpe) in [8.5, 9.5].enumerated() {
-            let set = LoggedSet(setIndex: index, load: kg(100), reps: 5, rpe: rpe,
-                                isCompleted: true)
+        for (index, reps) in [5, 4].enumerated() {
+            let set = LoggedSet(setIndex: index, load: kg(100), reps: reps, isCompleted: true)
             context.insert(set)
             set.exercise = exercise
         }
@@ -173,7 +172,9 @@ struct PerSetPrescriptionTests {
             snapshot.plans.first?.weeks.first?.days.first?.exercises.first)
 
         #expect(reported.intensity == IntensityTarget(scale: .rpe, value: "8"))
-        #expect(reported.loggedSets.map(\.rpe) == [8.5, 9.5])
+        // What was asked for, beside what was put up against it. Nobody was
+        // asked to rate the set, so nothing here reports a rating.
+        #expect(reported.loggedSets.map(\.reps) == [5, 4])
         #expect(reported.prescribedSets.count == 2)
         #expect(reported.prescribedSets.allSatisfy {
             $0.intensity == IntensityTarget(scale: .rpe, value: "8")
@@ -406,8 +407,11 @@ struct PerSetPrescriptionTests {
         })
     }
 
-    @Test("An effort asked of the top set alone is stated on that set's row")
-    func topSetEffortSitsOnItsOwnRow() throws {
+    /// The weight is the prescription when there is one, and the intensity is
+    /// the reasoning behind it. A row that already shows 80 kg does not also
+    /// need to be told the number was chosen to feel like an RPE 9.
+    @Test("A set given a load is not also told the effort behind it")
+    func loadedSetIsNotToldItsEffort() throws {
         let ramp = try imported([
             PlanDocumentExercise(
                 exerciseID: Self.squat, displayName: "Squat",
@@ -422,7 +426,40 @@ struct PerSetPrescriptionTests {
         ])
 
         #expect(ramp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: ramp) }
-            == [nil, nil, "RPE 9 · Top set"])
+            == [nil, nil, "Top set"], "the note is its own; the RPE is what 80 kg already says")
+    }
+
+    /// Without a load the intensity *is* the prescription: "work up to a top
+    /// single at RPE 8" is Claude deliberately leaving the weight to the lifter,
+    /// and a row that hid it would leave him nothing to go on.
+    @Test("A set given no load is told the effort asked of it, which is all it has")
+    func unloadedSetStatesItsEffort() throws {
+        let workUp = try imported([
+            PlanDocumentExercise(
+                exerciseID: Self.squat, displayName: "Squat",
+                sets: [
+                    SetPrescription(repRange: "5", suggestedLoad: kg(60)),
+                    SetPrescription(repRange: "3", suggestedLoad: kg(80)),
+                    SetPrescription(
+                        repRange: "1", intensity: IntensityTarget(scale: .rpe, value: "8"),
+                        notes: "Top single"),
+                ])
+        ])
+
+        #expect(workUp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: workUp) }
+            == [nil, nil, "RPE 8 · Top single"])
+    }
+
+    @Test("A set with neither a load nor an effort is told nothing extra")
+    func unloadedSetWithNoEffortSaysNothing() throws {
+        let bare = try imported([
+            PlanDocumentExercise(
+                exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8-12")
+        ])
+
+        #expect(bare.prescribedSets.allSatisfy {
+            PrescriptionSummary.detail(for: $0, in: bare) == nil
+        })
     }
 
     @Test("A note about one set of a drop set is stated on that set's row")
@@ -454,25 +491,6 @@ struct PerSetPrescriptionTests {
         #expect(PrescriptionSummary.detail(for: nil, in: exercise) == nil)
     }
 
-    @Test("Only the set the plan asked an effort of is offered a field for one")
-    func onlyPrescribedSetsInviteEffort() throws {
-        let ramp = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.squat, displayName: "Squat",
-                sets: [
-                    SetPrescription(suggestedLoad: kg(60)),
-                    SetPrescription(suggestedLoad: kg(70)),
-                    SetPrescription(
-                        suggestedLoad: kg(80),
-                        intensity: IntensityTarget(scale: .rpe, value: "9")),
-                ],
-                repRange: "5")
-        ])
-
-        #expect(ramp.prescribedSets.map { EffortEntry.isInvited(by: $0) }
-            == [false, false, true])
-    }
-
     /// The session read before it is trained states the *shape* of a ramp in one
     /// line. Every set of it still reaches the lifter in full on the logging
     /// screen: its own load and reps as the placeholders in its two fields, and
@@ -499,35 +517,6 @@ struct PerSetPrescriptionTests {
         let reading = SetRowPrescription(exercise: ramp, plans: [], unit: .kilograms)
         #expect(ramp.prescribedSets.map { reading.loadTarget($0) } == ["60", "80"])
         #expect(ramp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: ramp) }
-            == [nil, "RPE 9 · Top set"])
-    }
-
-    // MARK: - The field says what the plan asked for
-
-    /// The field was labelled "EFFORT" while the prescription above it said
-    /// "RPE 7-8", and the owner's first question on seeing it was what effort
-    /// meant. It names the scale the plan named instead.
-    @Test("The effort field is labelled with the scale the plan named")
-    func effortFieldNamesItsScale() {
-        #expect(IntensityPrescription.scaleName(for: IntensityTarget(scale: .rpe, value: "8")) == "RPE")
-        #expect(IntensityPrescription.scaleName(for: IntensityTarget(scale: .repsInReserve, value: "2")) == "RIR")
-        #expect(IntensityPrescription.scaleName(for: IntensityTarget(scale: .percentOfOneRepMax, value: "80")) == "% 1RM")
-    }
-
-    /// A scale nobody here has heard of is still named, in the words it arrived
-    /// in, rather than falling back to a word the plan never used.
-    @Test("An unrecognised scale keeps its own name")
-    func unknownScaleKeepsItsName() {
-        let target = IntensityTarget(scale: IntensityScale(rawValue: "velocity"), value: "0.4")
-        #expect(IntensityPrescription.scaleName(for: target) == "VELOCITY")
-    }
-
-    /// The empty field shows the number asked for, the way the empty reps field
-    /// shows the rep target — a placeholder, so the target reaches the lifter
-    /// without the app claiming he hit it.
-    @Test("The empty effort field shows the target, not a dash")
-    func effortPlaceholderIsTheTarget() {
-        #expect(IntensityPrescription.target(for: IntensityTarget(scale: .rpe, value: "7-8")) == "7-8")
-        #expect(IntensityPrescription.target(for: IntensityTarget(scale: .rpe, value: " 8 ")) == "8")
+            == [nil, "Top set"])
     }
 }

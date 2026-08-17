@@ -115,7 +115,6 @@ struct SupersetLogSection: View {
             loadTargetText: row.loadTarget,
             prescriptionDetail: PrescriptionSummary.detail(
                 for: row.prescribed, in: row.member),
-            intensity: EffortEntry.invitation(from: row.prescribed),
             measure: row.measure,
             unit: profile.displayUnit,
             onCompletionChanged: { completed in

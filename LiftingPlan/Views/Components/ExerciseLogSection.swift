@@ -29,9 +29,10 @@ import LiftingKit
 /// section used to draw the whole prescription again as a numbered block above
 /// the table; the sentence about set four was off the top of the screen by the
 /// time he reached set four. Each row now carries its own: its load and its reps
-/// as the placeholders in its two fields, and its effort target and its note in
-/// the line underneath. The numbered block still earns its place in
-/// `PrescribedExerciseRow`, which states a session that has no rows yet.
+/// as the placeholders in its two fields, and its note — and the effort asked of
+/// it where no load was — in the line underneath. The numbered block still earns
+/// its place in `PrescribedExerciseRow`, which states a session that has no rows
+/// yet.
 struct ExerciseLogSection: View {
     let exercise: PlannedExercise
     let profile: UserProfile
@@ -117,7 +118,6 @@ struct ExerciseLogSection: View {
                     repTargetText: RepPrescription.targetText(for: prescribed?.repRange),
                     loadTargetText: reading.loadTarget(prescribed),
                     prescriptionDetail: PrescriptionSummary.detail(for: prescribed, in: exercise),
-                    intensity: EffortEntry.invitation(from: prescribed),
                     measure: reading.measure,
                     unit: profile.displayUnit,
                     onCompletionChanged: { onCompletionChanged(exercise, $0) }

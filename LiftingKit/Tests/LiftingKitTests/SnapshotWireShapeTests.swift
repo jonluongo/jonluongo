@@ -40,14 +40,14 @@ struct SnapshotWireShapeTests {
             loggedSets: [
                 SnapshotLoggedSet(
                     setIndex: 0, load: Mass(value: 100, unit: .kilograms), reps: 5,
-                    rpe: 8, isCompleted: true, isWarmup: false, completedAt: Self.instant),
+                    isCompleted: true, isWarmup: false, completedAt: Self.instant),
                 SnapshotLoggedSet(
                     setIndex: 1, load: nil, reps: 0, durationSeconds: 34,
-                    rpe: nil, isCompleted: true, isWarmup: false, completedAt: Self.instant),
+                    isCompleted: true, isWarmup: false, completedAt: Self.instant),
                 SnapshotLoggedSet(
                     setIndex: 2, load: Mass(value: 32, unit: .kilograms), reps: 0,
                     distance: Distance(value: 40, unit: .metres),
-                    rpe: nil, isCompleted: true, isWarmup: false, completedAt: Self.instant),
+                    isCompleted: true, isWarmup: false, completedAt: Self.instant),
             ]
         )
         return TrainingSnapshot(
@@ -179,6 +179,34 @@ struct SnapshotWireShapeTests {
             "a set that was not carried did not travel no distance")
     }
 
+    // MARK: - The rating that is not asked for and not reported
+
+    /// The lifter is asked for no rating of how hard a set felt, so no key
+    /// stands where one used to. A permanently-null `rpe` would be worse than
+    /// its absence: it would read as a lifter who declined to answer, when
+    /// nothing asked him.
+    @Test("No logged set writes a rating key, not even a null one")
+    func noRatingKeyIsOnTheWire() throws {
+        let sets = try #require(try encodedExercise()["loggedSets"] as? [[String: Any]])
+
+        #expect(!sets.isEmpty)
+        for set in sets {
+            #expect(set["rpe"] == nil, "nobody was asked; a null would say he declined")
+        }
+        // The scale a prescription is written on is still called `rpe`; it is a
+        // value there, never a key, and that prescription is untouched.
+        let data = try TrainingSnapshot.makeEncoder().encode(snapshot())
+        #expect(!String(decoding: data, as: UTF8.self).contains("\"rpe\" :"))
+    }
+
+    /// Removing a key a reader could go looking for is a format change, not an
+    /// additive one — version 1 answers the question and version 2 is silent,
+    /// and a reader has to know which it holds.
+    @Test("Dropping the rating bumped the format version")
+    func removingTheRatingBumpedTheVersion() {
+        #expect(TrainingSnapshot.currentVersion == 2)
+    }
+
     // MARK: - A document written by hand, not by the encoder
 
     /// Written out the way a reader would meet it, including the two shapes no
@@ -304,5 +332,28 @@ struct SnapshotWireShapeTests {
         #expect(exercise.loggedSets.first?.durationSeconds == nil)
         #expect(exercise.loggedSets.first?.reps == 0)
         #expect(exercise.loggedSets.allSatisfy { $0.distance == nil })
+    }
+
+    /// A version 1 snapshot is one the previous build wrote, and one of those
+    /// is sitting in the shared folder right now with a rating on every set the
+    /// lifter answered. It must still read, whole: the rating is a key this
+    /// format no longer has, and nothing around it changed.
+    @Test("A version 1 snapshot that states a rating still reads, with every set intact")
+    func olderSnapshotStatingARatingStillReads() throws {
+        let json = Self.handWritten.replacingOccurrences(
+            of: "\"isCompleted\": true", with: "\"rpe\": 8.5, \"isCompleted\": true")
+        let decoded = try TrainingSnapshot.makeDecoder()
+            .decode(TrainingSnapshot.self, from: Data(json.utf8))
+        let exercise = try #require(
+            decoded.plans.first?.weeks.first?.days.first?.exercises.first)
+
+        #expect(decoded.version == 1, "it says what it is, and it is not rewritten")
+        #expect(exercise.loggedSets.count == 3)
+        #expect(exercise.loggedSets.map(\.reps) == [0, 9, 0])
+        #expect(exercise.loggedSets.first?.durationSeconds == 34)
+        #expect(exercise.loggedSets.dropFirst().first?.load == Mass(value: 80, unit: .kilograms))
+        #expect(exercise.loggedSets.last?.distance == Distance(value: 40, unit: .metres))
+        #expect(exercise.intensity == IntensityTarget(scale: .rpe, value: "8-9"),
+                "what was prescribed is untouched by what stopped being collected")
     }
 }

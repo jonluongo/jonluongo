@@ -31,7 +31,7 @@ struct SnapshotExporterTests {
             restSeconds: restSeconds, tempo: "3-0-1-0", notes: "Pause the last rep"
         )
         exercise.loggedSets = [
-            LoggedSet(setIndex: 0, load: load, reps: 5, rpe: 8.5, isCompleted: true)
+            LoggedSet(setIndex: 0, load: load, reps: 5, isCompleted: true)
         ]
         day.exercises = [exercise]
         week.days = [day]
@@ -254,7 +254,6 @@ struct SnapshotExporterTests {
 
         let set = try #require(exercise.loggedSets.first)
         #expect(set.reps == 5)
-        #expect(set.rpe == 8.5)
         #expect(set.isCompleted)
     }
 

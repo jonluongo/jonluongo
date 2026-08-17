@@ -79,23 +79,42 @@ enum PrescriptionSummary {
     /// nothing most of the time. The load and the reps are left out on purpose:
     /// they are already in front of the lifter as the placeholders in that
     /// row's own two fields, and a line repeating them would be the screen
-    /// saying the same thing twice. The effort is left out too when every set
-    /// asks for the same one, because the header stated it once for all of
-    /// them; it appears wherever a set asks for something of its own, which is
-    /// what a ramp's top single and a drop set's last set are — and it appears
-    /// even when the header states a span, because a span says what the sets
-    /// cover between them and not what *this* set is being asked for. A uniform
-    /// three-by-eight therefore gains no second line anywhere.
+    /// saying the same thing twice.
     ///
     /// `set` is `nil` for a warm-up or a set the lifter added past the ones
     /// prescribed, and a set the plan never described asks nothing of him.
     static func detail(for set: SetPrescription?, in exercise: PlannedExercise) -> String? {
         guard let set else { return nil }
-        let effort = statesIntensityForEverySet(exercise)
-            ? nil
-            : IntensityPrescription.label(for: set.intensity)
-        let parts = [effort, set.notes.flatMap { $0.isEmpty ? nil : $0 }].compactMap { $0 }
+        let parts = [
+            unloadedEffort(of: set, in: exercise),
+            set.notes.flatMap { $0.isEmpty ? nil : $0 },
+        ].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    /// The effort asked of this set, written only where nothing else on the row
+    /// has already said how hard to work.
+    ///
+    /// **A set with a load prescribed is not shown its intensity.** The
+    /// intensity is already baked into the number on the bar — a coach who
+    /// writes 100 kg for five has done the reasoning an RPE is the shorthand
+    /// for, and printing both under every row is showing his working. Where no
+    /// load was prescribed the intensity *is* the prescription: "work up to a
+    /// top single at RPE 8" leaves the lifter nothing else to go on, and hiding
+    /// it would leave the row blank. The same conditional shape as the rest
+    /// line, which appears only where a rest was prescribed.
+    ///
+    /// It is left out too when every set asks for the same effort, because the
+    /// exercise's own line above the table stated it once for all of them; it
+    /// appears wherever a set asks for something of its own, which is what a
+    /// ramp's top single and a drop set's last set are — and it appears even
+    /// when that line states a span, because a span says what the sets cover
+    /// between them and not what *this* set is being asked for.
+    private static func unloadedEffort(
+        of set: SetPrescription, in exercise: PlannedExercise
+    ) -> String? {
+        guard set.suggestedLoad == nil, !statesIntensityForEverySet(exercise) else { return nil }
+        return IntensityPrescription.label(for: set.intensity)
     }
 
     /// What the sets ask for between them — reps, a hold, or a carry, in the
@@ -138,10 +157,10 @@ enum PrescriptionSummary {
     }
 
     /// Whether every set asks for the same effort, which is the one case a row
-    /// has nothing of its own to say about it — the figure is already the
-    /// placeholder in that row's effort field, once per row. A header stating a
-    /// span has not said what any one set asks for, so it does not silence the
-    /// rows.
+    /// has nothing of its own to say about it — the exercise's own line above
+    /// the table has already stated that one figure for all of them. A line
+    /// stating a span has not said what any one set asks for, so it does not
+    /// silence the rows.
     private static func statesIntensityForEverySet(_ exercise: PlannedExercise) -> Bool {
         let sets = exercise.prescribedSets
         guard sharesOneIntensity(sets) else { return false }

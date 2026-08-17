@@ -87,8 +87,9 @@ struct PrescriptionSummaryWordingTests {
             repRange: "5")) == "3 × 5 · 60-80 kg")
     }
 
-    /// The efforts differ, so the span says so. It is not the top set's figure
-    /// standing for all three, and the top set's own row still states its own.
+    /// The efforts differ, so the span says so, rather than the top set's
+    /// figure standing for all three. None of these sets was given a load, so
+    /// each row states its own effort underneath as well.
     @Test("A ramp whose sets each state an effort spans the efforts too")
     func rampSpansItsEffort() throws {
         #expect(try imported(PlanDocumentExercise(
@@ -103,7 +104,7 @@ struct PrescriptionSummaryWordingTests {
 
     /// An effort asked of one set alone is not an effort asked of the exercise.
     /// Writing "RPE 9" here would claim all three sets were prescribed it, so
-    /// nothing is written and the set's own row carries it instead.
+    /// the line spends its room on the load these sets actually differ in.
     @Test("An effort only the top set states is not claimed for the exercise")
     func partialEffortIsNotClaimedForEverySet() throws {
         #expect(try imported(PlanDocumentExercise(
@@ -119,7 +120,8 @@ struct PrescriptionSummaryWordingTests {
     }
 
     /// Two scales are two sentences and no range covers both, so neither is
-    /// written above the table. Each set states its own where it is lifted.
+    /// written above the table. Neither set was given a load, so each states its
+    /// own effort on the row it is lifted on.
     @Test("Efforts written on two different scales are not spanned")
     func mixedScalesAreNotSpanned() throws {
         #expect(try imported(PlanDocumentExercise(
@@ -151,7 +153,8 @@ struct PrescriptionSummaryWordingTests {
 
     /// One thing beside the count and the target, because one is what the row
     /// holds beside the rest it prescribes. Where the sets differ in load, that
-    /// is the thing: the effort is on each row's own field under the bar.
+    /// is the thing — and the effort is not lost by being left out, because a
+    /// set that names a load has said how hard to work by naming it.
     @Test("A ramp that also states an effort spends its one line on the load")
     func loadWinsTheLineOverEffort() throws {
         #expect(try imported(PlanDocumentExercise(

@@ -4,11 +4,13 @@ import LiftingKit
 @testable import LiftingMCPKit
 
 /// Writing a prescription whose sets differ, and reading a prescribed effort
-/// back beside the effort that was logged.
+/// back beside the sets that were logged against it.
 ///
 /// The second half is the point of the first: a coach who can state an RPE
-/// target but never read it back against what the lifter reported cannot judge
-/// a session, so both directions are asserted here together.
+/// target but never read it back against what the lifter actually put up cannot
+/// judge a session, so both directions are asserted here together. What comes
+/// back is the reps and the load — the lifter is asked for no rating of his own,
+/// and nothing here reports one.
 @Suite("Per-set prescription and intensity")
 struct PerSetPrescriptionTests {
 
@@ -214,16 +216,20 @@ struct PerSetPrescriptionTests {
         try #require(try runner().contextResource().report)
     }
 
-    @Test("The prescribed intensity rides beside the logged RPE in the carried context")
+    @Test("The prescribed intensity rides beside the load and reps in the carried context")
     func contextCarriesPrescribedIntensity() throws {
         let context = try carriedContext()
         let bench = try #require(
             context["workingWeights"]?.arrayValue?
                 .first { $0["exerciseID"] == .string("barbell-bench-press") })
 
-        #expect(bench["rpe"] == .number(9.5), "what he actually gave")
+        #expect(bench["load"] == ["value": 225.0, "unit": "lb"], "what he actually put up")
+        #expect(bench["reps"] == .integer(4))
         #expect(bench["prescribedIntensity"]?["scale"] == .string("rpe"))
         #expect(bench["prescribedIntensity"]?["value"] == .string("8"), "what was asked for")
+        #expect(
+            bench.objectValue?["rpe"] == nil,
+            "he was asked for no rating; a null would say he declined to give one")
     }
 
     @Test("A lift with no prescribed intensity reports none rather than a default")
@@ -258,9 +264,14 @@ struct PerSetPrescriptionTests {
                 .first { $0["exerciseID"] == .string("barbell-bench-press") })
 
         #expect(bench["prescribed"]?["intensity"]?["value"] == .string("8"))
-        #expect(bench["sets"]?.arrayValue?.compactMap { $0["rpe"] } == [
-            .number(8), .number(8.5), .number(9.5),
+        // Four sets of five asked for, 5/5/4 put up against an RPE 8 target:
+        // what happened reads off the reps beside the prescription, which is
+        // what the rating was standing in for.
+        #expect(bench["sets"]?.arrayValue?.compactMap { $0["reps"] } == [
+            .integer(5), .integer(5), .integer(5), .integer(4), .integer(0),
         ])
+        #expect(
+            bench["sets"]?.arrayValue?.allSatisfy { $0.objectValue?["rpe"] == nil } == true)
     }
 }
 

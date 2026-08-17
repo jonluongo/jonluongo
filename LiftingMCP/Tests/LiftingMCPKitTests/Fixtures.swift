@@ -97,12 +97,12 @@ func fixtureProfile(
 
 private func set(
     _ index: Int, _ pounds: Double?, _ reps: Int, at date: Date,
-    rpe: Double? = nil, warmup: Bool = false, completed: Bool = true
+    warmup: Bool = false, completed: Bool = true
 ) -> SnapshotLoggedSet {
     SnapshotLoggedSet(
         setIndex: index,
         load: pounds.map { Mass(value: $0, unit: .pounds) },
-        reps: reps, rpe: rpe, isCompleted: completed, isWarmup: warmup, completedAt: date
+        reps: reps, isCompleted: completed, isWarmup: warmup, completedAt: date
     )
 }
 
@@ -144,9 +144,9 @@ private func basePlan() -> SnapshotPlan {
                                 sets: 3, reps: "5", load: 215, rest: 180,
                                 logged: [
                                     set(0, 135, 5, at: day, warmup: true),
-                                    set(1, 215, 5, at: day, rpe: 7),
-                                    set(2, 215, 5, at: day, rpe: 8),
-                                    set(3, 215, 5, at: day, rpe: 9),
+                                    set(1, 215, 5, at: day),
+                                    set(2, 215, 5, at: day),
+                                    set(3, 215, 5, at: day),
                                 ]),
                             prescribed(
                                 "barbell-squat", "Barbell Squat", order: 1,
@@ -204,13 +204,14 @@ private func currentPlan() -> SnapshotPlan {
                                 "barbell-bench-press", "Barbell Bench Press", order: 0,
                                 sets: 3, reps: "5", load: 225, rest: 180,
                                 // The effort the plan asked for, so it can be
-                                // read beside the effort actually logged below.
+                                // read beside the reps and load actually logged
+                                // below. Nobody is asked to rate a set.
                                 intensity: IntensityTarget(scale: .rpe, value: "8"),
                                 logged: [
                                     set(0, 135, 5, at: pushDay, warmup: true),
-                                    set(1, 225, 5, at: pushDay, rpe: 8),
-                                    set(2, 225, 5, at: pushDay, rpe: 8.5),
-                                    set(3, 225, 4, at: pushDay, rpe: 9.5),
+                                    set(1, 225, 5, at: pushDay),
+                                    set(2, 225, 5, at: pushDay),
+                                    set(3, 225, 4, at: pushDay),
                                     // On screen but never finished.
                                     set(4, 225, 0, at: pushDay, completed: false),
                                 ]),

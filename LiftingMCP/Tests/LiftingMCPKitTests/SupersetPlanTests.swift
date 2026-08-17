@@ -252,7 +252,7 @@ struct SupersetReportTests {
             tempo: nil, notes: nil,
             loggedSets: [
                 SnapshotLoggedSet(
-                    setIndex: 0, load: nil, reps: 12, rpe: nil,
+                    setIndex: 0, load: nil, reps: 12,
                     isCompleted: true, isWarmup: false, completedAt: daysAgo(1))
             ],
             group: position.map {

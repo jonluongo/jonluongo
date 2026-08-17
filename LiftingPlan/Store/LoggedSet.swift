@@ -19,10 +19,19 @@ import LiftingKit
 /// performed. Which one a row records is decided by what the plan prescribed
 /// for it, in `WorkMeasure`, and never by what the lifter happened to type.
 ///
+/// **It records what he did, and asks him nothing about it.** There is no
+/// self-reported rating here. The owner could not honestly tell one rep in
+/// reserve from three, and a number nobody can supply accurately is worse than
+/// none — a reader would trust it and program against it. What the plan asked
+/// for sits beside these sets in the snapshot, so the reps and the load
+/// answer the question a rating was standing in for.
+///
 /// Every property has a default or is optional, as CloudKit requires. A store
 /// written before a field existed keeps every row it had and reads the new field
-/// as absent, which was verified by reconstructing such a store on disk and
-/// reopening it under this schema rather than by reading the code.
+/// as absent; a store written with a field this build no longer has keeps every
+/// row too, and the retired column is simply left behind unread. Both were
+/// verified by reconstructing such a store on disk and reopening it under this
+/// schema rather than by reading the code.
 /// Depends on: `Mass` and `Distance` from Domain.
 @Model
 final class LoggedSet {
@@ -40,8 +49,6 @@ final class LoggedSet {
     /// instead: a set that was not carried did not travel no distance. The unit
     /// is stored beside the number and never converted, exactly as `load` is.
     var distance: Distance?
-    /// Rating of perceived exertion, 1–10.
-    var rpe: Double?
     var isCompleted: Bool = false
     /// Warmup sets show as "W" and are excluded from progression math.
     var isWarmup: Bool = false
@@ -51,7 +58,7 @@ final class LoggedSet {
 
     init(
         setIndex: Int = 0, load: Mass? = nil, reps: Int = 0, durationSeconds: Int? = nil,
-        distance: Distance? = nil, rpe: Double? = nil, isCompleted: Bool = false,
+        distance: Distance? = nil, isCompleted: Bool = false,
         isWarmup: Bool = false, completedAt: Date = Date()
     ) {
         self.setIndex = setIndex
@@ -59,7 +66,6 @@ final class LoggedSet {
         self.reps = reps
         self.durationSeconds = durationSeconds
         self.distance = distance
-        self.rpe = rpe
         self.isCompleted = isCompleted
         self.isWarmup = isWarmup
         self.completedAt = completedAt

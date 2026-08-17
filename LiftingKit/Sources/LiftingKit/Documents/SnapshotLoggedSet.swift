@@ -1,7 +1,13 @@
 import Foundation
 
 /// One set as the lifter logged it: what he lifted, for how many, for how long
-/// or how far, how hard it felt, and when.
+/// or how far, and when.
+///
+/// **Nothing here says how hard it felt.** The lifter is asked for no rating,
+/// so none is reported: what the plan asked for is in `prescribedSets` and what
+/// he did is here, and 4 × 8-10 prescribed against 10/10/9/8 logged says what a
+/// self-reported number was supposed to. A permanently-null rating field would
+/// read as a lifter who declined to answer a question nobody put to him.
 ///
 /// A row exists as soon as it is on screen, so read `isCompleted` rather than
 /// existence to know work was done, and `isWarmup` to know whether it counts.
@@ -34,15 +40,13 @@ public struct SnapshotLoggedSet: Codable, Hashable, Sendable {
     /// travels with the number and is never converted: forty yards is not forty
     /// metres, and no reader here may decide it is.
     public let distance: Distance?
-    /// Rating of perceived exertion, 1–10. `nil` when not rated.
-    public let rpe: Double?
     public let isCompleted: Bool
     public let isWarmup: Bool
     public let completedAt: Date
 
     public init(
         setIndex: Int, load: Mass?, reps: Int, durationSeconds: Int? = nil,
-        distance: Distance? = nil, rpe: Double?,
+        distance: Distance? = nil,
         isCompleted: Bool, isWarmup: Bool, completedAt: Date
     ) {
         self.setIndex = setIndex
@@ -50,7 +54,6 @@ public struct SnapshotLoggedSet: Codable, Hashable, Sendable {
         self.reps = reps
         self.durationSeconds = durationSeconds
         self.distance = distance
-        self.rpe = rpe
         self.isCompleted = isCompleted
         self.isWarmup = isWarmup
         self.completedAt = completedAt

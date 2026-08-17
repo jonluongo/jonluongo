@@ -122,10 +122,12 @@ public struct SnapshotDay: Codable, Hashable, Sendable {
 ///
 /// **`prescribedSets` is what was asked for, set by set, beside `loggedSets`,
 /// which is what happened.** Both are in order, so set *n* of one is the set
-/// the lifter was answering in the other. `intensity` is the effort the plan
-/// asked for; `SnapshotLoggedSet.rpe` is the effort he reported. Comparing them
-/// is the reader's job and the reason both are here — nothing in the app draws
-/// that comparison, converts between scales, or decides that a target was met.
+/// the lifter was answering in the other, and 4 × 8-10 prescribed against
+/// 10/10/9/8 logged reads as how the work went without anyone being asked to
+/// rate it. `intensity` is the effort the plan asked for, and the app collects
+/// no answer to it: reading the two lists against each other is the reader's
+/// job and the reason both are here — nothing in the app draws that comparison,
+/// converts between scales, or decides that a target was met.
 ///
 /// **`group` says it was performed in rounds.** An exercise inside a superset,
 /// tri-set or giant set carries the group it belongs to and its place in the

@@ -25,7 +25,14 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
 
     /// The format version this build writes. Bump it when a reader would need
     /// to behave differently, not for an additive field.
-    public static let currentVersion = 1
+    ///
+    /// Version 2 dropped the per-set `rpe` a lifter used to be asked for. That
+    /// is a removal rather than an addition, so a reader that went looking for
+    /// the key would find a version 1 document answering it and a version 2 one
+    /// silent, and needs to know which it is holding. A version 1 snapshot
+    /// still reads: `rpe` is simply a key this format no longer has, and the
+    /// sets around it are unchanged.
+    public static let currentVersion = 2
 
     /// The format version of this document, as written.
     public let version: Int

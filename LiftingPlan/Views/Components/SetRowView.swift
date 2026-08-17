@@ -20,13 +20,16 @@ import LiftingKit
 /// *seconds*, and writing it into a rep count is how a plank became thirty-four
 /// repetitions in every report that followed.
 ///
-/// **Anything else this set asks or is asked sits directly under it**, in
-/// `SetDetailLine` — the effort prescribed for this set alone, the note written
-/// about it, and the field that records how hard it felt. A sixth column would
-/// crowd five that are already tight, and a block above the table is off-screen
-/// by the time the lifter reaches set four. The line is drawn only when it has
-/// something to say, so an ordinary set of an ordinary prescription is exactly
-/// the row it always was.
+/// **Anything else this set asks sits directly under it**, as a quiet line: the
+/// note written about it, and the effort prescribed for it where no load was.
+/// A sixth column would crowd five that are already tight, and a block above the
+/// table is off-screen by the time the lifter reaches set four. The line is
+/// drawn only when it has something to say, so an ordinary set of an ordinary
+/// prescription is exactly the row it always was.
+///
+/// **Nothing on this row asks the lifter how hard it felt.** He is not rated and
+/// does not rate himself; what he put up is the whole of what he reports, and
+/// what was asked of him sits beside it in the record.
 struct SetRowView: View {
     @Bindable var set: LoggedSet
     /// What this row is called — the badge it draws and the name it says aloud.
@@ -44,13 +47,9 @@ struct SetRowView: View {
     /// the same reason. `"—"` when it prescribed none.
     var loadTargetText: String
     /// What this set asks that the exercise's header has not already said — its
-    /// own effort target, its own note — or `nil` when it asks nothing of its
-    /// own, which is the ordinary case and draws nothing.
+    /// own note, and the effort asked of it where no load was — or `nil` when it
+    /// asks nothing of its own, which is the ordinary case and draws nothing.
     var prescriptionDetail: String?
-    /// The intensity the plan asked of this set, or `nil` when it asked none.
-    /// Carried rather than reduced to a flag so the field can be labelled with
-    /// the scale the plan named and show the number it asked for.
-    var intensity: IntensityTarget?
     /// What this row records — reps, a hold, or a distance in the unit it was
     /// prescribed in. Decided by the prescription, in `WorkPrescription`, and
     /// never by what is typed.
@@ -123,16 +122,16 @@ struct SetRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.tight) {
             columns
-            // Drawn only when this set says something of its own or is asked
-            // something of its own. Nothing is drawn otherwise, so a uniform
-            // prescription gains no line per set for saying nothing new.
-            if prescriptionDetail != nil || intensity != nil {
-                SetDetailLine(
-                    set: set,
-                    detail: prescriptionDetail,
-                    intensity: intensity,
-                    spokenSetName: identity.spoken
-                )
+            // Drawn only when this set says something of its own. Nothing is
+            // drawn otherwise, so a uniform prescription gains no line per set
+            // for saying nothing new. It gets the row's whole width to wrap in:
+            // a sentence squeezed into a column narrower than its own words ran
+            // off the edge of the card at accessibility sizes.
+            if let prescriptionDetail {
+                Text(prescriptionDetail)
+                    .font(.barbellSupport)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

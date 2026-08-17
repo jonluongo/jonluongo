@@ -57,7 +57,6 @@ extension ToolRunner {
             "reps": .integer(record.loggedSet.reps),
             "durationSeconds": .integer(record.loggedSet.durationSeconds),
             "distance": .distance(record.loggedSet.distance),
-            "rpe": record.loggedSet.rpe.map { .number($0) } ?? .null,
             "isCompleted": .bool(record.loggedSet.isCompleted),
             "isWarmup": .bool(record.loggedSet.isWarmup),
             "plan": .string(record.planTitle),
@@ -72,13 +71,14 @@ extension ToolRunner {
 
     /// What the plan asked for, carried beside what happened. Absences stay
     /// absent: no rest prescribed is `null`, not zero, and no effort target is
-    /// `null` rather than an RPE nobody wrote.
+    /// `null` rather than a target nobody wrote.
     ///
     /// `prescribedSets` lists every set in order and in full, so a ramp or a
     /// drop set reads as the sets it actually is — compare it index for index
     /// with the logged sets beside it. `intensity` is the effort that was asked
-    /// for; the logged `rpe` is the effort that was given. Nothing here draws
-    /// the comparison or converts one scale into another.
+    /// for; the reps and load logged against it are what was given, and the
+    /// lifter is asked for no rating on top. Nothing here draws the comparison
+    /// or converts one scale into another.
     static func prescription(_ exercise: SnapshotPlannedExercise) -> JSONValue {
         [
             "sets": .integer(exercise.targetSets),
@@ -160,7 +160,6 @@ extension ToolRunner {
                         "reps": .integer($0.reps),
                         "durationSeconds": .integer($0.durationSeconds),
                         "distance": .distance($0.distance),
-                        "rpe": $0.rpe.map { .number($0) } ?? .null,
                         "isCompleted": .bool($0.isCompleted),
                         "isWarmup": .bool($0.isWarmup),
                     ]

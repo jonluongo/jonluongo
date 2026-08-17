@@ -29,8 +29,8 @@ struct TrendPoint: Identifiable {
 ///
 /// **It selects and orders; it does not judge.** There is no `isImproving` here
 /// and no estimated one-rep max behind one. Reading whether four weeks of work
-/// went anywhere means weighing load against reps against RPE against how the
-/// lifter felt, and every formula that reduces it to one number — Epley,
+/// went anywhere means weighing load against reps against what was asked for,
+/// and every formula that reduces it to one number — Epley,
 /// Brzycki, Wathan — disagrees with the next. Picking one and drawing an arrow
 /// from it would be this app deciding something it has no business deciding;
 /// the sets are all reported in the snapshot, and the judgement is the reader's.

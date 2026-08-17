@@ -56,7 +56,7 @@ struct CarriedWorkTests {
     private func loggedCarry(_ index: Int, _ distance: Distance?) -> SnapshotLoggedSet {
         SnapshotLoggedSet(
             setIndex: index, load: Mass(value: 32, unit: .kilograms), reps: 0,
-            distance: distance, rpe: nil, isCompleted: true, isWarmup: false,
+            distance: distance, isCompleted: true, isWarmup: false,
             completedAt: daysAgo(2))
     }
 

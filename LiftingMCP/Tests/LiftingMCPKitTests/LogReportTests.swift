@@ -32,15 +32,25 @@ struct ExerciseHistoryTests {
         #expect(dates.last == JSONValue.date(daysAgo(2)).stringValue)
     }
 
-    @Test("A set says what was lifted, in the unit it was entered in, and how it felt")
+    @Test("A set says what was lifted, in the unit it was entered in")
     func setsCarryTheirDetail() throws {
         let sets = try #require(try history("barbell-bench-press")["sets"]?.arrayValue)
-        let hardest = try #require(sets.first { $0["rpe"] == 9.5 })
+        let short = try #require(sets.first { $0["reps"] == 4 })
 
-        #expect(hardest["load"] == ["value": 225.0, "unit": "lb"])
-        #expect(hardest["reps"] == 4)
-        #expect(hardest["isCompleted"] == true)
-        #expect(hardest["isWarmup"] == false)
+        #expect(short["load"] == ["value": 225.0, "unit": "lb"])
+        #expect(short["isCompleted"] == true)
+        #expect(short["isWarmup"] == false)
+    }
+
+    /// The lifter is asked for no rating, so no report carries one — not even a
+    /// null. A permanently-empty field would tell a reader he declined to answer
+    /// when nothing put the question to him.
+    @Test("No logged set in any report carries a rating the lifter never gave")
+    func noReportCarriesARating() throws {
+        let sets = try #require(try history("barbell-bench-press")["sets"]?.arrayValue)
+
+        #expect(!sets.isEmpty)
+        #expect(sets.allSatisfy { $0.objectValue?["rpe"] == nil })
     }
 
     @Test("Warmups and unfinished rows are reported and flagged, not quietly dropped")

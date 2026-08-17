@@ -29,8 +29,8 @@ import LiftingKit
 /// movement, the sets, the reps, the effort and the rest. What Claude *said*
 /// about the movement is an instruction for the moment the bar is loaded, and
 /// it reaches the lifter there: `ExerciseLogSection` and `SupersetHeaderView`
-/// state the exercise's note on the logging screen, and `SetDetailLine` states
-/// a note about one set on that set's own row. Drawn here as well, a session of
+/// state the exercise's note on the logging screen, and `SetRowView` states a
+/// note about one set on that set's own row. Drawn here as well, a session of
 /// six exercises opened as a wall of prose in front of a lifter deciding
 /// whether to start.
 ///
