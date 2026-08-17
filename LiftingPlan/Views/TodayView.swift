@@ -11,12 +11,13 @@ import LiftingKit
 /// not started, a block that is over, or a lifter with no block at all. It opens
 /// on today every time, which is why the tab is still called Today.
 ///
-/// **How it is used.** The first tab, and it carries its own `NavigationStack`
-/// — the block is pushed onto it, and a session picked out over there comes back
-/// as a date, which only the screen that owns the stack can both select and pop
-/// to. There is no large navigation title: it held one word above a hundred
-/// points of empty bar, and the week strip earns that space instead. Nothing
-/// here writes to the store; the only thing it starts is logging.
+/// **How it is used.** The first tab. It carries a `NavigationStack` so an
+/// exercise can open its own record; it used to carry a path as well, because
+/// the block was pushed onto it and a session picked out over there had to come
+/// back as a date and pop. The block is a tab now, so the path went with it.
+/// There is no large navigation title: it held one word above a hundred points
+/// of empty bar, and the week strip earns that space instead. Nothing here
+/// writes to the store; the only thing it starts is logging.
 ///
 /// **What it depends on.** `TodayInPlan` from Services, `WeekStrip` from
 /// LiftingKit, `TrainingPlan` and `WorkoutDay` from Store, `TodayPhrasing` for
@@ -48,11 +49,6 @@ struct TodayView: View {
     /// The session the logging screen is open on, or `nil`.
     @State private var openSession: WorkoutDay?
 
-    /// What is pushed over this screen. Held rather than left to
-    /// `NavigationLink`'s own bookkeeping because the block screen hands a day
-    /// back, and returning to it means emptying this.
-    @State private var pushed: [BlockDestination] = []
-
     private var plan: TrainingPlan? { plans.first }
 
     /// The start of today, in the lifter's own calendar.
@@ -62,19 +58,18 @@ struct TodayView: View {
     private var shown: Date { chosen ?? today }
 
     var body: some View {
-        NavigationStack(path: $pushed) {
+        NavigationStack {
             Group {
                 if let plan {
                     screen(plan)
                 } else {
-                    noBlock
+                    NoBlockView()
                 }
             }
             // No title and no bar items, so the navigation bar collapses to
             // nothing and the strip sits where the large title's empty hundred
             // points were.
             .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: BlockDestination.self, destination: destination)
         }
         .onChange(of: scenePhase) { was, phase in
             guard phase == .active else { return }
@@ -104,10 +99,10 @@ struct TodayView: View {
         let standing = TodayInPlan.resolve(plan, on: shown, calendar: calendar)
         switch standing.standing {
         case .undated, .unscheduled:
-            noBlock
+            NoBlockView()
         default:
             List {
-                BlockLinkSection(plan: plan, standing: standing.standing)
+                BlockHeaderSection(plan: plan, standing: standing.standing)
                 content(plan, standing)
             }
             .safeAreaInset(edge: .top, spacing: 0) { strip(plan) }
@@ -116,38 +111,6 @@ struct TodayView: View {
             // gesture that ended up more sideways than it was long.
             .simultaneousGesture(swipe(plan))
         }
-    }
-
-    private var noBlock: some View {
-        ContentUnavailableView {
-            Label("No block yet", systemImage: "dumbbell")
-        } description: {
-            Text("Ask Claude for one.")
-        }
-    }
-
-    // MARK: - The block behind the day
-
-    @ViewBuilder
-    private func destination(_ destination: BlockDestination) -> some View {
-        switch destination {
-        case .block(let currentWeekOrdinal):
-            if let plan {
-                BlockView(plan: plan, currentWeekOrdinal: currentWeekOrdinal, show: show)
-            }
-        case .week(let week):
-            BlockWeekView(week: week, show: show)
-        }
-    }
-
-    /// A session picked out in the block, shown here instead of on a screen of
-    /// its own: the strip moves to that day and the block closes behind it. A
-    /// day the block cannot place on a calendar changes nothing rather than
-    /// selecting a date nobody chose.
-    private func show(_ day: WorkoutDay) {
-        guard let date = TodayInPlan.date(of: day, calendar: calendar) else { return }
-        pushed.removeAll()
-        choose(date)
     }
 
     // MARK: - The week

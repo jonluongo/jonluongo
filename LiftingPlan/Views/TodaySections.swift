@@ -15,35 +15,31 @@ import LiftingKit
 /// answer, `TodayPhrasing` for every line that is not a stored string, and the
 /// shared components.
 
-/// The block the day belongs to, and the way into it.
+/// Which block the day belongs to, and which week of it.
 ///
-/// One line, always in the same place, and it costs nothing when it is not
-/// tapped — Fitbod's *"My Plan ›"* rather than a calendar tab.
-///
-/// It survives the week strip above it because the two say different things:
-/// the strip says which Wednesday, and this says which week of training that
-/// Wednesday belongs to — an ordinal and a label a calendar cannot show.
-struct BlockLinkSection: View {
+/// **It is words and not a door.** This used to be a link into the block,
+/// because the block had no other way in; the block is a tab now, so a chevron
+/// here would be a second route to the same place on the screen that can least
+/// afford a spare row. The words stayed: the strip above says which Wednesday,
+/// and this says which week of training that Wednesday belongs to — an ordinal
+/// and a label a calendar cannot show.
+struct BlockHeaderSection: View {
 
     let plan: TrainingPlan
     let standing: TodayInBlock.Standing
 
     var body: some View {
         Section {
-            NavigationLink(
-                value: BlockDestination.block(currentWeekOrdinal: Self.currentOrdinal(standing))
-            ) {
-                VStack(alignment: .leading, spacing: Spacing.tight) {
-                    Text(Self.blockName(plan))
-                        .font(.barbellTitle)
-                    if let line = Self.headerLine(plan, standing) {
-                        Text(line)
-                            .font(.barbellSupport)
-                            .foregroundStyle(.secondary)
-                    }
+            VStack(alignment: .leading, spacing: Spacing.tight) {
+                Text(Self.blockName(plan))
+                    .font(.barbellTitle)
+                if let line = Self.headerLine(plan, standing) {
+                    Text(line)
+                        .font(.barbellSupport)
+                        .foregroundStyle(.secondary)
                 }
-                .padding(.vertical, Spacing.tight)
             }
+            .padding(.vertical, Spacing.tight)
         }
     }
 
@@ -69,14 +65,6 @@ struct BlockLinkSection: View {
                 ? nil
                 : "\(plan.orderedWeeks.count) week\(plan.orderedWeeks.count == 1 ? "" : "s")"
         case .beforeBlock, .undated, .unscheduled: nil
-        }
-    }
-
-    private static func currentOrdinal(_ standing: TodayInBlock.Standing) -> Int? {
-        switch standing {
-        case .session(let day): day.week.ordinal
-        case .rest(let week): week.ordinal
-        default: nil
         }
     }
 }
@@ -129,8 +117,12 @@ struct TodaySessionSection: View {
                     systemImage: "checkmark", tint: .green, title: "Logged", subtitle: nil)
             }
             if let session {
+                // Each row opens that exercise's record — which is where the
+                // History tab went. A lifter reading tonight's bench press and
+                // wondering what he benched last month is already looking at
+                // the row that answers him.
                 ForEach(session.orderedExercises) { exercise in
-                    PrescribedExerciseRow(exercise: exercise, unit: unit)
+                    ExerciseHistoryLink(exercise: exercise, unit: unit)
                 }
             } else {
                 // The block moved underneath the answer. Said plainly rather

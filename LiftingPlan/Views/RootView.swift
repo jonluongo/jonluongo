@@ -109,24 +109,27 @@ struct RootView: View {
     }
 }
 
-/// The three tabs, which is the whole app.
+/// The three tabs, which is the whole app: the day, the block, and the lifter.
 ///
-/// Today is the front door. It replaced a Plan tab that rendered every week of
-/// a block identically: the block is what today is part of, so it is reached
-/// through a link on Today rather than standing beside it.
+/// Today is the front door. Plan is the block it is a day of — it was a link on
+/// Today until the block stopped being a detail of the day. It stands where a
+/// History tab used to: a tab listing every lift you have ever logged is a
+/// filing cabinet, and what a lifter actually wants from it is one exercise's
+/// record, so that moved onto the exercise itself and the tab became the thing
+/// the app is for.
+///
+/// Today carries its own stack rather than being wrapped in one here, because
+/// the week strip has to sit where the navigation bar would be.
 struct MainTabView: View {
     let profile: UserProfile
 
     var body: some View {
         TabView {
-            // Today carries its own stack: a session picked out inside the
-            // block is shown on Today itself, which means emptying the path,
-            // and only the screen that owns it can do that.
             Tab("Today", systemImage: "dumbbell.fill") {
                 TodayView(profile: profile)
             }
-            Tab("History", systemImage: "chart.line.uptrend.xyaxis") {
-                NavigationStack { HistoryView(profile: profile) }
+            Tab("Plan", systemImage: "calendar") {
+                NavigationStack { BlockView(profile: profile) }
             }
             Tab("Settings", systemImage: "gearshape.fill") {
                 NavigationStack { SettingsView(profile: profile) }

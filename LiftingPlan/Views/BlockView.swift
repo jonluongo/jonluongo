@@ -1,77 +1,85 @@
 import SwiftUI
+import SwiftData
+import LiftingKit
 
-/// The screens the block is read through, as values a navigation path can hold.
+/// The whole block, a week at a time — the Plan tab.
 ///
-/// **What it does.** Names the two things that can sit over the Today screen:
-/// the block, and one week of it. They are values rather than destinations
-/// because the Today screen has to be able to empty its own path — a session
-/// chosen inside the block is shown *there*, so the block closes behind it.
+/// **What it does.** Names the block and repeats the coach's note, lists every
+/// week the plan states, marks the one today falls in and the ones that are
+/// deloads, and opens each to its sessions. It is a list rather than a calendar
+/// grid on purpose: training is dense and patterned, so a month of mostly-empty
+/// cells costs more space to say less than a week does — and cannot say "week 4
+/// is a deload", which is the thing worth knowing about a block.
 ///
-/// **How it is used.** `NavigationLink(value:)` here, `navigationDestination`
-/// on `TodayView`. **What it depends on.** `TrainingWeek` from Store.
-enum BlockDestination: Hashable {
-
-    /// The whole block, marking the week the day being read falls in. The
-    /// ordinal travels with the destination so the pushed screen keeps the week
-    /// it was opened against, rather than re-deriving it from a day the lifter
-    /// may since have swiped away from.
-    case block(currentWeekOrdinal: Int?)
-
-    /// One week's sessions.
-    case week(TrainingWeek)
-}
-
-/// The whole block, a week at a time.
-///
-/// **What it does.** Lists every week the plan states, marks the one today
-/// falls in and the ones that are deloads, and opens each to its sessions. It
-/// is a list rather than a calendar grid on purpose: training is dense and
-/// patterned, so a month of mostly-empty cells costs more space to say less
-/// than a week does — and cannot say "week 4 is a deload", which is the thing
-/// worth knowing about a block.
-///
-/// **How it is used.** Pushed from the Today screen's header, which is a link
-/// rather than a tab: the block is what today is a part of, so it sits behind
-/// today rather than beside it. `currentWeekOrdinal` comes from the same answer
-/// the header was drawn from, so the two cannot disagree about which week it
-/// is.
+/// **How it is used.** The second tab. It used to be pushed from a link on
+/// Today; the block is not a detail of the day, it is the thing the day is part
+/// of, so it stands beside Today rather than behind it and the link went. It
+/// reads the store directly for the same reason Today does — a tab is addressed
+/// by nothing.
 ///
 /// **What it depends on.** `TrainingPlan` and `TrainingWeek` from Store,
-/// `PlanWeekSelection` for a week's title, and the shared row and note
-/// components. It writes nothing.
+/// `TodayInPlan` from Services for which week is current, `PlanWeekSelection`
+/// for a week's title, and the shared row and note components. It writes
+/// nothing.
 struct BlockView: View {
 
-    let plan: TrainingPlan
-    /// The week today falls in, or `nil` when today falls outside the block —
-    /// before it starts, or after it has ended. Nothing is marked as current
-    /// then, because nothing is.
-    let currentWeekOrdinal: Int?
-    /// What to do with a session the lifter picks out down here: show it on the
-    /// screen this one was pushed from. Passed all the way down rather than
-    /// acted on locally, because the day is shown *there*.
-    let show: (WorkoutDay) -> Void
+    let profile: UserProfile
 
-    private var weeks: [TrainingWeek] { plan.orderedWeeks }
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.calendar) private var calendar
+    @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
-    private var note: String? {
+    /// When "today" is, re-read whenever the app comes back to the screen, so a
+    /// phone left open overnight does not keep marking last week as this one.
+    @State private var now = Date()
+
+    private var plan: TrainingPlan? { plans.first }
+
+    var body: some View {
+        Group {
+            if let plan {
+                weeks(of: plan)
+            } else {
+                NoBlockView()
+            }
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { now = Date() }
+        }
+    }
+
+    /// What the plan called itself, or what it is for when it went unnamed.
+    private var title: String {
+        guard let plan else { return "Plan" }
+        if !plan.title.isEmpty { return plan.title }
+        if !plan.goal.isEmpty { return plan.goal }
+        return "Plan"
+    }
+
+    private func note(_ plan: TrainingPlan) -> String? {
         plan.notes.flatMap { $0.isEmpty ? nil : $0 }
     }
 
-    var body: some View {
+    @ViewBuilder
+    private func weeks(of plan: TrainingPlan) -> some View {
+        let ordered = plan.orderedWeeks
+        let current = currentWeekOrdinal(plan)
         List {
-            if !plan.goal.isEmpty || note != nil {
+            if !plan.goal.isEmpty || note(plan) != nil {
                 Section {
                     if !plan.goal.isEmpty {
                         Text(plan.goal)
                             .font(.barbellTitle)
                     }
-                    if let note {
+                    if let note = note(plan) {
                         CoachNoteView(note: note)
                     }
                 }
             }
 
-            if weeks.isEmpty {
+            if ordered.isEmpty {
                 Section {
                     ContentUnavailableView {
                         Label("No weeks yet", systemImage: "calendar")
@@ -81,16 +89,24 @@ struct BlockView: View {
                 }
             } else {
                 Section("Weeks") {
-                    ForEach(weeks) { week in
-                        NavigationLink(value: BlockDestination.week(week)) {
-                            WeekRow(week: week, isCurrent: week.ordinal == currentWeekOrdinal)
+                    ForEach(ordered) { week in
+                        NavigationLink {
+                            BlockWeekView(week: week, unit: profile.displayUnit)
+                        } label: {
+                            WeekRow(week: week, isCurrent: week.ordinal == current)
                         }
                     }
                 }
             }
         }
-        .navigationTitle(plan.title.isEmpty ? "Block" : plan.title)
-        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// The week today falls in, or `nil` when today falls outside the block —
+    /// before it starts, or after it has ended. Nothing is marked as current
+    /// then, because nothing is.
+    private func currentWeekOrdinal(_ plan: TrainingPlan) -> Int? {
+        let standing = TodayInPlan.resolve(plan, on: now, calendar: calendar).standing
+        return standing.session?.week.ordinal ?? standing.rest?.ordinal
     }
 }
 
@@ -129,81 +145,5 @@ private struct WeekRow: View {
             title: PlanWeekSelection.title(for: week),
             subtitle: subtitle
         )
-    }
-}
-
-/// One week's sessions, in the order the plan prescribes them.
-///
-/// The row is `IconCircleRow`, the same shape the exercise header and the
-/// finished-session row draw, and a completed session changes glyph and hue
-/// together and nothing else.
-///
-/// **A session opens on the Today screen, not here.** There used to be a third
-/// screen below this one that previewed a day and offered to start it; Today now
-/// shows any day of the block in full, so the preview was the same session read
-/// twice. Tapping a session selects that day up there and closes the block
-/// behind it. Depends on: Store, `PlanWeekSelection`.
-struct BlockWeekView: View {
-
-    let week: TrainingWeek
-    /// Where a tapped session goes — see `BlockView.show`.
-    let show: (WorkoutDay) -> Void
-
-    var body: some View {
-        List {
-            if week.orderedDays.isEmpty {
-                ContentUnavailableView {
-                    Label("No sessions in this week", systemImage: "calendar.badge.exclamationmark")
-                } description: {
-                    Text("This week has no training days yet. They appear here as they're added.")
-                }
-            } else {
-                ForEach(week.orderedDays) { day in
-                    Button { show(day) } label: {
-                        SessionRow(day: day)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Shows this session on Today")
-                }
-            }
-        }
-        .navigationTitle(PlanWeekSelection.title(for: week))
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-/// One prescribed session as a row: the day it falls on, what it is for,
-/// whether it has been logged, and a chevron saying it goes somewhere.
-///
-/// Where it goes is the Today screen, showing that day — so the chevron is
-/// honest about there being a destination and only unusual in that the
-/// destination is behind it rather than in front. A row that acts on a tap and
-/// looks inert is the worse of the two.
-struct SessionRow: View {
-
-    let day: WorkoutDay
-
-    private var isLogged: Bool { day.completedAt != nil }
-
-    /// "Push · 5 exercises", dropping the focus when the plan named none.
-    private var subtitle: String {
-        let count = TodayPhrasing.sessionShape(
-            exercises: day.orderedExercises.count, durationMinutes: day.durationMinutes)
-        return [day.focus.isEmpty ? nil : day.focus, count]
-            .compactMap { $0 }
-            .joined(separator: " · ")
-    }
-
-    var body: some View {
-        IconCircleRow(
-            systemImage: isLogged ? "checkmark" : "dumbbell.fill",
-            tint: isLogged ? .green : .accentColor,
-            title: day.weekday.fullName,
-            subtitle: subtitle.isEmpty ? nil : subtitle
-        ) {
-            Image(systemName: "chevron.forward")
-                .font(.barbellLabel)
-                .foregroundStyle(.secondary)
-        }
     }
 }
