@@ -74,8 +74,10 @@ snapshot file and must never link SwiftData.
     `ExerciseID`.
   - `ExerciseTrend` — per-exercise top-set and estimated-1RM series.
   - `RestTimerModel` — the date-based pace timer.
-- **`Views/`** — `RootView`, `PlanOverviewView`, `SessionDetailView`,
+- **`Views/`** — `RootView`, `TodayView`, `BlockView`,
   `ActiveWorkoutView`, `HistoryView`, `SettingsView`, plus small components.
+  `TodayView` shows one day of the block in full; there is no second screen
+  previewing the same session.
   There is deliberately no setup or onboarding view: the app asks the lifter
   nothing, and `SettingsView` holds only the lb/kg preference and the reset.
 

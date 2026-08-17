@@ -124,6 +124,25 @@ public struct BlockCalendar: Sendable {
         return start...end
     }
 
+    /// The date one prescribed session falls on, or `nil` when nothing places
+    /// it — a block with no start date, an ordinal before the first week, or a
+    /// date the calendar cannot produce.
+    ///
+    /// The same arithmetic `today(in:on:)` places every session by, asked of
+    /// one session by name. It exists so a screen listing a block's weeks can
+    /// hand a day back to the screen that shows days, rather than opening a
+    /// second screen to show the same session. **Whether the ordinal is inside
+    /// the block is not checked**: a week the plan skipped still has a date
+    /// seven days after the one before it, and inventing a refusal there would
+    /// be this type deciding which weeks count.
+    public func date(
+        ofWeek ordinal: Int, weekday: Weekday, in schedule: BlockSchedule
+    ) -> Date? {
+        guard let startDate = schedule.startDate, ordinal > 0 else { return nil }
+        return date(
+            ofWeek: ordinal, weekday: weekday, from: calendar.startOfDay(for: startDate))
+    }
+
     // MARK: - Placing weeks and days
 
     /// Where an ordinal sits and what, if anything, the block stated there. An
@@ -152,13 +171,11 @@ public struct BlockCalendar: Sendable {
     private func datedDays(
         in schedule: BlockSchedule, from blockStart: Date, totalWeeks: Int
     ) -> [BlockDay] {
-        let startWeekday = calendar.component(.weekday, from: blockStart)
-        return schedule.weeks.flatMap { week -> [BlockDay] in
+        schedule.weeks.flatMap { week -> [BlockDay] in
             let placement = placement(of: week.ordinal, in: schedule, totalWeeks: totalWeeks)
             return week.days.compactMap { day -> BlockDay? in
-                let offset = (day.weekday.rawValue - startWeekday + 7) % 7
-                guard let date = calendar.date(
-                    byAdding: .day, value: (week.ordinal - 1) * 7 + offset, to: blockStart
+                guard let date = date(
+                    ofWeek: week.ordinal, weekday: day.weekday, from: blockStart
                 ) else { return nil }
                 return BlockDay(
                     week: placement, weekday: day.weekday, focus: day.focus,
@@ -167,5 +184,16 @@ public struct BlockCalendar: Sendable {
             }
         }
         .sorted { $0.date < $1.date }
+    }
+
+    /// A session in week `n` on weekday `w` falls `(w - startWeekday) mod 7`
+    /// days after that week's first day, which is `7 * (n - 1)` days after the
+    /// block's. The one place that rule is written; both the public lookup and
+    /// the dated list go through it, so they cannot disagree about a date.
+    private func date(ofWeek ordinal: Int, weekday: Weekday, from blockStart: Date) -> Date? {
+        let startWeekday = calendar.component(.weekday, from: blockStart)
+        let offset = (weekday.rawValue - startWeekday + 7) % 7
+        return calendar.date(
+            byAdding: .day, value: (ordinal - 1) * 7 + offset, to: blockStart)
     }
 }

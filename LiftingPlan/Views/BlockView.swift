@@ -1,5 +1,26 @@
 import SwiftUI
 
+/// The screens the block is read through, as values a navigation path can hold.
+///
+/// **What it does.** Names the two things that can sit over the Today screen:
+/// the block, and one week of it. They are values rather than destinations
+/// because the Today screen has to be able to empty its own path — a session
+/// chosen inside the block is shown *there*, so the block closes behind it.
+///
+/// **How it is used.** `NavigationLink(value:)` here, `navigationDestination`
+/// on `TodayView`. **What it depends on.** `TrainingWeek` from Store.
+enum BlockDestination: Hashable {
+
+    /// The whole block, marking the week the day being read falls in. The
+    /// ordinal travels with the destination so the pushed screen keeps the week
+    /// it was opened against, rather than re-deriving it from a day the lifter
+    /// may since have swiped away from.
+    case block(currentWeekOrdinal: Int?)
+
+    /// One week's sessions.
+    case week(TrainingWeek)
+}
+
 /// The whole block, a week at a time.
 ///
 /// **What it does.** Lists every week the plan states, marks the one today
@@ -21,11 +42,14 @@ import SwiftUI
 struct BlockView: View {
 
     let plan: TrainingPlan
-    let profile: UserProfile
     /// The week today falls in, or `nil` when today falls outside the block —
     /// before it starts, or after it has ended. Nothing is marked as current
     /// then, because nothing is.
     let currentWeekOrdinal: Int?
+    /// What to do with a session the lifter picks out down here: show it on the
+    /// screen this one was pushed from. Passed all the way down rather than
+    /// acted on locally, because the day is shown *there*.
+    let show: (WorkoutDay) -> Void
 
     private var weeks: [TrainingWeek] { plan.orderedWeeks }
 
@@ -58,9 +82,7 @@ struct BlockView: View {
             } else {
                 Section("Weeks") {
                     ForEach(weeks) { week in
-                        NavigationLink {
-                            BlockWeekView(week: week, profile: profile)
-                        } label: {
+                        NavigationLink(value: BlockDestination.week(week)) {
                             WeekRow(week: week, isCurrent: week.ordinal == currentWeekOrdinal)
                         }
                     }
@@ -114,11 +136,18 @@ private struct WeekRow: View {
 ///
 /// The row is `IconCircleRow`, the same shape the exercise header and the
 /// finished-session row draw, and a completed session changes glyph and hue
-/// together and nothing else. Depends on: Store, `SessionDetailView`.
+/// together and nothing else.
+///
+/// **A session opens on the Today screen, not here.** There used to be a third
+/// screen below this one that previewed a day and offered to start it; Today now
+/// shows any day of the block in full, so the preview was the same session read
+/// twice. Tapping a session selects that day up there and closes the block
+/// behind it. Depends on: Store, `PlanWeekSelection`.
 struct BlockWeekView: View {
 
     let week: TrainingWeek
-    let profile: UserProfile
+    /// Where a tapped session goes — see `BlockView.show`.
+    let show: (WorkoutDay) -> Void
 
     var body: some View {
         List {
@@ -130,11 +159,11 @@ struct BlockWeekView: View {
                 }
             } else {
                 ForEach(week.orderedDays) { day in
-                    NavigationLink {
-                        SessionDetailView(day: day, profile: profile)
-                    } label: {
+                    Button { show(day) } label: {
                         SessionRow(day: day)
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Shows this session on Today")
                 }
             }
         }
@@ -143,8 +172,13 @@ struct BlockWeekView: View {
     }
 }
 
-/// One prescribed session as a row: the day it falls on, what it is for, and
-/// whether it has been logged.
+/// One prescribed session as a row: the day it falls on, what it is for,
+/// whether it has been logged, and a chevron saying it goes somewhere.
+///
+/// Where it goes is the Today screen, showing that day — so the chevron is
+/// honest about there being a destination and only unusual in that the
+/// destination is behind it rather than in front. A row that acts on a tap and
+/// looks inert is the worse of the two.
 struct SessionRow: View {
 
     let day: WorkoutDay
@@ -166,6 +200,10 @@ struct SessionRow: View {
             tint: isLogged ? .green : .accentColor,
             title: day.weekday.fullName,
             subtitle: subtitle.isEmpty ? nil : subtitle
-        )
+        ) {
+            Image(systemName: "chevron.forward")
+                .font(.barbellLabel)
+                .foregroundStyle(.secondary)
+        }
     }
 }

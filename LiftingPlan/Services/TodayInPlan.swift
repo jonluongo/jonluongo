@@ -113,6 +113,20 @@ enum TodayInPlan {
     /// record, which is what keeps the derivation free of the store. This is
     /// the lookup back, and it finds nothing rather than guessing when the
     /// block has moved on underneath it.
+    /// The calendar day a stored session falls on, or `nil` when nothing
+    /// places it — a session outside a week, a week outside a block, or a block
+    /// with no start date.
+    ///
+    /// The lookup `session(_:in:)` performs, run the other way. It is what lets
+    /// the block screen hand a day to the screen that shows days instead of
+    /// opening a second screen to show the same session: the block knows a week
+    /// and a weekday, and the front door is addressed by date.
+    static func date(of day: WorkoutDay, calendar: Calendar = .current) -> Date? {
+        guard let week = day.week, let plan = week.plan else { return nil }
+        return BlockCalendar(calendar: calendar)
+            .date(ofWeek: week.ordinal, weekday: day.weekday, in: schedule(for: plan))
+    }
+
     static func session(_ day: BlockDay, in plan: TrainingPlan) -> WorkoutDay? {
         plan.orderedWeeks
             .first { $0.ordinal == day.week.ordinal }?

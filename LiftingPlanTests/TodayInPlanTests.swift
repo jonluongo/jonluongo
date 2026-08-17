@@ -139,6 +139,35 @@ struct TodayInPlanTests {
         #expect(TodayInPlan.session(absent, in: plan) == nil)
     }
 
+    @Test("A stored session answers the calendar day it falls on")
+    func dateOfAStoredSession() throws {
+        // The block screen holds a week and a weekday and has to hand the front
+        // door a date, because the front door is addressed by date. The answer
+        // has to be the same one `resolve` would give, or tapping a session in
+        // the block would show a different day.
+        let context = ModelContext(try StoreContainer.inMemory())
+        let plan = Self.fourWeekPlan()
+        context.insert(plan)
+        try context.saveOrThrow()
+
+        let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
+        let week = try #require(loaded.orderedWeeks.first { $0.ordinal == 2 })
+        let wednesday = try #require(week.orderedDays.first { $0.weekday == .wednesday })
+
+        let date = try #require(TodayInPlan.date(of: wednesday, calendar: Self.utc))
+        // Wednesday of week 2 is nine days after Monday 2 March.
+        #expect(date == Self.utc.startOfDay(for: Self.monday.addingTimeInterval(9 * 86_400)))
+
+        let standing = TodayInPlan.resolve(loaded, on: date, calendar: Self.utc).standing
+        let session = try #require(standing.session)
+        #expect(TodayInPlan.session(session, in: loaded) === wednesday)
+    }
+
+    @Test("A session no block holds has no date rather than a substitute one")
+    func dateOfADetachedSession() {
+        #expect(TodayInPlan.date(of: WorkoutDay(weekday: .monday), calendar: Self.utc) == nil)
+    }
+
     // MARK: - The days the strip may show
 
     @Test("A live block offers every one of its days")

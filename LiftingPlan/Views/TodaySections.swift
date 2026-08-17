@@ -27,16 +27,12 @@ struct BlockLinkSection: View {
 
     let plan: TrainingPlan
     let standing: TodayInBlock.Standing
-    let profile: UserProfile
 
     var body: some View {
         Section {
-            NavigationLink {
-                BlockView(
-                    plan: plan, profile: profile,
-                    currentWeekOrdinal: Self.currentOrdinal(standing)
-                )
-            } label: {
+            NavigationLink(
+                value: BlockDestination.block(currentWeekOrdinal: Self.currentOrdinal(standing))
+            ) {
                 VStack(alignment: .leading, spacing: Spacing.tight) {
                     Text(Self.blockName(plan))
                         .font(.barbellTitle)
@@ -85,20 +81,31 @@ struct BlockLinkSection: View {
     }
 }
 
-/// Today's session: what it is for, and every exercise it prescribes, one line
-/// each.
+/// The day's session in full: what it is for, and every exercise it
+/// prescribes — the sets, the effort, the rest, the tempo, and a ramp written
+/// out set by set where the plan wrote one.
 ///
 /// The whole session is shown rather than the next exercise alone — a
 /// prescribed session is something a lifter plans a gym trip around, and
 /// whether the rack is still needed is a question the screen should already
-/// have answered.
+/// have answered. It used to be a line each here and the rest of it one tap
+/// deeper on a screen of its own; the deeper screen was the same session read
+/// twice, so this took its contents and it went.
 struct TodaySessionSection: View {
 
     let day: BlockDay
     let plan: TrainingPlan
+    /// The lifter's display unit, so a prescribed load reads in the unit he
+    /// reads everything else in.
+    let unit: MassUnit
+    /// Whether the screen is offering to start this session, which is true only
+    /// on today. It decides nothing about the prescription — only whether the
+    /// line explaining what the button does is worth printing.
+    let startable: Bool
+
+    private var session: WorkoutDay? { TodayInPlan.session(day, in: plan) }
 
     var body: some View {
-        let session = TodayInPlan.session(day, in: plan)
         // The session's name is a row rather than a section header: a header is
         // drawn small, grey and uppercased, which is how a screen says "column
         // of a table", and this is the one thing on the screen.
@@ -123,7 +130,7 @@ struct TodaySessionSection: View {
             }
             if let session {
                 ForEach(session.orderedExercises) { exercise in
-                    ExerciseLine(exercise: exercise)
+                    PrescribedExerciseRow(exercise: exercise, unit: unit)
                 }
             } else {
                 // The block moved underneath the answer. Said plainly rather
@@ -131,7 +138,29 @@ struct TodaySessionSection: View {
                 Text("This session is no longer in the record.")
                     .font(.barbellBody)
             }
+        } footer: {
+            if let restNote { Text(restNote) }
         }
+    }
+
+    /// What the button below will do, said once, and only where all three
+    /// things it claims are true: there is a button, the session has not been
+    /// started, and the plan prescribed rest somewhere in it.
+    ///
+    /// A session that prescribes no rest gets no sentence rather than a longer
+    /// one explaining an absence — the app never decides how long to rest, and
+    /// a paragraph saying so on every set of a bodyweight circuit is a wall in
+    /// front of the one thing there is to do. It also goes once the lifter is
+    /// under way: by then the answer is the screen he just came back from.
+    private var restNote: String? {
+        guard startable, case .notStarted = day.progress else { return nil }
+        guard let session,
+            session.orderedExercises.contains(where: { $0.restSeconds != nil })
+        else { return nil }
+        return """
+            Tap Start to log this session set by set. Where the plan prescribes rest, \
+            checking a set off runs that rest.
+            """
     }
 }
 
@@ -205,25 +234,5 @@ struct TodayFinishedSection: View {
             }
             .padding(.vertical, Spacing.tight)
         }
-    }
-}
-
-/// One prescribed exercise as a line: its name, and what the plan asks of it.
-///
-/// The per-set breakdown belongs to the logging screen; the front door states
-/// the shape of the session and stops there.
-private struct ExerciseLine: View {
-
-    let exercise: PlannedExercise
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.tight) {
-            Text(exercise.displayName)
-                .font(.barbellTitle)
-            Text(PrescriptionSummary.text(for: exercise))
-                .font(.barbellSupport)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.vertical, Spacing.tight)
     }
 }

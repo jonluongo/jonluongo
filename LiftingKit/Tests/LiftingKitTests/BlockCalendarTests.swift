@@ -340,6 +340,57 @@ struct BlockCalendarTests {
         #expect(span.upperBound == Self.startOfDay(2026, 3, 29))
     }
 
+    // MARK: - One session's date
+
+    @Test("A session's date is the one the block places it on")
+    func dateOfOneSession() throws {
+        // The same answer `today(in:on:)` gives, asked the other way round: a
+        // screen holding a week ordinal and a weekday needs the date, so the
+        // day can be handed to the screen that shows days.
+        let subject = BlockCalendar(calendar: Self.utc)
+        let block = Self.fourWeekBlock()
+
+        #expect(
+            subject.date(ofWeek: 1, weekday: .monday, in: block)
+                == Self.startOfDay(2026, 3, 2))
+        #expect(
+            subject.date(ofWeek: 2, weekday: .wednesday, in: block)
+                == Self.startOfDay(2026, 3, 11))
+        #expect(
+            subject.date(ofWeek: 4, weekday: .friday, in: block)
+                == Self.startOfDay(2026, 3, 27))
+    }
+
+    @Test("Every dated session agrees with the date asked for by name")
+    func dateAgreesWithTodaysAnswer() throws {
+        // The two callers of the arithmetic cannot drift: whatever date the
+        // block reports a session on is the date the lookup gives for it.
+        let subject = BlockCalendar(calendar: Self.utc)
+        let block = Self.fourWeekBlock()
+
+        for ordinal in 1...4 {
+            for weekday in [Weekday.monday, .wednesday, .friday] {
+                let date = try #require(
+                    subject.date(ofWeek: ordinal, weekday: weekday, in: block))
+                let standing = subject.today(in: block, on: date)
+                let session = try #require(standing.standing.session)
+                #expect(session.week.ordinal == ordinal)
+                #expect(session.weekday == weekday)
+            }
+        }
+    }
+
+    @Test("A block nothing dates places no session, and neither does a week before the first")
+    func undatedBlockPlacesNoSession() {
+        let subject = BlockCalendar(calendar: Self.utc)
+
+        #expect(
+            subject.date(
+                ofWeek: 1, weekday: .monday,
+                in: BlockSchedule(startDate: nil, weeks: [])) == nil)
+        #expect(subject.date(ofWeek: 0, weekday: .monday, in: Self.fourWeekBlock()) == nil)
+    }
+
     // MARK: - Fixtures
 
     private static let utc = calendar(in: "UTC")

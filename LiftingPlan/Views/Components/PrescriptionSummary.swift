@@ -10,8 +10,8 @@ import LiftingKit
 /// for a single set of a ramp.
 ///
 /// **How it is used.** `ExerciseLogSection`, `ActiveWorkoutView`'s header and
-/// `SessionDetailView` call it rather than each assembling a line of their own,
-/// so the same prescription reads the same way everywhere in the app.
+/// `PrescribedExerciseRow` call it rather than each assembling a line of their
+/// own, so the same prescription reads the same way everywhere in the app.
 /// `detail(for:in:)` is the logging screen's: it says what one set asks that the
 /// exercise's line has not already said, so the sentence describing set four is
 /// under set four rather than off the top of the screen by the time he gets

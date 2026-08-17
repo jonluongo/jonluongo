@@ -12,11 +12,11 @@ import LiftingKit
 ///
 /// **How it is used.** Hand it the exercise's `prescribedSets` and the unit to
 /// read loads in; it asks `PrescriptionSummary` what each set says and draws
-/// nothing for a set that says nothing. `SessionDetailView` shows it, and only
-/// when the sets differ from one another — a uniform prescription is already
-/// stated in full above.
+/// nothing for a set that says nothing. `PrescribedExerciseRow` shows it, and
+/// only when the sets differ from one another — a uniform prescription is
+/// already stated in full above.
 ///
-/// **It is the preview's, not the logging screen's.** A session being read
+/// **It is the front door's, not the logging screen's.** A session being read
 /// before it is trained has no rows to hang anything on, so the numbered block
 /// is the only place its ramp can be seen whole. The logging screen dropped it:
 /// there, every set already has a row, and a sentence about set four belongs

@@ -119,8 +119,11 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
+            // Today carries its own stack: a session picked out inside the
+            // block is shown on Today itself, which means emptying the path,
+            // and only the screen that owns it can do that.
             Tab("Today", systemImage: "dumbbell.fill") {
-                NavigationStack { TodayView(profile: profile) }
+                TodayView(profile: profile)
             }
             Tab("History", systemImage: "chart.line.uptrend.xyaxis") {
                 NavigationStack { HistoryView(profile: profile) }

@@ -24,7 +24,7 @@ import LiftingKit
 /// time he reached set four. Each row now carries its own: its load and its reps
 /// as the placeholders in its two fields, and its effort target and its note in
 /// the line underneath. The numbered block still earns its place in
-/// `SessionDetailView`, which previews a session that has no rows yet.
+/// `PrescribedExerciseRow`, which states a session that has no rows yet.
 struct ExerciseLogSection: View {
     let exercise: PlannedExercise
     let profile: UserProfile
