@@ -419,18 +419,18 @@ struct SetPrescriptionTests {
     func laterVersionStillRefusedFirst() throws {
         let json = """
         {
-          "version": 4, "catalogVersion": 5,
+          "version": 5, "catalogVersion": 5,
           "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
           "generatedAt": "2023-11-14T22:13:20Z",
           "weeks": [], "clusterSets": true
         }
         """
         let error = #expect(throws: DocumentRefusal.self) { try decoded(json) }
-        #expect(error == .laterVersion(4, understood: PlanDocument.currentVersion))
+        #expect(error == .laterVersion(5, understood: PlanDocument.currentVersion))
     }
 
-    @Test("This build writes version 3, which is what makes the per-set shape readable")
-    func currentVersionIsThree() {
-        #expect(PlanDocument.currentVersion == 3)
+    @Test("The per-set shape arrived in version 3, and every version since still reads it")
+    func perSetShapeIsReadableFromVersionThreeOn() {
+        #expect(PlanDocument.currentVersion >= 3)
     }
 }

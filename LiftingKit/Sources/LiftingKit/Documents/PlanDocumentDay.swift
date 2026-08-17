@@ -2,27 +2,51 @@ import Foundation
 
 /// One training day of a `PlanDocumentWeek`.
 ///
-/// Read `exercises` in the order given — that is the order the work is meant to
-/// be done in, and nothing downstream re-sorts it. An empty `exercises` is a
-/// rest day the plan named on purpose, not a day that failed to be filled in.
+/// Read `entries` in the order given — that is the order the work is meant to be
+/// done in, and nothing downstream re-sorts it. An empty day is a rest day the
+/// plan named on purpose, not a day that failed to be filled in.
 ///
-/// Depends on: `Weekday`, `PlanDocumentExercise`, `DocumentRefusal`.
+/// **An entry is either an exercise or a group.** A group is two or more
+/// exercises performed as rounds, resting after the round — see
+/// `PlanDocumentEntry`. Read `exercises` when only the movements matter, such as
+/// checking every `ExerciseID` against the catalog; it is the same list flattened
+/// and in the same order, so a caller that never cared about grouping keeps the
+/// answer it always had.
+///
+/// Depends on: `Weekday`, `PlanDocumentEntry`, `DocumentRefusal`.
 public struct PlanDocumentDay: Codable, Hashable, Sendable {
     public let weekday: Weekday
     /// Short label such as "Push". May be empty.
     public let focus: String
     /// How long this session runs. `nil` when the plan did not say.
     public let durationMinutes: Int?
-    public let exercises: [PlanDocumentExercise]
+    /// The day's work in order: each entry one exercise, or one group of them.
+    public let entries: [PlanDocumentEntry]
+
+    /// Every movement the day prescribes, in order, whatever it was grouped
+    /// into. Derived rather than stored, so a day cannot hold a list of
+    /// exercises that disagrees with its entries.
+    public var exercises: [PlanDocumentExercise] { entries.flatMap(\.exercises) }
 
     public init(
         weekday: Weekday, focus: String = "", durationMinutes: Int? = nil,
-        exercises: [PlanDocumentExercise] = []
+        entries: [PlanDocumentEntry] = []
     ) {
         self.weekday = weekday
         self.focus = focus
         self.durationMinutes = durationMinutes
-        self.exercises = exercises
+        self.entries = entries
+    }
+
+    /// A day of ungrouped exercises, which is nearly every day.
+    public init(
+        weekday: Weekday, focus: String = "", durationMinutes: Int? = nil,
+        exercises: [PlanDocumentExercise]
+    ) {
+        self.init(
+            weekday: weekday, focus: focus, durationMinutes: durationMinutes,
+            entries: exercises.map(PlanDocumentEntry.exercise)
+        )
     }
 
     private enum CodingKeys: String, CodingKey, CaseIterable {
@@ -38,8 +62,17 @@ public struct PlanDocumentDay: Codable, Hashable, Sendable {
         weekday = try container.decode(Weekday.self, forKey: .weekday)
         focus = try container.decodeIfPresent(String.self, forKey: .focus) ?? ""
         durationMinutes = try container.decodeIfPresent(Int.self, forKey: .durationMinutes)
-        exercises = try container.decodeIfPresent(
-            [PlanDocumentExercise].self, forKey: .exercises) ?? []
+        entries = try container.decodeIfPresent([PlanDocumentEntry].self, forKey: .exercises) ?? []
+    }
+
+    /// Spelled out because the entries are written under `exercises`, which is
+    /// the key this format has always used and the key a group sits in.
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(weekday, forKey: .weekday)
+        try container.encode(focus, forKey: .focus)
+        try container.encodeIfPresent(durationMinutes, forKey: .durationMinutes)
+        try container.encode(entries, forKey: .exercises)
     }
 }
 

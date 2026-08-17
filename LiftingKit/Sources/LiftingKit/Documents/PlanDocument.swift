@@ -20,6 +20,12 @@ import Foundation
 /// throughout and a list when it is not. `intensity` states how hard the work
 /// should be, on whatever scale the plan works in.
 ///
+/// **A day's exercises may be grouped.** An entry of a day is either an exercise
+/// or `{ "group": [ … ], "restSeconds": 90 }` — two or more movements performed
+/// as rounds, resting only after the round, which is what a superset is. The
+/// group holds its members rather than labelling them, so a half-formed grouping
+/// cannot be written; see `PlanDocumentEntry`.
+///
 /// Nothing in this format is a suggestion to be adjusted. A set count, a rest,
 /// a rep range, and a load are recorded exactly as written; `id` is the
 /// document's stable identity, so importing the same plan twice is a no-op
@@ -41,6 +47,14 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     /// The format version this build writes. Bump it when a reader would need
     /// to behave differently, not for an additive field.
     ///
+    /// Version 4 let a day group exercises: an entry of `exercises` may now be
+    /// `{ "group": [ … ], "restSeconds": 90 }` rather than an exercise, which is
+    /// how a superset, a tri-set or a giant set is written. A version 3 reader
+    /// would refuse `group` as an unknown key, which is why this is a bump and
+    /// not an additive field — but it is additive in the direction that matters:
+    /// a day of bare exercises is unchanged, and every earlier document still
+    /// imports.
+    ///
     /// Version 3 let an exercise list its sets one at a time and state how hard
     /// they should be: `sets` may now be a list rather than a count, which a
     /// version 2 reader could not read, and `intensity` is a key it did not
@@ -48,7 +62,7 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     /// as a bare `days` array, which is still read — that shape is now the way a
     /// single-week block is written, so there is one rule rather than two.
     /// Every one of those documents still imports.
-    public static let currentVersion = 3
+    public static let currentVersion = 4
 
     /// The format version of this document, as written.
     public let version: Int

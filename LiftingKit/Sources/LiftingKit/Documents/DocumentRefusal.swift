@@ -75,6 +75,34 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
 
 extension DocumentRefusal {
 
+    /// Why an exercise inside a group cannot state a rest of its own.
+    ///
+    /// A group is performed as rounds and the rest is taken *after* the round —
+    /// that clause is the whole definition of a superset. A rest attached to one
+    /// member of it is a rest nobody takes, so it is refused with the key named
+    /// rather than stored where it would silently do nothing.
+    public static func restInsideGroup(exercise: String, location: String) -> DocumentRefusal {
+        .contradiction(
+            "'restSeconds' is not something an exercise inside a group can state"
+                + "\(said(location)): a group is performed as rounds and the rest is taken after "
+                + "the round, so a rest on '\(exercise)' alone would be a rest nobody takes. "
+                + "Nothing was taken in. Move it to the group's own 'restSeconds', which is the "
+                + "rest after each round.")
+    }
+
+    /// Why a group has to hold more than one exercise.
+    ///
+    /// One exercise performed with rest after it is an exercise, and the format
+    /// already says that in one line. A 'group' of one would be the same
+    /// prescription written in a shape that claims something it is not.
+    public static func groupOfOne(stated: Int, location: String) -> DocumentRefusal {
+        .contradiction(
+            "A 'group' is two or more exercises performed back to back with the rest taken after "
+                + "the round, and this one states \(stated)\(said(location)). Nothing was taken "
+                + "in. Send at least two exercises in the group, or send the exercise on its own "
+                + "with its own 'restSeconds'.")
+    }
+
     /// Why a dated series cannot be taken back with a `null`.
     ///
     /// Built here rather than at either call site because both clients answer
@@ -148,12 +176,16 @@ extension Decoder {
         let unknown = container.allKeys.map(\.stringValue).sorted()
             .first { !accepted.contains($0) }
         guard let unknown else { return }
-        throw DocumentRefusal.unknownKey(unknown, location: whereItSits)
+        throw DocumentRefusal.unknownKey(unknown, location: documentLocation)
     }
 
     /// The path to what is being read, as a reader of the JSON would point at
     /// it: `weeks → 2 → days → 0 → exercises → 1`.
-    private var whereItSits: String {
+    ///
+    /// Read by anything that refuses a value rather than a key — a group with
+    /// one exercise in it, a rest inside a group — so every refusal points at
+    /// the same place in the same words.
+    var documentLocation: String {
         codingPath
             .map { $0.intValue.map(String.init) ?? $0.stringValue }
             .filter { !$0.isEmpty }
