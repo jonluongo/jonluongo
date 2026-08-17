@@ -57,7 +57,7 @@ struct PrescriptionSummaryWordingTests {
 
         #expect(try imported(PlanDocumentExercise(
             exerciseID: Self.bench, displayName: "Bench", sets: 4, repRange: "8-10",
-            intensity: IntensityTarget(scale: .rpe, value: "8"))) == "4 × 8-10 · RPE 8")
+            intensity: IntensityTarget(scale: .rpe, value: "8"))) == "4 × 8-10 · 80% effort")
 
         #expect(try imported(PlanDocumentExercise(
             exerciseID: Self.bench, displayName: "Bench", sets: 1, repRange: "5")) == "1 × 5")
@@ -99,7 +99,7 @@ struct PrescriptionSummaryWordingTests {
                 SetPrescription(intensity: IntensityTarget(scale: .rpe, value: "8")),
                 SetPrescription(intensity: IntensityTarget(scale: .rpe, value: "9")),
             ],
-            repRange: "5")) == "3 × 5 · RPE 7-9")
+            repRange: "5")) == "3 × 5 · 70-90% effort")
     }
 
     /// An effort asked of one set alone is not an effort asked of the exercise.

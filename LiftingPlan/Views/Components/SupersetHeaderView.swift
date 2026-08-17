@@ -76,9 +76,11 @@ struct SupersetHeaderView: View {
             VStack(alignment: .leading, spacing: Spacing.tight) {
                 Text(member.displayName)
                     .font(.barbellBody)
-                Text(prescription(of: member))
-                    .font(.barbellSupport)
-                    .foregroundStyle(.secondary)
+                if let prescription = prescription(of: member) {
+                    Text(prescription)
+                        .font(.barbellSupport)
+                        .foregroundStyle(.secondary)
+                }
                 // What Claude said about this movement, beside the movement he
                 // said it about. An ungrouped exercise's note is stated on its
                 // card by `ExerciseLogSection`; inside a group the card belongs
@@ -110,16 +112,22 @@ struct SupersetHeaderView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             [
-                "\(group.notation(for: member) ?? ""), \(member.displayName), "
-                    + prescription(of: member),
+                "\(group.notation(for: member) ?? ""), \(member.displayName)",
+                prescription(of: member),
                 note(of: member),
             ].compactMap { $0 }.joined(separator: ". "))
     }
 
-    private func prescription(of member: PlannedExercise) -> String {
-        let summary = PrescriptionSummary.text(for: member, unit: unit)
-        guard let tempo = member.tempo, !tempo.isEmpty else { return summary }
-        return "\(summary) · tempo \(tempo)"
+    /// What the rounds below cannot say about this movement — the effort every
+    /// set of it shares, and its tempo. `nil` when they say everything, which
+    /// leaves the legend line the notation and the name, which is what a legend
+    /// is for.
+    private func prescription(of member: PlannedExercise) -> String? {
+        let parts = [
+            PrescriptionSummary.aboveTable(for: member),
+            member.tempo.flatMap { $0.isEmpty ? nil : "tempo \($0)" },
+        ].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
     /// What Claude wrote about this movement, or `nil` when he wrote nothing.

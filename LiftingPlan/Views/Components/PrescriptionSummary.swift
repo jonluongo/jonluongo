@@ -9,13 +9,14 @@ import LiftingKit
 /// for an exercise whose sets are all the same, `"3 × 5 · 60-80 kg"` for a ramp,
 /// `"4 × 8 / AMRAP · 70-100 kg"` for a drop set.
 ///
-/// **How it is used.** `ExerciseLogSection`, `ActiveWorkoutView`'s headers and
-/// `PrescribedExerciseRow` call it rather than each assembling a line of their
-/// own, so the same prescription reads the same way everywhere in the app.
-/// `detail(for:in:)` is the logging screen's: it says what one set asks that the
-/// exercise's line has not already said, so the sentence describing set four is
-/// under set four rather than off the top of the screen by the time he gets
-/// there.
+/// **How it is used.** Three callers, and which one they use turns on whether
+/// there is a table under the line. `PrescribedExerciseRow` browses a session
+/// with no table beneath it and calls `text(for:unit:)` for the whole
+/// prescription. The logging screen's headers have the table, so they call
+/// `aboveTable(for:)`, which states only what no row of it will. `detail(for:in:)`
+/// is the row's own: what *this* set asks that the header has not said, so the
+/// sentence describing set four is under set four rather than off the top of the
+/// screen by the time he gets there.
 ///
 /// **Every exercise gets one line, and a varying prescription is spanned rather
 /// than enumerated.** A ramp used to draw its count and then a numbered line per
@@ -69,6 +70,30 @@ enum PrescriptionSummary {
     private static func difference(in sets: [SetPrescription], unit: MassUnit) -> String? {
         if sharesOneTarget(sets), let load = varyingLoad(of: sets, unit: unit) { return load }
         return effort(of: sets)
+    }
+
+    /// What the header above a set table must state, because no row of that
+    /// table will state it.
+    ///
+    /// **The table already says the count and the target.** `3 × 10-12` above
+    /// three rows whose rep fields each read `10-12` is the screen saying the
+    /// same thing twice, and the second saying is the one competing with the
+    /// sets for the top of the card. The same goes for a ramp's span of load:
+    /// every row carries its own load as its own placeholder. A browsing screen
+    /// has no table under it and still needs the whole line — that is what
+    /// `text(for:unit:)` is, and `PrescribedExerciseRow` still calls it.
+    ///
+    /// **What a row cannot say is the effort every set shares.** `unloadedEffort`
+    /// deliberately draws nothing when all the sets ask for the same one, on the
+    /// grounds that this line stated it once for all of them — so removing this
+    /// line without replacing it would take the intensity off the logging screen
+    /// altogether. Where the sets ask for different efforts each row states its
+    /// own, and then there is nothing left here to add.
+    ///
+    /// `nil` when the table says everything, which is the ordinary case.
+    static func aboveTable(for exercise: PlannedExercise) -> String? {
+        guard statesIntensityForEverySet(exercise) else { return nil }
+        return IntensityPrescription.label(for: exercise.prescribedSets.first?.intensity)
     }
 
     /// What one prescribed set asks that the exercise's own line has not

@@ -345,7 +345,7 @@ struct PerSetPrescriptionTests {
     @Test("An intensity target is shown as the plan wrote it, never converted")
     func intensityIsShownAsWritten() {
         #expect(IntensityPrescription.label(for: IntensityTarget(scale: .rpe, value: "8"))
-            == "RPE 8")
+            == "80% effort")
         #expect(IntensityPrescription.label(for: IntensityTarget(scale: .repsInReserve, value: "2"))
             == "2 RIR")
         #expect(IntensityPrescription.label(
@@ -364,7 +364,7 @@ struct PerSetPrescriptionTests {
                 exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8-12",
                 intensity: IntensityTarget(scale: .rpe, value: "8"))
         ])
-        #expect(PrescriptionSummary.text(for: uniform, unit: .kilograms) == "3 × 8-12 · RPE 8")
+        #expect(PrescriptionSummary.text(for: uniform, unit: .kilograms) == "3 × 8-12 · 80% effort")
 
         // Sets that differ are spanned, never averaged and never represented by
         // one of them: five reps and three reps are three to five between them.
@@ -401,7 +401,7 @@ struct PerSetPrescriptionTests {
                 exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8",
                 intensity: IntensityTarget(scale: .rpe, value: "8"))
         ])
-        #expect(PrescriptionSummary.text(for: rated, unit: .kilograms) == "3 × 8 · RPE 8")
+        #expect(PrescriptionSummary.text(for: rated, unit: .kilograms) == "3 × 8 · 80% effort")
         #expect(rated.prescribedSets.allSatisfy {
             PrescriptionSummary.detail(for: $0, in: rated) == nil
         })
@@ -447,7 +447,7 @@ struct PerSetPrescriptionTests {
         ])
 
         #expect(workUp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: workUp) }
-            == [nil, nil, "RPE 8 · Top single"])
+            == [nil, nil, "80% effort · Top single"])
     }
 
     @Test("A set with neither a load nor an effort is told nothing extra")
@@ -518,5 +518,59 @@ struct PerSetPrescriptionTests {
         #expect(ramp.prescribedSets.map { reading.loadTarget($0) } == ["60", "80"])
         #expect(ramp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: ramp) }
             == [nil, "Top set"])
+    }
+}
+
+/// How a prescribed effort is written on screen.
+///
+/// The figure is Claude's and only the wording is the app's, so these assert
+/// that the wording restates the prescription and never converts it into a
+/// different claim about training.
+@Suite("Effort wording")
+struct EffortWordingTests {
+
+    @Test("An RPE is written out of a hundred rather than out of ten")
+    func rpeReadsAsEffort() {
+        // Eight out of ten written as eighty out of a hundred. The same figure,
+        // without the jargon.
+        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .rpe, value: "8"))
+            == "80% effort")
+    }
+
+    @Test("A span keeps both of its ends")
+    func rpeSpanReadsAsEffort() {
+        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .rpe, value: "7-8"))
+            == "70-80% effort")
+    }
+
+    @Test("A half-point stays a half-point")
+    func fractionalRPE() {
+        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .rpe, value: "7.5"))
+            == "75% effort")
+    }
+
+    @Test("An RPE that is not a number is shown as written, not mangled into one")
+    func unreadableRPEIsPrintedAsWritten() {
+        // Refusing to invent beats printing a figure the plan does not contain.
+        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .rpe, value: "top set"))
+            == "RPE top set")
+    }
+
+    @Test("A percentage of a maximum is never derived from an effort")
+    func oneRepMaxIsItsOwnClaim() {
+        // "80% effort" and "80% 1RM" are different sentences that both say "%".
+        // The second appears only where Claude prescribed it himself: mapping an
+        // RPE onto a percentage of a maximum is a table lookup that depends on
+        // the rep count, and it is a training claim this app does not make.
+        #expect(IntensityPrescription.label(
+            for: IntensityTarget(scale: .percentOfOneRepMax, value: "80")) == "80% 1RM")
+        #expect(IntensityPrescription.label(
+            for: IntensityTarget(scale: .rpe, value: "8")) != "80% 1RM")
+    }
+
+    @Test("Reps in reserve is a different scale and is left alone")
+    func repsInReserveUnchanged() {
+        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .repsInReserve, value: "2"))
+            == "2 RIR")
     }
 }

@@ -5,8 +5,10 @@ import LiftingKit
 /// plan asked for, and the menu.
 ///
 /// **What it does.** Says which exercise the table below it logs, and states the
-/// prescription in one line — the sets, what they ask for, the span of load
-/// where the sets differ in it, and the effort.
+/// part of the prescription that table will not — the effort every set shares,
+/// and the tempo. The count is the number of rows and the target is the
+/// placeholder in each of them, so restating either here was the card saying the
+/// same thing twice and charging the sets for the space.
 ///
 /// **How it is used.** `ActiveWorkoutView` puts one above each exercise's
 /// section. The menu holds the four things there are to do to an exercise
@@ -52,10 +54,20 @@ struct ExerciseHeaderView: View {
     var onAddSet: () -> Void
     var onAddWarmup: () -> Void
 
-    private var subtitle: String {
-        let summary = PrescriptionSummary.text(for: exercise, unit: unit)
-        guard let tempo = exercise.tempo, !tempo.isEmpty else { return summary }
-        return "\(summary) · tempo \(tempo)"
+    /// What the table below cannot say: the effort every set shares, and the
+    /// tempo. `nil` when it says everything, which leaves the header the name
+    /// alone.
+    ///
+    /// It used to restate the prescription in full — `3 × 10-12 · RPE 8` over
+    /// three rows whose rep fields each read `10-12`. The count is the number of
+    /// rows and the target is in every one of them; only the effort was not
+    /// anywhere else on the card.
+    private var subtitle: String? {
+        let parts = [
+            PrescriptionSummary.aboveTable(for: exercise),
+            exercise.tempo.flatMap { $0.isEmpty ? nil : "tempo \($0)" },
+        ].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
     var body: some View {
