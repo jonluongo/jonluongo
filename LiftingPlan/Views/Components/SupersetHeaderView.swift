@@ -25,13 +25,29 @@ struct SupersetHeaderView: View {
     let unit: MassUnit
     var onShowInfo: (PlannedExercise) -> Void
     var onAddWarmup: (PlannedExercise) -> Void
+    /// Opens the group's clock. Rest belongs to the group because resting only
+    /// after the group is what a superset is.
+    var onEditRest: (ExerciseGroup) -> Void
 
-    /// "3 rounds", or "3 rounds · tempo 3-0-1-0" where every movement shares a
-    /// tempo. Nothing is summarised away: where they differ, each legend line
-    /// says its own.
+    /// The lifter's own clock, which is not part of the plan and not in the
+    /// store. Read only to say what will actually run.
+    @Environment(RestPreferences.self) private var restPreferences
+
+    /// "3 rounds", and the rest after each one where there is any. Nothing is
+    /// summarised away: where the movements differ, each legend line says its
+    /// own.
+    ///
+    /// The rest used to lead the card below as a full-width line of its own —
+    /// the same misplacement an ungrouped exercise had, and fixed the same way.
     private var subtitle: String {
         let rounds = group.prescribedRounds
-        return "\(rounds) round\(rounds == 1 ? "" : "s")"
+        let rounds_text = "\(rounds) round\(rounds == 1 ? "" : "s")"
+        guard let rest = RestPrescription.line(
+            prescribed: group.restSeconds,
+            lifter: group.restKey.map { restPreferences.rest(for: $0) } ?? .asPrescribed,
+            timersEnabled: restPreferences.timersEnabled
+        ) else { return rounds_text }
+        return "\(rounds_text) · \(rest.lowercasedFirst) after each round"
     }
 
     var body: some View {
@@ -41,7 +57,20 @@ struct SupersetHeaderView: View {
                 tint: .accentColor,
                 title: group.title,
                 subtitle: subtitle
-            )
+            ) {
+                Menu {
+                    Button { onEditRest(group) } label: {
+                        Label("Rest Timer", systemImage: "timer")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.barbellBody)
+                        .foregroundStyle(.secondary)
+                        .frame(width: TapTarget.minimum, height: TapTarget.minimum)
+                        .contentShape(.rect)
+                }
+                .accessibilityLabel("\(group.title) options")
+            }
             ForEach(group.members) { member in
                 legend(for: member)
             }

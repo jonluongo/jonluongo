@@ -226,6 +226,7 @@ struct SetRowView: View {
             // shrink it rather than truncate the prescription.
             .lineLimit(1)
             .minimumScaleFactor(0.6)
+            .padding(.horizontal, SetTableMetrics.entryInset)
             .frame(width: SetTableMetrics.entryColumnWidth, height: SetTableMetrics.entryHeight)
             .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: Radius.small))
     }

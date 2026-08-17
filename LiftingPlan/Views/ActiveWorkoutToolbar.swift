@@ -25,8 +25,13 @@ import UIKit
 /// keyboard.
 struct ActiveWorkoutToolbar: ToolbarContent {
 
-    /// When the lifter opened the session; the clock counts up from here.
-    let startDate: Date
+    /// When training began — the earliest ticked set — or `nil` while nothing
+    /// has been ticked, which draws no clock at all.
+    let startedAt: Date?
+    /// When the session was marked done, which freezes the clock at what it
+    /// took. A session reopened days later would otherwise report the time
+    /// since, which is not a fact about the workout.
+    let finishedAt: Date?
     var onClose: () -> Void
 
     @ToolbarContentBuilder
@@ -43,16 +48,21 @@ struct ActiveWorkoutToolbar: ToolbarContent {
             }
             .accessibilityLabel("Close workout")
         }
-        // The session's running time, where the focus used to be. The focus was
-        // removed as unhelpful — the lifter picked this session and is looking
-        // at its exercises — and how long he has been training is the one thing
-        // worth a glance that nothing else on the screen says.
+        // How long he has been training — the one thing worth a glance that
+        // nothing else on the screen says.
+        //
+        // It counts from the first ticked set rather than from the moment this
+        // screen opened. Opening a screen is not training, and timing it meant
+        // the clock restarted every time the session was closed and resumed.
         ToolbarItem(placement: .principal) {
-            TimelineView(.periodic(from: startDate, by: 1)) { timeline in
-                Text(Self.elapsed(from: startDate, to: timeline.date))
-                    .font(.barbellSupport)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
+            if let startedAt {
+                if let finishedAt {
+                    clock(Self.elapsed(from: startedAt, to: finishedAt))
+                } else {
+                    TimelineView(.periodic(from: startedAt, by: 1)) { timeline in
+                        clock(Self.elapsed(from: startedAt, to: timeline.date))
+                    }
+                }
             }
         }
         // There is no timer button here any more. Rest is prescribed per
@@ -73,6 +83,13 @@ struct ActiveWorkoutToolbar: ToolbarContent {
             Spacer()
             Button("Done") { Self.dismissKeyboard() }
         }
+    }
+
+    private func clock(_ text: String) -> some View {
+        Text(text)
+            .font(.barbellSupport)
+            .foregroundStyle(.secondary)
+            .monospacedDigit()
     }
 
     /// The session's running time, as minutes and seconds.

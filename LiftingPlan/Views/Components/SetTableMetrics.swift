@@ -31,6 +31,15 @@ enum SetTableMetrics {
     /// The weight field and the work field.
     static let entryColumnWidth: CGFloat = 62
 
+    /// Breathing room inside an entry field, each side.
+    ///
+    /// Without it the text was laid out across the field's whole width, so a
+    /// prescribed range — `10-12`, `12-15` — reached both rounded edges and read
+    /// as though it had overflowed. A typed number is two or three characters
+    /// and keeps its full size; only the wider placeholder shrinks, which is the
+    /// right way round: the number he lifted stays the biggest thing on the row.
+    static let entryInset: CGFloat = 8
+
     /// The height of an entry field. These are tapped to focus, so they are
     /// held to the same minimum as the buttons either side of them.
     static let entryHeight: CGFloat = TapTarget.minimum

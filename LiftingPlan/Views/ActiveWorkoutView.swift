@@ -17,7 +17,6 @@ struct ActiveWorkoutView: View {
     @Environment(RestPreferences.self) private var restPreferences
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
-    @State private var startDate = Date()
     /// The clock being edited — an exercise's, or a group's — and the exercise
     /// being read about.
     @State private var restEditing: RestTarget?
@@ -68,7 +67,8 @@ struct ActiveWorkoutView: View {
             .scrollDismissesKeyboard(.interactively)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ActiveWorkoutToolbar(startDate: startDate, onClose: close)
+                ActiveWorkoutToolbar(
+                    startedAt: day.startedAt, finishedAt: day.completedAt, onClose: close)
             }
             .safeAreaInset(edge: .bottom) {
                 if restTimer.isRunning {
@@ -82,8 +82,8 @@ struct ActiveWorkoutView: View {
                 Text(errorMessage ?? "")
             }
             // Rest is prescribed per exercise and per group, so it is edited
-            // there: this sheet is opened by the rest line on the card it
-            // belongs to, whichever kind of card that is.
+            // per exercise and per group: this sheet is opened from the menu on
+            // the card it belongs to, whichever kind of card that is.
             .sheet(item: $restEditing) { target in
                 ExerciseRestSheet(
                     exerciseName: target.name,
@@ -126,8 +126,7 @@ struct ActiveWorkoutView: View {
                 profile: profile,
                 plans: plans,
                 onDeleteSet: delete,
-                onCompletionChanged: restChanged,
-                onEditRest: { restEditing = RestTarget(exercise: $0) }
+                onCompletionChanged: restChanged
             )
         } header: {
             ExerciseHeaderView(
@@ -153,15 +152,15 @@ struct ActiveWorkoutView: View {
                 plans: plans,
                 onAddRound: addRound,
                 onDeleteSet: delete,
-                onRoundChanged: restChanged,
-                onEditRest: { restEditing = RestTarget(group: $0) }
+                onRoundChanged: restChanged
             )
         } header: {
             SupersetHeaderView(
                 group: group,
                 unit: profile.displayUnit,
                 onShowInfo: { infoExercise = $0 },
-                onAddWarmup: { addSet(to: $0, warmup: true) }
+                onAddWarmup: { addSet(to: $0, warmup: true) },
+                onEditRest: { restEditing = RestTarget(group: $0) }
             )
             .textCase(nil)
         }
@@ -256,8 +255,15 @@ struct ActiveWorkoutView: View {
         save()
     }
 
+    /// Leaves the session. It does **not** stop the rest timer.
+    ///
+    /// It used to, which meant closing the screen mid-rest threw the rest away
+    /// — and closing the screen is exactly what a lifter does with ninety
+    /// seconds to wait. The timer is date-based and lives above this screen, so
+    /// it keeps counting while he is elsewhere and the cue still reaches a
+    /// pocketed phone. Finishing stops it, because then there is nothing left
+    /// to be resting for.
     private func close() {
-        restTimer.stop()
         guard save() else { return }
         dismiss()
     }

@@ -37,41 +37,8 @@ struct SupersetLogSection: View {
     /// Told the group and whether the round the lifter just touched is now
     /// complete. The screen decides what to run; this decides when.
     var onRoundChanged: (ExerciseGroup, Bool) -> Void
-    var onEditRest: (ExerciseGroup) -> Void
-
-    @Environment(RestPreferences.self) private var restPreferences
-
-    /// What the rest line says: the group's rest, and the lifter's clock beside
-    /// it whenever the two differ. `nil` when neither exists.
-    private var restLine: String? {
-        RestPrescription.line(
-            prescribed: group.restSeconds,
-            lifter: group.restKey.map { restPreferences.rest(for: $0) } ?? .asPrescribed,
-            timersEnabled: restPreferences.timersEnabled
-        )
-    }
-
     var body: some View {
         Group {
-            if let restLine {
-                Button {
-                    onEditRest(group)
-                } label: {
-                    HStack(spacing: Spacing.tight) {
-                        Label("\(restLine) after each round", systemImage: "timer")
-                        Image(systemName: "chevron.right")
-                            .font(.barbellLabel)
-                    }
-                    .font(.barbellSupport)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: TapTarget.minimum, alignment: .leading)
-                    .contentShape(.rect)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(restLine) after each round")
-                .accessibilityHint("Sets the rest timer for this group")
-            }
-
             SetTableHeader(
                 firstColumn: "LIFT", measure: rows.measure, unit: profile.displayUnit)
 
