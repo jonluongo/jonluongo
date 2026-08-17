@@ -130,10 +130,10 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
-            Tab("Today", systemImage: "dumbbell.fill") {
+            Tab("Today", systemImage: "calendar") {
                 TodayView(profile: profile)
             }
-            Tab("Blocks", systemImage: "calendar") {
+            Tab("Blocks", systemImage: "square.stack") {
                 NavigationStack { PlansView(profile: profile) }
             }
             Tab("Account", systemImage: "person.crop.circle") {
