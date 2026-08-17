@@ -29,25 +29,12 @@ struct SupersetHeaderView: View {
     /// after the group is what a superset is.
     var onEditRest: (ExerciseGroup) -> Void
 
-    /// The lifter's own clock, which is not part of the plan and not in the
-    /// store. Read only to say what will actually run.
-    @Environment(RestPreferences.self) private var restPreferences
-
-    /// "3 rounds", and the rest after each one where there is any. Nothing is
-    /// summarised away: where the movements differ, each legend line says its
-    /// own.
-    ///
-    /// The rest used to lead the card below as a full-width line of its own —
-    /// the same misplacement an ungrouped exercise had, and fixed the same way.
+    /// "3 rounds". The rest after each one is not written here — it is stated
+    /// on Home, it arrives as a countdown when a round closes, and the menu
+    /// names it for anyone who wants the figure.
     private var subtitle: String {
         let rounds = group.prescribedRounds
-        let rounds_text = "\(rounds) round\(rounds == 1 ? "" : "s")"
-        guard let rest = RestPrescription.line(
-            prescribed: group.restSeconds,
-            lifter: group.restKey.map { restPreferences.rest(for: $0) } ?? .asPrescribed,
-            timersEnabled: restPreferences.timersEnabled
-        ) else { return rounds_text }
-        return "\(rounds_text) · \(rest.lowercasedFirst) after each round"
+        return "\(rounds) round\(rounds == 1 ? "" : "s")"
     }
 
     var body: some View {

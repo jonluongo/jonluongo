@@ -13,13 +13,16 @@ import LiftingKit
 /// rather than to a set: read what it is, set its clock, and add a set of
 /// either kind.
 ///
-/// **The rest is a clause in this line, not a row of its own.** It used to lead
-/// the card below — a full-width tappable line above the column headers — which
-/// gave the most prominent place on the card to the one thing on it nobody came
-/// to read. It reads here beside the sets and the effort, and the clock is set
-/// from the menu, which is where everything else done to a whole exercise
-/// already is. That costs a tap on a setting changed rarely and buys a row back
-/// on every exercise of every session.
+/// **The rest is not written here at all.** It led the card below as a
+/// full-width tappable row above the column headers, which gave the most
+/// prominent place on the card to the one thing on it nobody came to read; it
+/// moved into this line, and then off the screen entirely. What it prescribes is
+/// stated on Home beside the sets and the reps, before the lifter decides to
+/// train; under the bar it arrives as a countdown when a set is ticked, which is
+/// the form it is actually used in. A third statement of it, on the card, was
+/// crowding the sets to repeat something already said and already running. The
+/// menu sets the clock and names the prescription for anyone who wants the
+/// figure.
 ///
 /// **Adding a set lives here because the two ways of adding one are the same
 /// kind of thing.** A warm-up was a menu item while a working set was a
@@ -44,26 +47,10 @@ struct ExerciseHeaderView: View {
     var onAddSet: () -> Void
     var onAddWarmup: () -> Void
 
-    /// The lifter's own clock, which is not part of the plan and not in the
-    /// store. Read only to say what will actually run.
-    @Environment(RestPreferences.self) private var restPreferences
-
     private var subtitle: String {
-        var parts = [PrescriptionSummary.text(for: exercise, unit: unit)]
-        if let tempo = exercise.tempo, !tempo.isEmpty {
-            parts.append("tempo \(tempo)")
-        }
-        // Absent when the plan prescribed no rest and the lifter has asked for
-        // none. Nothing invites him to fill that gap in: the menu is where a
-        // timer on an unprescribed exercise is asked for.
-        if let rest = RestPrescription.line(
-            prescribed: exercise.restSeconds,
-            lifter: restPreferences.rest(for: exercise.exerciseID),
-            timersEnabled: restPreferences.timersEnabled
-        ) {
-            parts.append(rest.lowercasedFirst)
-        }
-        return parts.joined(separator: " · ")
+        let summary = PrescriptionSummary.text(for: exercise, unit: unit)
+        guard let tempo = exercise.tempo, !tempo.isEmpty else { return summary }
+        return "\(summary) · tempo \(tempo)"
     }
 
     var body: some View {
