@@ -30,11 +30,17 @@ enum RepPrescription {
     }
 
     /// What an empty rep field shows: the prescribed target exactly as the plan
-    /// wrote it (`"8-12"`, `"AMRAP"`), or `"—"` when the plan named none.
-    /// Never a number the app chose.
+    /// wrote it (`"8-12"`, `"AMRAP"`), and nothing at all when the plan named
+    /// none. Never a number the app chose.
+    ///
+    /// It used to show `—` for an absent target, which put a mark inside a field
+    /// whose job is to invite a number. A placeholder is a hint about what to
+    /// type; a dash hints at nothing, and a fresh session drew two of them on
+    /// every row, so a table waiting to be filled in read as a table that was
+    /// broken. The column header says what the field holds. An empty field
+    /// says the plan asked for no figure, which is the truth.
     static func targetText(for repRange: String?) -> String {
-        let trimmed = (repRange ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "—" : trimmed
+        (repRange ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

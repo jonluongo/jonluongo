@@ -51,8 +51,8 @@ struct RepPrescriptionTests {
 
     @Test("A prescription that names no target shows an em dash, not a zero")
     func targetTextForNoPrescription() {
-        #expect(RepPrescription.targetText(for: "") == "—")
-        #expect(RepPrescription.targetText(for: "   ") == "—")
+        #expect(RepPrescription.targetText(for: "") == "")
+        #expect(RepPrescription.targetText(for: "   ") == "")
     }
 
     // MARK: - The regression itself

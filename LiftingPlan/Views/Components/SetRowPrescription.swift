@@ -18,7 +18,8 @@ import LiftingKit
 /// **What it depends on.** `WorkPrescription` and `PerformanceHistory` for the
 /// readings, `PlannedExercise` and `TrainingPlan` from Store, and `MassUnit`
 /// from LiftingKit. It writes nothing and invents nothing: an absent
-/// prescription stays absent and reads as `—`.
+/// prescription stays absent, which in a field is an empty field and in the
+/// column that reports the last session is `—`.
 struct SetRowPrescription {
 
     let exercise: PlannedExercise
@@ -47,11 +48,18 @@ struct SetRowPrescription {
     }
 
     /// What an empty weight field shows: the load this set was prescribed, in
-    /// the lifter's display unit, or `"—"` when none was. A placeholder rather
-    /// than a value, so the prescription reaches him without the app claiming he
-    /// lifted it.
+    /// the lifter's display unit, and nothing when none was. A placeholder
+    /// rather than a value, so the prescription reaches him without the app
+    /// claiming he lifted it.
+    ///
+    /// Empty rather than `—`, which is the mark this type uses for a *reading*
+    /// that does not exist. Inside a field it was neither: a placeholder is a
+    /// hint about what to type, and a dash hints at nothing while making a
+    /// fresh table look broken. `previousText` keeps the dash, because that
+    /// column is read rather than typed into and a lift with no history genuinely
+    /// has nothing to report.
     func loadTarget(_ prescription: SetPrescription?) -> String {
-        guard let load = prescription?.suggestedLoad else { return "—" }
+        guard let load = prescription?.suggestedLoad else { return "" }
         return load.converted(to: unit).value.compactString
     }
 

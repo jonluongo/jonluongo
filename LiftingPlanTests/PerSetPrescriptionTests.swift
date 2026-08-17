@@ -338,7 +338,7 @@ struct PerSetPrescriptionTests {
     func aRangeStillSeedsNothing() {
         #expect(RepPrescription.seededReps(for: "8-12") == nil)
         #expect(RepPrescription.seededReps(for: nil) == nil)
-        #expect(RepPrescription.targetText(for: nil) == "—")
+        #expect(RepPrescription.targetText(for: nil) == "")
         #expect(RepPrescription.targetText(for: "8-12") == "8-12")
     }
 

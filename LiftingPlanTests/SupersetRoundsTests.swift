@@ -179,7 +179,7 @@ struct SupersetRoundsTests {
         }
         let laid = rounds(group)
 
-        #expect(laid.rounds.map { $0.rows[0].loadTarget } == ["20", "25", "—"])
+        #expect(laid.rounds.map { $0.rows[0].loadTarget } == ["20", "25", ""])
         #expect(laid.rounds.map { $0.rows[0].prescribed?.repRange } == ["12", "12", "8"])
         #expect(laid.rounds[2].rows[0].prescribed?.notes == "to failure")
         #expect(laid.rounds.map { $0.rows[1].prescribed?.repRange } == ["15", "15", "15"])
@@ -193,6 +193,6 @@ struct SupersetRoundsTests {
 
         #expect(laid.rounds.count == 4)
         #expect(laid.rounds[3].rows[0].prescribed == nil)
-        #expect(laid.rounds[3].rows[0].loadTarget == "—")
+        #expect(laid.rounds[3].rows[0].loadTarget == "")
     }
 }
