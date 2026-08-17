@@ -67,7 +67,15 @@ struct ActiveWorkoutView: View {
             .listStyle(.insetGrouped)
             .scrollDismissesKeyboard(.interactively)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { toolbarContent }
+            .toolbar {
+                ActiveWorkoutToolbar(
+                    startDate: startDate,
+                    isLogged: isLogged,
+                    onClose: close,
+                    onFinish: finish,
+                    onUnfinish: unfinish
+                )
+            }
             .safeAreaInset(edge: .bottom) {
                 if restTimer.isRunning {
                     RestTimerBar(restTimer: restTimer)
@@ -163,81 +171,6 @@ struct ActiveWorkoutView: View {
         }
     }
 
-    // MARK: - Toolbar & chrome
-
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        // Its own item, and nothing beside it. Sharing one with the clock gave
-        // the toolbar a single background to draw around both, so the "circle"
-        // was a capsule the width of chevron-plus-gap-plus-time and the chevron
-        // sat at one end of it rather than in the middle of anything.
-        ToolbarItem(placement: .topBarLeading) {
-            Button {
-                close()
-            } label: {
-                Image(systemName: "chevron.down")
-            }
-            .accessibilityLabel("Close workout")
-        }
-        // The session's running time, where the focus used to be. The focus was
-        // removed as unhelpful — the lifter picked this session and is looking
-        // at its exercises — and how long he has been training is the one thing
-        // worth a glance that nothing else on the screen says.
-        ToolbarItem(placement: .principal) {
-            TimelineView(.periodic(from: startDate, by: 1)) { timeline in
-                Text(elapsedString(timeline.date))
-                    .font(.barbellSupport)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-            }
-        }
-        // There is no timer button here any more. Rest is prescribed per
-        // exercise, so one control in the toolbar could not mean anything
-        // specific — it opened a picker that started a stopwatch unrelated to
-        // whatever set had just been logged. The rest line on each exercise's
-        // card is the control now.
-        // One action, and its word says which state the session is in. A
-        // logged session is already recorded, so the button only closes it —
-        // calling that "Finish" would ask the lifter to finish something that
-        // is finished. Un-finishing is the rare correction, so it sits in the
-        // menu rather than on the surface: it is what makes reopening mean
-        // anything, and it is not what anyone came here to press.
-        ToolbarItem(placement: .topBarTrailing) {
-            if isLogged {
-                Menu {
-                    Button("Mark as unfinished", systemImage: "arrow.uturn.backward") {
-                        day.completedAt = nil
-                        _ = save()
-                    }
-                } label: {
-                    Text("Done").fontWeight(.semibold)
-                } primaryAction: {
-                    close()
-                }
-            } else {
-                Button("Finish") { finish() }
-                    .fontWeight(.semibold)
-            }
-        }
-        // A number pad has no return key, so without this the only way out of a
-        // weight field is to scroll the list — which is a poor thing to require
-        // of someone holding the phone in one hand between sets.
-        ToolbarItemGroup(placement: .keyboard) {
-            Spacer()
-            Button("Done") { dismissKeyboard() }
-        }
-    }
-
-    /// Resigns whatever field is first responder. The entry fields live inside
-    /// `SetRowView`, several levels down and one per set, so threading a
-    /// `FocusState` binding to each of them would cost more than it is worth
-    /// for a button that always means the same thing.
-    private func dismissKeyboard() {
-        UIApplication.shared.sendAction(
-            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
-        )
-    }
-
     // MARK: - Actions
 
     /// Runs the rest this exercise asks for when a set is ticked, and stops it
@@ -320,6 +253,13 @@ struct ActiveWorkoutView: View {
         dismiss()
     }
 
+    /// Takes a finished session back to unfinished, which is what makes
+    /// reopening one mean anything.
+    private func unfinish() {
+        day.completedAt = nil
+        save()
+    }
+
     private func close() {
         restTimer.stop()
         guard save() else { return }
@@ -349,42 +289,5 @@ struct ActiveWorkoutView: View {
             errorMessage = (error as? PersistenceError)?.errorDescription ?? error.localizedDescription
             return false
         }
-    }
-
-    // MARK: - Helpers
-
-    private func elapsedString(_ now: Date) -> String {
-        let seconds = max(0, Int(now.timeIntervalSince(startDate)))
-        return String(format: "%d:%02d", seconds / 60, seconds % 60)
-    }
-}
-
-/// Whose clock the rest sheet is editing: one exercise's, or one group's.
-///
-/// The sheet asks the same question either way — follow the plan, run this long,
-/// or run nothing — so it takes one value rather than being written twice. A
-/// group's choice is keyed on the exercise its round ends with, which is the
-/// exercise that carries the group's rest.
-private struct RestTarget: Identifiable {
-    let id: String
-    let name: String
-    let prescribedSeconds: Int?
-    let key: ExerciseID
-
-    init(exercise: PlannedExercise) {
-        id = "exercise-\(exercise.persistentModelID)"
-        name = exercise.displayName
-        prescribedSeconds = exercise.restSeconds
-        key = exercise.exerciseID
-    }
-
-    /// `nil` for a group whose members somehow arrived without one, which the
-    /// format cannot state and no screen should crash over.
-    init?(group: ExerciseGroup) {
-        guard let key = group.restKey else { return nil }
-        id = "group-\(group.id)"
-        name = group.title
-        prescribedSeconds = group.restSeconds
-        self.key = key
     }
 }
