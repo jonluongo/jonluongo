@@ -111,8 +111,8 @@ struct RootView: View {
 
 /// The three tabs, which is the whole app: the day, the blocks, and the lifter.
 ///
-/// Today is the front door. Blocks is every block he has been given — it was a
-/// link on Today until the block stopped being a detail of the day, and then a
+/// Home is the front door. Blocks is every block he has been given — it was a
+/// link on Home until the block stopped being a detail of the day, and then a
 /// tab showing a single block, which quietly meant the one before it was
 /// unreachable the moment a new one arrived. It stands where a History tab used
 /// to: a tab listing every lift you have ever logged is a filing cabinet, and
@@ -123,14 +123,20 @@ struct RootView: View {
 /// while everything Claude knew about the lifter went unshown. The lifter is a
 /// better third tab than a gear.
 ///
-/// Today carries its own stack rather than being wrapped in one here, because
+/// Home carries its own stack rather than being wrapped in one here, because
 /// the week strip has to sit where the navigation bar would be.
 struct MainTabView: View {
     let profile: UserProfile
 
     var body: some View {
         TabView {
-            Tab("Today", systemImage: "calendar") {
+            // Home, not Today. The screen was named for a date when it showed
+            // one; it shows the next workout in the block now and says so at the
+            // top, and a tab disagreeing with the title above it is the app
+            // contradicting itself. The calendar glyph went for the same reason
+            // — there is no calendar behind this tab any more, and the tab that
+            // does lay a block out week by week is the one beside it.
+            Tab("Home", systemImage: "house") {
                 TodayView(profile: profile)
             }
             Tab("Blocks", systemImage: "square.stack") {

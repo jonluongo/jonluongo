@@ -29,6 +29,13 @@ struct PrimaryActionButton: View {
         Button(action: action) {
             label
                 .fontWeight(.semibold)
+                // Stated rather than inherited. A prominent button draws its
+                // title white against the tint but leaves the symbol beside it
+                // to the accent, so the check on the green Finish button came
+                // out orange — one button in two colours. Both tints here are
+                // dark enough to carry white, which is the whole reason there
+                // are only two.
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.tight)
         }

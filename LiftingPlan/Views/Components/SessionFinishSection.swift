@@ -15,8 +15,18 @@ import SwiftUI
 /// where a lifter arrives having made it. Leaving is the chevron, and leaving
 /// changes nothing.
 ///
-/// **What it depends on.** SwiftUI and `Spacing`. The section it draws is a list
-/// section, so it is placed inside the same `List` as the exercises.
+/// **It is the same button as Start.** Both are the one thing to do at their
+/// point in the session, so they are drawn by `PrimaryActionButton` — the type
+/// that exists because "Start Workout", "Finish Workout" and "Start 2min" had
+/// once drifted into three buttons of different heights and colours. This
+/// section first drew a hand-rolled one, which was that drift happening again.
+/// Green is the named exception the button documents: green means done
+/// everywhere else in the app.
+///
+/// **What it depends on.** SwiftUI, `Spacing` and `PrimaryActionButton`. The
+/// section it draws is a list section, so it is placed inside the same `List` as
+/// the exercises; its rows carry no card behind them, because a button is not a
+/// row of a table.
 struct SessionFinishSection: View {
 
     /// Whether the session has been marked done, which decides which of the two
@@ -40,14 +50,14 @@ struct SessionFinishSection: View {
                         .font(.barbellSupport)
                 }
                 .padding(.vertical, Spacing.tight)
+                .listRowBackground(Color.clear)
             } else {
-                Button(action: onFinish) {
-                    Text("Finish")
-                        .font(.barbellBody)
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity, minHeight: TapTarget.minimum)
-                }
+                PrimaryActionButton(
+                    title: "Finish Workout", systemImage: "checkmark", tint: .green,
+                    action: onFinish
+                )
                 .accessibilityHint("Marks this session as logged")
+                .listRowBackground(Color.clear)
             }
         } footer: {
             // Said only where it is still true. A lifter about to press this

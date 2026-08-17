@@ -49,12 +49,16 @@ struct TodaySessionSection: View {
     ///
     /// `textCase(nil)` and the title ramp undo the small grey capitals a header
     /// is drawn in by default — that styling says "column of a table", and this
-    /// is the one thing on the screen.
+    /// is the one thing on the screen. The colour is stated as `Color.primary`
+    /// rather than as `.primary`: a section header sets its own foreground in
+    /// the environment, and the hierarchical shorthand resolved against that
+    /// rather than replacing it, so the heading rendered lighter than the
+    /// exercises underneath it — a title less prominent than the list it titles.
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.tight) {
             Text(TodayPhrasing.sessionTitle(focus: session.focus, weekday: session.weekday))
                 .font(.barbellTitle)
-                .foregroundStyle(.primary)
+                .foregroundStyle(Color.primary)
             if let shape = TodayPhrasing.sessionShape(
                 exercises: session.orderedExercises.count,
                 durationMinutes: session.durationMinutes
