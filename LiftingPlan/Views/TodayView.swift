@@ -97,7 +97,8 @@ struct TodayView: View {
             noBlock
         default:
             List {
-                Section { header(plan, standing.standing) }
+                BlockLinkSection(
+                    plan: plan, standing: standing.standing, profile: profile)
                 content(plan, standing)
             }
             .safeAreaInset(edge: .top, spacing: 0) { strip(plan) }
@@ -192,69 +193,6 @@ struct TodayView: View {
     /// pressing it would.
     private func choose(_ date: Date) {
         withAnimation { chosen = date == today ? nil : date }
-    }
-
-    // MARK: - Header
-
-    /// The block and the week, and the way into the block. One line, always in
-    /// the same place, and it costs nothing when it is not tapped.
-    ///
-    /// It survives the week strip because the two say different things: the
-    /// strip says which Wednesday, and this says which week of training that
-    /// Wednesday belongs to — an ordinal and a label the calendar cannot show.
-    private func header(
-        _ plan: TrainingPlan, _ standing: TodayInBlock.Standing
-    ) -> some View {
-        NavigationLink {
-            BlockView(
-                plan: plan, profile: profile,
-                currentWeekOrdinal: Self.currentOrdinal(standing)
-            )
-        } label: {
-            VStack(alignment: .leading, spacing: Spacing.tight) {
-                Text(Self.blockName(plan))
-                    .font(.barbellTitle)
-                if let line = Self.headerLine(plan, standing) {
-                    Text(line)
-                        .font(.barbellSupport)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.vertical, Spacing.tight)
-        }
-    }
-
-    /// What the plan called itself, or what it is for when it went unnamed.
-    private static func blockName(_ plan: TrainingPlan) -> String {
-        if !plan.title.isEmpty { return plan.title }
-        if !plan.goal.isEmpty { return plan.goal }
-        return "Block"
-    }
-
-    /// "Week 2 of 4 · Accumulation" while the day shown falls inside the block.
-    /// Outside it there is no week to name, so the block's length is stated
-    /// instead — and nothing at all before it starts, where the state below
-    /// already says when that is.
-    private static func headerLine(
-        _ plan: TrainingPlan, _ standing: TodayInBlock.Standing
-    ) -> String? {
-        switch standing {
-        case .session(let day): TodayPhrasing.weekLine(day.week)
-        case .rest(let week): TodayPhrasing.weekLine(week)
-        case .closed, .elapsed:
-            plan.orderedWeeks.isEmpty
-                ? nil
-                : "\(plan.orderedWeeks.count) week\(plan.orderedWeeks.count == 1 ? "" : "s")"
-        case .beforeBlock, .undated, .unscheduled: nil
-        }
-    }
-
-    private static func currentOrdinal(_ standing: TodayInBlock.Standing) -> Int? {
-        switch standing {
-        case .session(let day): day.week.ordinal
-        case .rest(let week): week.ordinal
-        default: nil
-        }
     }
 
     // MARK: - The state
