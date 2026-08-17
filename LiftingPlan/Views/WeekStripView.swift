@@ -36,6 +36,9 @@ struct WeekStripView: View {
     /// Called with the day a column was tapped for.
     let select: (Date) -> Void
 
+    /// The way back to today, or `nil` while today is what is being shown.
+    let returnToToday: (() -> Void)?
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.snug) {
             HStack(spacing: 0) {
@@ -49,10 +52,27 @@ struct WeekStripView: View {
             // it — the session, the prescription, the buttons — keeps scaling.
             .dynamicTypeSize(...DynamicTypeSize.accessibility1)
 
-            Text(dayLine)
-                .font(.barbellTitle)
-                .padding(.horizontal, Spacing.section)
+            HStack {
+                Text(dayLine)
+                    .font(.barbellTitle)
+                Spacer(minLength: Spacing.standard)
+                if let returnToToday {
+                    Button("Today", action: returnToToday)
+                        .font(.barbellBody)
+                        .accessibilityHint("Shows today again")
+                }
+            }
+            // The row keeps its height whether or not the button is in it. In
+            // the navigation bar the button was correct and unusable: it made a
+            // bar appear, which pushed the whole strip down the moment the
+            // lifter swiped, so the columns moved under the thumb that had just
+            // moved them.
+            .frame(minHeight: TapTarget.minimum)
         }
+        // One gutter for the whole header, the same the list below it uses. It
+        // is as wide as it can be: seven columns inside it are 49pt on the
+        // narrowest phone the app runs on, which still clears the 44pt target.
+        .padding(.horizontal, Spacing.section)
         .padding(.vertical, Spacing.snug)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.bar)
@@ -112,7 +132,11 @@ private struct WeekStripColumn: View {
                         .font(.barbellSupport)
                         .foregroundStyle(numeral)
                 }
-                .frame(minWidth: TapTarget.minimum, minHeight: TapTarget.minimum)
+                // The circle is the tap target, drawn. Fixed rather than
+                // scaled: a circle that grew with the text would be seven
+                // circles wider than the phone, and it is already the largest
+                // a touch needs.
+                .frame(width: TapTarget.minimum, height: TapTarget.minimum)
 
                 // Calendar's dot, for the same reason: it is what lets the
                 // week's shape be read without opening any of it. A rest day is

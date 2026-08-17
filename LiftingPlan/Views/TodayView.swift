@@ -63,16 +63,22 @@ struct TodayView: View {
                 noBlock
             }
         }
+        // No title and no bar items, so the navigation bar collapses to nothing
+        // and the strip sits where the large title's empty hundred points were.
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { returnToToday }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                now = Date()
-                // Coming back to the app is coming back to today. The screen is
-                // named for it, and a lifter reopening his phone between sets
-                // wants the day he is in, not the one he was reading about.
-                chosen = nil
-            }
+        .onChange(of: scenePhase) { was, phase in
+            guard phase == .active else { return }
+            now = Date()
+            // Coming back to the app is coming back to today: the screen is
+            // named for it, and a phone left open overnight would otherwise
+            // still be circling yesterday.
+            //
+            // Only from the background, though. A notification banner, a glance
+            // at Control Centre or a peek at the app switcher all pass through
+            // `.inactive`, and losing the day he was reading to any of them
+            // would make the strip feel like it could not be trusted to stay
+            // where it was put.
+            if was == .background { chosen = nil }
         }
         .fullScreenCover(item: $openSession) { session in
             ActiveWorkoutView(day: session, profile: profile)
@@ -132,19 +138,12 @@ struct TodayView: View {
                     )
                 },
                 dayLine: TodayPhrasing.dayLine(shown),
-                select: { choose($0) }
+                select: { choose($0) },
+                // Offered only once there is somewhere to come back from.
+                returnToToday: chosen == nil
+                    ? nil
+                    : { withAnimation { chosen = nil } }
             )
-        }
-    }
-
-    /// The way back, offered only once there is somewhere to come back from.
-    @ToolbarContentBuilder
-    private var returnToToday: some ToolbarContent {
-        if chosen != nil {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Today") { withAnimation { chosen = nil } }
-                    .accessibilityHint("Shows today again")
-            }
         }
     }
 
