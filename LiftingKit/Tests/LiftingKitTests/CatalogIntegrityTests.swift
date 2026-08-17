@@ -114,6 +114,20 @@ struct CatalogIntegrityTests {
         #expect(resistance.count > 300, "only \(resistance.count) resistance exercises")
     }
 
+    /// The bundled entries a volume report must not count as lifting volume.
+    /// `volume_by_muscle` asks each logged set's exercise this question, so a
+    /// bike or a stretch answering `true` here would put a muscle total wrong.
+    @Test("No cardio or stretching entry claims to be resistance training")
+    func conditioningIsNotResistance() throws {
+        let conditioning = try loaded().all.filter {
+            $0.category == .cardio || $0.category == .stretching
+        }
+        #expect(!conditioning.isEmpty, "the catalog ships no cardio or stretching to check")
+        for exercise in conditioning {
+            #expect(!exercise.isResistanceTraining, "\(exercise.id) counts as resistance training")
+        }
+    }
+
     @Test("Every resistance movement pattern has at least one bodyweight option")
     func bodyweightCoverage() throws {
         let loaded = try loaded()

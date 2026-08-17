@@ -202,9 +202,13 @@ public struct ExerciseCategory: ExtensibleTaxonomy {
     ]
 
     /// Categories that count as resistance training, as opposed to cardio or
-    /// stretching. Internal: it backs `Exercise.isResistanceTraining`, which no
-    /// client of this package reads today.
-    static let resistance: Set<ExerciseCategory> = [
+    /// stretching.
+    ///
+    /// It backs `Exercise.isResistanceTraining`, and it is public so a report
+    /// that counts only resistance work can *name* what it counted from the
+    /// same list it filtered on — a report that spelled the four categories out
+    /// in its own prose would start lying the day this set changed.
+    public static let resistance: Set<ExerciseCategory> = [
         .strength, .olympic, .powerlifting, .strongman,
     ]
 }

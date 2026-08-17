@@ -131,7 +131,13 @@ public enum ToolCatalog {
             seconds and distance as 'primaryDistance' — one total per unit — and \
             neither is ever added into the rep total, so a block of planks never \
             reads as repetitions and neither does a block of carries. Warmups and \
-            uncompleted rows are excluded.
+            uncompleted rows do not count. The muscle totals are resistance \
+            training only: cardio and stretching are real work but not lifting \
+            volume, so they are reported apart under 'excluded' — by category, \
+            with the sets, seconds and distance they were performed in — rather \
+            than counted as muscle volume. Read 'excluded' before concluding \
+            anything about how much a lifter is doing; an hour of conditioning \
+            is there and in none of the totals above.
             """,
         inputSchema: object(
             ["weeks": integer("How many weeks back from now to count. Defaults to 4.")]

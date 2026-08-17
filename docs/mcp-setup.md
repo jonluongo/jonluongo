@@ -87,7 +87,7 @@ exist and the tools that read your log will tell you so.
 | `list_exercises` | Catalog entries with real IDs, filtered to equipment you own |
 | `exercise_history` | Every set you have logged for one movement, in order |
 | `recent_sessions` | What you have been doing lately |
-| `volume_by_muscle` | Set, rep and seconds-held totals per muscle over a window |
+| `volume_by_muscle` | Set, rep and seconds-held totals per muscle over a window, for lifting; cardio and stretching are reported apart |
 | `unstated_facts` | Which facts the record can hold about you, and which are still empty |
 | `write_plan` | Writes a block to your phone — every week of it |
 | `update_profile` | Writes down what you said about yourself, what you weigh, and what you can already lift |

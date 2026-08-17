@@ -122,9 +122,15 @@ public struct Exercise: Codable, Hashable, Sendable, Identifiable {
     }
 
     /// Whether this is resistance training, as opposed to cardio or stretching.
-    /// Internal until a client needs it; `ExerciseFilter(categories:)` is the
-    /// public way to ask the same question of the catalog.
-    var isResistanceTraining: Bool {
+    ///
+    /// Ask it of an entry you already hold — `volume_by_muscle` asks it of the
+    /// exercise behind each logged set, to decide whether that set is lifting
+    /// volume. `ExerciseFilter(categories:)` asks the neighbouring question of
+    /// the *catalog*: which entries are resistance work. Neither substitutes for
+    /// the other here, because a filter's answer would collapse "this set was
+    /// cardio" into "this set matched nothing", and those are two different
+    /// things to tell a reader.
+    public var isResistanceTraining: Bool {
         ExerciseCategory.resistance.contains(category)
     }
 }
