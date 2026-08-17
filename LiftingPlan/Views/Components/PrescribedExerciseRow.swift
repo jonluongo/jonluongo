@@ -6,10 +6,23 @@ import LiftingKit
 ///
 /// **What it does.** States the plan and nothing else. Inside a group it is
 /// prefixed with the `A1` / `A2` the group's header legends, and nothing else
-/// about it changes. The sets it asks for and
-/// the effort it asks for sit beside a repeat glyph, and the rest it prescribes
-/// beside a clock — and the rest is absent when the plan prescribed none, since
-/// a session that asks for no rest shows none rather than `0s`.
+/// about it changes. What it asks for is one sentence — the sets, the effort,
+/// and the rest — and the rest is absent when the plan prescribed none, since a
+/// session that asks for no rest shows none rather than `0s`.
+///
+/// **One line, and it wraps rather than truncates.** It was two labelled
+/// columns, a repeat glyph against the prescription and a clock against the
+/// rest, laid out by a `ViewThatFits` that was supposed to stack them when they
+/// stopped fitting. It never did: the horizontal branch carried `lineLimit(1)`,
+/// which made it fit at any width by cutting the text, so a six-exercise session
+/// read `3 × 8-10 · RPE 7…` and the prescription the lifter was handed was not
+/// the one that was written. Truncation is the one failure this row must not
+/// have. Now it is a single string that wraps, and cannot lose a character.
+///
+/// **The glyphs are gone.** Six identical repeat arrows and six identical clocks
+/// down one card distinguished nothing from anything — `3min rest` already says
+/// which of the two numbers is the rest. They cost a column of alignment and
+/// gave back no information.
 ///
 /// **A ramp gets the same shape as everything else: a name and one line.** It
 /// used to state its count and then list its sets beneath, five rows where its
@@ -73,31 +86,25 @@ struct PrescribedExerciseRow: View {
                 Text(exercise.displayName).font(.barbellTitle)
                 Spacer()
             }
-            // One line where one line holds it, stacked where it does not: at
-            // accessibility text sizes "4 × 6-8 · RPE 7-8" and a rest no longer
-            // fit side by side, and a prescription broken across a ragged pair
-            // of columns is harder to read than two whole lines.
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: Spacing.standard) { prescription }
-                    .lineLimit(1)
-                VStack(alignment: .leading, spacing: Spacing.tight) { prescription }
-            }
-            .font(.barbellSupport)
-            .foregroundStyle(.secondary)
+            // Wraps onto a second line at long prescriptions and large text
+            // sizes. It never shortens: every character the plan wrote reaches
+            // the lifter, which is the whole job of this row.
+            Text(prescription)
+                .font(.barbellSupport)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, Spacing.tight)
     }
 
     /// What the plan asks for, and how long it asks for between — the second
-    /// drawn only when the plan prescribed one.
-    @ViewBuilder
-    private var prescription: some View {
-        Label(PrescriptionSummary.text(for: exercise, unit: unit), systemImage: "repeat")
+    /// stated only when the plan prescribed one.
+    private var prescription: String {
+        let summary = PrescriptionSummary.text(for: exercise, unit: unit)
         // A movement inside a group states no rest of its own: the rest comes
         // after the round, and the group's own line has already said how long.
         // Repeating it here would read as this movement asking for it alone.
-        if let rest = exercise.restSeconds, notation == nil {
-            Label("\(RestPrescription.durationText(rest)) rest", systemImage: "timer")
-        }
+        guard let rest = exercise.restSeconds, notation == nil else { return summary }
+        return "\(summary) · \(RestPrescription.durationText(rest)) rest"
     }
 }

@@ -1,13 +1,20 @@
 import SwiftUI
 import UIKit
 
-/// The chrome around a session being logged: how to leave it, how long it has
-/// been running, and the one action that ends it.
+/// The chrome around a session being logged: how to leave it, and how long it
+/// has been running.
 ///
-/// **What it does.** Draws the four toolbar items the logging screen has — the
-/// close chevron, the running time, the action whose word says which state the
-/// session is in, and the keyboard's Done. It holds no state and reaches into
-/// nothing: everything it needs it is handed, and everything it does it reports.
+/// **What it does.** Draws the three toolbar items the logging screen has — the
+/// close chevron, the running time, and the keyboard's Done. It holds no state
+/// and reaches into nothing: everything it needs it is handed, and everything it
+/// does it reports.
+///
+/// **Finishing is not up here, and that is the point.** It was: `Finish` sat top
+/// right, which is where every sheet in iOS puts the button that means *let me
+/// out*. Tapping it to leave marked the day logged — a session with nothing
+/// filled in read as trained, and the owner hit it on his first real session.
+/// The one control that changes what the record says now lives at the end of the
+/// session, under the last set, where a lifter arrives having actually finished.
 ///
 /// **How it is used.** `ActiveWorkoutView` passes it to `.toolbar`. It is a
 /// `ToolbarContent` of its own rather than a computed property on that screen
@@ -20,14 +27,7 @@ struct ActiveWorkoutToolbar: ToolbarContent {
 
     /// When the lifter opened the session; the clock counts up from here.
     let startDate: Date
-    /// Whether the session has been marked done, which decides what the one
-    /// action is called.
-    let isLogged: Bool
     var onClose: () -> Void
-    var onFinish: () -> Void
-    /// Takes a finished session back to unfinished — the rare correction, which
-    /// is why it sits in a menu rather than on the surface.
-    var onUnfinish: () -> Void
 
     @ToolbarContentBuilder
     var body: some ToolbarContent {
@@ -60,28 +60,12 @@ struct ActiveWorkoutToolbar: ToolbarContent {
         // specific — it opened a picker that started a stopwatch unrelated to
         // whatever set had just been logged. The rest line on each exercise's
         // card is the control now.
-        // One action, and its word says which state the session is in. A
-        // logged session is already recorded, so the button only closes it —
-        // calling that "Finish" would ask the lifter to finish something that
-        // is finished. Un-finishing is the rare correction, so it sits in the
-        // menu rather than on the surface: it is what makes reopening mean
-        // anything, and it is not what anyone came here to press.
-        ToolbarItem(placement: .topBarTrailing) {
-            if isLogged {
-                Menu {
-                    Button("Mark as unfinished", systemImage: "arrow.uturn.backward") {
-                        onUnfinish()
-                    }
-                } label: {
-                    Text("Done").fontWeight(.semibold)
-                } primaryAction: {
-                    onClose()
-                }
-            } else {
-                Button("Finish") { onFinish() }
-                    .fontWeight(.semibold)
-            }
-        }
+        //
+        // Nothing sits top right. The chevron already leaves the session, and a
+        // second control in the position that means *leave* was read as the way
+        // out by the one person who has used this app — which is how a session
+        // he had not started came to be marked as trained.
+        //
         // A number pad has no return key, so without this the only way out of a
         // weight field is to scroll the list — which is a poor thing to require
         // of someone holding the phone in one hand between sets.

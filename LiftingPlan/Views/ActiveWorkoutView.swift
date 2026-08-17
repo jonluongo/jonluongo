@@ -56,6 +56,11 @@ struct ActiveWorkoutView: View {
                         case .group(let group): section(for: group)
                         }
                     }
+                    // Past the last set, which is where a lifter who has
+                    // finished arrives. It used to be top right, where it was
+                    // pressed as a way out of the screen.
+                    SessionFinishSection(
+                        isLogged: isLogged, onFinish: finish, onUnfinish: unfinish)
                 }
 
             }
@@ -63,13 +68,7 @@ struct ActiveWorkoutView: View {
             .scrollDismissesKeyboard(.interactively)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ActiveWorkoutToolbar(
-                    startDate: startDate,
-                    isLogged: isLogged,
-                    onClose: close,
-                    onFinish: finish,
-                    onUnfinish: unfinish
-                )
+                ActiveWorkoutToolbar(startDate: startDate, onClose: close)
             }
             .safeAreaInset(edge: .bottom) {
                 if restTimer.isRunning {

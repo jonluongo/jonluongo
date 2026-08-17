@@ -30,8 +30,21 @@ struct TodaySessionSection: View {
         // of a table", and this is the one thing on the screen.
         Section {
             VStack(alignment: .leading, spacing: Spacing.tight) {
-                Text(TodayPhrasing.sessionTitle(day))
-                    .font(.barbellTitle)
+                // Logged sits beside the name it describes, small. It was a row
+                // of its own — a 36pt green disc and one word, taking as much
+                // of the card as an exercise takes — which spent the most
+                // prominent space on the screen restating a fact the button
+                // underneath already says by reading "Open Session".
+                HStack(alignment: .firstTextBaseline, spacing: Spacing.standard) {
+                    Text(TodayPhrasing.sessionTitle(day))
+                        .font(.barbellTitle)
+                    Spacer()
+                    if case .finished = day.progress {
+                        Label("Logged", systemImage: "checkmark")
+                            .font(.barbellSupport)
+                            .foregroundStyle(.green)
+                    }
+                }
                 if let shape = TodayPhrasing.sessionShape(
                     exercises: session?.orderedExercises.count ?? 0,
                     durationMinutes: session?.durationMinutes
@@ -43,10 +56,6 @@ struct TodaySessionSection: View {
             }
             .padding(.vertical, Spacing.tight)
 
-            if case .finished = day.progress {
-                IconCircleRow(
-                    systemImage: "checkmark", tint: .green, title: "Logged", subtitle: nil)
-            }
             if let session {
                 // Each row opens that exercise's record — which is where the
                 // History tab went. A lifter reading tonight's bench press and
