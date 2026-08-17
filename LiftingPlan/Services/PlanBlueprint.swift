@@ -82,42 +82,6 @@ struct WeekBlueprint: Equatable {
     }
 }
 
-/// One training day within a `WeekBlueprint`. Depends on: `Weekday` from
-/// Domain, `ExerciseBlueprint`.
-struct DayBlueprint: Equatable {
-    var weekday: Weekday
-    var focus: String
-    var durationMinutes: Int?
-    var exercises: [ExerciseBlueprint]
-}
-
-/// One prescribed movement within a `DayBlueprint`.
-///
-/// `exerciseID` is the identity that gets persisted onto `PlannedExercise` and
-/// is what `PerformanceHistory` joins on; `displayName` is shown to the lifter
-/// and carried through for display only. Never resolve or match an exercise by
-/// `displayName` — collapsing that distinction back into a single free-text
-/// name is exactly the bug this type's shape exists to prevent.
-///
-/// `sets` is always how many sets there are. `statedSets` holds them one at a
-/// time when the plan listed them and is empty when it prescribed the same work
-/// throughout — the ordinary case, which stores no per-set rows. Depends on:
-/// `ExerciseID`, `Mass`, `IntensityTarget`, `SetPrescription`.
-struct ExerciseBlueprint: Equatable {
-    var exerciseID: ExerciseID
-    var displayName: String
-    var repRange: String
-    var sets: Int
-    var restSeconds: Int?
-    var suggestedLoad: Mass?
-    var tempo: String?
-    var notes: String?
-    /// How hard the work should be. `nil` when the plan named no target.
-    var intensity: IntensityTarget?
-    /// The sets the plan listed one at a time, in order. Empty when uniform.
-    var statedSets: [SetPrescription] = []
-}
-
 extension PlanBlueprint {
     /// Build the SwiftData object graph for this blueprint: a new `TrainingPlan`
     /// holding one `TrainingWeek` per week, in the order they were given.
@@ -177,13 +141,39 @@ extension PlanBlueprint {
         return plan
     }
 
+    /// One day's prescriptions, in the order they are to be trained, with a
+    /// group's members carrying the identity that makes them one.
+    ///
+    /// **A group gets one identity and its members a position within it.** The
+    /// group's rest lands on the member the round ends with, because that is
+    /// where the rest is taken — nothing is rested after the others, since the
+    /// next movement of the round follows immediately. That keeps
+    /// `PlannedExercise.restSeconds` meaning exactly what it has always meant
+    /// and leaves the group needing no column of its own.
     private static func makeWorkoutDay(_ day: DayBlueprint) -> WorkoutDay {
         let workoutDay = WorkoutDay(
             weekday: day.weekday,
             focus: day.focus,
             durationMinutes: day.durationMinutes
         )
-        workoutDay.exercises = day.exercises.enumerated().map(Self.makePlannedExercise)
+        var prescribed: [PlannedExercise] = []
+        for entry in day.entries {
+            switch entry {
+            case .exercise(let exercise):
+                prescribed.append(makePlannedExercise(prescribed.count, exercise))
+            case .group(let group):
+                let identity = UUID()
+                for (position, exercise) in group.exercises.enumerated() {
+                    let planned = makePlannedExercise(prescribed.count, exercise)
+                    planned.groupID = identity
+                    planned.groupPosition = position
+                    planned.restSeconds =
+                        position == group.exercises.count - 1 ? group.restSeconds : nil
+                    prescribed.append(planned)
+                }
+            }
+        }
+        workoutDay.exercises = prescribed
         return workoutDay
     }
 
@@ -255,20 +245,37 @@ extension PlanBlueprint {
             weekday: day.weekday,
             focus: day.focus,
             durationMinutes: day.durationMinutes,
-            exercises: day.exercises.map { exercise in
-                ExerciseBlueprint(
-                    exerciseID: exercise.exerciseID,
-                    displayName: exercise.displayName,
-                    repRange: exercise.repRange,
-                    sets: exercise.sets,
-                    restSeconds: exercise.restSeconds,
-                    suggestedLoad: exercise.suggestedLoad,
-                    tempo: exercise.tempo,
-                    notes: exercise.notes,
-                    intensity: exercise.intensity,
-                    statedSets: exercise.statedSets
-                )
-            }
+            entries: day.entries.map(Self.entryBlueprint)
+        )
+    }
+
+    /// An entry, in whichever of its two shapes it arrived. A group crosses as
+    /// a group: the grouping is a prescription like any other, and flattening it
+    /// here would lose the only thing it says.
+    private static func entryBlueprint(_ entry: PlanDocumentEntry) -> EntryBlueprint {
+        switch entry {
+        case .exercise(let exercise):
+            .exercise(exerciseBlueprint(exercise))
+        case .group(let group):
+            .group(GroupBlueprint(
+                exercises: group.exercises.map(exerciseBlueprint),
+                restSeconds: group.restSeconds
+            ))
+        }
+    }
+
+    private static func exerciseBlueprint(_ exercise: PlanDocumentExercise) -> ExerciseBlueprint {
+        ExerciseBlueprint(
+            exerciseID: exercise.exerciseID,
+            displayName: exercise.displayName,
+            repRange: exercise.repRange,
+            sets: exercise.sets,
+            restSeconds: exercise.restSeconds,
+            suggestedLoad: exercise.suggestedLoad,
+            tempo: exercise.tempo,
+            notes: exercise.notes,
+            intensity: exercise.intensity,
+            statedSets: exercise.statedSets
         )
     }
 }

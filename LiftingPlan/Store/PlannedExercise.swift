@@ -16,6 +16,14 @@ import LiftingKit
 /// statements and the exercise's are put together, and it is what the workout
 /// logger renders and the snapshot reports.
 ///
+/// **It may be performed in a group.** `groupID` says which superset, tri-set
+/// or giant set this exercise belongs to and `groupPosition` where in the round
+/// it sits; both are `nil` for an exercise performed on its own, which is nearly
+/// every exercise. Two optional columns rather than a `SupersetGroup` model,
+/// because a relationship and a CloudKit record type would say no more than
+/// these do. Read them through `SessionGrouping` rather than directly —
+/// reconstructing a day's groups is one job and belongs in one place.
+///
 /// Every property has a default, as CloudKit requires.
 /// Depends on: `ExerciseID`, `Mass`, `IntensityTarget` and `SetPrescription`
 /// from LiftingKit, and `PrescribedSet`.
@@ -30,10 +38,24 @@ final class PlannedExercise {
     /// Human-readable rep target, e.g. "8-12" or "5".
     var repRange: String = ""
     var suggestedLoad: Mass?
-    /// Rest between sets, in seconds — drives the pace timer. `nil` when no
-    /// rest was prescribed, in which case no timer starts unless the lifter
-    /// sets one himself.
+    /// Rest taken after a set of this exercise, in seconds — what the pace timer
+    /// runs. `nil` when no rest was prescribed, in which case no timer starts
+    /// unless the lifter sets one himself.
+    ///
+    /// **Inside a group this still means what it has always meant**, which is
+    /// why a group needs no column of its own for it: nothing is rested after
+    /// any member but the last, because the next movement of the round follows
+    /// immediately, and the last carries the group's rest after the round. Read
+    /// `ExerciseGroup.restSeconds` rather than a member's when you want the
+    /// group's.
     var restSeconds: Int?
+    /// The group this exercise is performed in — a superset, a tri-set, a giant
+    /// set — or `nil` when it is performed on its own. Identity only: what a
+    /// group *is* is the exercises sharing this, in `groupPosition` order.
+    var groupID: UUID?
+    /// Where this exercise sits within its group's round, from zero. `nil`
+    /// exactly when `groupID` is.
+    var groupPosition: Int?
     /// How hard the work is meant to be, on whatever scale the plan stated.
     /// `nil` when the plan named no target — never inferred from the load.
     var intensity: IntensityTarget?
