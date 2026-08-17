@@ -37,7 +37,20 @@ enum EffortEntry {
     /// would be a form the app invented for itself. `nil` — a warmup, or a set
     /// the lifter added past the ones prescribed — is not asked.
     static func isInvited(by prescription: SetPrescription?) -> Bool {
-        IntensityPrescription.label(for: prescription?.intensity) != nil
+        invitation(from: prescription) != nil
+    }
+
+    /// The target to ask against, or `nil` when the plan asked for none.
+    ///
+    /// The row needs the target itself, not the fact that one exists: the field
+    /// is labelled with the scale the plan named and shows the number it asked
+    /// for. A target whose value is blank invites nothing — there would be
+    /// nothing to compare an answer to.
+    static func invitation(from prescription: SetPrescription?) -> IntensityTarget? {
+        guard let intensity = prescription?.intensity,
+              IntensityPrescription.label(for: intensity) != nil
+        else { return nil }
+        return intensity
     }
 
     /// The rating a field's text records, or `nil` when it records none.

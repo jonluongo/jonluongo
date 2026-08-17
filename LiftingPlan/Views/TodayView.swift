@@ -49,6 +49,12 @@ struct TodayView: View {
         // Which day "today" is. Without it the title is a label rather than an
         // answer, and every relative word under it — "Rest day", "Tomorrow" —
         // is anchored to nothing.
+        //
+        // Drawn by the navigation bar rather than in the list, so it behaves
+        // the way every other iOS app's header does: large while the screen is
+        // at rest, shrinking into the bar as the content moves under it. The
+        // bar's height above the title is the platform's, and the price of
+        // that behaviour.
         .navigationSubtitle(TodayPhrasing.todayLine(now))
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { now = Date() }

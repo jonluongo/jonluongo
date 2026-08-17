@@ -46,9 +46,10 @@ struct SetRowView: View {
     /// own effort target, its own note — or `nil` when it asks nothing of its
     /// own, which is the ordinary case and draws nothing.
     var prescriptionDetail: String?
-    /// Whether the plan named an intensity target for this set, and so whether
-    /// the lifter is offered somewhere to say how hard it felt.
-    var invitesEffort: Bool
+    /// The intensity the plan asked of this set, or `nil` when it asked none.
+    /// Carried rather than reduced to a flag so the field can be labelled with
+    /// the scale the plan named and show the number it asked for.
+    var intensity: IntensityTarget?
     /// What this row records — reps, a hold, or a distance in the unit it was
     /// prescribed in. Decided by the prescription, in `WorkPrescription`, and
     /// never by what is typed.
@@ -121,11 +122,11 @@ struct SetRowView: View {
             // Drawn only when this set says something of its own or is asked
             // something of its own. Nothing is drawn otherwise, so a uniform
             // prescription gains no line per set for saying nothing new.
-            if prescriptionDetail != nil || invitesEffort {
+            if prescriptionDetail != nil || intensity != nil {
                 SetDetailLine(
                     set: set,
                     detail: prescriptionDetail,
-                    invitesEffort: invitesEffort,
+                    intensity: intensity,
                     spokenSetName: spokenSetName
                 )
             }

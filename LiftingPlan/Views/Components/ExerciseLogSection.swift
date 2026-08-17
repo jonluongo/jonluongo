@@ -76,7 +76,7 @@ struct ExerciseLogSection: View {
                     repTargetText: RepPrescription.targetText(for: prescribed?.repRange),
                     loadTargetText: loadTargetText(prescribed),
                     prescriptionDetail: PrescriptionSummary.detail(for: prescribed, in: exercise),
-                    invitesEffort: EffortEntry.isInvited(by: prescribed),
+                    intensity: EffortEntry.invitation(from: prescribed),
                     measure: measure,
                     unit: profile.displayUnit,
                     onComplete: { onCompleteSet(exercise) }

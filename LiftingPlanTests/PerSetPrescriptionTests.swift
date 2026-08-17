@@ -492,4 +492,33 @@ struct PerSetPrescriptionTests {
 
         #expect(lines == ["60 kg × 5", "80 kg × 5 · RPE 9 · Top set"])
     }
+
+    // MARK: - The field says what the plan asked for
+
+    /// The field was labelled "EFFORT" while the prescription above it said
+    /// "RPE 7-8", and the owner's first question on seeing it was what effort
+    /// meant. It names the scale the plan named instead.
+    @Test("The effort field is labelled with the scale the plan named")
+    func effortFieldNamesItsScale() {
+        #expect(IntensityPrescription.scaleName(for: IntensityTarget(scale: .rpe, value: "8")) == "RPE")
+        #expect(IntensityPrescription.scaleName(for: IntensityTarget(scale: .repsInReserve, value: "2")) == "RIR")
+        #expect(IntensityPrescription.scaleName(for: IntensityTarget(scale: .percentOfOneRepMax, value: "80")) == "% 1RM")
+    }
+
+    /// A scale nobody here has heard of is still named, in the words it arrived
+    /// in, rather than falling back to a word the plan never used.
+    @Test("An unrecognised scale keeps its own name")
+    func unknownScaleKeepsItsName() {
+        let target = IntensityTarget(scale: IntensityScale(rawValue: "velocity"), value: "0.4")
+        #expect(IntensityPrescription.scaleName(for: target) == "VELOCITY")
+    }
+
+    /// The empty field shows the number asked for, the way the empty reps field
+    /// shows the rep target — a placeholder, so the target reaches the lifter
+    /// without the app claiming he hit it.
+    @Test("The empty effort field shows the target, not a dash")
+    func effortPlaceholderIsTheTarget() {
+        #expect(IntensityPrescription.target(for: IntensityTarget(scale: .rpe, value: "7-8")) == "7-8")
+        #expect(IntensityPrescription.target(for: IntensityTarget(scale: .rpe, value: " 8 ")) == "8")
+    }
 }

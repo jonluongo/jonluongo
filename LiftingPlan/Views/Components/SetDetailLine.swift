@@ -30,9 +30,11 @@ struct SetDetailLine: View {
     /// What this set asks that the exercise's header has not already said, or
     /// `nil` when it asks nothing of its own.
     let detail: String?
-    /// Whether the plan named an intensity target for this set, which is the
-    /// only reason to ask how hard it felt.
-    let invitesEffort: Bool
+    /// The intensity the plan asked of this set, or `nil` when it asked none —
+    /// which is the only reason to ask how hard it felt. It is the target
+    /// itself rather than a flag, because the field is labelled with the scale
+    /// the plan named and shows the number it asked for.
+    let intensity: IntensityTarget?
     /// How this row is named aloud — "set 2", "warm-up set" — so the field
     /// says which set it rates. Every row on the screen is otherwise identical.
     let spokenSetName: String
@@ -54,15 +56,15 @@ struct SetDetailLine: View {
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
-            if invitesEffort {
-                Text("EFFORT")
+            if let intensity {
+                Text(IntensityPrescription.scaleName(for: intensity))
                     .font(.barbellLabel)
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
                 // Supporting type rather than Metric: this qualifies the row
                 // above it. The field is still held to the tap minimum, since
                 // it is tapped with chalk on the hands like everything else here.
-                TextField("—", text: effortText)
+                TextField(IntensityPrescription.target(for: intensity), text: effortText)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
                     .font(.barbellSupport)
@@ -75,8 +77,12 @@ struct SetDetailLine: View {
                     .background(
                         Color(.tertiarySystemFill), in: .rect(cornerRadius: Radius.small)
                     )
-                    .accessibilityLabel("Effort for \(spokenSetName)")
-                    .accessibilityHint("How hard the set felt, on the scale the plan asked for")
+                    .accessibilityLabel(
+                        "\(IntensityPrescription.scaleName(for: intensity)) for \(spokenSetName)"
+                    )
+                    .accessibilityHint(
+                        "The plan asked for \(IntensityPrescription.target(for: intensity))"
+                    )
                 // The completion column, left empty, so the field sits under
                 // the one above it rather than under the check.
                 Spacer().frame(width: SetTableMetrics.checkColumnWidth)
