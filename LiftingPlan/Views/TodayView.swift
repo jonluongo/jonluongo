@@ -187,16 +187,23 @@ struct TodayView: View {
 
     // MARK: - The one thing to do
 
-    /// Start, or resume where the work stopped. Absent for a session already
-    /// finished and for one that prescribes nothing — a button that opens an
-    /// empty logging screen is a promise the plan did not make.
+    /// Start, resume, or reopen. Absent only for a session that prescribes
+    /// nothing — a button that opens an empty logging screen is a promise the
+    /// plan did not make.
+    ///
+    /// A finished session keeps its button. Without one a logged day was a dead
+    /// end: nothing could be corrected, added, or undone, and Finish was a
+    /// one-way door pressed with chalk on the hands.
     @ViewBuilder
     private func action(_ plan: TrainingPlan, _ standing: TodayInBlock.Standing) -> some View {
         if let day = standing.session,
-            let title = TodayPhrasing.actionTitle(for: day.progress),
             let session = TodayInPlan.session(day, in: plan),
             !session.orderedExercises.isEmpty {
-            PrimaryActionButton(title: title, systemImage: "play.fill") {
+            let isDone = if case .finished = day.progress { true } else { false }
+            PrimaryActionButton(
+                title: TodayPhrasing.actionTitle(for: day.progress),
+                systemImage: isDone ? "square.and.pencil" : "play.fill"
+            ) {
                 openSession = session
             }
             .padding(Spacing.section)

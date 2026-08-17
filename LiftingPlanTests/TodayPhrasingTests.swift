@@ -90,7 +90,9 @@ struct TodayPhrasingTests {
     func actionTitleFollowsProgress() {
         #expect(TodayPhrasing.actionTitle(for: .notStarted) == "Start Session")
         #expect(TodayPhrasing.actionTitle(for: .inProgress) == "Resume Session")
-        #expect(TodayPhrasing.actionTitle(for: .finished(Self.monday)) == nil)
+        // A finished session still opens: a logged day used to be a dead end,
+        // so a mis-tapped Finish or a weight typed wrong could not be put right.
+        #expect(TodayPhrasing.actionTitle(for: .finished(Self.monday)) == "Open Session")
     }
 
     // MARK: - What is next

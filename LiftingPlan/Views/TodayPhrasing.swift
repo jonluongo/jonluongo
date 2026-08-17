@@ -44,11 +44,19 @@ enum TodayPhrasing {
 
     /// The word on the button, or `nil` when the session is finished and there
     /// is nothing left to press.
-    static func actionTitle(for progress: SessionProgress) -> String? {
+    /// The word on the button.
+    ///
+    /// A finished session still opens. It used to return nothing here, which
+    /// left a logged day with no door: a mis-tapped Finish, a weight typed
+    /// wrong, or a set done after the lifter thought he was done were all
+    /// unreachable. The app is the record, and a record that cannot be
+    /// corrected is not one — so the session reopens, and finishing it again
+    /// keeps the time it was first finished.
+    static func actionTitle(for progress: SessionProgress) -> String {
         switch progress {
         case .notStarted: "Start Session"
         case .inProgress: "Resume Session"
-        case .finished: nil
+        case .finished: "Open Session"
         }
     }
 
