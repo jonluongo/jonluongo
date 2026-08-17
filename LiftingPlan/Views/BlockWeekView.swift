@@ -15,7 +15,7 @@ import LiftingKit
 /// being read, seven days at a time, with no button to start any of it. Today
 /// remains the only screen that trains a session.
 ///
-/// **How it is used.** Pushed from `BlockView`, inside the Plan tab's stack.
+/// **How it is used.** Pushed from `BlockView`, inside the Plans tab's stack.
 /// **What it depends on.** `TrainingWeek` and `WorkoutDay` from Store,
 /// `PlanWeekSelection` for the title, `TodayPhrasing` for a session's shape,
 /// and the shared row components. It writes nothing.

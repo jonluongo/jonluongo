@@ -6,7 +6,7 @@ import SwiftUI
 /// plan for itself, so the only true next step is asking the coach for one.
 ///
 /// **How it is used.** Today draws it when nothing can be placed against a
-/// calendar; the Plan tab draws it when there is no plan at all. It is one view
+/// calendar; the Plans tab draws it when the record holds no plan at all. It is one view
 /// rather than two so the two tabs cannot come to describe the same absence
 /// differently.
 ///

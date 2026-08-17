@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 import LiftingKit
 
-/// The whole block, a week at a time — the Plan tab.
+/// One whole block, a week at a time — a plan opened from the Plans tab.
 ///
 /// **What it does.** Names the block and repeats the coach's note, lists every
 /// week the plan states, marks the one today falls in and the ones that are
@@ -11,51 +11,34 @@ import LiftingKit
 /// cells costs more space to say less than a week does — and cannot say "week 4
 /// is a deload", which is the thing worth knowing about a block.
 ///
-/// **How it is used.** The second tab. It used to be pushed from a link on
-/// Today; the block is not a detail of the day, it is the thing the day is part
-/// of, so it stands beside Today rather than behind it and the link went. It
-/// reads the store directly for the same reason Today does — a tab is addressed
-/// by nothing.
+/// **How it is used.** Pushed from `PlansView` with the plan to draw. It used to
+/// be the tab itself and read the newest plan out of the store, which is what
+/// made every earlier block unreachable; it is now handed the block it shows, so
+/// the same screen serves the current one and every one before it.
 ///
 /// **What it depends on.** `TrainingPlan` and `TrainingWeek` from Store,
-/// `TodayInPlan` from Services for which week is current, `PlanWeekSelection`
-/// for a week's title, and the shared row and note components. It writes
-/// nothing.
+/// `TodayInPlan` from Services for which week is current, `PlansListing` for the
+/// block's name, `PlanWeekSelection` for a week's title, and the shared row and
+/// note components. It writes nothing.
 struct BlockView: View {
 
+    let plan: TrainingPlan
     let profile: UserProfile
 
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.calendar) private var calendar
-    @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     /// When "today" is, re-read whenever the app comes back to the screen, so a
     /// phone left open overnight does not keep marking last week as this one.
     @State private var now = Date()
 
-    private var plan: TrainingPlan? { plans.first }
-
     var body: some View {
-        Group {
-            if let plan {
-                weeks(of: plan)
-            } else {
-                NoBlockView()
+        weeks(of: plan)
+            .navigationTitle(PlansListing.title(of: plan))
+            .navigationBarTitleDisplayMode(.inline)
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { now = Date() }
             }
-        }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { now = Date() }
-        }
-    }
-
-    /// What the plan called itself, or what it is for when it went unnamed.
-    private var title: String {
-        guard let plan else { return "Plan" }
-        if !plan.title.isEmpty { return plan.title }
-        if !plan.goal.isEmpty { return plan.goal }
-        return "Plan"
     }
 
     private func note(_ plan: TrainingPlan) -> String? {
