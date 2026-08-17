@@ -102,7 +102,6 @@ struct TodayView: View {
             NoBlockView()
         default:
             List {
-                BlockHeaderSection(plan: plan, standing: standing.standing)
                 content(plan, standing)
             }
             .safeAreaInset(edge: .top, spacing: 0) { strip(plan) }
@@ -202,27 +201,14 @@ struct TodayView: View {
                 // Only today is offered a button, so only today gets the line
                 // that says what pressing it does.
                 startable: chosen == nil)
-            noteSection(plan)
         case .rest:
             TodayRestSection()
-            noteSection(plan)
         case .beforeBlock(let days):
             TodayBeforeBlockSection(daysUntilStart: days)
-            noteSection(plan)
         case .closed, .elapsed:
             TodayFinishedSection(plan: plan)
         case .undated, .unscheduled:
             EmptyView()
-        }
-    }
-
-    /// The coach's words, while the block is one the lifter is in. Absent when
-    /// he wrote none — an empty section would read as a note that failed to
-    /// arrive.
-    @ViewBuilder
-    private func noteSection(_ plan: TrainingPlan) -> some View {
-        if let note = plan.notes, !note.isEmpty {
-            Section { CoachNoteView(note: note) }
         }
     }
 
