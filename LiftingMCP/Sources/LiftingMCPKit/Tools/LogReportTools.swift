@@ -144,6 +144,11 @@ extension ToolRunner {
             "exerciseID": .string(exercise.exerciseID.rawValue),
             "displayName": .string(exercise.displayName),
             "order": .integer(exercise.order),
+            // `null` for the ordinary exercise performed on its own. Where it is
+            // present, these sets were performed in rounds with the others of
+            // the same group — which a flat list of sets cannot say, and which
+            // is the whole of what makes them a superset.
+            "group": group(exercise.group),
             "prescribed": prescription(exercise),
             "completedWorkingSets": .integer(
                 exercise.loggedSets.count { $0.isCompleted && !$0.isWarmup }),
@@ -160,6 +165,21 @@ extension ToolRunner {
                         "isWarmup": .bool($0.isWarmup),
                     ]
                 }),
+        ]
+    }
+
+    /// The group an exercise was performed in, as it was written on the plan.
+    ///
+    /// `notation` is the A1 / A2 a lifter reads, and `restSeconds` is the rest
+    /// after each round — the group's, and the only rest a group has.
+    private static func group(_ group: SnapshotExerciseGroup?) -> JSONValue {
+        guard let group else { return .null }
+        return [
+            "id": .string(group.id.uuidString),
+            "notation": .string(group.notation),
+            "position": .integer(group.position),
+            "of": .integer(group.size),
+            "restSeconds": .integer(group.restSeconds),
         ]
     }
 }

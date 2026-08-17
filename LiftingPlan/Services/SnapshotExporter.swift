@@ -126,11 +126,29 @@ enum SnapshotExporter {
         )
     }
 
+    /// One day, with each exercise saying which group it was performed in.
+    ///
+    /// The exercises stay a flat list in prescribed order — that is what they
+    /// are, and a reader counting a day's movements should not have to know
+    /// about grouping to do it. What a flat list cannot say is that some of them
+    /// were performed as rounds, so each grouped exercise carries the group. A
+    /// superset reported without it is six unrelated sets.
     private static func snapshot(of day: WorkoutDay) -> SnapshotDay {
-        SnapshotDay(
+        var groups: [PersistentIdentifier: SnapshotExerciseGroup] = [:]
+        for case .group(let group) in day.entries {
+            for (position, member) in group.members.enumerated() {
+                groups[member.persistentModelID] = SnapshotExerciseGroup(
+                    id: group.id, letter: group.letter, position: position + 1,
+                    size: group.members.count, restSeconds: group.restSeconds
+                )
+            }
+        }
+        return SnapshotDay(
             weekday: day.weekday, focus: day.focus,
             durationMinutes: day.durationMinutes, completedAt: day.completedAt,
-            exercises: day.orderedExercises.map(snapshot(of:))
+            exercises: day.orderedExercises.map {
+                snapshot(of: $0, in: groups[$0.persistentModelID])
+            }
         )
     }
 
@@ -141,7 +159,9 @@ enum SnapshotExporter {
     /// that no set actually matched. `intensity` is the effort that was asked
     /// for, carried beside the RPE each set was logged with — the app never
     /// compares them, converts between scales, or decides a target was met.
-    private static func snapshot(of exercise: PlannedExercise) -> SnapshotPlannedExercise {
+    private static func snapshot(
+        of exercise: PlannedExercise, in group: SnapshotExerciseGroup?
+    ) -> SnapshotPlannedExercise {
         SnapshotPlannedExercise(
             exerciseID: exercise.exerciseID, displayName: exercise.displayName,
             order: exercise.order, targetSets: exercise.targetSets,
@@ -154,7 +174,8 @@ enum SnapshotExporter {
             // done, and deciding what to make of it is not the app's call.
             loggedSets: (exercise.loggedSets ?? [])
                 .sorted { $0.setIndex < $1.setIndex }
-                .map(snapshot(of:))
+                .map(snapshot(of:)),
+            group: group
         )
     }
 

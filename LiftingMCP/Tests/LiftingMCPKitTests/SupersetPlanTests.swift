@@ -232,3 +232,80 @@ struct SupersetPlanTests {
         #expect(shapes[1]["properties"]?["restSeconds"] != nil)
     }
 }
+
+/// What `recent_sessions` says about work that was trained in rounds.
+///
+/// This is where Claude reads back what actually happened, so it is where the
+/// grouping has to survive: a superset reported as unrelated sets is a session
+/// whose shape he cannot see.
+@Suite("Reading a superset back")
+struct SupersetReportTests {
+
+    private static let groupID = UUID()
+
+    private func member(
+        _ id: String, order: Int, restSeconds: Int?, position: Int?
+    ) -> SnapshotPlannedExercise {
+        SnapshotPlannedExercise(
+            exerciseID: ExerciseID(rawValue: id), displayName: id, order: order,
+            targetSets: 3, repRange: "12-15", suggestedLoad: nil, restSeconds: restSeconds,
+            tempo: nil, notes: nil,
+            loggedSets: [
+                SnapshotLoggedSet(
+                    setIndex: 0, load: nil, reps: 12, rpe: nil,
+                    isCompleted: true, isWarmup: false, completedAt: daysAgo(1))
+            ],
+            group: position.map {
+                SnapshotExerciseGroup(
+                    id: Self.groupID, letter: "A", position: $0, size: 2, restSeconds: 90)
+            }
+        )
+    }
+
+    private func sessionExercises() throws -> [JSONValue] {
+        let day = SnapshotDay(
+            weekday: .monday, focus: "Push", durationMinutes: 60, completedAt: daysAgo(1),
+            exercises: [
+                member("barbell-bench-press", order: 0, restSeconds: 180, position: nil),
+                member("barbell-curl", order: 1, restSeconds: nil, position: 1),
+                member("lat-pulldown", order: 2, restSeconds: 90, position: 2),
+            ])
+        let plan = SnapshotPlan(
+            title: "Autumn", goal: "Bigger arms", startDate: daysAgo(10), weekCount: 1,
+            completedAt: nil, catalogVersion: 5, weekdays: [.monday], durationMinutes: 60,
+            weeks: [SnapshotWeek(ordinal: 1, label: "", isDeload: false, days: [day])])
+        let documents = InMemoryDocuments(snapshot: fixtureSnapshot(plans: [plan]))
+        let outcome = try makeRunner(documents: documents)
+            .call(ToolCatalog.recentSessions, arguments: [:])
+        let report = try #require(outcome.report)
+        let sessions = try #require(report["sessions"]?.arrayValue)
+        return try #require(sessions.first?["exercises"]?.arrayValue)
+    }
+
+    @Test("A grouped exercise reports its notation, its place in the round and the group's rest")
+    func groupedExerciseReportsItsGroup() throws {
+        let exercises = try sessionExercises()
+        let group = try #require(exercises[1]["group"])
+
+        #expect(group["notation"]?.stringValue == "A1")
+        #expect(group["position"]?.intValue == 1)
+        #expect(group["of"]?.intValue == 2)
+        #expect(group["restSeconds"]?.intValue == 90)
+        #expect(exercises[2]["group"]?["notation"]?.stringValue == "A2")
+        #expect(exercises[1]["group"]?["id"] == exercises[2]["group"]?["id"])
+    }
+
+    @Test("An exercise performed on its own reports a null group")
+    func ungroupedExerciseReportsNull() throws {
+        let exercises = try sessionExercises()
+
+        #expect(exercises[0].objectValue?["group"] == .null)
+        #expect(exercises[0]["exerciseID"]?.stringValue == "barbell-bench-press")
+    }
+
+    @Test("The tool says so before it is called, so the key is not a surprise")
+    func schemaSaysSo() {
+        #expect(ToolCatalog.recentSessionsDefinition.description.contains("superset"))
+        #expect(ToolCatalog.recentSessionsDefinition.description.contains("'group'"))
+    }
+}

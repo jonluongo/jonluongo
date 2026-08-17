@@ -109,7 +109,12 @@ public enum ToolCatalog {
             The most recently trained days, newest first: what was prescribed, \
             what was logged against it, and when. Each logged set carries its \
             reps, its 'durationSeconds' for work held for time, and its \
-            'distance' — a value and its unit — for work carried over a distance.
+            'distance' — a value and its unit — for work carried over a distance. \
+            An exercise trained in a superset, tri-set or giant set carries \
+            'group' — its notation ('A1'), its place in the round, and the rest \
+            after each round; 'group' is null for an exercise performed on its \
+            own. Without it a superset would read back as unrelated sets rather \
+            than as the rounds it was performed in.
             """,
         inputSchema: object(
             ["limit": integer("How many sessions to return. Defaults to 10.")]
