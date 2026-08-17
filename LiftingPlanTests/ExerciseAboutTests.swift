@@ -41,7 +41,7 @@ struct ExerciseAboutTests {
     func statedFacts() throws {
         let facts = ExerciseAbout.facts(for: try exercise(full))
         #expect(facts.map(\.label) == [
-            "Primary", "Also works", "Equipment", "Pattern", "Mechanic", "Difficulty",
+            "Primary", "Secondary", "Equipment", "Pattern", "Mechanic", "Difficulty",
         ])
         #expect(facts.map(\.value) == [
             "Chest", "Triceps, Shoulders", "Barbell", "Horizontal press",
@@ -54,7 +54,7 @@ struct ExerciseAboutTests {
         let facts = ExerciseAbout.facts(for: try exercise(sparse))
         #expect(facts.map(\.label) == ["Primary", "Equipment", "Pattern"])
         #expect(!facts.contains { $0.label == "Difficulty" })
-        #expect(!facts.contains { $0.label == "Also works" })
+        #expect(!facts.contains { $0.label == "Secondary" })
     }
 
     @Test("An entry with no instructions has none to show")

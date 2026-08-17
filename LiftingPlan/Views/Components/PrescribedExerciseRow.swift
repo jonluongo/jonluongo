@@ -1,8 +1,8 @@
 import SwiftUI
 import LiftingKit
 
-/// One prescribed exercise, read before it is trained: its name, what the plan
-/// asks of it, and whether it has already been logged.
+/// One prescribed exercise, read before it is trained: its name and what the
+/// plan asks of it.
 ///
 /// **What it does.** States the plan and nothing else. Inside a group it is
 /// prefixed with the `A1` / `A2` the group's header legends, and nothing else
@@ -28,6 +28,14 @@ import LiftingKit
 /// six exercises opened as a wall of prose in front of a lifter deciding
 /// whether to start.
 ///
+/// **Nor is whether it has been logged.** This row used to carry a green
+/// circled check when every set of the exercise was ticked, on the same screen
+/// as the green circled check beside the day — one badge making two different
+/// claims, which read as one claim nobody could pin down. The day-level mark is
+/// the one a screen of prescriptions is for; which of Monday's six exercises
+/// got finished is a question asked under the bar, and `ExerciseLogSection`
+/// answers it there, set by set.
+///
 /// **How it is used.** The Today screen draws one per exercise of the day it is
 /// showing. It was the session preview screen's row; that screen showed the same
 /// session Today now shows, one tap deeper, so it went and the row stayed.
@@ -46,13 +54,6 @@ struct PrescribedExerciseRow: View {
     /// drew. The common case pays nothing for the rare one.
     var notation: String? = nil
 
-    /// Whether every set logged against this exercise is ticked. Absence of
-    /// rows is not completion: an exercise nobody has opened has none.
-    private var isComplete: Bool {
-        let sets = exercise.loggedSets ?? []
-        return !sets.isEmpty && sets.allSatisfy(\.isCompleted)
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.tight) {
             HStack {
@@ -65,11 +66,6 @@ struct PrescribedExerciseRow: View {
                 }
                 Text(exercise.displayName).font(.barbellTitle)
                 Spacer()
-                if isComplete {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                        .accessibilityLabel("Logged")
-                }
             }
             // One line where one line holds it, stacked where it does not: at
             // accessibility text sizes "4 × 6-8 · RPE 7-8" and a rest no longer

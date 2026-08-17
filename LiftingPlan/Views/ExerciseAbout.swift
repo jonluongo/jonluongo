@@ -51,7 +51,11 @@ enum ExerciseAbout {
     static func facts(for exercise: Exercise) -> [ExerciseFact] {
         [
             fact("Primary", list(exercise.primaryMuscles.map(\.rawValue))),
-            fact("Also works", list(exercise.secondaryMuscles.map(\.rawValue))),
+            // "Primary" and "Secondary", not "Primary" and "Also works": every
+            // other label on this screen names the fact rather than narrating
+            // it, and a verb phrase sitting under a noun read as two different
+            // kinds of row.
+            fact("Secondary", list(exercise.secondaryMuscles.map(\.rawValue))),
             fact("Equipment", sentenceCased(exercise.equipment.rawValue)),
             fact("Pattern", sentenceCased(exercise.pattern.rawValue)),
             fact("Mechanic", exercise.mechanic.map { sentenceCased($0.rawValue) }),

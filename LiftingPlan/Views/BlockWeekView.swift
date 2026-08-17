@@ -17,8 +17,8 @@ import LiftingKit
 ///
 /// **How it is used.** Pushed from `BlockView`, inside the Plans tab's stack.
 /// **What it depends on.** `TrainingWeek` and `WorkoutDay` from Store,
-/// `PlanWeekSelection` for the title, `TodayPhrasing` for a session's shape,
-/// and the shared row components. It writes nothing.
+/// `PlanWeekSelection` for the title, and the shared row components. It writes
+/// nothing.
 struct BlockWeekView: View {
 
     let week: TrainingWeek
@@ -79,11 +79,14 @@ struct SessionRow: View {
 
     private var isLogged: Bool { day.completedAt != nil }
 
-    /// "Push · 5 exercises", dropping the focus when the plan named none.
+    /// "Push · 60 min", dropping either part the plan did not state.
+    ///
+    /// **It no longer counts the exercises.** The count sat one row above the
+    /// list it was counting, so it told the reader something the next inch of
+    /// screen already showed. The session's length is the one fact on this line
+    /// that is nowhere else on the screen, so it stayed.
     private var subtitle: String {
-        let count = TodayPhrasing.sessionShape(
-            exercises: day.orderedExercises.count, durationMinutes: day.durationMinutes)
-        return [day.focus.isEmpty ? nil : day.focus, count]
+        [day.focus.isEmpty ? nil : day.focus, day.durationMinutes.map { "\($0) min" }]
             .compactMap { $0 }
             .joined(separator: " · ")
     }
