@@ -20,8 +20,9 @@ import SwiftUI
 /// that exists because "Start Workout", "Finish Workout" and "Start 2min" had
 /// once drifted into three buttons of different heights and colours. This
 /// section first drew a hand-rolled one, which was that drift happening again.
-/// Green is the named exception the button documents: green means done
-/// everywhere else in the app.
+/// It carries the accent, not green: green marks what the record already holds
+/// — a ticked set, a logged session — and this button is the act that creates
+/// that, not the fact itself.
 ///
 /// **What it depends on.** SwiftUI, `Spacing` and `PrimaryActionButton`. The
 /// section it draws is a list section, so it is placed inside the same `List` as
@@ -53,9 +54,7 @@ struct SessionFinishSection: View {
                 .listRowBackground(Color.clear)
             } else {
                 PrimaryActionButton(
-                    title: "Finish Workout", systemImage: "checkmark", tint: .green,
-                    action: onFinish
-                )
+                    title: "Finish Workout", systemImage: "checkmark", action: onFinish)
                 .accessibilityHint("Marks this session as logged")
                 .listRowBackground(Color.clear)
             }

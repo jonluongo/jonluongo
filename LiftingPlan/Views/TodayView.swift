@@ -5,10 +5,19 @@ import LiftingKit
 /// The front door: the next workout in the block, and the one thing there is to
 /// do about it.
 ///
-/// **What it does.** Finds the first session the block prescribes that has not
-/// been logged, shows it in full, and offers to start it. Three states and no
-/// more — no block, a workout waiting, or a block whose sessions have all been
-/// logged.
+/// **What it does.** Shows the workouts left in the week the lifter is on, one
+/// per page, and offers to start whichever he has swiped to. Three states and no
+/// more — no block, a week with workouts left in it, or a block whose sessions
+/// have all been logged.
+///
+/// **He chooses which one, not the app.** It used to show the first unlogged
+/// session and only that, which quietly decided the order of his week for him:
+/// a lifter who wanted legs on Monday had no way to say so, and the screen would
+/// have sat on Push until he trained it. The block prescribes what the week
+/// holds and Claude decides that; which of them he does today is his, and it was
+/// never the app's to hold. When one workout is left there is one page and
+/// nothing to swipe, which is the same statement made by the absence of a
+/// choice.
 ///
 /// **There is no calendar here, deliberately.** A week strip used to sit across
 /// the top, pinned to a start date the app itself invented — `PlanImporter`
@@ -37,20 +46,36 @@ struct TodayView: View {
     /// The session the logging screen is open on, or `nil`.
     @State private var openSession: WorkoutDay?
 
+    /// The page he has swiped to, or `nil` before he has swiped at all — which
+    /// shows the first workout left in the week.
+    @State private var chosen: PersistentIdentifier?
+
     private var plan: TrainingPlan? { plans.first }
 
-    /// The next workout: the first session in the block that has not been
-    /// logged.
+    /// The workouts left in the week the lifter is on: every session of the
+    /// earliest week that still holds one, that has not been logged.
     ///
     /// A day the block prescribes no exercises on is passed over rather than
-    /// shown — it is not a workout, and it will never be logged, so stopping on
-    /// it would strand the screen there forever. That is a reading of the block,
-    /// not a decision about it: what to train is still entirely Claude's, and
-    /// this only finds where the lifter has got to in what was written.
-    private var nextWorkout: WorkoutDay? {
-        plan?.orderedWeeks
-            .flatMap { $0.orderedDays }
-            .first { $0.completedAt == nil && !$0.orderedExercises.isEmpty }
+    /// shown — it is not a workout, and it will never be logged, so offering it
+    /// would be offering a page with nothing to do on it. That is a reading of
+    /// the block, not a decision about it: what to train is still entirely
+    /// Claude's, and this only finds what is left of what he wrote.
+    private var remaining: [WorkoutDay] {
+        guard let week = plan?.orderedWeeks.first(where: { !Self.left(in: $0).isEmpty }) else {
+            return []
+        }
+        return Self.left(in: week)
+    }
+
+    private static func left(in week: TrainingWeek) -> [WorkoutDay] {
+        week.orderedDays.filter { $0.completedAt == nil && !$0.orderedExercises.isEmpty }
+    }
+
+    /// The workout the button will start: the one swiped to, or the first left
+    /// when nothing has been swiped to — and the first again whenever the one he
+    /// had chosen leaves the week, which is what finishing it does.
+    private var selected: WorkoutDay? {
+        remaining.first { $0.persistentModelID == chosen } ?? remaining.first
     }
 
     var body: some View {
@@ -71,11 +96,25 @@ struct TodayView: View {
 
     @ViewBuilder
     private func screen(_ plan: TrainingPlan) -> some View {
-        if let workout = nextWorkout {
-            List {
-                TodaySessionSection(session: workout, unit: profile.displayUnit)
+        if let selected {
+            // One page per workout left in the week. The dots are drawn only
+            // where there is more than one, because an indicator under a single
+            // page says a choice exists that does not.
+            TabView(selection: $chosen) {
+                ForEach(remaining) { workout in
+                    List {
+                        TodaySessionSection(session: workout, unit: profile.displayUnit)
+                    }
+                    .tag(Optional(workout.persistentModelID))
+                }
             }
-            .safeAreaInset(edge: .bottom) { action(workout) }
+            .tabViewStyle(.page(indexDisplayMode: remaining.count > 1 ? .always : .never))
+            .indexViewStyle(.page(backgroundDisplayMode: .interactive))
+            // Stated because a pager does not hand its background up the way a
+            // list does: the navigation bar behind the title drew white over
+            // grouped-grey content, a seam across the top of the screen.
+            .background(Color(.systemGroupedBackground))
+            .safeAreaInset(edge: .bottom) { action(selected) }
         } else {
             // Every session logged, or a block with nothing in it. Both read the
             // same to a lifter: there is no next workout, and the next one comes
@@ -86,9 +125,10 @@ struct TodayView: View {
         }
     }
 
-    /// Start, or pick up where the session was left. A workout with prescribed
-    /// exercises always has one — `nextWorkout` never returns an empty session,
-    /// so there is no button here that opens a screen with nothing on it.
+    /// Start, or pick up where the session was left — whichever page he is on.
+    /// A workout with prescribed exercises always has one: `remaining` never
+    /// holds an empty session, so there is no button here that opens a screen
+    /// with nothing on it.
     private func action(_ workout: WorkoutDay) -> some View {
         PrimaryActionButton(
             title: TodayPhrasing.actionTitle(for: TodayInPlan.progress(of: workout)),
