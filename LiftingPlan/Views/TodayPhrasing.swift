@@ -70,33 +70,6 @@ enum TodayPhrasing {
         }
     }
 
-    /// `"Tomorrow · Push"`, `"Thursday · Lower"` — the next session the block
-    /// prescribes, named by when it falls and what it is for.
-    ///
-    /// A weekday names itself for anything inside the coming week; past that a
-    /// weekday would be ambiguous — "Thursday" could be either of two — so the
-    /// count of days is stated instead.
-    static func nextLine(
-        for day: BlockDay, from now: Date, calendar: Calendar = .current
-    ) -> String {
-        let when = whenLine(for: day, from: now, calendar: calendar)
-        return day.focus.isEmpty ? when : "\(when) · \(day.focus)"
-    }
-
-    /// The timing half of `nextLine`, on its own.
-    static func whenLine(
-        for day: BlockDay, from now: Date, calendar: Calendar = .current
-    ) -> String {
-        let days = calendar.dateComponents(
-            [.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: day.date)
-        ).day
-        switch days {
-        case .some(1): return "Tomorrow"
-        case .some(let count) where count >= 7: return "In \(count) days"
-        default: return day.weekday.fullName
-        }
-    }
-
     /// `"5 exercises"`, and the session's length beside it when the plan stated
     /// one. Nothing is said about a session that prescribes nothing.
     static func sessionShape(exercises: Int, durationMinutes: Int?) -> String? {
@@ -114,16 +87,30 @@ enum TodayPhrasing {
         return "\(finished) of \(prescribed) session\(prescribed == 1 ? "" : "s") logged"
     }
 
-    /// `"Sunday, 16 August"` — the day the screen is talking about.
+    /// `"Sunday, 16 August"` — the day the screen is showing.
     ///
     /// The screen was titled "Today" and never said which day that was, so
-    /// "Rest day" and "Tomorrow · Push" had nothing to anchor to: a word like
-    /// *tomorrow* only means something once *today* has been stated. The
-    /// weekday leads because training is scheduled by weekday — "Sunday" is the
-    /// part a lifter checks against what the block prescribes.
-    static func todayLine(_ now: Date, locale: Locale = .autoupdatingCurrent) -> String {
-        now.formatted(
-            .dateTime.weekday(.wide).day().month(.wide).locale(locale)
-        )
+    /// "Rest day" had nothing to anchor to. Now that the strip lets any day be
+    /// chosen it has a second job: a circled `17` says which column, and this
+    /// says which day. The weekday leads because training is scheduled by
+    /// weekday — "Sunday" is the part a lifter checks against what the block
+    /// prescribes.
+    ///
+    /// The year is not stated. It is the same for eleven months out of twelve
+    /// and the strip never travels beyond one block, so it would be a word that
+    /// is always there and never read.
+    /// The time zone is an argument for the same reason the calendar is
+    /// everywhere else here: which day an instant falls on is a question only a
+    /// time zone answers, and a line that read "Sunday" on one side of midnight
+    /// and "Monday" on the other depending on the machine is not one a test
+    /// could hold still.
+    static func dayLine(
+        _ date: Date,
+        locale: Locale = .autoupdatingCurrent,
+        timeZone: TimeZone = .autoupdatingCurrent
+    ) -> String {
+        var style = Date.FormatStyle.dateTime.weekday(.wide).day().month(.wide).locale(locale)
+        style.timeZone = timeZone
+        return date.formatted(style)
     }
 }

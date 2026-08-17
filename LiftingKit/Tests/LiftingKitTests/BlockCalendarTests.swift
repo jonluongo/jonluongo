@@ -292,6 +292,54 @@ struct BlockCalendarTests {
         #expect(day.date == Self.startOfDay(2026, 3, 9, in: newYork))
     }
 
+    // MARK: - The block's extent
+
+    @Test("A block covers its start date and seven days per week after it")
+    func spanCoversEveryWeek() throws {
+        let subject = BlockCalendar(calendar: Self.utc)
+        let span = try #require(subject.span(of: Self.fourWeekBlock()))
+
+        #expect(span.lowerBound == Self.startOfDay(2026, 3, 2))
+        // Four weeks from Monday 2 March ends on Sunday 29 March, not 30 March:
+        // the last day is covered, and an off-by-one here is a day the strip
+        // would let the lifter swipe into for nothing.
+        #expect(span.upperBound == Self.startOfDay(2026, 3, 29))
+    }
+
+    @Test("The extent is the same day the block reports having elapsed on")
+    func spanAgreesWithElapsed() throws {
+        let subject = BlockCalendar(calendar: Self.utc)
+        let span = try #require(subject.span(of: Self.fourWeekBlock()))
+        let after = subject.today(in: Self.fourWeekBlock(), on: Self.at(2026, 4, 1))
+
+        guard case .elapsed(let endedOn) = after.standing else {
+            Issue.record("Expected the block to have elapsed")
+            return
+        }
+        #expect(endedOn == span.upperBound)
+    }
+
+    @Test("A block nothing dates has no extent")
+    func undatedBlockHasNoSpan() {
+        let subject = BlockCalendar(calendar: Self.utc)
+
+        #expect(subject.span(of: BlockSchedule(startDate: nil, closedAt: nil, weeks: [])) == nil)
+        #expect(subject.span(
+            of: BlockSchedule(startDate: Self.at(2026, 3, 2), closedAt: nil, weeks: [])) == nil)
+    }
+
+    @Test("A closed block still covered the days it covered")
+    func closedBlockKeepsItsExtent() throws {
+        // Closing is a fact about the record, not about the calendar. What to
+        // do about it is the caller's decision.
+        let subject = BlockCalendar(calendar: Self.utc)
+        let closed = Self.fourWeekBlock(closedAt: Self.at(2026, 3, 10))
+        let span = try #require(subject.span(of: closed))
+
+        #expect(span.lowerBound == Self.startOfDay(2026, 3, 2))
+        #expect(span.upperBound == Self.startOfDay(2026, 3, 29))
+    }
+
     // MARK: - Fixtures
 
     private static let utc = calendar(in: "UTC")

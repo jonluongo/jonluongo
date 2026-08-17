@@ -2,62 +2,77 @@ import SwiftUI
 import SwiftData
 import LiftingKit
 
-/// The front door: what today is, and the one thing there is to do about it.
+/// The front door: which day the lifter is looking at, and the one thing there
+/// is to do about it.
 ///
-/// **What it does.** Asks `TodayInPlan` where today falls in the current block
-/// and draws the one screen that answer calls for — today's session and a way
-/// to begin it, the work already under way, a rest day and what follows it, a
-/// block that has not started, a block that is over, or a lifter with no block
-/// at all. It replaces the Plan tab, which rendered every week of a block
-/// identically and left the lifter to work out which one he was in.
+/// **What it does.** Draws a week of the block across the top, lets any day in
+/// it be chosen by tap or by swipe, and answers what that day is — a session and
+/// a way to begin it, the work already under way, a rest day, a block that has
+/// not started, a block that is over, or a lifter with no block at all. It opens
+/// on today every time, which is why the tab is still called Today.
 ///
-/// **How it is used.** The first tab, inside a `NavigationStack`. The header is
-/// a link into `BlockView` rather than a tab of its own: the block is what
-/// today is part of, so it sits behind today. Nothing here writes to the store;
-/// the only thing it starts is the logging screen.
+/// **How it is used.** The first tab, inside a `NavigationStack`. There is no
+/// large navigation title: it held one word above a hundred points of empty bar,
+/// and the week strip earns that space instead. The block is reached by a link
+/// rather than by a tab of its own, because the block is what a day is part of.
+/// Nothing here writes to the store; the only thing it starts is logging.
 ///
-/// **What it depends on.** `TodayInPlan` from Services, `TrainingPlan` and
-/// `WorkoutDay` from Store, `TodayPhrasing` for every line that is not a stored
-/// string, and the shared components.
+/// **What it depends on.** `TodayInPlan` from Services, `WeekStrip` from
+/// LiftingKit, `TrainingPlan` and `WorkoutDay` from Store, `TodayPhrasing` for
+/// every line that is not a stored string, and the shared components.
+///
+/// ## The day being shown, and today
+///
+/// `chosen` is `nil` until the lifter swipes, and returns to `nil` whenever he
+/// comes back to the app. Holding the absence rather than a copy of today's date
+/// is what makes a phone left open overnight correct in the morning: there is no
+/// stale date to go out of step, and *Today* is a state to return to rather than
+/// a date to recompute.
 struct TodayView: View {
 
     let profile: UserProfile
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.calendar) private var calendar
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     /// When "today" is, read once and refreshed when the app comes back to the
-    /// screen. A phone left open overnight would otherwise still be showing
-    /// yesterday, and the moment the lifter looks at it is the moment it is
-    /// re-read.
+    /// screen. The moment the lifter looks at it is the moment it is re-read.
     @State private var now = Date()
+
+    /// The day the lifter swiped or tapped to, or `nil` while the screen is
+    /// still about today.
+    @State private var chosen: Date?
 
     /// The session the logging screen is open on, or `nil`.
     @State private var openSession: WorkoutDay?
 
     private var plan: TrainingPlan? { plans.first }
 
+    /// The start of today, in the lifter's own calendar.
+    private var today: Date { calendar.startOfDay(for: now) }
+
+    /// The start of the day the screen is showing.
+    private var shown: Date { chosen ?? today }
+
     var body: some View {
         Group {
             if let plan {
-                today(plan, TodayInPlan.resolve(plan, on: now))
+                screen(plan)
             } else {
                 noBlock
             }
         }
-        .navigationTitle("Today")
-        // Which day "today" is. Without it the title is a label rather than an
-        // answer, and every relative word under it — "Rest day", "Tomorrow" —
-        // is anchored to nothing.
-        //
-        // Drawn by the navigation bar rather than in the list, so it behaves
-        // the way every other iOS app's header does: large while the screen is
-        // at rest, shrinking into the bar as the content moves under it. The
-        // bar's height above the title is the platform's, and the price of
-        // that behaviour.
-        .navigationSubtitle(TodayPhrasing.todayLine(now))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { returnToToday }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { now = Date() }
+            if phase == .active {
+                now = Date()
+                // Coming back to the app is coming back to today. The screen is
+                // named for it, and a lifter reopening his phone between sets
+                // wants the day he is in, not the one he was reading about.
+                chosen = nil
+            }
         }
         .fullScreenCover(item: $openSession) { session in
             ActiveWorkoutView(day: session, profile: profile)
@@ -69,7 +84,8 @@ struct TodayView: View {
     /// Saying "Week 1" over a plan that states neither would be the app
     /// inventing the fact that is missing.
     @ViewBuilder
-    private func today(_ plan: TrainingPlan, _ standing: TodayInBlock) -> some View {
+    private func screen(_ plan: TrainingPlan) -> some View {
+        let standing = TodayInPlan.resolve(plan, on: shown, calendar: calendar)
         switch standing.standing {
         case .undated, .unscheduled:
             noBlock
@@ -78,7 +94,11 @@ struct TodayView: View {
                 Section { header(plan, standing.standing) }
                 content(plan, standing)
             }
+            .safeAreaInset(edge: .top, spacing: 0) { strip(plan) }
             .safeAreaInset(edge: .bottom) { action(plan, standing.standing) }
+            // Simultaneous, so the list still scrolls: this only ever acts on a
+            // gesture that ended up more sideways than it was long.
+            .simultaneousGesture(swipe(plan))
         }
     }
 
@@ -90,11 +110,99 @@ struct TodayView: View {
         }
     }
 
+    // MARK: - The week
+
+    /// The week the shown day falls in, pinned above everything else.
+    ///
+    /// Absent for a block no day can be chosen inside — see
+    /// `TodayInPlan.selectableDays`. A strip that could not change the screen
+    /// would be a control that does nothing.
+    @ViewBuilder
+    private func strip(_ plan: TrainingPlan) -> some View {
+        if let reachable = reachableDays(plan) {
+            WeekStripView(
+                days: WeekStrip(calendar: calendar).week(containing: shown).map { date in
+                    WeekStripDay(
+                        date: date,
+                        isToday: date == today,
+                        isSelected: date == shown,
+                        trains: TodayInPlan.prescribesSession(
+                            in: plan, on: date, calendar: calendar),
+                        isReachable: reachable.contains(date)
+                    )
+                },
+                dayLine: TodayPhrasing.dayLine(shown),
+                select: { choose($0) }
+            )
+        }
+    }
+
+    /// The way back, offered only once there is somewhere to come back from.
+    @ToolbarContentBuilder
+    private var returnToToday: some ToolbarContent {
+        if chosen != nil {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Today") { withAnimation { chosen = nil } }
+                    .accessibilityHint("Shows today again")
+            }
+        }
+    }
+
+    /// The days this screen will show, which is the block's own days plus today.
+    ///
+    /// Today is included even when it falls outside the block — before it starts
+    /// or after it ends — because a screen that opens on a day it will not let
+    /// you return to is a trap. Every day in this range resolves to something
+    /// with words on it, which is the property that stops a swipe reaching a
+    /// blank screen.
+    private func reachableDays(_ plan: TrainingPlan) -> ClosedRange<Date>? {
+        guard let span = TodayInPlan.selectableDays(in: plan, calendar: calendar) else {
+            return nil
+        }
+        return min(span.lowerBound, today)...max(span.upperBound, today)
+    }
+
+    /// Left for the next day, right for the previous.
+    ///
+    /// A swipe has to travel further than the smallest thing it could have been
+    /// aiming at, and end up more sideways than it was long, before it counts —
+    /// otherwise a diagonal flick down a long session would change the day.
+    private func swipe(_ plan: TrainingPlan) -> some Gesture {
+        DragGesture(minimumDistance: TapTarget.minimum)
+            .onEnded { drag in
+                let sideways = drag.translation.width
+                guard abs(sideways) > abs(drag.translation.height) else { return }
+                step(sideways < 0 ? 1 : -1, in: plan)
+            }
+    }
+
+    /// Moves one day, or stays put at the ends of the block. Nothing is clamped
+    /// and nothing wraps: the strip simply stops, which is what a lifter feels
+    /// as an edge.
+    private func step(_ days: Int, in plan: TrainingPlan) {
+        guard
+            let reachable = reachableDays(plan),
+            let moved = WeekStrip(calendar: calendar)
+                .day(shown, steppedBy: days, within: reachable)
+        else { return }
+        choose(moved)
+    }
+
+    /// Shows a day, and forgets the choice again when the day chosen is today —
+    /// so tapping today's column puts the *Today* button away, exactly as
+    /// pressing it would.
+    private func choose(_ date: Date) {
+        withAnimation { chosen = date == today ? nil : date }
+    }
+
     // MARK: - Header
 
-    /// The block and the week, and the way into the block. Fitbod's "My Plan ›"
-    /// rather than a calendar tab: one line, always in the same place, and it
-    /// costs nothing when it is not tapped.
+    /// The block and the week, and the way into the block. One line, always in
+    /// the same place, and it costs nothing when it is not tapped.
+    ///
+    /// It survives the week strip because the two say different things: the
+    /// strip says which Wednesday, and this says which week of training that
+    /// Wednesday belongs to — an ordinal and a label the calendar cannot show.
     private func header(
         _ plan: TrainingPlan, _ standing: TodayInBlock.Standing
     ) -> some View {
@@ -124,10 +232,10 @@ struct TodayView: View {
         return "Block"
     }
 
-    /// "Week 2 of 4 · Accumulation" while today falls inside the block. Outside
-    /// it there is no week to name, so the block's length is stated instead —
-    /// and nothing at all before it starts, where the state below already says
-    /// when that is.
+    /// "Week 2 of 4 · Accumulation" while the day shown falls inside the block.
+    /// Outside it there is no week to name, so the block's length is stated
+    /// instead — and nothing at all before it starts, where the state below
+    /// already says when that is.
     private static func headerLine(
         _ plan: TrainingPlan, _ standing: TodayInBlock.Standing
     ) -> String? {
@@ -157,28 +265,18 @@ struct TodayView: View {
         switch standing.standing {
         case .session(let day):
             TodaySessionSection(day: day, plan: plan)
-            // A session already logged asks the same question a rest day does.
-            if day.progress.isFinished, let upcoming = standing.upcoming {
-                next(upcoming, in: plan)
-            }
             noteSection(plan)
         case .rest:
             TodayRestSection()
-            if let upcoming = standing.upcoming { next(upcoming, in: plan) }
             noteSection(plan)
         case .beforeBlock(let days):
             TodayBeforeBlockSection(daysUntilStart: days)
-            if let upcoming = standing.upcoming { next(upcoming, in: plan) }
             noteSection(plan)
         case .closed, .elapsed:
             TodayFinishedSection(plan: plan)
         case .undated, .unscheduled:
             EmptyView()
         }
-    }
-
-    private func next(_ day: BlockDay, in plan: TrainingPlan) -> some View {
-        TodayNextSection(next: day, plan: plan, profile: profile, now: now)
     }
 
     /// The coach's words, while the block is one the lifter is in. Absent when
@@ -193,16 +291,22 @@ struct TodayView: View {
 
     // MARK: - The one thing to do
 
-    /// Start, resume, or reopen. Absent only for a session that prescribes
-    /// nothing — a button that opens an empty logging screen is a promise the
-    /// plan did not make.
+    /// Start, resume, or reopen — **on today, and only on today.**
     ///
-    /// A finished session keeps its button. Without one a logged day was a dead
-    /// end: nothing could be corrected, added, or undone, and Finish was a
-    /// one-way door pressed with chalk on the hands.
+    /// Another day's session is shown in full, because seeing what a day holds
+    /// is what the strip is for, but it does not offer to be started. A block
+    /// prescribes its sessions in an order; deciding to train Thursday's work on
+    /// Tuesday is the lifter's to make, and it should not be one mis-swipe and
+    /// one mis-tap away on a screen read one-handed. A finished session keeps
+    /// its button, so a mis-tapped Finish or a weight typed wrong is not a dead
+    /// end.
+    ///
+    /// Absent too for a session that prescribes nothing: a button that opens an
+    /// empty logging screen is a promise the plan did not make.
     @ViewBuilder
     private func action(_ plan: TrainingPlan, _ standing: TodayInBlock.Standing) -> some View {
-        if let day = standing.session,
+        if chosen == nil,
+            let day = standing.session,
             let session = TodayInPlan.session(day, in: plan),
             !session.orderedExercises.isEmpty {
             let isDone = if case .finished = day.progress { true } else { false }

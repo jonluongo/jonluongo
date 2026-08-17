@@ -68,8 +68,15 @@ struct TodaySessionSection: View {
 /// A day the block prescribes nothing on.
 ///
 /// Two days in five are this one, so it says what it is in the same type a
-/// training day gets. Rest is what the block prescribes today, not the absence
-/// of a screen — and what follows is stated by the section after this one.
+/// training day gets. Rest is what the block prescribes, not the absence of a
+/// screen.
+///
+/// A *Next* section used to sit under this, naming the session after today,
+/// because without it a rest day was a screen with one sentence on it. The week
+/// strip above now says the same thing better: the next training day is a
+/// marked column two thumbs away, in the context of the whole week, rather than
+/// one line naming one day. The section was answering a question the header
+/// already answers, so it went.
 struct TodayRestSection: View {
 
     var body: some View {
@@ -96,43 +103,6 @@ struct TodayBeforeBlockSection: View {
             Text(TodayPhrasing.start(inDays: daysUntilStart))
                 .font(.barbellTitle)
                 .padding(.vertical, Spacing.tight)
-        }
-    }
-}
-
-/// The next session the block prescribes, and the way into it.
-///
-/// Shown on the days that have no session of their own — a rest day, a day
-/// before the block starts, and a day whose session is already logged. All
-/// three ask the same question.
-struct TodayNextSection: View {
-
-    let next: BlockDay
-    let plan: TrainingPlan
-    let profile: UserProfile
-    /// When "now" is, so "Tomorrow" is measured from the same instant the rest
-    /// of the screen was drawn from.
-    let now: Date
-
-    var body: some View {
-        let session = TodayInPlan.session(next, in: plan)
-        Section("Next") {
-            if let session {
-                NavigationLink {
-                    SessionDetailView(day: session, profile: profile)
-                } label: {
-                    IconCircleRow(
-                        systemImage: "dumbbell.fill", tint: .accentColor,
-                        title: TodayPhrasing.nextLine(for: next, from: now),
-                        subtitle: TodayPhrasing.sessionShape(
-                            exercises: session.orderedExercises.count,
-                            durationMinutes: session.durationMinutes)
-                    )
-                }
-            } else {
-                Text(TodayPhrasing.nextLine(for: next, from: now))
-                    .font(.barbellBody)
-            }
         }
     }
 }

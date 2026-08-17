@@ -95,35 +95,61 @@ struct TodayPhrasingTests {
         #expect(TodayPhrasing.actionTitle(for: .finished(Self.monday)) == "Open Session")
     }
 
-    // MARK: - What is next
+    // MARK: - The day being shown
 
-    @Test("Tomorrow is called tomorrow, not by its weekday")
-    func tomorrow() {
-        let next = Self.day(.tuesday, focus: "Pull", daysFromMonday: 1)
-        #expect(TodayPhrasing.nextLine(for: next, from: Self.monday, calendar: Self.calendar)
-            == "Tomorrow · Pull")
+    // A *Next* section used to name the session after today, and these tests
+    // covered its wording. The week strip says the same thing better — the next
+    // training day is a marked column rather than a sentence — so the section
+    // and its phrasing both went, and what the header says instead is below.
+
+    @Test("The line names the weekday first, then the date")
+    func dayLineNamesTheWeekday() {
+        let line = TodayPhrasing.dayLine(
+            Self.monday, locale: Locale(identifier: "en_US"), timeZone: .gmt)
+
+        // Ordering is the locale's, so the parts are asserted rather than the
+        // punctuation between them.
+        #expect(line.contains("Monday"))
+        #expect(line.contains("March"))
+        #expect(line.contains("2"))
     }
 
-    @Test("A day later this week is named by its weekday")
-    func laterThisWeek() {
-        let next = Self.day(.thursday, focus: "Lower", daysFromMonday: 3)
-        #expect(TodayPhrasing.nextLine(for: next, from: Self.monday, calendar: Self.calendar)
-            == "Thursday · Lower")
+    @Test("The year is not stated")
+    func dayLineOmitsTheYear() {
+        // It is the same for eleven months in twelve and the strip never
+        // travels beyond one block, so it would be a word always there and
+        // never read.
+        let line = TodayPhrasing.dayLine(
+            Self.monday, locale: Locale(identifier: "en_US"), timeZone: .gmt)
+
+        #expect(!line.contains("2026"))
     }
 
-    @Test("Past a week a weekday would be ambiguous, so the count is stated")
-    func beyondAWeek() {
-        // "Thursday" eleven days out could be either of two Thursdays.
-        let next = Self.day(.thursday, focus: "Lower", daysFromMonday: 10)
-        #expect(TodayPhrasing.nextLine(for: next, from: Self.monday, calendar: Self.calendar)
-            == "In 10 days · Lower")
+    @Test("A different day gets a different line")
+    func dayLineFollowsTheDay() {
+        let monday = TodayPhrasing.dayLine(
+            Self.monday, locale: Locale(identifier: "en_US"), timeZone: .gmt)
+        let tuesday = TodayPhrasing.dayLine(
+            Self.monday.addingTimeInterval(86_400),
+            locale: Locale(identifier: "en_US"), timeZone: .gmt)
+
+        #expect(monday != tuesday)
+        #expect(tuesday.contains("Tuesday"))
     }
 
-    @Test("A session the plan named nothing states only when it is")
-    func nextWithoutFocus() {
-        let next = Self.day(.tuesday, daysFromMonday: 1)
-        #expect(TodayPhrasing.nextLine(for: next, from: Self.monday, calendar: Self.calendar)
-            == "Tomorrow")
+    @Test("The day an instant falls on is the time zone's answer, not the machine's")
+    func dayLineFollowsTheTimeZone() {
+        // Midnight UTC on Monday is still Sunday evening in New York, and the
+        // strip's circled column agrees with the line beneath it or neither can
+        // be trusted.
+        let utc = TodayPhrasing.dayLine(
+            Self.monday, locale: Locale(identifier: "en_US"), timeZone: .gmt)
+        let newYork = TodayPhrasing.dayLine(
+            Self.monday, locale: Locale(identifier: "en_US"),
+            timeZone: TimeZone(identifier: "America/New_York") ?? .gmt)
+
+        #expect(utc.contains("Monday"))
+        #expect(newYork.contains("Sunday"))
     }
 
     // MARK: - Before the block

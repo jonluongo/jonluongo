@@ -89,9 +89,7 @@ public struct BlockCalendar: Sendable {
 
         let ordinal = elapsedDays / 7 + 1
         if ordinal > totalWeeks {
-            guard let endedOn = calendar.date(
-                byAdding: .day, value: totalWeeks * 7 - 1, to: blockStart
-            ) else {
+            guard let endedOn = span(of: schedule)?.upperBound else {
                 return TodayInBlock(standing: .undated, upcoming: nil)
             }
             return TodayInBlock(standing: .elapsed(endedOn: endedOn), upcoming: upcoming)
@@ -102,6 +100,28 @@ public struct BlockCalendar: Sendable {
             return TodayInBlock(standing: .session(session), upcoming: upcoming)
         }
         return TodayInBlock(standing: .rest(placement), upcoming: upcoming)
+    }
+
+    /// The first and last calendar day this block covers, or `nil` when nothing
+    /// places it on a calendar — no start date, or no weeks to measure.
+    ///
+    /// The extent follows the same rule as everything else here: a block runs
+    /// seven days per week from its start date, so a four-week block covers its
+    /// start date and the twenty-seven days after it. **Whether the record has
+    /// closed the block is not consulted** — a closed block still covered the
+    /// days it covered, and what to do about that is the caller's decision, not
+    /// this one's.
+    public func span(of schedule: BlockSchedule) -> ClosedRange<Date>? {
+        guard
+            let startDate = schedule.startDate,
+            let totalWeeks = schedule.weeks.map(\.ordinal).max(),
+            totalWeeks > 0
+        else { return nil }
+        let start = calendar.startOfDay(for: startDate)
+        guard let end = calendar.date(
+            byAdding: .day, value: totalWeeks * 7 - 1, to: start
+        ) else { return nil }
+        return start...end
     }
 
     // MARK: - Placing weeks and days
