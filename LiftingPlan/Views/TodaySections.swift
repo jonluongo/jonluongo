@@ -1,150 +1,76 @@
 import SwiftUI
 import LiftingKit
-/// The day's session in full: what it is for, and every exercise it
-/// prescribes — the sets, the effort, the rest, the tempo, and a ramp written
-/// out set by set where the plan wrote one.
+
+/// The next workout in full: what it is for, and every exercise it prescribes —
+/// the sets, the effort, the rest, the tempo, and a ramp written out set by set
+/// where the plan wrote one.
 ///
-/// The whole session is shown rather than the next exercise alone — a
-/// prescribed session is something a lifter plans a gym trip around, and
-/// whether the rack is still needed is a question the screen should already
-/// have answered. It used to be a line each here and the rest of it one tap
-/// deeper on a screen of its own; the deeper screen was the same session read
-/// twice, so this took its contents and it went.
+/// The whole session is shown rather than the next exercise alone — a prescribed
+/// session is something a lifter plans a gym trip around, and whether the rack is
+/// still needed is a question the screen should already have answered.
+///
+/// It is handed the stored session directly. It used to take a day derived from
+/// a calendar and look the stored one back up, which meant it also had to say
+/// what it would do when the lookup failed; with no calendar in front of it there
+/// is nothing to fail.
 struct TodaySessionSection: View {
 
-    let day: BlockDay
-    let plan: TrainingPlan
+    let session: WorkoutDay
     /// The lifter's display unit, so a prescribed load reads in the unit he
     /// reads everything else in.
     let unit: MassUnit
-    /// Whether the screen is offering to start this session, which is true only
-    /// on today. It decides nothing about the prescription — only whether the
-    /// line explaining what the button does is worth printing.
-    let startable: Bool
-
-    private var session: WorkoutDay? { TodayInPlan.session(day, in: plan) }
 
     var body: some View {
-        // The session's name is a row rather than a section header: a header is
-        // drawn small, grey and uppercased, which is how a screen says "column
-        // of a table", and this is the one thing on the screen.
         Section {
-            VStack(alignment: .leading, spacing: Spacing.tight) {
-                // Logged sits beside the name it describes, small. It was a row
-                // of its own — a 36pt green disc and one word, taking as much
-                // of the card as an exercise takes — which spent the most
-                // prominent space on the screen restating a fact the button
-                // underneath already says by reading "Open Session".
-                HStack(alignment: .firstTextBaseline, spacing: Spacing.standard) {
-                    Text(TodayPhrasing.sessionTitle(day))
-                        .font(.barbellTitle)
-                    Spacer()
-                    if case .finished = day.progress {
-                        Label("Logged", systemImage: "checkmark")
-                            .font(.barbellSupport)
-                            .foregroundStyle(.green)
-                    }
-                }
-                if let shape = TodayPhrasing.sessionShape(
-                    exercises: session?.orderedExercises.count ?? 0,
-                    durationMinutes: session?.durationMinutes
-                ) {
-                    Text(shape)
-                        .font(.barbellSupport)
-                        .foregroundStyle(.secondary)
+            // Each row opens that exercise's record — which is where the History
+            // tab went. A lifter reading tonight's bench press and wondering
+            // what he benched last month is already looking at the row that
+            // answers him.
+            ForEach(session.entries) { entry in
+                switch entry {
+                case .exercise(let exercise):
+                    ExerciseDetailLink(exercise: exercise, unit: unit)
+                case .group(let group):
+                    PrescribedGroupRows(group: group, unit: unit)
                 }
             }
-            .padding(.vertical, Spacing.tight)
-
-            if let session {
-                // Each row opens that exercise's record — which is where the
-                // History tab went. A lifter reading tonight's bench press and
-                // wondering what he benched last month is already looking at
-                // the row that answers him.
-                ForEach(session.entries) { entry in
-                    switch entry {
-                    case .exercise(let exercise):
-                        ExerciseDetailLink(exercise: exercise, unit: unit)
-                    case .group(let group):
-                        PrescribedGroupRows(group: group, unit: unit)
-                    }
-                }
-            } else {
-                // The block moved underneath the answer. Said plainly rather
-                // than guessed at with a neighbouring day's session.
-                Text("This session is no longer in the record.")
-                    .font(.barbellBody)
-            }
-        } footer: {
-            if let restNote { Text(restNote) }
+        } header: {
+            header
         }
     }
 
-    /// What the button below will do, said once, and only where all three
-    /// things it claims are true: there is a button, the session has not been
-    /// started, and the block prescribed rest somewhere in it.
+    /// The workout's name, above the card rather than inside it.
     ///
-    /// A session that prescribes no rest gets no sentence rather than a longer
-    /// one explaining an absence — the app never decides how long to rest, and
-    /// a paragraph saying so on every set of a bodyweight circuit is a wall in
-    /// front of the one thing there is to do. It also goes once the lifter is
-    /// under way: by then the answer is the screen he just came back from.
-    private var restNote: String? {
-        guard startable, case .notStarted = day.progress else { return nil }
-        guard let session,
-            session.orderedExercises.contains(where: { $0.restSeconds != nil })
-        else { return nil }
-        return """
-            Tap Start to log this session set by set. Where the block prescribes rest, \
-            checking a set off runs that rest.
-            """
-    }
-}
-
-/// A day the block prescribes nothing on.
-///
-/// Two days in five are this one, so it says what it is in the same type a
-/// training day gets. Rest is what the block prescribes, not the absence of a
-/// screen.
-///
-/// A *Next* section used to sit under this, naming the session after today,
-/// because without it a rest day was a screen with one sentence on it. The week
-/// strip above now says the same thing better: the next training day is a
-/// marked column two thumbs away, in the context of the whole week, rather than
-/// one line naming one day. The section was answering a question the header
-/// already answers, so it went.
-struct TodayRestSection: View {
-
-    var body: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Spacing.tight) {
-                Text("Rest day")
-                    .font(.barbellTitle)
-                Text("Nothing is prescribed today.")
+    /// It was the card's first row, divided from the exercises by the same
+    /// hairline that divides them from each other — so the thing naming the
+    /// session was drawn as one more item in the list of exercises, and read
+    /// like one. A section header sits outside the card, which is where a
+    /// heading belongs and what makes the card beneath it read as its contents.
+    ///
+    /// `textCase(nil)` and the title ramp undo the small grey capitals a header
+    /// is drawn in by default — that styling says "column of a table", and this
+    /// is the one thing on the screen.
+    private var header: some View {
+        VStack(alignment: .leading, spacing: Spacing.tight) {
+            Text(TodayPhrasing.sessionTitle(focus: session.focus, weekday: session.weekday))
+                .font(.barbellTitle)
+                .foregroundStyle(.primary)
+            if let shape = TodayPhrasing.sessionShape(
+                exercises: session.orderedExercises.count,
+                durationMinutes: session.durationMinutes
+            ) {
+                Text(shape)
                     .font(.barbellSupport)
                     .foregroundStyle(.secondary)
             }
-            .padding(.vertical, Spacing.tight)
         }
+        .textCase(nil)
+        .padding(.bottom, Spacing.tight)
     }
 }
 
-/// A block that has not begun, and when it does.
-struct TodayBeforeBlockSection: View {
-
-    let daysUntilStart: Int
-
-    var body: some View {
-        Section {
-            Text(TodayPhrasing.start(inDays: daysUntilStart))
-                .font(.barbellTitle)
-                .padding(.vertical, Spacing.tight)
-        }
-    }
-}
-
-/// A block that is over: what the record holds, and the one thing left to do
-/// about it.
+/// A block with no workout left in it: what the record holds, and the one thing
+/// left to do about it.
 ///
 /// The count is a count and not a score — nothing here decides whether it was
 /// enough. The app cannot reach the coach, so it says who can.

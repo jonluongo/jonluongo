@@ -3,70 +3,45 @@ import LiftingKit
 
 /// The words the front door says about a day.
 ///
-/// **What it does.** Turns the values `BlockCalendar` answers with — a week's
-/// placement, a prescribed day, how far a session has got — into the short
-/// strings the Today screen prints. It states facts and never advises: "Rest
-/// day", "Thursday · Push", "Starts in 3 days" are all readings of a calendar
-/// and a stored plan, and what the lifter should do about any of them is not
-/// decided here.
+/// **What it does.** Turns what a stored session holds — what it is for, how
+/// much of it there is, how far it has got — into the short strings the Home
+/// screen prints. It states facts and never advises: what the lifter should do
+/// about any of them is not decided here.
 ///
-/// **How it is used.** `TodayView` calls it for every line that is not a stored
-/// string. It lives apart from the view because a sentence with a plural and an
-/// off-by-one in it is worth testing, and testing it through a `List` would
-/// need a simulator to assert what a `String` already answers.
+/// **How it is used.** `TodayView` and `TodaySections` call it for every line
+/// that is not a stored string. It lives apart from the views because a sentence
+/// with a plural and an off-by-one in it is worth testing, and testing it
+/// through a `List` would need a simulator to assert what a `String` already
+/// answers.
 ///
-/// **What it depends on.** `WeekPlacement`, `BlockDay`, `SessionProgress` and
-/// `Weekday` from LiftingKit, and Foundation's `Calendar`. No store, no view,
-/// no state.
+/// **What it depends on.** `SessionProgress` and `Weekday` from LiftingKit. No
+/// store, no view, no state, and — since the week strip went — no calendar.
 enum TodayPhrasing {
 
-    /// `"Week 2 of 4 · Accumulation"` — where this week sits and what the plan
-    /// called it.
-    ///
-    /// A one-week block is not "of 1", a week the plan named nothing states its
-    /// position alone, and a deload the plan left unlabelled is still said to
-    /// be one rather than losing the only thing that distinguishes it.
-    static func weekLine(_ placement: WeekPlacement) -> String {
-        let position = placement.totalWeeks > 1
-            ? "Week \(placement.ordinal) of \(placement.totalWeeks)"
-            : "Week \(placement.ordinal)"
-        guard let stated = placement.stated else { return position }
-        if !stated.label.isEmpty { return "\(position) · \(stated.label)" }
-        if stated.isDeload { return "\(position) · Deload" }
-        return position
+    /// What to call this workout: what the plan said it is for, or the day
+    /// the plan filed it under when it named it nothing. Both are things Claude
+    /// wrote; neither is invented here.
+    static func sessionTitle(focus: String, weekday: Weekday) -> String {
+        focus.isEmpty ? weekday.fullName : focus
     }
 
-    /// What to call today's session: what the plan said it is for, or the day
-    /// it falls on when the plan named it nothing.
-    static func sessionTitle(_ day: BlockDay) -> String {
-        day.focus.isEmpty ? day.weekday.fullName : day.focus
-    }
-
-    /// The word on the button, or `nil` when the session is finished and there
-    /// is nothing left to press.
-    /// The word on the button.
+    /// The word on the button, which names an action every time.
     ///
-    /// A finished session still opens. It used to return nothing here, which
+    /// It used to read "Open Session" on a workout already logged — a
+    /// description of a screen rather than something to do, and the owner said
+    /// so. Going back into a session is continuing the workout whether it was
+    /// finished or abandoned mid-set, and which of the two it was is already
+    /// said elsewhere; the button does not need to say it twice.
+    ///
+    /// A finished session still opens. It used to offer nothing at all, which
     /// left a logged day with no door: a mis-tapped Finish, a weight typed
     /// wrong, or a set done after the lifter thought he was done were all
     /// unreachable. The app is the record, and a record that cannot be
-    /// corrected is not one — so the session reopens, and finishing it again
-    /// keeps the time it was first finished.
+    /// corrected is not one.
     static func actionTitle(for progress: SessionProgress) -> String {
         switch progress {
-        case .notStarted: "Start Session"
-        case .inProgress: "Resume Session"
-        case .finished: "Open Session"
-        }
-    }
-
-    /// `"Starts tomorrow"`, `"Starts in 3 days"` — how long until a block that
-    /// has not begun begins.
-    static func start(inDays days: Int) -> String {
-        switch days {
-        case ..<1: "Starts today"
-        case 1: "Starts tomorrow"
-        default: "Starts in \(days) days"
+        case .notStarted: "Start Workout"
+        case .inProgress, .finished: "Continue Workout"
         }
     }
 
@@ -85,32 +60,5 @@ enum TodayPhrasing {
     static func recordLine(finished: Int, prescribed: Int) -> String? {
         guard prescribed > 0 else { return nil }
         return "\(finished) of \(prescribed) session\(prescribed == 1 ? "" : "s") logged"
-    }
-
-    /// `"Sunday, 16 August"` — the day the screen is showing.
-    ///
-    /// The screen was titled "Today" and never said which day that was, so
-    /// "Rest day" had nothing to anchor to. Now that the strip lets any day be
-    /// chosen it has a second job: a circled `17` says which column, and this
-    /// says which day. The weekday leads because training is scheduled by
-    /// weekday — "Sunday" is the part a lifter checks against what the block
-    /// prescribes.
-    ///
-    /// The year is not stated. It is the same for eleven months out of twelve
-    /// and the strip never travels beyond one block, so it would be a word that
-    /// is always there and never read.
-    /// The time zone is an argument for the same reason the calendar is
-    /// everywhere else here: which day an instant falls on is a question only a
-    /// time zone answers, and a line that read "Sunday" on one side of midnight
-    /// and "Monday" on the other depending on the machine is not one a test
-    /// could hold still.
-    static func dayLine(
-        _ date: Date,
-        locale: Locale = .autoupdatingCurrent,
-        timeZone: TimeZone = .autoupdatingCurrent
-    ) -> String {
-        var style = Date.FormatStyle.dateTime.weekday(.wide).day().month(.wide).locale(locale)
-        style.timeZone = timeZone
-        return date.formatted(style)
     }
 }

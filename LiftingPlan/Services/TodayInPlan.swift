@@ -29,35 +29,6 @@ enum TodayInPlan {
         BlockCalendar(calendar: calendar).today(in: schedule(for: plan), on: now)
     }
 
-    /// The days of this block a lifter may choose between, or `nil` when there
-    /// is nothing to choose.
-    ///
-    /// The week strip lets any day be selected, so something has to say which
-    /// days are the block's. Three blocks answer `nil`, and for the same reason
-    /// in each: **every day reads the same, so choosing between them is a
-    /// gesture that changes nothing.** A block with no start date or no weeks
-    /// cannot place a day at all, and a block the record has closed reports
-    /// itself closed on every date it is asked about. A strip over any of them
-    /// would be a control that does nothing, which is worse than no control.
-    static func selectableDays(
-        in plan: TrainingPlan, calendar: Calendar = .current
-    ) -> ClosedRange<Date>? {
-        guard plan.completedAt == nil else { return nil }
-        return BlockCalendar(calendar: calendar).span(of: schedule(for: plan))
-    }
-
-    /// Whether the block prescribes a session on this date.
-    ///
-    /// What the strip's mark under a day means, and nothing more: it is the same
-    /// question `resolve` answers, asked of a day the lifter is not standing in.
-    /// A day the block prescribes nothing on is unmarked, which is how the shape
-    /// of the training week is read at a glance.
-    static func prescribesSession(
-        in plan: TrainingPlan, on date: Date, calendar: Calendar = .current
-    ) -> Bool {
-        resolve(plan, on: date, calendar: calendar).standing.session != nil
-    }
-
     /// This block reduced to the values a calendar question needs.
     ///
     /// `completedAt` travels through as `closedAt` and nothing more is claimed
