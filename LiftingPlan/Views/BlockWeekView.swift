@@ -56,7 +56,7 @@ struct BlockWeekView: View {
                 .foregroundStyle(.secondary)
         } else {
             ForEach(day.orderedExercises) { exercise in
-                ExerciseHistoryLink(exercise: exercise, unit: unit)
+                ExerciseDetailLink(exercise: exercise, unit: unit)
             }
         }
     }

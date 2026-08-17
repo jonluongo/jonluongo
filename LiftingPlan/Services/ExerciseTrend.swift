@@ -5,7 +5,7 @@ import LiftingKit
 /// laid out over time.
 ///
 /// Built as part of `ExerciseTrend.build(from:)` and consumed by
-/// `ExerciseHistoryView`'s chart and session list. It carries what was lifted
+/// `ExerciseDetailView`'s chart and session list. It carries what was lifted
 /// and for how many, and nothing derived from them — no estimated one-rep max, because
 /// which formula turns a set into an estimate is a training opinion and this
 /// app holds none. Depends on: `Mass` from Domain.
@@ -19,7 +19,7 @@ struct TrendPoint: Identifiable {
 /// All logged sessions for one exercise, oldest → newest, with a best-set
 /// selection per session.
 ///
-/// Built by `ExerciseTrend.build(from:)` and shown by `ExerciseHistoryView`'s
+/// Built by `ExerciseTrend.build(from:)` and shown by `ExerciseDetailView`'s
 /// session list and chart. Trends are keyed by `exerciseID`, never by name, so a renamed
 /// or re-generated exercise doesn't fragment its own history — the same rule
 /// `PerformanceHistory` enforces. `build(from:)` walks the same plan → week →

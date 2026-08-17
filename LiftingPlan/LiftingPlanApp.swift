@@ -13,6 +13,9 @@ struct LiftingPlanApp: App {
     /// exercise reads the same data, stamped with the same version.
     private let catalog: ExerciseCatalog
     @State private var restTimer = RestTimerModel()
+    /// What the lifter has said about his own clock — on or off, and how long
+    /// on each exercise. One instance for the app, like the timer it feeds.
+    @State private var restPreferences = RestPreferences()
     private let container: ModelContainer
     /// The shared iCloud folder both machines see. The snapshot goes out
     /// through it and plans and profile updates come in through it; nothing
@@ -57,6 +60,7 @@ struct LiftingPlanApp: App {
             RootView()
                 .environment(\.exerciseCatalog, catalog)
                 .environment(restTimer)
+                .environment(restPreferences)
                 .environment(documentInbox)
                 .environment(snapshotOutbox)
                 .task { await restTimer.requestNotificationAuthorization() }

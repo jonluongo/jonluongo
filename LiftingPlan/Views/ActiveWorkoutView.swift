@@ -12,14 +12,17 @@ struct ActiveWorkoutView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(RestTimerModel.self) private var restTimer
+    /// The lifter's own clock: whether it runs at all, and how long on each
+    /// exercise. Not the prescription, and not in the store.
+    @Environment(RestPreferences.self) private var restPreferences
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     @State private var startDate = Date()
     @State private var showingFinishConfirm = false
-    @State private var showingRestPicker = false
-    /// The last rest the lifter ran himself, kept for this session only so the
-    /// sheet reopens on it. Never read from or written to the store.
-    @State private var lastCustomRestSeconds = 0
+    /// The exercise whose clock is being edited, and the one being read about.
+    /// Both are per exercise, because both are.
+    @State private var restEditing: PlannedExercise?
+    @State private var infoExercise: PlannedExercise?
     @State private var errorMessage: String?
 
     private var exercises: [PlannedExercise] { day.orderedExercises }
@@ -51,11 +54,17 @@ struct ActiveWorkoutView: View {
                                 plans: plans,
                                 onAddSet: addSet,
                                 onDeleteSet: delete,
-                                onCompletionChanged: restChanged
+                                onCompletionChanged: restChanged,
+                                onEditRest: { restEditing = $0 }
                             )
                         } header: {
-                            ExerciseHeaderView(exercise: exercise, onAddWarmup: { addSet(to: exercise, warmup: true) })
-                                .textCase(nil)
+                            ExerciseHeaderView(
+                                exercise: exercise,
+                                onShowInfo: { infoExercise = exercise },
+                                onEditRest: { restEditing = exercise },
+                                onAddWarmup: { addSet(to: exercise, warmup: true) }
+                            )
+                            .textCase(nil)
                         }
                     }
                 }
@@ -90,10 +99,33 @@ struct ActiveWorkoutView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
-            .sheet(isPresented: $showingRestPicker) {
-                RestDurationSheet(initialSeconds: lastCustomRestSeconds) { seconds in
-                    lastCustomRestSeconds = seconds
-                    restTimer.start(seconds: seconds, context: "Rest")
+            // Rest is prescribed per exercise, so it is edited per exercise:
+            // this sheet is opened by the rest line on the card it belongs to.
+            .sheet(item: $restEditing) { exercise in
+                ExerciseRestSheet(
+                    exerciseName: exercise.displayName,
+                    prescribedSeconds: exercise.restSeconds,
+                    timersEnabled: restPreferences.timersEnabled,
+                    rest: restPreferences.rest(for: exercise.exerciseID)
+                ) { rest in
+                    restPreferences.setRest(rest, for: exercise.exerciseID)
+                }
+            }
+            // The same screen the exercise row pushes elsewhere in the app —
+            // what the movement is and what has been lifted on it are one
+            // exercise, and were never worth two destinations.
+            .sheet(item: $infoExercise) { exercise in
+                NavigationStack {
+                    ExerciseDetailView(
+                        exerciseID: exercise.exerciseID,
+                        displayName: exercise.displayName,
+                        unit: profile.displayUnit
+                    )
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { infoExercise = nil }.fontWeight(.semibold)
+                        }
+                    }
                 }
             }
         }
@@ -128,14 +160,11 @@ struct ActiveWorkoutView: View {
                     .monospacedDigit()
             }
         }
-        ToolbarItem(placement: .topBarTrailing) {
-            Button {
-                showingRestPicker = true
-            } label: {
-                Image(systemName: "timer")
-            }
-            .accessibilityLabel("Rest timer")
-        }
+        // There is no timer button here any more. Rest is prescribed per
+        // exercise, so one control in the toolbar could not mean anything
+        // specific — it opened a picker that started a stopwatch unrelated to
+        // whatever set had just been logged. The rest line on each exercise's
+        // card is the control now.
         ToolbarItem(placement: .topBarTrailing) {
             Button("Finish") { showingFinishConfirm = true }
                 .fontWeight(.semibold)
@@ -161,51 +190,32 @@ struct ActiveWorkoutView: View {
 
     // MARK: - Actions
 
-    /// Runs the rest this exercise prescribes when a set is ticked, and stops
-    /// it when one is taken back.
+    /// Runs the rest this exercise asks for when a set is ticked, and stops it
+    /// when one is taken back.
     ///
     /// Unchecking used to leave the timer running, which made the bar outlast
     /// the thing it was counting for. A set taken back did not happen, so there
     /// is nothing to be resting from.
     ///
-    /// When the plan prescribed no rest, no timer starts — the app does not
-    /// invent one.
+    /// **How long it runs is the lifter's to say and Claude's to prescribe, in
+    /// that order.** `RestPreferences` answers with the prescribed rest until
+    /// the lifter says otherwise, with his own length once he has, and with
+    /// nothing when he has switched the clock off here or everywhere. When the
+    /// plan prescribed no rest and he has asked for none, no timer starts — the
+    /// app does not invent one.
     private func restChanged(for exercise: PlannedExercise, isCompleted: Bool) {
         guard isCompleted else {
             restTimer.stop()
             return
         }
-        guard let seconds = exercise.restSeconds else { return }
+        guard let seconds = restPreferences.runningSeconds(
+            prescribed: exercise.restSeconds, for: exercise.exerciseID
+        ) else { return }
         restTimer.start(seconds: seconds, context: exercise.displayName)
     }
 
     private func addSet(to exercise: PlannedExercise, warmup: Bool) {
-        let existing = exercise.loggedSets ?? []
-        let nextIndex = (existing.map(\.setIndex).max() ?? -1) + 1
-        let ordered = existing.sorted { $0.setIndex < $1.setIndex }
-        let template = ordered.last(where: { !$0.isWarmup })
-        let set = LoggedSet(
-            setIndex: nextIndex,
-            load: warmup ? nil : template?.load,
-            // An added working set copies the one just logged — the lifter's
-            // own number, in this session. When there is none to copy it falls
-            // back to the prescription, never to a rule of the app's. A hold
-            // copies the hold and a carry the distance, each with no reps,
-            // because those are the things a set can be and this one is the same
-            // kind as the one before it.
-            reps: warmup ? 0 : (template?.reps ?? RepPrescription.seededReps(for: exercise.repRange) ?? 0),
-            durationSeconds: warmup
-                ? nil
-                : (template?.durationSeconds
-                    ?? HoldPrescription.seededSeconds(for: exercise.repRange)),
-            distance: warmup
-                ? nil
-                : (template?.distance
-                    ?? WorkPrescription.seededDistance(for: exercise.repRange)),
-            isWarmup: warmup
-        )
-        context.insert(set)
-        set.exercise = exercise
+        SetSeeding.addSet(to: exercise, warmup: warmup, in: context)
         save()
     }
 
@@ -234,47 +244,11 @@ struct ActiveWorkoutView: View {
         dismiss()
     }
 
-    // MARK: - Seeding
-
-    /// Pre-populate each exercise with exactly the sets it prescribes, primed
-    /// with what the plan prescribed and nothing else.
-    ///
-    /// **Each row is seeded from its own set's prescription, not the
-    /// exercise's average.** A ramp seeds 60, 70, 80 and a drop set seeds the
-    /// lighter fourth row, because that is what was written; collapsing them
-    /// into one figure would hand the lifter a session nobody prescribed. The
-    /// seeded reps come from `RepPrescription`, which fills the field only when
-    /// that set named one number and leaves it blank — with the prescribed
-    /// target shown in its place — when it named a range. Work prescribed as a
-    /// hold seeds its seconds through `HoldPrescription` instead and leaves the
-    /// reps at zero, so a thirty-second plank is logged as a thirty-second hold
-    /// rather than as thirty repetitions; work prescribed as a carry seeds its
-    /// distance through `WorkPrescription` for the same reason. None of those
-    /// numbers is ever taken from what the lifter did last time. Last session's
-    /// performance is shown beside each row as reference
-    /// (`ExerciseLogSection.previousText`), which is what it is for;
-    /// substituting it for the prescription is how the prescription stops
-    /// reaching the lifter at all. Every seeded number is editable, because
-    /// what gets logged is what he actually lifts.
+    /// Fills the table in from the prescription the first time this session is
+    /// opened. The rule for what each row starts as lives in `SetSeeding`; what
+    /// belongs here is the save, and showing the lifter when it fails.
     private func seedSetsIfNeeded() {
-        for exercise in exercises where (exercise.loggedSets ?? []).isEmpty {
-            for (index, prescribed) in exercise.prescribedSets.enumerated() {
-                let set = LoggedSet(
-                    setIndex: index,
-                    load: prescribed.suggestedLoad,
-                    reps: RepPrescription.seededReps(for: prescribed.repRange) ?? 0,
-                    // A hold seeds the seconds it prescribes and a carry the
-                    // distance, each leaving the reps at zero. Only one of the
-                    // three is ever filled in, because a set is counted, held,
-                    // or carried, and never two of them at once.
-                    durationSeconds: HoldPrescription.seededSeconds(for: prescribed.repRange),
-                    distance: WorkPrescription.seededDistance(for: prescribed.repRange),
-                    isWarmup: false
-                )
-                context.insert(set)
-                set.exercise = exercise
-            }
-        }
+        SetSeeding.seedMissingSets(for: exercises, in: context)
         save()
     }
 

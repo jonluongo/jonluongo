@@ -14,9 +14,11 @@ import LiftingKit
 /// **The only thing this section writes is the log.** The prescription — sets,
 /// reps, rest — is read and displayed, never edited: a rest the lifter changed
 /// in the gym would go out in the snapshot as though Claude had prescribed it,
-/// and he would read his own plan back with a number he never wrote. Running a
-/// timer of one's own is a session-local stopwatch and lives in
-/// `ActiveWorkoutView`'s toolbar instead.
+/// and he would read his own plan back with a number he never wrote. The rest
+/// line is a control now, but what it edits is the lifter's clock in
+/// `RestPreferences`, which lives outside the store entirely; when his clock and
+/// the prescription differ the line names both, so the screen never claims the
+/// plan asked for his number.
 ///
 /// **Every per-set statement reaches the lifter on the row it describes.** This
 /// section used to draw the whole prescription again as a numbered block above
@@ -33,6 +35,15 @@ struct ExerciseLogSection: View {
     var onDeleteSet: (LoggedSet, PlannedExercise) -> Void
     /// Told which exercise, and whether the set was ticked or taken back.
     var onCompletionChanged: (PlannedExercise, Bool) -> Void
+    /// Opens this exercise's clock. Tapping the rest line is the whole of the
+    /// rest control now — there is no timer button in the toolbar, because one
+    /// button up there could not mean anything specific when every exercise
+    /// prescribes its own rest.
+    var onEditRest: (PlannedExercise) -> Void
+
+    /// The lifter's own clock, which is not part of the plan and not in the
+    /// store. Read here only to draw the line.
+    @Environment(RestPreferences.self) private var restPreferences
 
     private var orderedSets: [LoggedSet] {
         (exercise.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }
@@ -49,6 +60,17 @@ struct ExerciseLogSection: View {
     /// from the prescription and nothing else.
     private var measure: WorkMeasure { WorkPrescription.measure(of: exercise) }
 
+    /// What the rest line says: the plan's rest, and the lifter's clock beside
+    /// it whenever the two differ. `nil` when the plan prescribed no rest and
+    /// the lifter has asked for nothing.
+    private var restLine: String? {
+        RestPrescription.line(
+            prescribed: exercise.restSeconds,
+            lifter: restPreferences.rest(for: exercise.exerciseID),
+            timersEnabled: restPreferences.timersEnabled
+        )
+    }
+
     var body: some View {
         Group {
             if let notes = exercise.notes, !notes.isEmpty {
@@ -57,12 +79,27 @@ struct ExerciseLogSection: View {
                     .foregroundStyle(.secondary)
             }
 
-            // Shown only when the plan prescribed a rest. Nothing is drawn when
-            // it did not, and nothing invites the lifter to fill the gap in.
-            if let restLabel = RestPrescription.label(seconds: exercise.restSeconds) {
-                Label(restLabel, systemImage: "timer")
+            // Shown when the plan prescribed a rest, or when the lifter set a
+            // clock of his own on an exercise it did not. Nothing is drawn when
+            // neither is true, and nothing invites him to fill the gap in — the
+            // menu is where a timer on an unprescribed exercise is asked for.
+            if let restLine {
+                Button {
+                    onEditRest(exercise)
+                } label: {
+                    HStack(spacing: Spacing.tight) {
+                        Label(restLine, systemImage: "timer")
+                        Image(systemName: "chevron.right")
+                            .font(.barbellLabel)
+                    }
                     .font(.barbellSupport)
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: TapTarget.minimum, alignment: .leading)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(restLine)
+                .accessibilityHint("Sets the rest timer for this exercise")
             }
 
             columnHeader

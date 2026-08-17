@@ -11,8 +11,9 @@ import LiftingKit
 /// straight to `PlannedExercise.restSeconds` — the stored prescription, which
 /// `SnapshotExporter` then exports. Tapping "60s" between sets silently rewrote
 /// Claude's plan in the very record he reads back to judge whether the plan is
-/// working. The timer is now a session-local stopwatch and the prescription is
-/// read-only.
+/// working. The rest line on an exercise is a control again, but what it writes
+/// is `RestPreferences`, which never sees the model context; the prescription
+/// stays read-only.
 @MainActor
 @Suite("Rest prescription")
 struct RestPrescriptionTests {
@@ -59,6 +60,38 @@ struct RestPrescriptionTests {
         try context.saveOrThrow()
         let loaded = try #require(try context.fetch(FetchDescriptor<PlannedExercise>()).first)
         #expect(loaded.restSeconds == nil)
+    }
+
+    @Test("Editing the lifter's clock leaves the prescribed rest exactly as prescribed")
+    func editingTheClockDoesNotEditThePrescription() throws {
+        let context = ModelContext(try StoreContainer.inMemory())
+        let id = ExerciseID(rawValue: "barbell-bench-press")
+        let exercise = PlannedExercise(
+            exerciseID: id, displayName: "Barbell Bench Press",
+            order: 0, targetSets: 5, repRange: "5", restSeconds: 180
+        )
+        context.insert(exercise)
+        try context.saveOrThrow()
+
+        // Everything the sheet can do to an exercise's clock, in one go.
+        let preferences = RestPreferences(store: UserDefaultsRestStore(defaults: isolatedDefaults()))
+        preferences.setRest(.seconds(45), for: id)
+        preferences.setRest(.off, for: id)
+        preferences.setTimersEnabled(false)
+
+        try context.saveOrThrow()
+        let loaded = try #require(try context.fetch(FetchDescriptor<PlannedExercise>()).first)
+        #expect(loaded.restSeconds == 180)
+        // And what the snapshot would carry is still Claude's number.
+        #expect(loaded.prescribedSets.count == 5)
+    }
+
+    /// A defaults suite of this test's own, so nothing it writes reaches the
+    /// simulator's real preferences or the next test.
+    private func isolatedDefaults() -> UserDefaults {
+        let name = "rest-prescription-tests-\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: name) else { return .standard }
+        return defaults
     }
 
     @Test("No prescribed rest draws no label — the app neither invents one nor asks for one")

@@ -7,15 +7,17 @@ import LiftingKit
 /// **What it does.** Shows what Claude has been told: his goal, his experience,
 /// his constraints, what he avoids, what he weighs, what he trains with, when
 /// he trains, and what he can already lift. It then names, in one sentence, the
-/// facts nobody has stated yet. Below that sit the two things that are about
-/// the app rather than about training: the unit weights are drawn in, and the
-/// delete.
+/// facts nobody has stated yet. Below that sit the things that are about the
+/// app rather than about training: the unit weights are drawn in, whether the
+/// rest clock runs at all, and the delete.
 ///
-/// **It is read-only, and shows no affordance suggesting otherwise.** Claude
-/// writes these facts through the shared folder and the app displays them; the
-/// only control is the unit picker, which is about how a number is drawn rather
-/// than about the lifter, and which is his to set for the same reason it always
-/// was.
+/// **The record is read-only, and shows no affordance suggesting otherwise.**
+/// Claude writes these facts through the shared folder and the app displays
+/// them. The two controls are the unit picker and the rest-timer switch, and
+/// neither states anything about the lifter: one is how a number is drawn, the
+/// other whether his phone counts down between sets. How long to rest on a
+/// given exercise is not here — that is prescribed per exercise and edited on
+/// the exercise.
 ///
 /// **How it is used.** The third tab. It was Settings, which asked no training
 /// question and answered none either — the record was invisible in the app, so
@@ -29,6 +31,9 @@ struct AccountView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.exerciseCatalog) private var catalog
+    /// The lifter's own clock. The only other control on this page, and the
+    /// only other thing here that is his to set.
+    @Environment(RestPreferences.self) private var restPreferences
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
     @Query(sort: \BodyMetric.date, order: .reverse) private var weighIns: [BodyMetric]
     @Query private var strengthBaselines: [StrengthBaseline]
@@ -44,6 +49,17 @@ struct AccountView: View {
     /// it is made rather than waiting for a Done button that does not exist.
     private var unitBinding: Binding<MassUnit> {
         Binding(get: { profile.displayUnit }, set: { setDisplayUnit($0) })
+    }
+
+    /// The master switch for the between-sets countdown. It writes to
+    /// `RestPreferences`, never to the store: switching a clock off is a thing
+    /// about this phone, not a fact about the lifter that Claude should read
+    /// back as though he had been told it.
+    private var restTimerBinding: Binding<Bool> {
+        Binding(
+            get: { restPreferences.timersEnabled },
+            set: { restPreferences.setTimersEnabled($0) }
+        )
     }
 
     private var facts: [LifterFactRow] {
@@ -112,6 +128,20 @@ struct AccountView: View {
                 Text("Units")
             } footer: {
                 Text("How weights are shown, and what new entries are entered in. Sets you have already logged keep the unit you logged them in.")
+            }
+
+            // The second thing on this page that is the lifter's rather than
+            // the record's, and it sits beside the first for that reason. A
+            // lifter who does not want a countdown between sets should be able
+            // to say so once, not once per exercise; how long to rest on any
+            // particular one is still said on that exercise, where it means
+            // something.
+            Section {
+                Toggle("Rest timers", isOn: restTimerBinding)
+            } header: {
+                Text("Rest Timer")
+            } footer: {
+                Text("When off, checking a set off starts no countdown. The rest Claude prescribed is still shown on every exercise — that is his plan, not a feature of the app.")
             }
 
             Section {

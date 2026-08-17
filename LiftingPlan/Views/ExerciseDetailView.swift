@@ -3,29 +3,37 @@ import SwiftData
 import Charts
 import LiftingKit
 
-/// One exercise's record: every session it has been logged in, and the line
-/// those sessions draw.
+/// One exercise, whole: what the movement is, and what has been lifted on it.
 ///
-/// **What it does.** Shows what was actually lifted — the heaviest set of each
-/// session, newest first, and a chart of the same over time. It shows what
-/// happened and says nothing about it: there is no arrow and no estimated
-/// one-rep max, because which formula turns a set into an estimate is a training
-/// opinion and this app holds none.
+/// **What it does.** Draws the catalog's description of the movement — the
+/// space its demonstration will occupy, the muscles it trains, what it is
+/// performed with, and how to perform it where the catalog says — and then the
+/// record: the heaviest set of each session, newest first, and the line those
+/// sessions draw. It shows what happened and says nothing about it: there is no
+/// arrow and no estimated one-rep max, because which formula turns a set into
+/// an estimate is a training opinion and this app holds none.
+///
+/// **It is one screen and not two.** Information about an exercise and the
+/// record of it are the same exercise, and splitting them would give the app two
+/// destinations each showing half of one — which is what `SessionDetailView` and
+/// the History tab were doing when they were deleted. What the movement is comes
+/// first because it answers the question the name raises; the record follows,
+/// and is the longer scroll.
 ///
 /// **How it is used.** Pushed from a prescribed exercise row, on Today and on a
-/// week inside the Plan tab. It replaced a History tab that listed every logged
-/// exercise and then made you tap one: a lifter reading *Barbell Bench Press*
-/// and wondering what he benched last month is already looking at the row that
-/// answers him, so the answer moved onto the row and the filing cabinet went.
+/// week inside the Plan tab, and presented as a sheet from an exercise's menu on
+/// the logging screen.
 ///
-/// **What it depends on.** `ExerciseTrend` from Services, `TrainingPlan` from
-/// Store, `ExerciseID` and `Mass` from Domain. It reads the store and writes
-/// nothing.
+/// **What it depends on.** `ExerciseAboutSections` for the catalog half,
+/// `ExerciseTrend` from Services, `TrainingPlan` from Store, `ExerciseID` and
+/// `Mass` from Domain, and the injected catalog. It reads and writes nothing.
 ///
 /// The trend is looked up by `exerciseID`, never by name — the same identity
 /// rule `PerformanceHistory` enforces, so a renamed or re-generated exercise
-/// does not fragment its own history.
-struct ExerciseHistoryView: View {
+/// does not fragment its own history. The catalog entry is looked up by the same
+/// id, which is why the demonstration a MoveKit file will fill has a home
+/// already.
+struct ExerciseDetailView: View {
 
     let exerciseID: ExerciseID
     /// What to call it at the top. Display only; the record is keyed by id.
@@ -34,6 +42,7 @@ struct ExerciseHistoryView: View {
     /// everything else in.
     let unit: MassUnit
 
+    @Environment(\.exerciseCatalog) private var catalog
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     /// This exercise's sessions, or `nil` when nothing has been logged against
@@ -44,17 +53,19 @@ struct ExerciseHistoryView: View {
     }
 
     var body: some View {
-        Group {
+        List {
+            ExerciseAboutSections(entry: catalog.exercise(id: exerciseID))
             if let trend {
-                List {
-                    chart(trend)
-                    sessions(trend)
-                }
+                chart(trend)
+                sessions(trend)
             } else {
-                ContentUnavailableView {
-                    Label("Nothing logged yet", systemImage: "chart.line.uptrend.xyaxis")
-                } description: {
-                    Text("Sets you log against this exercise show up here.")
+                // A sentence rather than the whole screen: the movement above
+                // it is still worth reading on the day nothing has been logged,
+                // which is exactly the day someone looks it up.
+                Section("Sessions") {
+                    Text("Nothing logged yet. Sets you log against this exercise show up here.")
+                        .font(.barbellBody)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -141,23 +152,23 @@ struct ExerciseHistoryView: View {
     }
 }
 
-/// A prescribed exercise, and the way into what it has been lifted with.
+/// A prescribed exercise, and the way into everything about it.
 ///
 /// **What it does.** Draws `PrescribedExerciseRow` and pushes
-/// `ExerciseHistoryView` when it is tapped. It exists so the two screens that
-/// list prescribed exercises — Today's session and a week inside Plan — open
-/// the record the same way and say the same thing about it to VoiceOver.
+/// `ExerciseDetailView` when it is tapped. It exists so the two screens that
+/// list prescribed exercises — Today's session and a week inside Plan — open the
+/// exercise the same way and say the same thing about it to VoiceOver.
 ///
 /// **What it depends on.** `PrescribedExerciseRow`, `PlannedExercise` from
 /// Store, `MassUnit` from Domain. It must be inside a `NavigationStack`.
-struct ExerciseHistoryLink: View {
+struct ExerciseDetailLink: View {
 
     let exercise: PlannedExercise
     let unit: MassUnit
 
     var body: some View {
         NavigationLink {
-            ExerciseHistoryView(
+            ExerciseDetailView(
                 exerciseID: exercise.exerciseID,
                 displayName: exercise.displayName,
                 unit: unit
@@ -165,7 +176,7 @@ struct ExerciseHistoryLink: View {
         } label: {
             PrescribedExerciseRow(exercise: exercise, unit: unit)
         }
-        .accessibilityHint("Shows what you have lifted on this exercise")
+        .accessibilityHint("Shows this exercise and what you have lifted on it")
     }
 }
 

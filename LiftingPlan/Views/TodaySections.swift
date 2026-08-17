@@ -53,7 +53,7 @@ struct TodaySessionSection: View {
                 // wondering what he benched last month is already looking at
                 // the row that answers him.
                 ForEach(session.orderedExercises) { exercise in
-                    ExerciseHistoryLink(exercise: exercise, unit: unit)
+                    ExerciseDetailLink(exercise: exercise, unit: unit)
                 }
             } else {
                 // The block moved underneath the answer. Said plainly rather

@@ -8,7 +8,12 @@ import SwiftUI
 /// alike, and only the count when they are not, since the set rows say the rest.
 ///
 /// **How it is used.** `ActiveWorkoutView` puts one above each exercise's
-/// section. `onAddWarmup` is the one thing the menu does today.
+/// section. The menu holds the three things there are to do to an exercise
+/// rather than to a set: read what it is, set its clock, and add a warmup.
+/// Rest is also editable by tapping the rest line on the card, which is where
+/// a lifter looks for it; the menu item exists because an exercise Claude
+/// prescribed no rest for has no such line, and a lifter who wants to time
+/// himself on it should not be shut out.
 ///
 /// **What it depends on.** `IconCircleRow` for the shape — the plan screen's
 /// day row draws the same one, and the two used to be separate code that had
@@ -17,6 +22,8 @@ import SwiftUI
 /// future divergence visible.
 struct ExerciseHeaderView: View {
     let exercise: PlannedExercise
+    var onShowInfo: () -> Void
+    var onEditRest: () -> Void
     var onAddWarmup: () -> Void
 
     private var subtitle: String {
@@ -31,6 +38,12 @@ struct ExerciseHeaderView: View {
             subtitle: subtitle
         ) {
             Menu {
+                Button { onShowInfo() } label: {
+                    Label("About This Exercise", systemImage: "info.circle")
+                }
+                Button { onEditRest() } label: {
+                    Label("Rest Timer", systemImage: "timer")
+                }
                 Button { onAddWarmup() } label: {
                     Label("Add Warmup Set", systemImage: "flame")
                 }
@@ -39,6 +52,7 @@ struct ExerciseHeaderView: View {
                     .font(.barbellBody)
                     .foregroundStyle(.secondary)
             }
+            .accessibilityLabel("\(exercise.displayName) options")
         }
     }
 }
