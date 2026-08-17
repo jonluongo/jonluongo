@@ -21,6 +21,8 @@ import LiftingKit
 struct SupersetHeaderView: View {
 
     let group: ExerciseGroup
+    /// The lifter's display unit, carried down to the prescriptions.
+    let unit: MassUnit
     var onShowInfo: (PlannedExercise) -> Void
     var onAddWarmup: (PlannedExercise) -> Void
 
@@ -98,7 +100,7 @@ struct SupersetHeaderView: View {
     }
 
     private func prescription(of member: PlannedExercise) -> String {
-        let summary = PrescriptionSummary.text(for: member)
+        let summary = PrescriptionSummary.text(for: member, unit: unit)
         guard let tempo = member.tempo, !tempo.isEmpty else { return summary }
         return "\(summary) · tempo \(tempo)"
     }

@@ -131,7 +131,6 @@ struct ActiveWorkoutView: View {
                 exercise: exercise,
                 profile: profile,
                 plans: plans,
-                onAddSet: addSet,
                 onDeleteSet: delete,
                 onCompletionChanged: restChanged,
                 onEditRest: { restEditing = RestTarget(exercise: $0) }
@@ -139,8 +138,10 @@ struct ActiveWorkoutView: View {
         } header: {
             ExerciseHeaderView(
                 exercise: exercise,
+                unit: profile.displayUnit,
                 onShowInfo: { infoExercise = exercise },
                 onEditRest: { restEditing = RestTarget(exercise: exercise) },
+                onAddSet: { addSet(to: exercise, warmup: false) },
                 onAddWarmup: { addSet(to: exercise, warmup: true) }
             )
             .textCase(nil)
@@ -164,6 +165,7 @@ struct ActiveWorkoutView: View {
         } header: {
             SupersetHeaderView(
                 group: group,
+                unit: profile.displayUnit,
                 onShowInfo: { infoExercise = $0 },
                 onAddWarmup: { addSet(to: $0, warmup: true) }
             )

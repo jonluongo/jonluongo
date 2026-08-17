@@ -363,10 +363,10 @@ struct PerSetPrescriptionTests {
                 exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8-12",
                 intensity: IntensityTarget(scale: .rpe, value: "8"))
         ])
-        #expect(PrescriptionSummary.text(for: uniform) == "3 × 8-12 · RPE 8")
+        #expect(PrescriptionSummary.text(for: uniform, unit: .kilograms) == "3 × 8-12 · RPE 8")
 
-        // Sets that differ are not summarized into one line that no set
-        // matches; the count is stated and the rows say the rest.
+        // Sets that differ are spanned, never averaged and never represented by
+        // one of them: five reps and three reps are three to five between them.
         let varying = try imported([
             PlanDocumentExercise(
                 exerciseID: Self.squat, displayName: "Squat",
@@ -375,12 +375,12 @@ struct PerSetPrescriptionTests {
                     SetPrescription(repRange: "3"),
                 ])
         ])
-        #expect(PrescriptionSummary.text(for: varying) == "2 sets")
+        #expect(PrescriptionSummary.text(for: varying, unit: .kilograms) == "2 × 3-5")
 
         let bare = try imported([
             PlanDocumentExercise(exerciseID: Self.bench, displayName: "Bench", sets: 4)
         ])
-        #expect(PrescriptionSummary.text(for: bare) == "4 sets")
+        #expect(PrescriptionSummary.text(for: bare, unit: .kilograms) == "4 sets")
     }
 
     @Test("A uniform prescription gains nothing under its rows")
@@ -400,7 +400,7 @@ struct PerSetPrescriptionTests {
                 exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8",
                 intensity: IntensityTarget(scale: .rpe, value: "8"))
         ])
-        #expect(PrescriptionSummary.text(for: rated) == "3 × 8 · RPE 8")
+        #expect(PrescriptionSummary.text(for: rated, unit: .kilograms) == "3 × 8 · RPE 8")
         #expect(rated.prescribedSets.allSatisfy {
             PrescriptionSummary.detail(for: $0, in: rated) == nil
         })
@@ -473,13 +473,12 @@ struct PerSetPrescriptionTests {
             == [false, false, true])
     }
 
-    /// The session read before it is trained states the shape of a ramp. What
-    /// Claude wrote about the top set is an instruction for the moment that set
-    /// is loaded, and `detail(for:in:)` puts it on that set's own row; stated
-    /// here as well it was read twice, and the reading that mattered was the
-    /// one under the bar.
-    @Test("A set's own line states its load, its reps and its effort — not its note")
-    func setLineStatesWhatThatSetPrescribes() throws {
+    /// The session read before it is trained states the *shape* of a ramp in one
+    /// line. Every set of it still reaches the lifter in full on the logging
+    /// screen: its own load and reps as the placeholders in its two fields, and
+    /// what Claude asked of it in particular on the row it is lifted on.
+    @Test("A ramp is one line to browse and every set of it under the bar")
+    func rampIsSpannedToBrowseAndStatedInFullToLog() throws {
         let ramp = try imported([
             PlanDocumentExercise(
                 exerciseID: Self.squat, displayName: "Squat",
@@ -491,13 +490,14 @@ struct PerSetPrescriptionTests {
                 ],
                 repRange: "5")
         ])
-        let lines = ramp.prescribedSets.map {
-            PrescriptionSummary.text(for: $0, unit: .kilograms)
-        }
 
-        #expect(lines == ["60 kg × 5", "80 kg × 5 · RPE 9"])
+        #expect(PrescriptionSummary.text(for: ramp, unit: .kilograms) == "2 × 5 · 60-80 kg")
 
-        // The note itself is not lost — it is on the row that set is logged on.
+        // Nothing about the individual sets is lost: the loads are what each
+        // row's weight field is seeded with, and what was asked of the top set
+        // is on the top set's row.
+        let reading = SetRowPrescription(exercise: ramp, plans: [], unit: .kilograms)
+        #expect(ramp.prescribedSets.map { reading.loadTarget($0) } == ["60", "80"])
         #expect(ramp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: ramp) }
             == [nil, "RPE 9 · Top set"])
     }

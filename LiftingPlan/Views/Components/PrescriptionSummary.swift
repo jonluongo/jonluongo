@@ -4,12 +4,12 @@ import LiftingKit
 /// How a prescription is written on screen, for the exercise as a whole and for
 /// one of its sets.
 ///
-/// **What it does.** Builds the lines the lifter reads above a set table and in
-/// a session preview: `"3 × 8-12 · RPE 8"` for an exercise whose sets are all
-/// the same, `"4 sets"` for one whose sets differ, and `"80 kg × 5 · RPE 9"`
-/// for a single set of a ramp.
+/// **What it does.** Builds the one line the lifter reads above a set table and
+/// beside an exercise's name in a session he is browsing: `"3 × 8-12 · RPE 8"`
+/// for an exercise whose sets are all the same, `"3 × 5 · 60-80 kg"` for a ramp,
+/// `"4 × 8 / AMRAP · 70-100 kg"` for a drop set.
 ///
-/// **How it is used.** `ExerciseLogSection`, `ActiveWorkoutView`'s header and
+/// **How it is used.** `ExerciseLogSection`, `ActiveWorkoutView`'s headers and
 /// `PrescribedExerciseRow` call it rather than each assembling a line of their
 /// own, so the same prescription reads the same way everywhere in the app.
 /// `detail(for:in:)` is the logging screen's: it says what one set asks that the
@@ -17,27 +17,58 @@ import LiftingKit
 /// under set four rather than off the top of the screen by the time he gets
 /// there.
 ///
-/// **What it depends on.** `PlannedExercise`, `SetPrescription` and
-/// `IntensityPrescription`. It states what the plan said and never summarizes
-/// away a difference: an exercise whose sets differ is not given one rep range
-/// that no set of it actually has, because the lifter would then be reading a
-/// prescription nobody wrote. The sets say the rest, one row at a time.
+/// **Every exercise gets one line, and a varying prescription is spanned rather
+/// than enumerated.** A ramp used to draw its count and then a numbered line per
+/// set, so one exercise in a list read as a different kind of object from its
+/// neighbours and the count above the lines restated what the lines already
+/// said. The span is what a browsing screen can honestly say — the *whole* of
+/// what is prescribed still reaches the lifter set by set on the logging screen,
+/// where the work happens, and that is the entire argument for summarising here.
+///
+/// **What it depends on.** `PlannedExercise`, `SetPrescription`,
+/// `IntensityPrescription` and `TargetSpan`. It states what the plan said and
+/// never rounds, averages, or picks one set to stand for the rest: a figure is
+/// written only when every set states it, and otherwise only as the span the
+/// sets actually cover.
 enum PrescriptionSummary {
 
-    /// The one-line summary of a whole prescription.
+    /// The one-line summary of a whole prescription: how many sets, what they
+    /// ask for, and one more thing about them.
     ///
-    /// A uniform prescription states its count, its reps and its effort. One
-    /// whose sets differ states only how many there are — the per-set lines
-    /// carry what each of them actually asks for.
-    static func text(for exercise: PlannedExercise) -> String {
+    /// **One thing, because the line holds one.** It shares a row with the rest
+    /// the exercise prescribes, and about eighteen characters is all that leaves
+    /// it; a line that tried to say the reps, the load and the effort at once
+    /// lost its tail to an ellipsis, and `4 × 8/AMRAP · 30-6…` says less than a
+    /// shorter line that chose. So it spends the room on whatever makes these
+    /// sets differ from one another — the span of load a ramp climbs — and on
+    /// the effort when they do not differ at all. What is left out is not lost:
+    /// the logging screen states every set of it in full, on the row it is
+    /// lifted on.
+    ///
+    /// `unit` is the lifter's display unit, so a load written in pounds is read
+    /// in the unit he reads everything else in. The conversion is a display one;
+    /// nothing rewrites what was prescribed.
+    static func text(for exercise: PlannedExercise, unit: MassUnit) -> String {
         let sets = exercise.prescribedSets
-        guard let repRange = sharedRepRange(of: sets), sharesOneIntensity(sets) else {
-            return "\(exercise.targetSets) set\(exercise.targetSets == 1 ? "" : "s")"
-        }
-        let effort = IntensityPrescription.label(for: sharedIntensity(of: sets))
-        return ["\(exercise.targetSets) × \(repRange)", effort]
+        let count = exercise.targetSets
+        let work = target(of: sets).map { "\(count) × \($0)" }
+            ?? "\(count) set\(count == 1 ? "" : "s")"
+        return [work, difference(in: sets, unit: unit)]
             .compactMap { $0 }
             .joined(separator: " · ")
+    }
+
+    /// The one thing said beside the count and the target.
+    ///
+    /// The span of load first, because where the sets ask for the same work and
+    /// differ in what is on the bar, that span is the only thing on the line
+    /// saying they differ at all — and it is asked only when the target is
+    /// shared, since a target that already reads `8/AMRAP` has said it. Then the
+    /// effort: the one every set asks for, or the span of the ones they ask for
+    /// between them.
+    private static func difference(in sets: [SetPrescription], unit: MassUnit) -> String? {
+        if sharesOneTarget(sets), let load = varyingLoad(of: sets, unit: unit) { return load }
+        return effort(of: sets)
     }
 
     /// What one prescribed set asks that the exercise's own line has not
@@ -50,8 +81,10 @@ enum PrescriptionSummary {
     /// row's own two fields, and a line repeating them would be the screen
     /// saying the same thing twice. The effort is left out too when every set
     /// asks for the same one, because the header stated it once for all of
-    /// them; it appears only where a set asks for something of its own, which
-    /// is what a ramp's top single and a drop set's last set are. A uniform
+    /// them; it appears wherever a set asks for something of its own, which is
+    /// what a ramp's top single and a drop set's last set are — and it appears
+    /// even when the header states a span, because a span says what the sets
+    /// cover between them and not what *this* set is being asked for. A uniform
     /// three-by-eight therefore gains no second line anywhere.
     ///
     /// `set` is `nil` for a warm-up or a set the lifter added past the ones
@@ -65,62 +98,54 @@ enum PrescriptionSummary {
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
-    /// One prescribed set as a line: its load, its reps and its effort — each
-    /// part dropped when the plan did not state it. Empty when the plan stated
-    /// nothing at all about the set, which is a set with nothing to say.
-    ///
-    /// **The set's note is not here.** This is the session read before it is
-    /// trained, where a ramp is listed so the lifter can see its shape; the
-    /// sentence Claude wrote about the top set is an instruction for the moment
-    /// that set is loaded, and `detail(for:in:)` puts it on that set's own row
-    /// on the logging screen. Stated in both places it was read twice, and the
-    /// second reading was the one under the bar.
-    ///
-    /// `unit` is the lifter's display unit, so a load written in pounds is read
-    /// in the unit he reads everything else in. The conversion is a display
-    /// one; nothing rewrites what was prescribed.
-    static func text(for set: SetPrescription, unit: MassUnit) -> String {
-        let load = set.suggestedLoad.map {
-            "\($0.converted(to: unit).value.compactString) \(unit.rawValue)"
-        }
-        let reps = set.repRange.flatMap { $0.isEmpty ? nil : $0 }
-        let work = [load, reps].compactMap { $0 }.joined(separator: " × ")
-
-        return [work.isEmpty ? nil : work,
-                IntensityPrescription.label(for: set.intensity)]
-            .compactMap { $0 }
-            .joined(separator: " · ")
+    /// What the sets ask for between them — reps, a hold, or a carry, in the
+    /// words they were written in. `nil` when any set states no target, since a
+    /// figure covering a set nobody prescribed one for would be an invention.
+    private static func target(of sets: [SetPrescription]) -> String? {
+        TargetSpan.text(covering: sets.map { $0.repRange ?? "" })
     }
 
-    /// Whether this exercise's sets differ from one another, which is what
-    /// decides whether the lifter is shown a per-set breakdown at all.
-    static func setsDiffer(in exercise: PlannedExercise) -> Bool {
-        !exercise.orderedStatedSets.isEmpty
-            && Set(exercise.prescribedSets).count > 1
+    /// Whether every set asks for the same target — including all of them
+    /// asking for none, which differ in nothing either.
+    private static func sharesOneTarget(_ sets: [SetPrescription]) -> Bool {
+        Set(sets.map { $0.repRange ?? "" }).count == 1
     }
 
-    /// Whether `text(for:)` already names an effort covering every set, which
-    /// is the one case a row must not repeat it in. It is the summary's own
-    /// condition asked as a question, so the two cannot drift apart.
+    /// The span of load across the sets, written only when they differ — that
+    /// difference is the whole of what a ramp or a drop set *is*, and it is what
+    /// the numbered block used five rows to say. `nil` when the loads are all
+    /// alike, and when any set was given none.
+    private static func varyingLoad(of sets: [SetPrescription], unit: MassUnit) -> String? {
+        let loads = sets.compactMap { $0.suggestedLoad?.converted(to: unit).value }
+        guard loads.count == sets.count, let low = loads.min(), let high = loads.max(),
+            low != high
+        else { return nil }
+        return "\(low.compactString)-\(high.compactString) \(unit.rawValue)"
+    }
+
+    /// The effort asked of the sets: the one target when they all state it, and
+    /// the span of the values when they state different ones on the same scale.
+    /// `nil` when any set states none, and when two of them are written on
+    /// scales that cannot be spanned — RPE and a percentage of a maximum are two
+    /// different sentences, and no range covers both.
+    private static func effort(of sets: [SetPrescription]) -> String? {
+        let intensities = sets.compactMap(\.intensity)
+        let scales = Set(intensities.map(\.scale))
+        guard intensities.count == sets.count, scales.count == 1, let scale = scales.first,
+            let span = TargetSpan.text(covering: intensities.map(\.value))
+        else { return nil }
+        return IntensityPrescription.label(for: IntensityTarget(scale: scale, value: span))
+    }
+
+    /// Whether every set asks for the same effort, which is the one case a row
+    /// has nothing of its own to say about it — the figure is already the
+    /// placeholder in that row's effort field, once per row. A header stating a
+    /// span has not said what any one set asks for, so it does not silence the
+    /// rows.
     private static func statesIntensityForEverySet(_ exercise: PlannedExercise) -> Bool {
         let sets = exercise.prescribedSets
-        guard sharedRepRange(of: sets) != nil else { return false }
-        return IntensityPrescription.label(for: sharedIntensity(of: sets)) != nil
-    }
-
-    /// The rep target every set states, or `nil` when they differ or none was
-    /// stated — the case in which the summary gives only a count.
-    private static func sharedRepRange(of sets: [SetPrescription]) -> String? {
-        let reps = Set(sets.map { $0.repRange ?? "" })
-        guard reps.count == 1, let repRange = reps.first, !repRange.isEmpty else { return nil }
-        return repRange
-    }
-
-    /// The one intensity every set states, or `nil` when they differ or none
-    /// stated one. Both answers mean the same thing to a caller: there is no
-    /// single effort to write above the table.
-    private static func sharedIntensity(of sets: [SetPrescription]) -> IntensityTarget? {
-        sharesOneIntensity(sets) ? sets.first?.intensity : nil
+        guard sharesOneIntensity(sets) else { return false }
+        return IntensityPrescription.label(for: sets.first?.intensity) != nil
     }
 
     /// Whether every set names the same intensity — including all of them

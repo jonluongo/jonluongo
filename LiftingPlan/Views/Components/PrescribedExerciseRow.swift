@@ -9,10 +9,16 @@ import LiftingKit
 /// about it changes. The sets it asks for and
 /// the effort it asks for sit beside a repeat glyph, and the rest it prescribes
 /// beside a clock — and the rest is absent when the plan prescribed none, since
-/// a session that asks for no rest shows none rather than `0s`. When the sets
-/// differ from one another they are listed one at a time, because no single line
-/// can state a ramp or a drop set without naming a figure no set of it actually
-/// has.
+/// a session that asks for no rest shows none rather than `0s`.
+///
+/// **A ramp gets the same shape as everything else: a name and one line.** It
+/// used to state its count and then list its sets beneath, five rows where its
+/// neighbours took two, so one exercise in the list read as a different kind of
+/// object from the rest. `PrescriptionSummary` spans it instead — `3 × 5 · 60-80
+/// kg` says these differ and how far without naming a figure no set of it has.
+/// The sets themselves are not lost: every one of them reaches the lifter in
+/// full on the logging screen, on the row it is lifted on, which is the only
+/// screen where knowing set four's load in advance is worth a row of its own.
 ///
 /// **Tempo is not here.** It is a per-rep instruction, and the place it is
 /// needed is under the bar: `ExerciseHeaderView` states it on the logging
@@ -40,9 +46,9 @@ import LiftingKit
 /// showing. It was the session preview screen's row; that screen showed the same
 /// session Today now shows, one tap deeper, so it went and the row stayed.
 ///
-/// **What it depends on.** `PrescriptionSummary` for the words, `RestPrescription`
-/// for a rest length, `PrescriptionLines` for a ramp, `PlannedExercise` from
-/// Store and `MassUnit` from LiftingKit. It reads the store and writes nothing.
+/// **What it depends on.** `PrescriptionSummary` for the words,
+/// `RestPrescription` for a rest length, `PlannedExercise` from Store and
+/// `MassUnit` from LiftingKit. It reads the store and writes nothing.
 struct PrescribedExerciseRow: View {
 
     let exercise: PlannedExercise
@@ -78,10 +84,6 @@ struct PrescribedExerciseRow: View {
             }
             .font(.barbellSupport)
             .foregroundStyle(.secondary)
-
-            if PrescriptionSummary.setsDiffer(in: exercise) {
-                PrescriptionLines(sets: exercise.prescribedSets, unit: unit)
-            }
         }
         .padding(.vertical, Spacing.tight)
     }
@@ -90,7 +92,7 @@ struct PrescribedExerciseRow: View {
     /// drawn only when the plan prescribed one.
     @ViewBuilder
     private var prescription: some View {
-        Label(PrescriptionSummary.text(for: exercise), systemImage: "repeat")
+        Label(PrescriptionSummary.text(for: exercise, unit: unit), systemImage: "repeat")
         // A movement inside a group states no rest of its own: the rest comes
         // after the round, and the group's own line has already said how long.
         // Repeating it here would read as this movement asking for it alone.

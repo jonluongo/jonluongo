@@ -3,9 +3,14 @@ import SwiftData
 import LiftingKit
 
 /// The editable body of one exercise's section inside `ActiveWorkoutView`:
-/// notes, the prescribed rest, the set table, and "Add Set". Split out to keep
+/// notes, the prescribed rest, and the set table. Split out to keep
 /// `ActiveWorkoutView` focused on the workout's overall flow rather than
 /// per-row mechanics.
+///
+/// **The table is rows and nothing else.** Adding a set was a full-width button
+/// under the last row, which made an occasional act a permanent fixture of the
+/// table and put it beside the rows it was not part of. It is a menu item on
+/// `ExerciseHeaderView` now, next to the warm-up it always resembled.
 ///
 /// Weight is shown and entered in `profile.displayUnit`; `previousText` reads
 /// the lifter's most recent performance on this exercise (keyed by
@@ -31,7 +36,6 @@ struct ExerciseLogSection: View {
     let exercise: PlannedExercise
     let profile: UserProfile
     let plans: [TrainingPlan]
-    var onAddSet: (PlannedExercise, Bool) -> Void
     var onDeleteSet: (LoggedSet, PlannedExercise) -> Void
     /// Told which exercise, and whether the set was ticked or taken back.
     var onCompletionChanged: (PlannedExercise, Bool) -> Void
@@ -125,16 +129,6 @@ struct ExerciseLogSection: View {
                     }
                 }
             }
-
-            Button {
-                onAddSet(exercise, false)
-            } label: {
-                Label("Add Set", systemImage: "plus")
-                    .font(.barbellSupport)
-                    .frame(maxWidth: .infinity, minHeight: TapTarget.minimum)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
         }
     }
 
