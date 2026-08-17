@@ -19,6 +19,14 @@ import LiftingKit
 /// lifter types under a placeholder reading "30 seconds" is thirty-four
 /// *seconds*, and writing it into a rep count is how a plank became thirty-four
 /// repetitions in every report that followed.
+///
+/// **Anything else this set asks or is asked sits directly under it**, in
+/// `SetDetailLine` — the effort prescribed for this set alone, the note written
+/// about it, and the field that records how hard it felt. A sixth column would
+/// crowd five that are already tight, and a block above the table is off-screen
+/// by the time the lifter reaches set four. The line is drawn only when it has
+/// something to say, so an ordinary set of an ordinary prescription is exactly
+/// the row it always was.
 struct SetRowView: View {
     @Bindable var set: LoggedSet
     /// 1-based working-set number, ignored when the row is a warmup.
@@ -34,6 +42,13 @@ struct SetRowView: View {
     /// The load the plan prescribed for this set, shown the same way and for
     /// the same reason. `"—"` when it prescribed none.
     var loadTargetText: String
+    /// What this set asks that the exercise's header has not already said — its
+    /// own effort target, its own note — or `nil` when it asks nothing of its
+    /// own, which is the ordinary case and draws nothing.
+    var prescriptionDetail: String?
+    /// Whether the plan named an intensity target for this set, and so whether
+    /// the lifter is offered somewhere to say how hard it felt.
+    var invitesEffort: Bool
     /// What this row records — reps, a hold, or a distance in the unit it was
     /// prescribed in. Decided by the prescription, in `WorkPrescription`, and
     /// never by what is typed.
@@ -101,6 +116,23 @@ struct SetRowView: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.tight) {
+            columns
+            // Drawn only when this set says something of its own or is asked
+            // something of its own. Nothing is drawn otherwise, so a uniform
+            // prescription gains no line per set for saying nothing new.
+            if prescriptionDetail != nil || invitesEffort {
+                SetDetailLine(
+                    set: set,
+                    detail: prescriptionDetail,
+                    invitesEffort: invitesEffort,
+                    spokenSetName: spokenSetName
+                )
+            }
+        }
+    }
+
+    private var columns: some View {
         HStack(spacing: SetTableMetrics.columnGutter) {
             // The set badge names what the row is, and changing that is a
             // deliberate choice from a menu rather than a toggle under a
@@ -162,11 +194,19 @@ struct SetRowView: View {
         Binding(get: { set.isWarmup }, set: { set.isWarmup = $0 })
     }
 
-    /// Spoken aloud, this control has to say which set it completes — every row
-    /// on the screen is otherwise identical to it.
+    /// How this row is named aloud. Every row on the screen is otherwise
+    /// identical, so each control on one has to say which set it belongs to.
+    /// `self` is written out because a property body opening with `set` reads
+    /// as the start of a setter to the parser.
+    private var spokenSetName: String {
+        self.set.isWarmup ? "warm-up set" : "set \(workingNumber)"
+    }
+
+    /// Spoken aloud, this control has to say which set it completes.
     private var completionLabel: String {
-        let which = set.isWarmup ? "warm-up set" : "set \(workingNumber)"
-        return set.isCompleted ? "Completed \(which)" : "Complete \(which)"
+        self.set.isCompleted
+            ? "Completed \(spokenSetName)"
+            : "Complete \(spokenSetName)"
     }
 
     /// Whether the field the lifter types into holds a distance, which is the

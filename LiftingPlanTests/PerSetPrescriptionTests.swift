@@ -383,6 +383,96 @@ struct PerSetPrescriptionTests {
         #expect(PrescriptionSummary.text(for: bare) == "4 sets")
     }
 
+    @Test("A uniform prescription gains nothing under its rows")
+    func uniformRowsSayNothingNew() throws {
+        let plain = try imported([
+            PlanDocumentExercise(
+                exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8")
+        ])
+        #expect(plain.prescribedSets.allSatisfy {
+            PrescriptionSummary.detail(for: $0, in: plain) == nil
+        })
+
+        // The effort every set asks for is stated once, above the table. A row
+        // repeating it would be the screen saying the same thing three times.
+        let rated = try imported([
+            PlanDocumentExercise(
+                exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8",
+                intensity: IntensityTarget(scale: .rpe, value: "8"))
+        ])
+        #expect(PrescriptionSummary.text(for: rated) == "3 × 8 · RPE 8")
+        #expect(rated.prescribedSets.allSatisfy {
+            PrescriptionSummary.detail(for: $0, in: rated) == nil
+        })
+    }
+
+    @Test("An effort asked of the top set alone is stated on that set's row")
+    func topSetEffortSitsOnItsOwnRow() throws {
+        let ramp = try imported([
+            PlanDocumentExercise(
+                exerciseID: Self.squat, displayName: "Squat",
+                sets: [
+                    SetPrescription(suggestedLoad: kg(60)),
+                    SetPrescription(suggestedLoad: kg(70)),
+                    SetPrescription(
+                        suggestedLoad: kg(80),
+                        intensity: IntensityTarget(scale: .rpe, value: "9"), notes: "Top set"),
+                ],
+                repRange: "5")
+        ])
+
+        #expect(ramp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: ramp) }
+            == [nil, nil, "RPE 9 · Top set"])
+    }
+
+    @Test("A note about one set of a drop set is stated on that set's row")
+    func dropSetNoteSitsOnItsOwnRow() throws {
+        let drop = try imported([
+            PlanDocumentExercise(
+                exerciseID: Self.bench, displayName: "Bench",
+                sets: [
+                    SetPrescription(),
+                    SetPrescription(),
+                    SetPrescription(repRange: "AMRAP", suggestedLoad: kg(70), notes: "Drop set"),
+                ],
+                repRange: "8", suggestedLoad: kg(100))
+        ])
+
+        #expect(drop.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: drop) }
+            == [nil, nil, "Drop set"])
+    }
+
+    @Test("A row the plan said nothing about adds no line of its own")
+    func unprescribedRowAddsNothing() throws {
+        let exercise = try imported([
+            PlanDocumentExercise(
+                exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8",
+                intensity: IntensityTarget(scale: .rpe, value: "8"))
+        ])
+
+        // A warm-up, or a set added past the ones prescribed.
+        #expect(PrescriptionSummary.detail(for: nil, in: exercise) == nil)
+    }
+
+    @Test("Only the set the plan asked an effort of is offered a field for one")
+    func onlyPrescribedSetsInviteEffort() throws {
+        let ramp = try imported([
+            PlanDocumentExercise(
+                exerciseID: Self.squat, displayName: "Squat",
+                sets: [
+                    SetPrescription(suggestedLoad: kg(60)),
+                    SetPrescription(suggestedLoad: kg(70)),
+                    SetPrescription(
+                        suggestedLoad: kg(80),
+                        intensity: IntensityTarget(scale: .rpe, value: "9")),
+                ],
+                repRange: "5")
+        ])
+
+        #expect(ramp.prescribedSets.map { EffortEntry.isInvited(by: $0) }
+            == [false, false, true])
+    }
+
     @Test("A set's own line states its load, its reps and its effort, as written")
     func setLineStatesWhatThatSetPrescribes() throws {
         let ramp = try imported([

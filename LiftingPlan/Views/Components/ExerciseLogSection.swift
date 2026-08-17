@@ -17,6 +17,14 @@ import LiftingKit
 /// and he would read his own plan back with a number he never wrote. Running a
 /// timer of one's own is a session-local stopwatch and lives in
 /// `ActiveWorkoutView`'s toolbar instead.
+///
+/// **Every per-set statement reaches the lifter on the row it describes.** This
+/// section used to draw the whole prescription again as a numbered block above
+/// the table; the sentence about set four was off the top of the screen by the
+/// time he reached set four. Each row now carries its own: its load and its reps
+/// as the placeholders in its two fields, and its effort target and its note in
+/// the line underneath. The numbered block still earns its place in
+/// `SessionDetailView`, which previews a session that has no rows yet.
 struct ExerciseLogSection: View {
     let exercise: PlannedExercise
     let profile: UserProfile
@@ -56,26 +64,19 @@ struct ExerciseLogSection: View {
                     .foregroundStyle(.secondary)
             }
 
-            // Drawn only when the sets differ from one another. A uniform
-            // prescription is already stated in full in the section header, and
-            // repeating it once per set would say nothing new.
-            if PrescriptionSummary.setsDiffer(in: exercise) {
-                PrescriptionLines(sets: prescribedSets, unit: profile.displayUnit)
-            }
-
             columnHeader
 
             ForEach(Array(orderedSets.enumerated()), id: \.element.persistentModelID) { index, set in
+                let number = workingNumber(at: index)
+                let prescribed = prescription(forWorkingNumber: number, isWarmup: set.isWarmup)
                 SetRowView(
                     set: set,
-                    workingNumber: workingNumber(at: index),
-                    previousText: previousText(workingIndex: workingNumber(at: index) - 1, isWarmup: set.isWarmup),
-                    repTargetText: RepPrescription.targetText(
-                        for: prescription(forWorkingNumber: workingNumber(at: index),
-                                          isWarmup: set.isWarmup)?.repRange),
-                    loadTargetText: loadTargetText(
-                        prescription(forWorkingNumber: workingNumber(at: index),
-                                     isWarmup: set.isWarmup)),
+                    workingNumber: number,
+                    previousText: previousText(workingIndex: number - 1, isWarmup: set.isWarmup),
+                    repTargetText: RepPrescription.targetText(for: prescribed?.repRange),
+                    loadTargetText: loadTargetText(prescribed),
+                    prescriptionDetail: PrescriptionSummary.detail(for: prescribed, in: exercise),
+                    invitesEffort: EffortEntry.isInvited(by: prescribed),
                     measure: measure,
                     unit: profile.displayUnit,
                     onComplete: { onCompleteSet(exercise) }
