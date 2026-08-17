@@ -191,8 +191,8 @@ struct CarriedWorkTests {
     private func value(at path: [String], in schema: JSONValue) throws -> JSONValue {
         var current = schema
         for key in path {
-            current = try #require(
-                current[key], "nothing at '\(key)' in \(path.joined(separator: "."))")
+            let step = Int(key).flatMap { current[$0] } ?? current[key]
+            current = try #require(step, "nothing at '\(key)' in \(path.joined(separator: "."))")
         }
         return current
     }
@@ -201,7 +201,10 @@ struct CarriedWorkTests {
         let described = try value(
             at: [
                 "properties", "weeks", "items", "properties", "days", "items",
-                "properties", "exercises", "items", "properties", "repRange", "description",
+                // An entry of a day is an exercise or a group, so the exercise
+                // shape is the first of the two the item may take.
+                "properties", "exercises", "items", "anyOf", "0",
+                "properties", "repRange", "description",
             ],
             in: ToolCatalog.writePlanDefinition.inputSchema)
         return try #require(described.stringValue)

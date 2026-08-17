@@ -71,6 +71,16 @@ extension JSONValue {
         return value
     }
 
+    /// The element at `index`, or `nil` when this is not an array or is shorter
+    /// than that. The companion to the member subscript above, so a path through
+    /// a document that passes through a list — a week, a day, a group's second
+    /// exercise — reads as one chain rather than breaking into `arrayValue`.
+    public subscript(index: Int) -> JSONValue? {
+        guard case .array(let values) = self, values.indices.contains(index) else { return nil }
+        let value = values[index]
+        return value == .null ? nil : value
+    }
+
     /// The strings in an array member, tolerating a bare string in place of a
     /// one-element array — Claude writes `"muscle": "chest"` at least as often
     /// as `"muscle": ["chest"]`, and both plainly mean the same thing.

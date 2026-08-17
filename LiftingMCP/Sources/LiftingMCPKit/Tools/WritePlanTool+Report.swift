@@ -96,8 +96,26 @@ extension ToolRunner {
             "weekday": .string(day.weekday.fullName),
             "focus": .string(day.focus),
             "durationMinutes": .integer(day.durationMinutes),
-            "exercises": .array(day.exercises.map(reported(exercise:))),
+            "exercises": .array(day.entries.map(reported(entry:))),
         ]
+    }
+
+    /// One entry as it landed: an exercise, or the group it was written in.
+    ///
+    /// A group comes back as a group rather than as the exercises inside it,
+    /// because the grouping is the part of the prescription that a flat list
+    /// cannot state — and the caller is reading this to see that what he wrote
+    /// is what arrived.
+    private static func reported(entry: PlanDocumentEntry) -> JSONValue {
+        switch entry {
+        case .exercise(let exercise):
+            return reported(exercise: exercise)
+        case .group(let group):
+            return [
+                "group": .array(group.exercises.map(reported(exercise:))),
+                "restSeconds": .integer(group.restSeconds),
+            ]
+        }
     }
 
     /// One prescription as it landed, including every set it prescribes.

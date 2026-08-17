@@ -24,7 +24,13 @@ extension ToolCatalog {
             also fails the call, with the key named, rather than being dropped. \
             An exercise's 'sets' is a number when every set is the same work and \
             a list when they differ — that is how a drop set, a ramp, a back-off \
-            set or a per-set note is written. 'intensity' states how hard the \
+            set or a per-set note is written. An entry in a day's 'exercises' is \
+            either one exercise or one group — {"group": [ … ], "restSeconds": \
+            90} — which is how a superset, a tri-set or a giant set is written: \
+            the movements are performed back to back and the rest comes after \
+            the round, so the group states the rest and the exercises inside it \
+            state none. Group only when you mean it; nothing here groups \
+            anything on its own. 'intensity' states how hard the \
             work should be, on whatever scale you work in; it is recorded as \
             written and never converted or bounded. Work that is not counted in \
             reps is prescribed in 'repRange' as the measure it actually is: held \
@@ -66,9 +72,46 @@ extension ToolCatalog {
                     + "1 is Sunday and 7 is Saturday."),
             "focus": string("Short label such as 'Push'."),
             "durationMinutes": integer("How long this session runs."),
-            "exercises": array(of: exerciseSchema, "The movements, in the order to do them."),
+            "exercises": array(
+                of: entrySchema,
+                "The work, in the order to do it. Each entry is one exercise, or "
+                    + "one group of exercises performed back to back."),
         ],
         required: ["weekday"]
+    )
+
+    /// One entry of a day: an exercise, or a group of them.
+    ///
+    /// The group holds its exercises rather than labelling them, so there is no
+    /// way to write half a grouping — no two exercises at opposite ends of a day
+    /// claiming one group, and no group of one. It is the same choice `sets`
+    /// makes: one key, two shapes, and no way to disagree with itself.
+    private static let entrySchema: JSONValue = [
+        "description": .string(
+            "One exercise, or a group of two or more performed back to back as a "
+                + "superset, tri-set or giant set."),
+        "anyOf": [exerciseSchema, groupSchema],
+    ]
+
+    /// A superset, tri-set or giant set. Two or more exercises, and the rest
+    /// that follows the round rather than any set inside it.
+    private static let groupSchema = object(
+        [
+            "group": array(
+                of: exerciseSchema,
+                "Two or more exercises, in the order they are performed within "
+                    + "each round. The lifter does one set of each, in this order, then "
+                    + "rests, then goes again — so the count of sets each of them "
+                    + "prescribes is the number of rounds. A group of one is refused; "
+                    + "that is just an exercise."),
+            "restSeconds": integer(
+                "Rest after each round. Omit if you are not prescribing rest. This "
+                    + "is the group's rest, and the only rest a group has: an exercise "
+                    + "inside a group stating 'restSeconds' of its own is refused, "
+                    + "because a rest between the movements of a round is a rest "
+                    + "nobody takes."),
+        ],
+        required: ["group"]
     )
 
     private static let exerciseSchema = object(
