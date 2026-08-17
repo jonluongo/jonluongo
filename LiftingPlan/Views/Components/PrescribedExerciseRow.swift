@@ -19,6 +19,15 @@ import LiftingKit
 /// screen. A third column of it here cost a line on every exercise to answer a
 /// question nobody asks while deciding whether to go to the gym.
 ///
+/// **Neither is the coach's note.** This row says what the session *is* — the
+/// movement, the sets, the reps, the effort and the rest. What Claude *said*
+/// about the movement is an instruction for the moment the bar is loaded, and
+/// it reaches the lifter there: `ExerciseLogSection` and `SupersetHeaderView`
+/// state the exercise's note on the logging screen, and `SetDetailLine` states
+/// a note about one set on that set's own row. Drawn here as well, a session of
+/// six exercises opened as a wall of prose in front of a lifter deciding
+/// whether to start.
+///
 /// **How it is used.** The Today screen draws one per exercise of the day it is
 /// showing. It was the session preview screen's row; that screen showed the same
 /// session Today now shows, one tap deeper, so it went and the row stayed.
@@ -76,12 +85,6 @@ struct PrescribedExerciseRow: View {
 
             if PrescriptionSummary.setsDiffer(in: exercise) {
                 PrescriptionLines(sets: exercise.prescribedSets, unit: unit)
-            }
-
-            if let notes = exercise.notes, !notes.isEmpty {
-                Text(notes)
-                    .font(.barbellSupport)
-                    .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, Spacing.tight)

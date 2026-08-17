@@ -473,7 +473,12 @@ struct PerSetPrescriptionTests {
             == [false, false, true])
     }
 
-    @Test("A set's own line states its load, its reps and its effort, as written")
+    /// The session read before it is trained states the shape of a ramp. What
+    /// Claude wrote about the top set is an instruction for the moment that set
+    /// is loaded, and `detail(for:in:)` puts it on that set's own row; stated
+    /// here as well it was read twice, and the reading that mattered was the
+    /// one under the bar.
+    @Test("A set's own line states its load, its reps and its effort — not its note")
     func setLineStatesWhatThatSetPrescribes() throws {
         let ramp = try imported([
             PlanDocumentExercise(
@@ -490,7 +495,11 @@ struct PerSetPrescriptionTests {
             PrescriptionSummary.text(for: $0, unit: .kilograms)
         }
 
-        #expect(lines == ["60 kg × 5", "80 kg × 5 · RPE 9 · Top set"])
+        #expect(lines == ["60 kg × 5", "80 kg × 5 · RPE 9"])
+
+        // The note itself is not lost — it is on the row that set is logged on.
+        #expect(ramp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: ramp) }
+            == [nil, "RPE 9 · Top set"])
     }
 
     // MARK: - The field says what the plan asked for

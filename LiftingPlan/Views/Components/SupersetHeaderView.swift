@@ -7,8 +7,9 @@ import LiftingKit
 /// **What it does.** Names the group in the words a lifter already reads —
 /// *Superset A*, *Tri-set B* — and then legends it, because the rows below carry
 /// only `A1` and `A2` and something has to say what those are. Each legend line
-/// is the movement's name and what the plan asks of it, with the menu of things
-/// there are to do to that movement rather than to the group.
+/// is the movement's name, what the plan asks of it and what Claude wrote about
+/// it, with the menu of things there are to do to that movement rather than to
+/// the group.
 ///
 /// **How it is used.** `ActiveWorkoutView` puts one above each group's section,
 /// where `ExerciseHeaderView` sits above an ungrouped exercise's. The two are
@@ -59,6 +60,16 @@ struct SupersetHeaderView: View {
                 Text(prescription(of: member))
                     .font(.barbellSupport)
                     .foregroundStyle(.secondary)
+                // What Claude said about this movement, beside the movement he
+                // said it about. An ungrouped exercise's note is stated on its
+                // card by `ExerciseLogSection`; inside a group the card belongs
+                // to the round rather than to one movement, so the legend line
+                // naming the movement is the only place its note can attach to.
+                if let note = note(of: member) {
+                    Text(note)
+                        .font(.barbellSupport)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer(minLength: 0)
             Menu {
@@ -79,13 +90,22 @@ struct SupersetHeaderView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(group.notation(for: member) ?? ""), \(member.displayName), "
-                + prescription(of: member))
+            [
+                "\(group.notation(for: member) ?? ""), \(member.displayName), "
+                    + prescription(of: member),
+                note(of: member),
+            ].compactMap { $0 }.joined(separator: ". "))
     }
 
     private func prescription(of member: PlannedExercise) -> String {
         let summary = PrescriptionSummary.text(for: member)
         guard let tempo = member.tempo, !tempo.isEmpty else { return summary }
         return "\(summary) · tempo \(tempo)"
+    }
+
+    /// What Claude wrote about this movement, or `nil` when he wrote nothing.
+    /// An empty note is nothing to draw, exactly as an absent one is.
+    private func note(of member: PlannedExercise) -> String? {
+        member.notes.flatMap { $0.isEmpty ? nil : $0 }
     }
 }

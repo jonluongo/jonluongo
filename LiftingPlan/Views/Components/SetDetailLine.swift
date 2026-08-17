@@ -5,12 +5,14 @@ import LiftingKit
 /// The quiet line under one set row: what the plan asked of *this* set beyond
 /// the two numbers already in it, and the effort the lifter gives back.
 ///
-/// **What it does.** Draws at most two things. On the left, the sentence
-/// describing this set — "RPE 9", "Drop set", "last set AMRAP" — which used to
-/// live in a numbered block above the table and was off the top of the screen
-/// by the time the lifter reached set four. On the right, the one field that
-/// writes `LoggedSet.rpe`, which the snapshot has always reported and no screen
-/// could ever fill in.
+/// **What it does.** Draws at most two things. The sentence describing this set
+/// — "RPE 9", "Drop set", "last set AMRAP" — which used to live in a numbered
+/// block above the table and was off the top of the screen by the time the
+/// lifter reached set four. And the one field that writes `LoggedSet.rpe`,
+/// which the snapshot has always reported and no screen could ever fill in.
+/// They sit side by side while the sentence fits on one line beside the field
+/// and stack when it does not, so a long prescription is read whole rather than
+/// squeezed into a column narrower than its own words.
 ///
 /// **How it is used.** `SetRowView` puts one under itself and draws it at all
 /// only when there is something to draw: `detail` is `nil` and `invitesEffort`
@@ -48,14 +50,50 @@ struct SetDetailLine: View {
         )
     }
 
+    /// Side by side while the sentence fits on one line beside the field, and
+    /// stacked the moment it does not.
+    ///
+    /// One row is what this was, and the sentence was left whatever the field
+    /// did not want — which an `HStack` divides down to about half the row. A
+    /// sentence is the one thing here that cannot be given an arbitrary column
+    /// and still be read: it wrapped into a four-word gutter at ordinary sizes,
+    /// and at accessibility sizes a single word was wider than the space left
+    /// for it, so the word ran out past the edge of the card and was cut off by
+    /// it. Stacking gives the sentence the whole width to wrap in and leaves the
+    /// field under the column it belongs to. `PrescribedExerciseRow` states its
+    /// prescription the same way and for the same reason.
     var body: some View {
-        HStack(spacing: SetTableMetrics.columnGutter) {
-            if let detail {
-                Text(detail)
-                    .font(.barbellSupport)
-                    .foregroundStyle(.secondary)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: SetTableMetrics.columnGutter) {
+                sentence
+                Spacer(minLength: 0)
+                effort
             }
-            Spacer(minLength: 0)
+            VStack(alignment: .leading, spacing: Spacing.tight) {
+                sentence
+                HStack(spacing: SetTableMetrics.columnGutter) {
+                    Spacer(minLength: 0)
+                    effort
+                }
+            }
+        }
+    }
+
+    /// What the plan asked of this set beyond the two numbers already in it.
+    @ViewBuilder
+    private var sentence: some View {
+        if let detail {
+            Text(detail)
+                .font(.barbellSupport)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    /// The scale the plan named and the field that answers it, drawn only where
+    /// it named one.
+    @ViewBuilder
+    private var effort: some View {
+        HStack(spacing: SetTableMetrics.columnGutter) {
             if let intensity {
                 Text(IntensityPrescription.scaleName(for: intensity))
                     .font(.barbellLabel)

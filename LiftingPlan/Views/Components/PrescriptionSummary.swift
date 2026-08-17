@@ -65,9 +65,16 @@ enum PrescriptionSummary {
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
-    /// One prescribed set as a line: its load, its reps, its effort, its note —
-    /// each part dropped when the plan did not state it. Empty when the plan
-    /// stated nothing at all about the set, which is a set with nothing to say.
+    /// One prescribed set as a line: its load, its reps and its effort — each
+    /// part dropped when the plan did not state it. Empty when the plan stated
+    /// nothing at all about the set, which is a set with nothing to say.
+    ///
+    /// **The set's note is not here.** This is the session read before it is
+    /// trained, where a ramp is listed so the lifter can see its shape; the
+    /// sentence Claude wrote about the top set is an instruction for the moment
+    /// that set is loaded, and `detail(for:in:)` puts it on that set's own row
+    /// on the logging screen. Stated in both places it was read twice, and the
+    /// second reading was the one under the bar.
     ///
     /// `unit` is the lifter's display unit, so a load written in pounds is read
     /// in the unit he reads everything else in. The conversion is a display
@@ -80,8 +87,7 @@ enum PrescriptionSummary {
         let work = [load, reps].compactMap { $0 }.joined(separator: " × ")
 
         return [work.isEmpty ? nil : work,
-                IntensityPrescription.label(for: set.intensity),
-                set.notes.flatMap { $0.isEmpty ? nil : $0 }]
+                IntensityPrescription.label(for: set.intensity)]
             .compactMap { $0 }
             .joined(separator: " · ")
     }
