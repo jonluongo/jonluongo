@@ -59,8 +59,6 @@ extension JSONValue {
         return nil
     }
 
-    public var isNull: Bool { self == .null }
-
     /// A member of this object, or `nil` when this is not an object or has no
     /// such member. `null` members answer `nil` too, so an argument explicitly
     /// sent as `null` reads the same as one that was omitted.

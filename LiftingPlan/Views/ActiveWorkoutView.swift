@@ -30,11 +30,6 @@ struct ActiveWorkoutView: View {
     /// performed as rounds. The grouping was prescribed; nothing here makes one.
     private var entries: [SessionEntry] { day.entries }
 
-    private var totalSets: Int { exercises.reduce(0) { $0 + ($1.loggedSets ?? []).count } }
-    private var completedSets: Int {
-        exercises.reduce(0) { $0 + ($1.loggedSets ?? []).filter(\.isCompleted).count }
-    }
-
     /// Whether this session has been marked done. Not derived from how much of
     /// it is filled in: a lifter who stops at three sets of four has finished,
     /// and one resting between sets has not, and nothing in the record can tell

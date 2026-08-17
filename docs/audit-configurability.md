@@ -1,5 +1,13 @@
 # Configurability Audit — LiftingPlan
 
+> **Superseded — a record of 2026-08-14, not a description of the code.** Its
+> central finding was acted on: `ProgressionEngine` and its five baked-in
+> progression constants are deleted, along with `TemplatePlanBuilder`,
+> `SessionSkeleton` and the rest of the app-side planner. The app now makes no
+> training decisions at all — Claude does, over MCP — so the composition layer
+> this audit was about no longer exists in the app. Read it for why, not for
+> what is there.
+
 Date: 2026-08-14
 Scope: `Tools/derivation-rules.json`, `Tools/overrides.json`, `Tools/build-catalog.py`, all Swift under `LiftingPlan/`.
 Audience split assumed throughout: **developer configuration** (owner edits data, rebuilds) vs. **user configuration** (end user customizes at runtime, no rebuild).

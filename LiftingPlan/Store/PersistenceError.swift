@@ -16,13 +16,6 @@ enum PersistenceError: Error, LocalizedError {
             "Your changes could not be saved. Check your connection and try again."
         }
     }
-
-    /// The original error, for logging and diagnosis. Never shown to the user.
-    var underlyingError: any Error {
-        switch self {
-        case .saveFailed(let underlying): underlying
-        }
-    }
 }
 
 extension ModelContext {
