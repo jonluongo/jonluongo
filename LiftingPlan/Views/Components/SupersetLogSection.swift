@@ -41,6 +41,9 @@ struct SupersetLogSection: View {
         Group {
             SetTableHeader(
                 firstColumn: "LIFT", measure: rows.measure, unit: profile.displayUnit)
+                .listRowBackground(Palette.panel)
+                .listRowSeparator(.hidden)
+                .listRowInsets(SetTableMetrics.headerInsets)
 
             ForEach(rows.warmups) { row in
                 setRow(row)

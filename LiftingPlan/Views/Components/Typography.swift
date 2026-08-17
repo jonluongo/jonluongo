@@ -31,9 +31,16 @@ import SwiftUI
 /// no asset, no environment, no state.
 extension Font {
 
-    /// The numbers read from three feet away. `.monospacedDigit()` is part of
-    /// the role, so a counting number never reflows as it changes.
-    static let barbellMetric: Font = .title2.weight(.bold).monospacedDigit()
+    /// The numbers read from three feet away, set in the monospaced face.
+    ///
+    /// This is the app's one typographic signature and it is spent here on
+    /// purpose: the whole product is a grid of figures — a load, a count, a
+    /// countdown — and a monospaced face is what a column of figures is written
+    /// in when the column has to be scanned rather than read. It also holds its
+    /// width as a number changes, so nothing reflows under a thumb mid-set.
+    /// Everything around it stays in the system face; a page set entirely in
+    /// mono is a terminal, not an instrument.
+    static let barbellMetric: Font = .system(.title3, design: .monospaced).weight(.semibold)
 
     /// The name of the thing being described.
     static let barbellTitle: Font = .headline
@@ -47,6 +54,13 @@ extension Font {
     static let barbellSupport: Font = .subheadline.monospacedDigit()
 
     /// Column headers. Uppercasing is the call site's, since it is a property
-    /// of the string rather than of the type.
+    /// of the string rather than of the type — as is the tracking, which is a
+    /// layout modifier rather than part of a font. `Label.tracking` below is the
+    /// figure to use: letter-spaced capitals are how a measuring instrument
+    /// labels a scale, and at this size they stop reading as shouting and start
+    /// reading as engraving.
     static let barbellLabel: Font = .caption2.weight(.semibold)
+
+    /// The tracking a `barbellLabel` is drawn with.
+    static let labelTracking: CGFloat = 0.8
 }

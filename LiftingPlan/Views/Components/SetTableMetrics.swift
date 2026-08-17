@@ -1,4 +1,4 @@
-import CoreGraphics
+import SwiftUI
 
 /// The set table's column geometry, declared once.
 ///
@@ -28,8 +28,10 @@ enum SetTableMetrics {
     /// The same, so the table's two ends match.
     static let checkColumnWidth: CGFloat = TapTarget.minimum
 
-    /// The weight field and the work field.
-    static let entryColumnWidth: CGFloat = 62
+    /// The weight field and the work field. Wider than it was: the figures in
+    /// them are monospaced now, and mono digits are broader than proportional
+    /// ones, so a three-figure load needs the room rather than the shrinking.
+    static let entryColumnWidth: CGFloat = 68
 
     /// Breathing room inside an entry field, each side.
     ///
@@ -49,4 +51,20 @@ enum SetTableMetrics {
 
     /// Between columns.
     static let columnGutter: CGFloat = Spacing.snug
+
+    /// What surrounds one set row.
+    ///
+    /// The vertical figure is deliberately small. A list's default row inset is
+    /// generous because most rows are a line of prose; these are lines of a
+    /// table, and at the default a four-set exercise filled the screen on its
+    /// own. The controls inside still clear 44pt, so the row is tight without
+    /// anything on it becoming hard to hit.
+    static let rowInsets = EdgeInsets(
+        top: Spacing.tight, leading: Spacing.section,
+        bottom: Spacing.tight, trailing: Spacing.section)
+
+    /// What surrounds the column names. Tighter beneath, because the hairline
+    /// under them belongs to the rows rather than to the label.
+    static let headerInsets = EdgeInsets(
+        top: Spacing.snug, leading: Spacing.section, bottom: 0, trailing: Spacing.section)
 }

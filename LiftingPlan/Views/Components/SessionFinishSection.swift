@@ -52,11 +52,16 @@ struct SessionFinishSection: View {
                 }
                 .padding(.vertical, Spacing.tight)
                 .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             } else {
                 PrimaryActionButton(
                     title: "Finish Workout", systemImage: "checkmark", action: onFinish)
                 .accessibilityHint("Marks this session as logged")
                 .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(
+                    top: Spacing.major, leading: Spacing.section,
+                    bottom: Spacing.snug, trailing: Spacing.section))
             }
         } footer: {
             // Said only where it is still true. A lifter about to press this
@@ -64,6 +69,9 @@ struct SessionFinishSection: View {
             // which is exactly the distinction the toolbar failed to draw.
             if !isLogged {
                 Text("Records this session as trained. Closing without it changes nothing.")
+                    .foregroundStyle(Palette.muted)
+                    .padding(.horizontal, Spacing.section)
+                    .padding(.bottom, Spacing.major)
             }
         }
     }

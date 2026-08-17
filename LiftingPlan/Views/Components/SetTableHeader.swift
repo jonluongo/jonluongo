@@ -37,7 +37,14 @@ struct SetTableHeader: View {
             Image(systemName: "checkmark").frame(width: SetTableMetrics.checkColumnWidth)
         }
         .font(.barbellLabel)
-        .foregroundStyle(.secondary)
+        .tracking(Font.labelTracking)
+        .foregroundStyle(Palette.muted)
+        .padding(.bottom, Spacing.snug)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Palette.rule)
+                .frame(height: Palette.hairline)
+        }
     }
 
     /// What the second field is called: the unit its rows are recorded in.

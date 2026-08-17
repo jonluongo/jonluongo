@@ -63,7 +63,14 @@ struct ActiveWorkoutView: View {
                 }
 
             }
-            .listStyle(.insetGrouped)
+            // Plain, not inset-grouped. A rounded white card per exercise
+            // boxed each table in a shape that said "one item in a list of
+            // items", when the table *is* the screen. Rules separate them now,
+            // which is how a page of columns is separated from the next page of
+            // columns.
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Palette.surface)
             .scrollDismissesKeyboard(.interactively)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

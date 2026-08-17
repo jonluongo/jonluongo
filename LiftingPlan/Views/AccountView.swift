@@ -154,6 +154,9 @@ struct AccountView: View {
                 Text("Deletes every block and every set logged against it. Everything above is kept.")
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Palette.surface)
         .navigationTitle("Account")
         .confirmationDialog("Delete all blocks?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
             Button("Delete Blocks", role: .destructive) { deleteAllPlans() }

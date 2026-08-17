@@ -62,8 +62,13 @@ struct DesignSystemTests {
     func typeRamp() {
         // Stated as equalities rather than described in a comment: a future
         // edit that swaps a semantic style for a fixed point size — which is
-        // exactly what TimerRing did — stops being a silent change.
-        #expect(Font.barbellMetric == Font.title2.weight(.bold).monospacedDigit())
+        // exactly what TimerRing did — stops being a silent change. Metric is
+        // built on `.title3` and drawn in the monospaced face: the numbers are
+        // the app's one typographic signature, and a column of figures that has
+        // to be scanned is set in mono. The size is still semantic, so Dynamic
+        // Type carries it.
+        #expect(
+            Font.barbellMetric == Font.system(.title3, design: .monospaced).weight(.semibold))
         #expect(Font.barbellTitle == Font.headline)
         #expect(Font.barbellBody == Font.body)
         #expect(Font.barbellSupport == Font.subheadline.monospacedDigit())

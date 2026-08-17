@@ -83,7 +83,9 @@ struct PrescribedExerciseRow: View {
                         .foregroundStyle(.secondary)
                         .accessibilityLabel("\(notation),")
                 }
-                Text(exercise.displayName).font(.barbellTitle)
+                Text(exercise.displayName)
+                    .font(.barbellTitle)
+                    .foregroundStyle(Palette.ink)
                 Spacer()
             }
             // Wraps onto a second line at long prescriptions and large text
@@ -91,7 +93,7 @@ struct PrescribedExerciseRow: View {
             // the lifter, which is the whole job of this row.
             Text(prescription)
                 .font(.barbellSupport)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Palette.muted)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, Spacing.tight)

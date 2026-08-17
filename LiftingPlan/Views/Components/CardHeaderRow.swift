@@ -31,10 +31,11 @@ struct CardHeaderRow<Trailing: View>: View {
             VStack(alignment: .leading, spacing: Spacing.tight) {
                 Text(title)
                     .font(.barbellTitle)
+                    .foregroundStyle(Palette.ink)
                 if let subtitle {
                     Text(subtitle)
                         .font(.barbellSupport)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Palette.muted)
                 }
             }
             Spacer()

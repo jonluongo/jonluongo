@@ -34,6 +34,8 @@ struct TodaySessionSection: View {
                     PrescribedGroupRows(group: group, unit: unit)
                 }
             }
+            .listRowBackground(Palette.panel)
+            .listRowSeparatorTint(Palette.rule)
         } header: {
             header
         }
@@ -69,7 +71,10 @@ struct TodaySessionSection: View {
             }
         }
         .textCase(nil)
-        .padding(.bottom, Spacing.tight)
+        .padding(.top, Spacing.snug)
+        .padding(.bottom, Spacing.standard)
+        .listRowInsets(EdgeInsets(
+            top: 0, leading: Spacing.section, bottom: 0, trailing: Spacing.section))
     }
 }
 

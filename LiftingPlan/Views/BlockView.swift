@@ -34,7 +34,10 @@ struct BlockView: View {
 
     var body: some View {
         weeks(of: plan)
-            .navigationTitle(PlansListing.title(of: plan))
+            .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Palette.surface)
+        .navigationTitle(PlansListing.title(of: plan))
             .navigationBarTitleDisplayMode(.inline)
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { now = Date() }

@@ -69,6 +69,9 @@ struct ExerciseDetailView: View {
                 }
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Palette.surface)
         .navigationTitle(displayName)
         .navigationBarTitleDisplayMode(.inline)
     }

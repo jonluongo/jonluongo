@@ -57,11 +57,16 @@ struct ExerciseLogSection: View {
             if let notes = exercise.notes, !notes.isEmpty {
                 Text(notes)
                     .font(.barbellSupport)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Palette.muted)
+                    .listRowBackground(Palette.panel)
+                    .listRowSeparator(.hidden)
             }
 
             SetTableHeader(
                 firstColumn: "SET", measure: reading.measure, unit: profile.displayUnit)
+                .listRowBackground(Palette.panel)
+                .listRowSeparator(.hidden)
+                .listRowInsets(SetTableMetrics.headerInsets)
 
             ForEach(Array(orderedSets.enumerated()), id: \.element.persistentModelID) { index, set in
                 let number = workingNumber(at: index)
@@ -79,7 +84,14 @@ struct ExerciseLogSection: View {
                     unit: profile.displayUnit,
                     onCompletionChanged: { onCompletionChanged(exercise, $0) }
                 )
-                .listRowBackground(set.isCompleted ? Color.green.opacity(0.12) : nil)
+                // No wash behind a finished row. The filled square is the mark
+                // that it happened, and a pale green band the width of the
+                // screen said the same thing far louder — two statements of one
+                // fact, and the louder of them a second colour across the whole
+                // table. Chanel's rule: take one thing off.
+                .listRowBackground(Palette.panel)
+                .listRowSeparatorTint(Palette.rule)
+                .listRowInsets(SetTableMetrics.rowInsets)
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) { onDeleteSet(set, exercise) } label: {
                         Label("Delete", systemImage: "trash")

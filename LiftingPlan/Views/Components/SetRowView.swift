@@ -130,7 +130,7 @@ struct SetRowView: View {
             if let prescriptionDetail {
                 Text(prescriptionDetail)
                     .font(.barbellSupport)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Palette.muted)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -152,7 +152,7 @@ struct SetRowView: View {
             } label: {
                 Text(identity.badge)
                     .font(.barbellSupport)
-                    .foregroundStyle(set.isWarmup ? .orange : .primary)
+                    .foregroundStyle(set.isWarmup ? Palette.accent : Palette.ink)
                     .frame(
                         width: SetTableMetrics.setColumnWidth,
                         height: SetTableMetrics.controlHeight
@@ -164,7 +164,7 @@ struct SetRowView: View {
 
             Text(previousText)
                 .font(.barbellSupport)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Palette.muted)
                 .frame(maxWidth: .infinity)
                 .lineLimit(1)
 
@@ -175,9 +175,21 @@ struct SetRowView: View {
             Button {
                 complete()
             } label: {
-                Image(systemName: set.isCompleted ? "checkmark.square.fill" : "square")
-                    .font(.barbellMetric)
-                    .foregroundStyle(set.isCompleted ? .green : .secondary)
+                // A filled square, not a tick in a box. The row is a line of a
+                // record and the mark is what puts it there — square because
+                // every other edge in this table is square, and filled because
+                // a set either happened or it did not.
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(set.isCompleted ? Palette.recorded : .clear)
+                    .stroke(set.isCompleted ? Palette.recorded : Palette.rule, lineWidth: 1.5)
+                    .frame(width: 22, height: 22)
+                    .overlay {
+                        if set.isCompleted {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(Palette.panel)
+                        }
+                    }
                     .frame(
                         width: SetTableMetrics.checkColumnWidth,
                         height: SetTableMetrics.controlHeight
@@ -218,6 +230,7 @@ struct SetRowView: View {
         TextField(placeholder, text: text)
             .keyboardType(isDecimal ? .decimalPad : .numberPad)
             .multilineTextAlignment(.center)
+            .foregroundStyle(Palette.ink)
             // The weight and the work are what this screen is for, and they are
             // read at arm's length: they are the type ramp's Metric, which is
             // the role that exists for exactly these two fields.
@@ -228,7 +241,15 @@ struct SetRowView: View {
             .minimumScaleFactor(0.6)
             .padding(.horizontal, SetTableMetrics.entryInset)
             .frame(width: SetTableMetrics.entryColumnWidth, height: SetTableMetrics.entryHeight)
-            .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: Radius.small))
+            // A ruled cell rather than a filled box. Two grey slabs per row made
+            // the table read as a form to complete; a hairline underneath says
+            // "write here" in the vocabulary the rest of the grid is drawn in.
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(Palette.rule)
+                    .frame(height: Palette.hairline)
+                    .padding(.horizontal, Spacing.tight)
+            }
     }
 
     /// Ticks the set, or takes it back.

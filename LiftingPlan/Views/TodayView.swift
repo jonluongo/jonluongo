@@ -105,6 +105,9 @@ struct TodayView: View {
                     List {
                         TodaySessionSection(session: workout, unit: profile.displayUnit)
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(Palette.surface)
                     .tag(Optional(workout.persistentModelID))
                 }
             }
@@ -122,6 +125,9 @@ struct TodayView: View {
             List {
                 TodayFinishedSection(plan: plan)
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Palette.surface)
         }
     }
 
@@ -137,6 +143,6 @@ struct TodayView: View {
             openSession = workout
         }
         .padding(Spacing.section)
-        .background(.bar)
+        .background(Palette.surface)
     }
 }
