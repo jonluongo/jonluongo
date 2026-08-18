@@ -105,7 +105,12 @@ struct SupersetLogSection: View {
                 onRoundChanged(group, completed && rows.isComplete(round: row.round))
             }
         )
-        .listRowBackground(row.set.isCompleted ? Color.green.opacity(0.12) : nil)
+        // No background of its own. This carried the completed-row wash that was
+        // deleted from an ungrouped exercise's table, and its `nil` branch
+        // overrode the panel — so every set row in a group fell back to the
+        // list's default and drew full-bleed white against the inset panel above
+        // it. That was the seam. The mark on the row says the set happened; the
+        // panel is the panel's business.
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) { onDeleteSet(row.set, row.member) } label: {
                 Label("Delete", systemImage: "trash")
