@@ -108,6 +108,21 @@ struct TodayView: View {
 
     @ViewBuilder
     private func screen(_ plan: TrainingPlan) -> some View {
+        // The title sits above the pager rather than inside its pages. Inside,
+        // it swiped sideways along with the workouts — and the name of the
+        // screen is not one of the things being swiped between.
+        VStack(alignment: .leading, spacing: 0) {
+            PageTitle("Home")
+            pages(plan)
+        }
+        // Stated, because the title is no longer inside a list and so inherits
+        // nothing from one: it drew on white above grouped-grey content, a band
+        // across the top of the screen.
+        .background(Palette.surface)
+    }
+
+    @ViewBuilder
+    private func pages(_ plan: TrainingPlan) -> some View {
         if let selected {
             // One page per workout left in the week. The dots are drawn only
             // where there is more than one, because an indicator under a single
@@ -115,7 +130,6 @@ struct TodayView: View {
             TabView(selection: $chosen) {
                 ForEach(remaining) { workout in
                     List {
-                        PageTitle("Home")
                         TodaySessionSection(session: workout, unit: profile.displayUnit)
                     }
                     .listStyle(.plain)
@@ -136,7 +150,6 @@ struct TodayView: View {
             // same to a lifter: there is no next workout, and the next one comes
             // from Claude.
             List {
-                PageTitle("Home")
                 TodayFinishedSection(plan: plan)
             }
             .listStyle(.plain)

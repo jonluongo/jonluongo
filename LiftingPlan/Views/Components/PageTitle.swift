@@ -16,9 +16,13 @@ import SwiftUI
 /// gets both — the position and the scroll — at the cost of being this app's
 /// text rather than the system's.
 ///
-/// **How it is used.** First row of the `List`, with the navigation bar hidden.
-/// It carries no background and no separator of its own, so it reads as a
-/// heading over the panels rather than as an item among them.
+/// **How it is used.** With the navigation bar hidden, either as the first row
+/// of the `List` or above one — Home puts it above its pager, because a title
+/// inside the pages swiped sideways along with the workouts, and the name of
+/// the screen is not one of the things being swiped between. It carries its own
+/// padding so it sits identically in both places, and no background or
+/// separator, so it reads as a heading over the panels rather than an item among
+/// them.
 ///
 /// **What it depends on.** `Spacing` and `Palette`. It holds no state.
 struct PageTitle: View {
@@ -34,10 +38,12 @@ struct PageTitle: View {
             .font(.largeTitle.weight(.bold))
             .foregroundStyle(Palette.ink)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Spacing.section)
+            .padding(.top, Spacing.snug)
             .padding(.bottom, Spacing.snug)
-            .listRowInsets(EdgeInsets(
-                top: Spacing.snug, leading: Spacing.section,
-                bottom: 0, trailing: Spacing.section))
+            // Zero, so the padding above is the only thing positioning it and
+            // the same figure applies whether it is in a list or above one.
+            .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .accessibilityAddTraits(.isHeader)
