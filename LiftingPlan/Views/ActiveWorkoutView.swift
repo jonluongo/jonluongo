@@ -161,7 +161,7 @@ struct ActiveWorkoutView: View {
                     write { try log.delete(set, from: exercise) }
                 },
                 onCompletionChanged: { exercise, completed in
-                    log.restChanged(for: exercise, isCompleted: completed)
+                    write { try log.completionChanged(for: exercise, isCompleted: completed) }
                 }
             )
         }
@@ -201,7 +201,7 @@ struct ActiveWorkoutView: View {
                         write { try log.delete(set, from: exercise) }
                     },
                     onCompletionChanged: { _, completed in
-                        log.roundChanged(group, completed: completed)
+                        write { try log.roundCompletionChanged(group, completed: completed) }
                     },
                     paired: true
                 )

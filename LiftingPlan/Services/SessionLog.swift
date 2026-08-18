@@ -80,12 +80,38 @@ struct SessionLog {
         try context.saveOrThrow()
     }
 
+    // MARK: - Ticking a set
+
+    /// Writes the tick, then runs the rest it asks for.
+    ///
+    /// **The write is the point.** A ticked set is the one irreversible thing a
+    /// lifter does in this app — it is the claim that the work happened — and
+    /// until now nothing saved it. `SetRowView` flipped the flag and the
+    /// callback only started a countdown, leaving the record to SwiftData's
+    /// autosave, which does run but on no schedule anyone can promise. A set
+    /// performed and then lost is the one failure a datastore may not have, and
+    /// "probably, eventually" is not the standard.
+    ///
+    /// It throws so the view shows a failed save rather than swallowing it,
+    /// which matters more here than anywhere else in the app.
+    func completionChanged(for exercise: PlannedExercise, isCompleted: Bool) throws {
+        restChanged(for: exercise, isCompleted: isCompleted)
+        try context.saveOrThrow()
+    }
+
+    /// The same for a movement inside a group, where the rest waits for the
+    /// round rather than the set.
+    func roundCompletionChanged(_ group: ExerciseGroup, completed: Bool) throws {
+        roundChanged(group, completed: completed)
+        try context.saveOrThrow()
+    }
+
     // MARK: - The clock
 
     /// Runs the rest this exercise asks for when a set is ticked, and stops it
     /// when one is taken back — a set taken back did not happen, so there is
     /// nothing to be resting from.
-    func restChanged(for exercise: PlannedExercise, isCompleted: Bool) {
+    private func restChanged(for exercise: PlannedExercise, isCompleted: Bool) {
         guard isCompleted else { return restTimer.stop() }
         guard let seconds = restPreferences.runningSeconds(
             prescribed: exercise.restSeconds, for: exercise.exerciseID
@@ -97,7 +123,7 @@ struct SessionLog {
     /// difference a group makes and the whole reason the grouping is worth
     /// expressing: ticking one movement starts nothing, because the next
     /// follows immediately.
-    func roundChanged(_ group: ExerciseGroup, completed: Bool) {
+    private func roundChanged(_ group: ExerciseGroup, completed: Bool) {
         let rounds = GroupRounds(group: group, plans: plans, unit: unit)
         guard completed, rounds.hasCompleteRound else { return restTimer.stop() }
         guard let key = group.restKey,

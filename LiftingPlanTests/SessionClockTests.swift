@@ -157,3 +157,67 @@ struct UnloggedSetTests {
         #expect(try day(completed: []).unloggedSetCount == 0)
     }
 }
+
+/// That a ticked set reaches the disk.
+///
+/// A ticked set is the one irreversible claim a lifter makes in this app — that
+/// the work happened — and it used to be left to SwiftData's autosave, which
+/// runs but on no schedule anyone can promise. These assert the write, because
+/// losing a set that was performed is the one failure a record may not have.
+@Suite("A tick is written")
+@MainActor
+struct TickPersistenceTests {
+
+    private func session(in context: ModelContext) throws -> (WorkoutDay, PlannedExercise, LoggedSet) {
+        let day = WorkoutDay(weekday: .monday, focus: "Push")
+        let exercise = PlannedExercise(
+            exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
+            displayName: "Barbell Bench Press", order: 0, targetSets: 1, repRange: "5")
+        let set = LoggedSet(
+            setIndex: 0, load: Mass(value: 185, unit: .pounds), reps: 5, isCompleted: false)
+        context.insert(day)
+        context.insert(exercise)
+        context.insert(set)
+        exercise.day = day
+        set.exercise = exercise
+        try context.saveOrThrow()
+        return (day, exercise, set)
+    }
+
+    @Test("Ticking a set is on disk before the app is backgrounded")
+    func tickIsSaved() throws {
+        let container = try StoreContainer.inMemory()
+        let context = ModelContext(container)
+        let (day, exercise, set) = try session(in: context)
+
+        set.isCompleted = true
+        let log = SessionLog(
+            day: day, context: context, restTimer: RestTimerModel(),
+            restPreferences: RestPreferences(), plans: [], unit: .pounds)
+        try log.completionChanged(for: exercise, isCompleted: true)
+
+        // A second context over the same store sees only what was written.
+        let reader = ModelContext(container)
+        let stored = try #require(try reader.fetch(FetchDescriptor<LoggedSet>()).first)
+        #expect(stored.isCompleted, "the tick reached the store, not just the screen")
+    }
+
+    @Test("Taking a set back is written too")
+    func untickIsSaved() throws {
+        let container = try StoreContainer.inMemory()
+        let context = ModelContext(container)
+        let (day, exercise, set) = try session(in: context)
+        set.isCompleted = true
+        try context.saveOrThrow()
+
+        set.isCompleted = false
+        let log = SessionLog(
+            day: day, context: context, restTimer: RestTimerModel(),
+            restPreferences: RestPreferences(), plans: [], unit: .pounds)
+        try log.completionChanged(for: exercise, isCompleted: false)
+
+        let reader = ModelContext(container)
+        let stored = try #require(try reader.fetch(FetchDescriptor<LoggedSet>()).first)
+        #expect(!stored.isCompleted, "a set taken back did not happen, and the record says so")
+    }
+}
