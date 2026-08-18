@@ -80,13 +80,27 @@ struct TodayView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
+            // The header is drawn whatever the state, because it carries the
+            // only route to the block and the record. It used to live inside
+            // the has-a-plan branch, which meant a lifter on day one — the one
+            // person most likely to need Account — could reach neither.
+            VStack(alignment: .leading, spacing: 0) {
+                header
                 if let plan {
-                    screen(plan)
+                    pages(plan)
                 } else {
-                    NoBlockView()
+                    // The title already says there is no block, so this says
+                    // only the part it cannot: who writes one. `NoBlockView`
+                    // still heads the Blocks sheet, where the title is "Blocks"
+                    // and the absence does need naming.
+                    Text("Ask Claude for one.")
+                        .font(.barbellBody)
+                        .foregroundStyle(Palette.muted)
+                        .padding(.horizontal, PanelMetrics.inset)
+                    Spacer(minLength: 0)
                 }
             }
+            .background(Palette.surface)
             // No navigation bar at all, and the title drawn as the first row of
             // the content instead.
             //
@@ -126,21 +140,6 @@ struct TodayView: View {
         var id: String { rawValue }
     }
 
-    @ViewBuilder
-    private func screen(_ plan: TrainingPlan) -> some View {
-        // The title sits above the pager rather than inside its pages. Inside,
-        // it swiped sideways along with the workouts — and the name of the
-        // screen is not one of the things being swiped between.
-        VStack(alignment: .leading, spacing: 0) {
-            header
-            pages(plan)
-        }
-        // Stated, because the title is no longer inside a list and so inherits
-        // nothing from one: it drew on white above grouped-grey content, a band
-        // across the top of the screen.
-        .background(Palette.surface)
-    }
-
     /// The session's own name, and the way to everything that is not it.
     ///
     /// The name is the page's title because the session *is* the page — there
@@ -153,9 +152,7 @@ struct TodayView: View {
                 // workout: "No workout" was the negative of a fact the section
                 // beneath then stated positively, so the screen carried two
                 // headings for one thing and led with the emptier of them.
-                Text(selected.map {
-                    TodayPhrasing.sessionTitle(focus: $0.focus, weekday: $0.weekday)
-                } ?? "Block finished")
+                Text(title)
                     .font(.largeTitle.weight(.bold))
                     .foregroundStyle(Palette.ink)
                 HStack(spacing: Spacing.snug) {
@@ -189,6 +186,15 @@ struct TodayView: View {
         .padding(.horizontal, PanelMetrics.inset)
         .padding(.top, Spacing.snug)
         .padding(.bottom, Spacing.standard)
+    }
+
+    /// The screen's one subject: the session, or the state that stands in for
+    /// it. Stated once — the sections beneath say only what this cannot.
+    private var title: String {
+        if let selected {
+            return TodayPhrasing.sessionTitle(focus: selected.focus, weekday: selected.weekday)
+        }
+        return plan == nil ? "No block" : "Block finished"
     }
 
     /// What the session on screen amounts to, or nothing when there is none.
