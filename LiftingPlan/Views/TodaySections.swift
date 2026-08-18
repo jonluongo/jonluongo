@@ -78,7 +78,7 @@ struct TodaySessionSection: View {
             }
         }
         .textCase(nil)
-        .padding(.top, Spacing.snug)
+        .padding(.top, Spacing.standard)
         .padding(.bottom, Spacing.standard)
         .listRowInsets(EdgeInsets(
             top: 0, leading: Spacing.section, bottom: 0, trailing: Spacing.section))

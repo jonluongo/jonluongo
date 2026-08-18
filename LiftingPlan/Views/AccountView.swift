@@ -171,6 +171,11 @@ struct AccountView: View {
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle("Account")
+        // Inline, as on Home. Home's title cannot collapse — the scrolling
+        // there happens inside a pager the title does not sit on — and a tab
+        // whose header behaves differently from the tab beside it is worse than
+        // either behaviour on its own.
+        .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("Delete all blocks?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
             Button("Delete Blocks", role: .destructive) { deleteAllPlans() }
             Button("Cancel", role: .cancel) {}

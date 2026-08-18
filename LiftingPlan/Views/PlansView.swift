@@ -52,6 +52,11 @@ struct PlansView: View {
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle("Blocks")
+        // Inline, as on Home. Home's title cannot collapse — the scrolling
+        // there happens inside a pager the title does not sit on — and a tab
+        // whose header behaves differently from the tab beside it is worse than
+        // either behaviour on its own.
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     /// One group, or nothing at all when it holds no blocks — an empty

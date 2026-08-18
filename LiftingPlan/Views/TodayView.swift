@@ -88,6 +88,15 @@ struct TodayView: View {
                 }
             }
             .navigationTitle("Home")
+            // Inline, in the bar itself. A large title only collapses when it
+            // is attached to the scroll view it should track, and the scrolling
+            // here happens inside the pager's pages rather than in the view the
+            // title sits on — so it had no scroll to follow and stood
+            // permanently large, a hundred points of band that could never
+            // fade. Inline is the same word in the same place at every scroll
+            // position, which is what was wanted from the fade: the header on
+            // the header bar, and the workout starting at the top of the screen.
+            .navigationBarTitleDisplayMode(.inline)
         }
         .fullScreenCover(item: $openSession) { session in
             ActiveWorkoutView(day: session, profile: profile)
