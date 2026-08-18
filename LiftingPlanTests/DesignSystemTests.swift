@@ -58,7 +58,7 @@ struct DesignSystemTests {
 
     // MARK: - Type
 
-    @Test("The type ramp is five roles, each built on a semantic text style")
+    @Test("The type ramp is six roles, each built on a semantic text style")
     func typeRamp() {
         // Stated as equalities rather than described in a comment: a future
         // edit that swaps a semantic style for a fixed point size — which is
@@ -69,16 +69,23 @@ struct DesignSystemTests {
         // Type carries it.
         #expect(
             Font.barbellMetric == Font.system(.title3, design: .monospaced).weight(.semibold))
+        // A heading has to win against the rows inside the panel it introduces.
+        // Both were `.headline`, so position was the only thing saying which
+        // was which.
+        #expect(Font.barbellHeading == Font.title3.weight(.bold))
         #expect(Font.barbellTitle == Font.headline)
         #expect(Font.barbellBody == Font.body)
         #expect(Font.barbellSupport == Font.subheadline.monospacedDigit())
         #expect(Font.barbellLabel == Font.caption2.weight(.semibold))
     }
 
-    @Test("The five roles are five distinct treatments")
+    @Test("The six roles are six distinct treatments")
     func rolesAreDistinct() {
-        let roles: [Font] = [.barbellMetric, .barbellTitle, .barbellBody, .barbellSupport, .barbellLabel]
-        #expect(Set(roles).count == 5)
+        let roles: [Font] = [
+            .barbellMetric, .barbellHeading, .barbellTitle,
+            .barbellBody, .barbellSupport, .barbellLabel,
+        ]
+        #expect(Set(roles).count == 6)
     }
 
     // MARK: - Set table

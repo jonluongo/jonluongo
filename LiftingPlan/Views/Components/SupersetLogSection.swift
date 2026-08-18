@@ -52,8 +52,11 @@ struct SupersetLogSection: View {
             ForEach(rows.rounds) { round in
                 Text("ROUND \(round.number)")
                     .font(.barbellLabel)
-                    .foregroundStyle(.secondary)
+                    .tracking(Font.labelTracking)
+                    .foregroundStyle(Palette.muted)
                     .accessibilityAddTraits(.isHeader)
+                    .listRowBackground(Palette.panel)
+                    .listRowSeparator(.hidden)
                 ForEach(round.rows) { row in
                     setRow(row)
                 }
@@ -67,7 +70,10 @@ struct SupersetLogSection: View {
                     .frame(maxWidth: .infinity, minHeight: TapTarget.minimum)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Palette.muted)
+            .listRowBackground(Palette.panel)
+            // The last row of the panel, so nothing is ruled off beneath it.
+            .listRowSeparator(.hidden, edges: .bottom)
         }
     }
 
@@ -77,6 +83,13 @@ struct SupersetLogSection: View {
     }
 
     private func setRow(_ row: GroupRounds.Row) -> some View {
+        setRowBody(row)
+            .listRowBackground(Palette.panel)
+            .listRowSeparatorTint(Palette.rule)
+            .listRowInsets(SetTableMetrics.rowInsets)
+    }
+
+    private func setRowBody(_ row: GroupRounds.Row) -> some View {
         SetRowView(
             set: row.set,
             identity: row.identity,

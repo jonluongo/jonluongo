@@ -30,7 +30,7 @@ struct CardHeaderRow<Trailing: View>: View {
         HStack(spacing: Spacing.standard) {
             VStack(alignment: .leading, spacing: Spacing.tight) {
                 Text(title)
-                    .font(.barbellTitle)
+                    .font(.barbellHeading)
                     .foregroundStyle(Palette.ink)
                 if let subtitle {
                     Text(subtitle)
@@ -47,7 +47,11 @@ struct CardHeaderRow<Trailing: View>: View {
                     .frame(minWidth: TapTarget.minimum, minHeight: TapTarget.minimum)
             }
         }
-        .padding(.vertical, Spacing.tight)
+        // More above than below: the gap over a heading separates it from the
+        // panel it has finished with, and the gap under it binds it to the one
+        // it introduces. Equal padding made it float between the two.
+        .padding(.top, Spacing.major)
+        .padding(.bottom, Spacing.snug)
     }
 }
 

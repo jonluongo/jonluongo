@@ -92,6 +92,10 @@ struct ExerciseLogSection: View {
                 .listRowBackground(Palette.panel)
                 .listRowSeparatorTint(Palette.rule)
                 .listRowInsets(SetTableMetrics.rowInsets)
+                // No rule under the last row: a divider divides two things, and
+                // below the final set there is only the edge of the panel.
+                .listRowSeparator(
+                    index == orderedSets.count - 1 ? .hidden : .visible, edges: .bottom)
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) { onDeleteSet(set, exercise) } label: {
                         Label("Delete", systemImage: "trash")

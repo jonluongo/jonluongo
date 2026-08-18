@@ -26,13 +26,19 @@ struct TodaySessionSection: View {
             // tab went. A lifter reading tonight's bench press and wondering
             // what he benched last month is already looking at the row that
             // answers him.
-            ForEach(session.entries) { entry in
-                switch entry {
-                case .exercise(let exercise):
-                    ExerciseDetailLink(exercise: exercise, unit: unit)
-                case .group(let group):
-                    PrescribedGroupRows(group: group, unit: unit)
+            ForEach(Array(session.entries.enumerated()), id: \.element.id) { index, entry in
+                Group {
+                    switch entry {
+                    case .exercise(let exercise):
+                        ExerciseDetailLink(exercise: exercise, unit: unit)
+                    case .group(let group):
+                        PrescribedGroupRows(group: group, unit: unit)
+                    }
                 }
+                // Nothing ruled off under the last exercise: below it is the
+                // edge of the panel, and a divider divides two things.
+                .listRowSeparator(
+                    index == session.entries.count - 1 ? .hidden : .visible, edges: .bottom)
             }
             .listRowBackground(Palette.panel)
             .listRowSeparatorTint(Palette.rule)
@@ -59,7 +65,7 @@ struct TodaySessionSection: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.tight) {
             Text(TodayPhrasing.sessionTitle(focus: session.focus, weekday: session.weekday))
-                .font(.barbellTitle)
+                .font(.barbellHeading)
                 .foregroundStyle(Color.primary)
             if let shape = TodayPhrasing.sessionShape(
                 exercises: session.orderedExercises.count,
@@ -92,7 +98,7 @@ struct TodayFinishedSection: View {
         Section {
             VStack(alignment: .leading, spacing: Spacing.snug) {
                 Text("Block finished")
-                    .font(.barbellTitle)
+                    .font(.barbellHeading)
                 if let record = TodayPhrasing.recordLine(
                     finished: days.filter { $0.completedAt != nil }.count,
                     prescribed: days.count

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The five things text can be in this app.
+/// The six things text can be in this app.
 ///
 /// **What it does.** Replaces the eighteen type treatments the audit counted —
 /// seven base styles, four weights and nine loose `.monospacedDigit()`
@@ -13,8 +13,14 @@ import SwiftUI
 /// - **Metric** — a number the lifter reads mid-set, at arm's length: a
 ///   countdown, a weight, a rep count. These are the content of the logging
 ///   screen and they get bigger, not smaller.
-/// - **Title** — the name of the thing: an exercise, a day, a trend, the
-///   block's goal.
+/// - **Heading** — the name of a section that owns the panel beneath it: the
+///   exercise a set table logs, the workout a list of exercises makes up. It
+///   was `Title`, which is also what the rows *inside* those panels are drawn
+///   in — so a heading and the items under it were the same weight, and nothing
+///   outranked anything. A heading has to win against its own contents or it is
+///   not a heading.
+/// - **Title** — the name of a thing in a list: an exercise row, a day, a
+///   trend.
 /// - **Body** — prose. Footers, empty-state descriptions, a coach's note.
 /// - **Support** — everything that qualifies something else: prescription
 ///   lines, previous performance, subtitles. **One** supporting size, in place
@@ -42,7 +48,12 @@ extension Font {
     /// mono is a terminal, not an instrument.
     static let barbellMetric: Font = .system(.title3, design: .monospaced).weight(.semibold)
 
-    /// The name of the thing being described.
+    /// The name of a section, drawn above the panel that holds its contents.
+    /// A step clear of `barbellTitle` so the hierarchy is visible rather than
+    /// implied by position alone.
+    static let barbellHeading: Font = .title3.weight(.bold)
+
+    /// The name of a thing inside a list.
     static let barbellTitle: Font = .headline
 
     /// Prose.
