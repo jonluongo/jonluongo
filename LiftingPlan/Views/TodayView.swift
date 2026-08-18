@@ -143,9 +143,14 @@ struct TodayView: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: Spacing.tight) {
+                // The title states the screen's one subject. With no session
+                // left it is the state of the block, not the absence of a
+                // workout: "No workout" was the negative of a fact the section
+                // beneath then stated positively, so the screen carried two
+                // headings for one thing and led with the emptier of them.
                 Text(selected.map {
                     TodayPhrasing.sessionTitle(focus: $0.focus, weekday: $0.weekday)
-                } ?? "No workout")
+                } ?? "Block finished")
                     .font(.largeTitle.weight(.bold))
                     .foregroundStyle(Palette.ink)
                 HStack(spacing: Spacing.snug) {

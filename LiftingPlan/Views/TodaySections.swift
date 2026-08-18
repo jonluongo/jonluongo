@@ -13,21 +13,23 @@ struct TodayFinishedSection: View {
     var body: some View {
         let days = plan.orderedWeeks.flatMap { $0.orderedDays }
         Section {
-            VStack(alignment: .leading, spacing: Spacing.snug) {
-                Text("Block finished")
-                    .font(.barbellHeading)
-                if let record = TodayPhrasing.recordLine(
-                    finished: days.filter { $0.completedAt != nil }.count,
-                    prescribed: days.count
-                ) {
-                    Text(record)
-                        .font(.barbellSupport)
-                        .foregroundStyle(.secondary)
-                }
-                Text("Ask Claude for the next one.")
-                    .font(.barbellBody)
+            // The heading is the page's title now, so this states only what the
+            // title cannot: what the record holds, and who writes the next one.
+            if let record = TodayPhrasing.recordLine(
+                finished: days.filter { $0.completedAt != nil }.count,
+                prescribed: days.count
+            ) {
+                Text(record)
+                    .font(.barbellSupport)
+                    .foregroundStyle(Palette.muted)
+                    .panelRow(.first)
+                    .listRowSeparator(.hidden)
             }
-            .padding(.vertical, Spacing.tight)
+            Text("Ask Claude for the next one.")
+                .font(.barbellBody)
+                .foregroundStyle(Palette.ink)
+                .panelRow(.last)
+                .listRowSeparator(.hidden)
         }
     }
 }
