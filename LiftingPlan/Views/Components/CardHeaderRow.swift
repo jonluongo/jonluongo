@@ -24,11 +24,22 @@ struct CardHeaderRow<Trailing: View>: View {
     /// The line under the title, or `nil` when there is nothing to say. Never an
     /// empty string standing in for one.
     let subtitle: String?
+    /// A short label above the title, in the accent, with the bolt that marks
+    /// it. `nil` on everything that is not part of a superset, which is most
+    /// things.
+    var eyebrow: String? = nil
     @ViewBuilder let trailing: () -> Trailing
 
     var body: some View {
         HStack(spacing: Spacing.standard) {
             VStack(alignment: .leading, spacing: Spacing.tight) {
+                if let eyebrow {
+                    Label(eyebrow, systemImage: "bolt.fill")
+                        .font(.barbellLabel)
+                        .tracking(Font.labelTracking)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Palette.accent)
+                }
                 Text(title)
                     .font(.barbellHeading)
                     .foregroundStyle(Palette.ink)
@@ -62,7 +73,7 @@ struct CardHeaderRow<Trailing: View>: View {
 extension CardHeaderRow where Trailing == EmptyView {
 
     /// The row without a control on the right.
-    init(title: String, subtitle: String?) {
-        self.init(title: title, subtitle: subtitle) { EmptyView() }
+    init(title: String, subtitle: String?, eyebrow: String? = nil) {
+        self.init(title: title, subtitle: subtitle, eyebrow: eyebrow) { EmptyView() }
     }
 }

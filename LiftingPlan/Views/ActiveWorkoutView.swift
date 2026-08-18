@@ -178,9 +178,10 @@ struct ActiveWorkoutView: View {
                     onShowInfo: { infoExercise = member },
                     onEditRest: { restEditing = RestTarget(group: group) },
                     onAddSet: { write { try log.addSet(to: member, warmup: false) } },
-                    onAddWarmup: { write { try log.addSet(to: member, warmup: true) } }
+                    onAddWarmup: { write { try log.addSet(to: member, warmup: true) } },
+                    paired: true
                 )
-                .panelRow(index == 0 ? .first : .middle, paired: true)
+                .panelRow(.first, paired: true)
                 .listRowSeparator(.hidden)
 
                 ExerciseLogSection(
@@ -193,7 +194,6 @@ struct ActiveWorkoutView: View {
                     onCompletionChanged: { _, completed in
                         log.roundChanged(group, completed: completed)
                     },
-                    closesPanel: index == group.members.count - 1,
                     paired: true
                 )
             }

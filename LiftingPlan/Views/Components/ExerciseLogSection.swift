@@ -41,10 +41,6 @@ struct ExerciseLogSection: View {
     var onDeleteSet: (LoggedSet, PlannedExercise) -> Void
     /// Told which exercise, and whether the set was ticked or taken back.
     var onCompletionChanged: (PlannedExercise, Bool) -> Void
-    /// Whether this exercise's last set is the last row of the panel. It is on
-    /// its own; inside a superset the panel continues into the next movement,
-    /// which is the whole of how the pairing is shown.
-    var closesPanel: Bool = true
     /// Whether these sets belong to a movement performed as part of a superset,
     /// which draws the rule down the panel's edge.
     var paired: Bool = false
@@ -95,7 +91,7 @@ struct ExerciseLogSection: View {
                 // fact, and the louder of them a second colour across the whole
                 // table. Chanel's rule: take one thing off.
                 .panelRow(
-                    index == orderedSets.count - 1 && closesPanel ? .last : .middle,
+                    index == orderedSets.count - 1 ? .last : .middle,
                     insets: SetTableMetrics.rowInsets, paired: paired)
                 // No rules between rows. Each row already carries a ruled cell
                 // under the two fields it is typed into, and a full-width line

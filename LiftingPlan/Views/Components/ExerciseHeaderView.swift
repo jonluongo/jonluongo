@@ -53,6 +53,9 @@ struct ExerciseHeaderView: View {
     /// Records a set past the ones prescribed — the fifth he actually did.
     var onAddSet: () -> Void
     var onAddWarmup: () -> Void
+    /// Whether this movement is performed as part of a superset, which names it
+    /// above the prescription and draws the rule down the panel's edge.
+    var paired: Bool = false
 
     /// What the table below cannot say: the effort every set shares, and the
     /// tempo. `nil` when it says everything, which leaves the header the name
@@ -62,6 +65,15 @@ struct ExerciseHeaderView: View {
     /// three rows whose rep fields each read `10-12`. The count is the number of
     /// rows and the target is in every one of them; only the effort was not
     /// anywhere else on the card.
+    /// Named where a lifter reads it, above the movement it belongs to.
+    ///
+    /// The word is back and the code is not. `Superset A` was a letter
+    /// distinguishing a group from a B that usually does not exist, plus an
+    /// `A1`/`A2` legend decoding symbols the layout had invented. This says the
+    /// one thing that is true of both movements and needs no decoding, and the
+    /// rule down the panel edge says which two.
+    private var eyebrow: String? { paired ? "Superset" : nil }
+
     private var subtitle: String? {
         let parts = [
             PrescriptionSummary.aboveTable(for: exercise),
@@ -71,7 +83,7 @@ struct ExerciseHeaderView: View {
     }
 
     var body: some View {
-        CardHeaderRow(title: exercise.displayName, subtitle: subtitle) {
+        CardHeaderRow(title: exercise.displayName, subtitle: subtitle, eyebrow: eyebrow) {
             Menu {
                 Button { onShowInfo() } label: {
                     Label("About This Exercise", systemImage: "info.circle")
