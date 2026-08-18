@@ -64,7 +64,7 @@ struct ExerciseLogSection: View {
                 Text(notes)
                     .font(.barbellSupport)
                     .foregroundStyle(Palette.muted)
-                    .panelRow(.first)
+                    .panelRow(.middle)
                     .listRowSeparator(.hidden)
             }
 

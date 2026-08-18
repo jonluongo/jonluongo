@@ -55,13 +55,20 @@ extension View {
     func panelRow(
         _ position: PanelPosition, insets: EdgeInsets = PanelMetrics.rowInsets
     ) -> some View {
-        listRowInsets(insets)
+        // A panel's outer edges get more room than its inner rows, which is what
+        // separates one panel from the next. Without it two panels sat flush and
+        // read as a single surface with a seam across it.
+        var spaced = insets
+        if position == .first || position == .only { spaced.top += PanelMetrics.edge }
+        if position == .last || position == .only { spaced.bottom += PanelMetrics.edge }
+        return listRowInsets(spaced)
         .listRowBackground(
             UnevenRoundedRectangle(
                 topLeadingRadius: position.topRadius,
                 bottomLeadingRadius: position.bottomRadius,
                 bottomTrailingRadius: position.bottomRadius,
-                topTrailingRadius: position.topRadius
+                topTrailingRadius: position.topRadius,
+                style: .continuous
             )
             .fill(Palette.panel)
             .padding(.horizontal, PanelMetrics.inset)

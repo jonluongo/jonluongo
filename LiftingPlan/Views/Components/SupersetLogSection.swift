@@ -40,7 +40,7 @@ struct SupersetLogSection: View {
     var body: some View {
         Group {
             ForEach(Array(rows.warmups.enumerated()), id: \.element.id) { index, row in
-                setRow(row, position: index == 0 ? .first : .middle)
+                setRow(row, position: .middle)
             }
 
             ForEach(Array(rows.rounds.enumerated()), id: \.element.id) { index, round in
@@ -54,7 +54,7 @@ struct SupersetLogSection: View {
                     // because the column header used to be the first row — and
                     // deleting that header left the panel with no rounded top
                     // and nothing to say where it began.
-                    .panelRow(index == 0 && rows.warmups.isEmpty ? .first : .middle)
+                    .panelRow(.middle)
                     .listRowSeparator(.hidden)
                 ForEach(round.rows) { row in
                     setRow(row)

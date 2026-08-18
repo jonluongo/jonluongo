@@ -229,17 +229,26 @@ enum Radius {
     /// Inline controls that sit in a row: entry fields, badges.
     static let small: CGFloat = 8
 
-    /// The panel a table of figures is written on. Tighter than the system's
-    /// inset-grouped corner, which is drawn for cards of content: a softer
-    /// corner makes a table read as something to browse rather than something
-    /// to fill in.
-    static let panel: CGFloat = 6
+    /// The panel a table of figures is written on.
+    ///
+    /// Drawn `.continuous` everywhere, which is the part that matters: a
+    /// circular arc meets the straight edge at an angle the eye catches, and a
+    /// continuous curve does not. Six points of circular arc read as a hard
+    /// corner however small the number is, which is why cutting the radius did
+    /// not make the panel quieter — it made it sharper.
+    static let panel: CGFloat = 12
 
     /// Surfaces that float over content: the rest bar.
     static let large: CGFloat = 20
 
     /// Every radius, smallest first. For tests, as with `Spacing.all`.
-    static let all: [CGFloat] = [panel, small, large]
+    ///
+    /// The order is the size of the thing drawn, not the order they were
+    /// written: an entry field is small and takes a small curve, a panel is a
+    /// surface and takes a larger one, and the bar floating over content takes
+    /// the largest. A panel tighter than the field inside it was the mistake
+    /// that made the panels read as hard.
+    static let all: [CGFloat] = [small, panel, large]
 }
 
 /// The smallest a control may be.
@@ -350,6 +359,10 @@ enum PanelMetrics {
     /// step in, which is what says the row belongs to the panel rather than
     /// running to the same edge as it.
     static let contentInset: CGFloat = inset + Spacing.standard
+
+    /// The extra room a panel's first and last rows take, which is the gap one
+    /// panel keeps from the next.
+    static let edge: CGFloat = Spacing.standard
 
     /// What surrounds an ordinary row of a panel.
     static let rowInsets = EdgeInsets(

@@ -128,15 +128,10 @@ struct ActiveWorkoutView: View {
     /// An exercise performed on its own — exactly the card it has always been.
     @ViewBuilder
     private func section(for exercise: PlannedExercise) -> some View {
+        // The name sits on the panel rather than above it, so an exercise is
+        // one object — its title, its prescription and its sets — instead of a
+        // label floating over a table that happens to be beneath it.
         Section {
-            ExerciseLogSection(
-                exercise: exercise,
-                profile: profile,
-                plans: plans,
-                onDeleteSet: delete,
-                onCompletionChanged: restChanged
-            )
-        } header: {
             ExerciseHeaderView(
                 exercise: exercise,
                 unit: profile.displayUnit,
@@ -145,7 +140,16 @@ struct ActiveWorkoutView: View {
                 onAddSet: { addSet(to: exercise, warmup: false) },
                 onAddWarmup: { addSet(to: exercise, warmup: true) }
             )
-            .textCase(nil)
+            .panelRow(.first)
+            .listRowSeparator(.hidden)
+
+            ExerciseLogSection(
+                exercise: exercise,
+                profile: profile,
+                plans: plans,
+                onDeleteSet: delete,
+                onCompletionChanged: restChanged
+            )
         }
     }
 
@@ -154,6 +158,16 @@ struct ActiveWorkoutView: View {
     @ViewBuilder
     private func section(for group: ExerciseGroup) -> some View {
         Section {
+            SupersetHeaderView(
+                group: group,
+                unit: profile.displayUnit,
+                onShowInfo: { infoExercise = $0 },
+                onAddWarmup: { addSet(to: $0, warmup: true) },
+                onEditRest: { restEditing = RestTarget(group: $0) }
+            )
+            .panelRow(.first)
+            .listRowSeparator(.hidden)
+
             SupersetLogSection(
                 group: group,
                 profile: profile,
@@ -162,15 +176,6 @@ struct ActiveWorkoutView: View {
                 onDeleteSet: delete,
                 onRoundChanged: restChanged
             )
-        } header: {
-            SupersetHeaderView(
-                group: group,
-                unit: profile.displayUnit,
-                onShowInfo: { infoExercise = $0 },
-                onAddWarmup: { addSet(to: $0, warmup: true) },
-                onEditRest: { restEditing = RestTarget(group: $0) }
-            )
-            .textCase(nil)
         }
     }
 

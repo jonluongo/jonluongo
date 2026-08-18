@@ -43,13 +43,15 @@ struct DesignSystemTests {
 
     // MARK: - Radius
 
-    @Test("There are three radii, and each is rounder than the last")
+    @Test("There are three radii, and the bigger the surface the rounder it is")
     func threeRadii() {
-        // A panel is the least round of the three: it holds a table of figures,
-        // and a softer corner reads as a card of content to browse.
-        #expect(Radius.all == [Radius.panel, Radius.small, Radius.large])
-        #expect(Radius.panel < Radius.small)
-        #expect(Radius.small < Radius.large)
+        // An entry field is small and takes a small curve; a panel is a surface
+        // and takes a larger one; the bar floating over content takes the
+        // largest. The panel was briefly the tightest of the three, which is
+        // what made the panels read as hard rather than as quiet.
+        #expect(Radius.all == [Radius.small, Radius.panel, Radius.large])
+        #expect(Radius.small < Radius.panel)
+        #expect(Radius.panel < Radius.large)
     }
 
     // MARK: - Tap targets
