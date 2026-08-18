@@ -39,7 +39,11 @@ struct PageTitle: View {
             .foregroundStyle(Palette.ink)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Spacing.section)
-            .padding(.top, Spacing.snug)
+            // Enough that the title clears a sheet's rounded top edge and its
+            // grabber. On a full screen this reads as ordinary breathing room
+            // under the status bar; in a sheet it is the difference between a
+            // heading and a heading jammed into a corner.
+            .padding(.top, Spacing.major)
             .padding(.bottom, Spacing.snug)
             // Zero, so the padding above is the only thing positioning it and
             // the same figure applies whether it is in a list or above one.

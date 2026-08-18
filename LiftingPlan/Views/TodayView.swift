@@ -108,6 +108,11 @@ struct TodayView: View {
                 case .account: AccountView(profile: profile)
                 }
             }
+            // The grabber, rather than a Done button. A sheet with no
+            // affordance at all can only be left by a gesture nothing on screen
+            // mentions; a button would be chrome for something the platform
+            // already does. This is the smallest thing that says "swipe me".
+            .presentationDragIndicator(.visible)
         }
     }
 
