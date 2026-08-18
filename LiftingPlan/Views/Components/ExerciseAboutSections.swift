@@ -39,25 +39,34 @@ struct ExerciseAboutSections: View {
             }
 
             Section {
-                ForEach(ExerciseAbout.facts(for: entry)) { fact in
+                let facts = ExerciseAbout.facts(for: entry)
+                ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
                     LabeledContent(fact.label, value: fact.value)
                         .font(.barbellSupport)
+                        .foregroundStyle(Palette.ink)
+                        .panelRow(.at(index, of: facts.count))
+                        .listRowSeparator(.hidden)
                 }
             }
 
             if !entry.instructions.isEmpty {
-                Section("How to perform it") {
+                Section {
                     ForEach(Array(entry.instructions.enumerated()), id: \.offset) { index, step in
                         HStack(alignment: .firstTextBaseline, spacing: Spacing.standard) {
                             Text("\(index + 1)")
                                 .font(.barbellSupport)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Palette.muted)
                             Text(step)
                                 .font(.barbellBody)
+                                .foregroundStyle(Palette.ink)
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("Step \(index + 1). \(step)")
+                        .panelRow(.at(index, of: entry.instructions.count))
+                        .listRowSeparator(.hidden)
                     }
+                } header: {
+                    SectionHeading("How to perform it")
                 }
             }
         }

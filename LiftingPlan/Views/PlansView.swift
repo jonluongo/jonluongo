@@ -48,7 +48,7 @@ struct PlansView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle("Blocks")
@@ -61,15 +61,19 @@ struct PlansView: View {
     private func section(_ standing: PlansListing.Standing) -> some View {
         let blocks = plans.filter { PlansListing.standing(of: $0) == standing }
         if !blocks.isEmpty {
-            Section(standing.heading) {
-                ForEach(blocks) { plan in
+            Section {
+                ForEach(Array(blocks.enumerated()), id: \.element.id) { index, plan in
                     BlockCard(
                         plan: plan,
                         standing: standing,
                         subtitle: PlansListing.subtitle(of: plan, calendar: calendar),
                         profile: profile
                     )
+                    .panelRow(.at(index, of: blocks.count))
+                    .listRowSeparator(.hidden)
                 }
+            } header: {
+                SectionHeading(standing.heading)
             }
         }
     }

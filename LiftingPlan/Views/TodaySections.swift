@@ -20,13 +20,6 @@ struct TodaySessionSection: View {
     /// reads everything else in.
     let unit: MassUnit
 
-    /// Where a row sits in the panel, given how many there are.
-    private static func position(_ index: Int, of count: Int) -> PanelPosition {
-        if count == 1 { return .only }
-        if index == 0 { return .first }
-        return index == count - 1 ? .last : .middle
-    }
-
     var body: some View {
         Section {
             // Each row opens that exercise's record — which is where the History
@@ -42,7 +35,7 @@ struct TodaySessionSection: View {
                         PrescribedGroupRows(group: group, unit: unit)
                     }
                 }
-                .panelRow(Self.position(index, of: session.entries.count))
+                .panelRow(.at(index, of: session.entries.count))
                 .listRowInsets(EdgeInsets(
                     top: Spacing.tight, leading: SetTableMetrics.contentInset,
                     bottom: Spacing.tight, trailing: SetTableMetrics.contentInset))

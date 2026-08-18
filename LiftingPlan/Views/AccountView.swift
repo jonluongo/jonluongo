@@ -83,27 +83,36 @@ struct AccountView: View {
                 if facts.isEmpty {
                     Text("Nothing yet.")
                         .font(.barbellBody)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Palette.muted)
+                        .panelRow(.only)
+                        .listRowSeparator(.hidden)
                 } else {
-                    ForEach(facts) { fact in
+                    ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
                         IconCircleRow(
                             systemImage: fact.systemImage, tint: .accentColor,
                             title: fact.value, subtitle: fact.label
                         )
+                        .panelRow(.at(index, of: facts.count))
+                        .listRowSeparator(.hidden)
                     }
                 }
             } footer: {
                 Text("Claude records these as you tell him; the app only shows them.")
+                    .foregroundStyle(Palette.muted)
             }
 
             if !baselines.isEmpty {
-                Section("Strength") {
-                    ForEach(baselines) { baseline in
+                Section {
+                    ForEach(Array(baselines.enumerated()), id: \.element.id) { index, baseline in
                         IconCircleRow(
                             systemImage: baseline.systemImage, tint: .accentColor,
                             title: baseline.value, subtitle: baseline.label
                         )
+                        .panelRow(.at(index, of: baselines.count))
+                        .listRowSeparator(.hidden)
                     }
+                } header: {
+                    SectionHeading("Strength")
                 }
             }
 
@@ -112,10 +121,14 @@ struct AccountView: View {
             // whole screen on day one. The sentence still answers what Claude
             // could know, which a page showing nothing cannot.
             if let notYetSaid {
-                Section("Not yet said") {
+                Section {
                     Text(notYetSaid)
                         .font(.barbellBody)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Palette.muted)
+                        .panelRow(.only)
+                        .listRowSeparator(.hidden)
+                } header: {
+                    SectionHeading("Not yet said")
                 }
             }
 
@@ -154,7 +167,7 @@ struct AccountView: View {
                 Text("Deletes every block and every set logged against it. Everything above is kept.")
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle("Account")

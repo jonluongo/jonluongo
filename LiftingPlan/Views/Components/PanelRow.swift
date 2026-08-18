@@ -14,6 +14,13 @@ enum PanelPosition {
     /// The only row in its panel, so both ends are rounded.
     case only
 
+    /// Where the row at `index` sits among `count` of them.
+    static func at(_ index: Int, of count: Int) -> PanelPosition {
+        if count <= 1 { return .only }
+        if index == 0 { return .first }
+        return index == count - 1 ? .last : .middle
+    }
+
     fileprivate var topRadius: CGFloat {
         switch self {
         case .first, .only: Radius.panel

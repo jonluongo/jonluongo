@@ -54,13 +54,19 @@ struct BlockView: View {
         let current = currentWeekOrdinal(plan)
         List {
             if !plan.goal.isEmpty || note(plan) != nil {
+                let hasNote = note(plan) != nil
                 Section {
                     if !plan.goal.isEmpty {
                         Text(plan.goal)
                             .font(.barbellTitle)
+                            .foregroundStyle(Palette.ink)
+                            .panelRow(hasNote ? .first : .only)
+                            .listRowSeparator(.hidden)
                     }
                     if let note = note(plan) {
                         CoachNoteView(note: note)
+                            .panelRow(plan.goal.isEmpty ? .only : .last)
+                            .listRowSeparator(.hidden)
                     }
                 }
             }
@@ -74,14 +80,18 @@ struct BlockView: View {
                     }
                 }
             } else {
-                Section("Weeks") {
-                    ForEach(ordered) { week in
+                Section {
+                    ForEach(Array(ordered.enumerated()), id: \.element.id) { index, week in
                         NavigationLink {
                             BlockWeekView(week: week, unit: profile.displayUnit)
                         } label: {
                             WeekRow(week: week, isCurrent: week.ordinal == current)
                         }
+                        .panelRow(.at(index, of: ordered.count))
+                        .listRowSeparator(.hidden)
                     }
+                } header: {
+                    SectionHeading("Weeks")
                 }
             }
         }

@@ -62,14 +62,18 @@ struct ExerciseDetailView: View {
                 // A sentence rather than the whole screen: the movement above
                 // it is still worth reading on the day nothing has been logged,
                 // which is exactly the day someone looks it up.
-                Section("Sessions") {
+                Section {
                     Text("Nothing logged yet. Sets you log against this exercise show up here.")
                         .font(.barbellBody)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Palette.muted)
+                        .panelRow(.only)
+                        .listRowSeparator(.hidden)
+                } header: {
+                    SectionHeading("Sessions")
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle(displayName)
@@ -85,7 +89,7 @@ struct ExerciseDetailView: View {
     private func chart(_ trend: ExerciseTrend) -> some View {
         let points = loads(trend)
         if points.count >= 2 {
-            Section("Heaviest set (\(unit.rawValue))") {
+            Section {
                 Chart(points) { point in
                     // `run` breaks the line wherever a session carried no load
                     // at all: each unbroken stretch is its own series, so
@@ -103,27 +107,38 @@ struct ExerciseDetailView: View {
                     )
                 }
                 .frame(height: 200)
+                .panelRow(.only)
+                .listRowSeparator(.hidden)
                 .padding(.vertical, Spacing.snug)
+            } header: {
+                SectionHeading("Heaviest set (\(unit.rawValue))")
             }
         }
     }
 
     private func sessions(_ trend: ExerciseTrend) -> some View {
-        Section("Sessions") {
-            ForEach(trend.points.reversed()) { point in
+        let points = Array(trend.points.reversed())
+        return Section {
+            ForEach(Array(points.enumerated()), id: \.element.id) { index, point in
                 HStack {
                     Text(point.date, format: .dateTime.month().day())
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Palette.muted)
                     Spacer()
                     if let load = point.topLoad {
                         let converted = load.converted(to: unit)
                         Text("\(converted.value.compactString) \(unit.rawValue) × \(point.topReps)")
+                            .foregroundStyle(Palette.ink)
                     } else {
                         Text("\(point.topReps) reps")
+                            .foregroundStyle(Palette.ink)
                     }
                 }
                 .font(.barbellSupport)
+                .panelRow(.at(index, of: points.count))
+                .listRowSeparator(.hidden)
             }
+        } header: {
+            SectionHeading("Sessions")
         }
     }
 

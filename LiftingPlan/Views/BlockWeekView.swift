@@ -37,12 +37,14 @@ struct BlockWeekView: View {
                 ForEach(week.orderedDays) { day in
                     Section {
                         SessionRow(day: day)
+                            .panelRow(.first)
+                            .listRowSeparator(.hidden)
                         exercises(of: day)
                     }
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle(PlanWeekSelection.title(for: week))
@@ -56,15 +58,21 @@ struct BlockWeekView: View {
         if day.orderedExercises.isEmpty {
             Text("No exercises yet.")
                 .font(.barbellSupport)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Palette.muted)
+                .panelRow(.last)
+                .listRowSeparator(.hidden)
         } else {
-            ForEach(day.entries) { entry in
-                switch entry {
-                case .exercise(let exercise):
-                    ExerciseDetailLink(exercise: exercise, unit: unit)
-                case .group(let group):
-                    PrescribedGroupRows(group: group, unit: unit)
+            ForEach(Array(day.entries.enumerated()), id: \.element.id) { index, entry in
+                Group {
+                    switch entry {
+                    case .exercise(let exercise):
+                        ExerciseDetailLink(exercise: exercise, unit: unit)
+                    case .group(let group):
+                        PrescribedGroupRows(group: group, unit: unit)
+                    }
                 }
+                .panelRow(index == day.entries.count - 1 ? .last : .middle)
+                .listRowSeparator(.hidden)
             }
         }
     }
