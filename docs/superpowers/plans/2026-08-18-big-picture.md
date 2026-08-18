@@ -1,0 +1,122 @@
+# Big Picture — Sprint Plan
+
+**Date:** 2026-08-18
+**Context:** The app was rebuilt today from three tabs and a preview-plus-sheet
+into one screen: the session he is in. That deleted a lot and moved more. This
+plan is what the redesign left open, ordered by what can hurt.
+
+## The shape of the debt
+
+Three kinds of work, and they are not interchangeable:
+
+1. **Regressions the redesign introduced.** Things that were right yesterday and
+   are wrong now. These come first because they are my errors, not decisions.
+2. **Never-looked-at.** Code that compiles and is tested and has never been
+   rendered. Every defect the owner caught in the last stretch was in this
+   category — the pattern is exact and worth stating: *what I screenshotted was
+   right; what I only compiled was wrong.*
+3. **Deferred product decisions.** Real questions with no answer yet. They are
+   last because none of them is blocking and each needs the owner.
+
+---
+
+## Tier 1 — Regressions
+
+### 1.1 A hold or a carry no longer says what it is measured in
+
+`SetTableHeader` named the second column after the unit its rows actually
+record: `REPS`, `SECS`, or the carry's own distance unit. It is deleted. The
+prescription still reaches the lifter as the placeholder — a plank shows
+`30 seconds` in the empty field — but the moment he types `34`, nothing on the
+row says seconds.
+
+**This is the exact failure the `WorkMeasure` work existed to prevent.** The
+store is still correct: `SetRowView` writes `durationSeconds` for a hold and
+`distance` for a carry, decided by the prescription, so no number lands in the
+wrong column. What broke is what the *lifter* can see. A row reading `34 × ` is
+ambiguous in a way `135 × 8` is not.
+
+**Fix:** the unit belongs beside the figure, not above the column. For counted
+work the `×` already says it. For a hold and a carry the row should read
+`34s` / `40 m` — one suffix, on the one row that needs it, and nothing added to
+the common case.
+
+### 1.2 Supersets have never been seen under the new row
+
+`SupersetLogSection` lost its column header and gained the stripped row, and no
+group has been rendered since. The A1/A2 notation sits in the column the set
+number now occupies. **Likely wrong, unverified either way.**
+
+### 1.3 Finishing a session removes it from the pager
+
+Correct — a logged session is no longer "remaining" — but it means the screen
+changes under the thumb at the moment he taps Finish, and nothing says what
+happened. Never watched end to end.
+
+---
+
+## Tier 2 — Never looked at
+
+### 2.1 Dark mode
+
+`Palette` declares seven colours in both appearances. **Not one of them has ever
+been rendered dark.** Every screen, every panel, every hairline is unverified,
+and the accent-on-dark contrast is a guess.
+
+### 2.2 Blocks and Account as sheets
+
+Both were built as tabs and are now presented as sheets from the `⋯`. A sheet
+has a different top, a different dismiss, and different safe areas. Their
+`PageTitle` and hidden navigation bar were designed for a tab. Unverified.
+
+### 2.3 VoiceOver on the new structure
+
+The card that was a tap target is gone; the session is the root; the `⋯` is now
+the only route to two screens. None of the new labels or traits have been heard.
+
+### 2.4 The MCP loop, end to end
+
+Neither document format changed today, so this *should* be intact — but the
+snapshot has not been exported and read back since the calendar was deleted, and
+`SnapshotPlan` still carries `weekdays` that nothing in the app now displays.
+Worth one real round trip rather than an assumption.
+
+### 2.5 Empty and edge states
+
+No block at all; a block whose sessions are all logged; a session of one
+exercise; a session of ten. The one-screen structure changed all four and none
+has been drawn.
+
+---
+
+## Tier 3 — Decisions waiting on the owner
+
+| Question | Why it is open |
+|---|---|
+| The `⋯` is the only route to Blocks and Account | Accepted deliberately today. Worth revisiting after a week of use, not before. |
+| ~121 mobility movements in the vendored catalog | Needs the coverage grid (pattern × equipment) to answer with evidence rather than taste. |
+| An exercise `role` — preparation vs work | Would let Claude mark a warm-up movement as such. No pressure until he wants to. |
+| Splitting `completedAt` into finished vs superseded | One field currently carries both meanings on `TrainingPlan`. Honest today; ambiguous the first time it matters. |
+| Barbell → Superset rename | Mechanical, touches everything, best done when nothing else is in flight. |
+
+---
+
+## Order of work
+
+1. **1.1** — a visible regression in the one thing the app must not get wrong.
+2. **2.1 dark mode** — cheapest to check, largest blast radius, and it is the
+   only tier-2 item where every screen is affected at once.
+3. **1.2, 1.3** — verify by rendering, fix what is found.
+4. **2.2, 2.5** — the screens the redesign re-parented.
+5. **2.3, 2.4** — a pass each.
+6. Tier 3 stays parked until asked.
+
+**Nothing here is new product.** The whole sprint is closing what today opened,
+and the sequencing is deliberate: the app should be proved before it is extended.
+
+## The rule this plan is built on
+
+Ship nothing that has not been rendered. Every defect the owner found today was
+in code that compiled, passed its tests, and had never been looked at — and
+every screen that was screenshotted survived contact. Tests hold the logic;
+only a screenshot holds the layout.
