@@ -63,16 +63,11 @@ struct ActiveWorkoutView: View {
                 }
 
             }
-            // Inset and rounded. It was full-width and square for a while — the
-            // instrument argument being that a card boxes the table in a shape
-            // saying "one item in a list of items" when the table *is* the
-            // screen. On the device it just read as a plainer panel: a
-            // full-bleed white band against a grey one is what every stock list
-            // looks like before it is styled, so the change spent the corners
-            // and bought nothing. Everything else the pass established — the
-            // rules between rows, the tightened density, the typed hierarchy —
-            // holds inside the inset card.
-            .listStyle(.insetGrouped)
+            // Plain, with the panel drawn by the rows themselves — see
+            // `panelRow`. Inset-grouped would draw its own panel underneath, at
+            // its own corner radius, and the radius is the point: the system's
+            // is drawn for cards of content and these hold a table of figures.
+            .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Palette.surface)
             .scrollDismissesKeyboard(.interactively)

@@ -41,7 +41,7 @@ struct SupersetLogSection: View {
         Group {
             SetTableHeader(
                 firstColumn: "LIFT", measure: rows.measure, unit: profile.displayUnit)
-                .listRowBackground(Palette.panel)
+                .panelRow(.first)
                 .listRowSeparator(.hidden)
                 .listRowInsets(SetTableMetrics.headerInsets)
 
@@ -55,7 +55,7 @@ struct SupersetLogSection: View {
                     .tracking(Font.labelTracking)
                     .foregroundStyle(Palette.muted)
                     .accessibilityAddTraits(.isHeader)
-                    .listRowBackground(Palette.panel)
+                    .panelRow(.middle)
                     .listRowSeparator(.hidden)
                 ForEach(round.rows) { row in
                     setRow(row)
@@ -71,9 +71,8 @@ struct SupersetLogSection: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(Palette.muted)
-            .listRowBackground(Palette.panel)
-            // The last row of the panel, so nothing is ruled off beneath it.
-            .listRowSeparator(.hidden, edges: .bottom)
+            .panelRow(.last)
+            .listRowSeparator(.hidden)
         }
     }
 
@@ -84,8 +83,8 @@ struct SupersetLogSection: View {
 
     private func setRow(_ row: GroupRounds.Row) -> some View {
         setRowBody(row)
-            .listRowBackground(Palette.panel)
-            .listRowSeparatorTint(Palette.rule)
+            .panelRow(.middle)
+            .listRowSeparator(.hidden)
             .listRowInsets(SetTableMetrics.rowInsets)
     }
 

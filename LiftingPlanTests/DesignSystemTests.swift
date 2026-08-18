@@ -43,9 +43,12 @@ struct DesignSystemTests {
 
     // MARK: - Radius
 
-    @Test("There are two radii: one small, one large")
-    func twoRadii() {
-        #expect(Radius.all == [Radius.small, Radius.large])
+    @Test("There are three radii, and each is rounder than the last")
+    func threeRadii() {
+        // A panel is the least round of the three: it holds a table of figures,
+        // and a softer corner reads as a card of content to browse.
+        #expect(Radius.all == [Radius.panel, Radius.small, Radius.large])
+        #expect(Radius.panel < Radius.small)
         #expect(Radius.small < Radius.large)
     }
 

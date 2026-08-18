@@ -5,16 +5,17 @@ import UIKit
 /// has been running.
 ///
 /// **What it does.** Draws the three toolbar items the logging screen has — the
-/// close chevron, the running time, and the keyboard's Done. It holds no state
+/// close control, the running time, and the keyboard's Done. It holds no state
 /// and reaches into nothing: everything it needs it is handed, and everything it
 /// does it reports.
 ///
-/// **Finishing is not up here, and that is the point.** It was: `Finish` sat top
-/// right, which is where every sheet in iOS puts the button that means *let me
-/// out*. Tapping it to leave marked the day logged — a session with nothing
-/// filled in read as trained, and the owner hit it on his first real session.
-/// The one control that changes what the record says now lives at the end of the
-/// session, under the last set, where a lifter arrives having actually finished.
+/// **Top right closes, and closes is all it does.** It used to be `Finish`,
+/// which is the position every sheet in iOS gives the button meaning *let me
+/// out* — so it was pressed as one, and a session with nothing filled in came
+/// back marked as trained. The answer was not to leave the corner empty: an
+/// close control belongs where a reader's thumb already goes for it. Finishing
+/// moved to the end of the session, under the last set, and the corner now holds
+/// the only thing it was ever read as.
 ///
 /// **How it is used.** `ActiveWorkoutView` passes it to `.toolbar`. It is a
 /// `ToolbarContent` of its own rather than a computed property on that screen
@@ -38,13 +39,13 @@ struct ActiveWorkoutToolbar: ToolbarContent {
     var body: some ToolbarContent {
         // Its own item, and nothing beside it. Sharing one with the clock gave
         // the toolbar a single background to draw around both, so the "circle"
-        // was a capsule the width of chevron-plus-gap-plus-time and the chevron
-        // sat at one end of it rather than in the middle of anything.
-        ToolbarItem(placement: .topBarLeading) {
+        // was a capsule the width of glyph-plus-gap-plus-time and the glyph sat
+        // at one end of it rather than in the middle of anything.
+        ToolbarItem(placement: .topBarTrailing) {
             Button {
                 onClose()
             } label: {
-                Image(systemName: "chevron.down")
+                Image(systemName: "xmark")
             }
             .accessibilityLabel("Close workout")
         }
@@ -70,11 +71,6 @@ struct ActiveWorkoutToolbar: ToolbarContent {
         // specific — it opened a picker that started a stopwatch unrelated to
         // whatever set had just been logged. The rest line on each exercise's
         // card is the control now.
-        //
-        // Nothing sits top right. The chevron already leaves the session, and a
-        // second control in the position that means *leave* was read as the way
-        // out by the one person who has used this app — which is how a session
-        // he had not started came to be marked as trained.
         //
         // A number pad has no return key, so without this the only way out of a
         // weight field is to scroll the list — which is a poor thing to require

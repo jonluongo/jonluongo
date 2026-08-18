@@ -20,6 +20,13 @@ struct TodaySessionSection: View {
     /// reads everything else in.
     let unit: MassUnit
 
+    /// Where a row sits in the panel, given how many there are.
+    private static func position(_ index: Int, of count: Int) -> PanelPosition {
+        if count == 1 { return .only }
+        if index == 0 { return .first }
+        return index == count - 1 ? .last : .middle
+    }
+
     var body: some View {
         Section {
             // Each row opens that exercise's record — which is where the History
@@ -35,13 +42,14 @@ struct TodaySessionSection: View {
                         PrescribedGroupRows(group: group, unit: unit)
                     }
                 }
-                // Nothing ruled off under the last exercise: below it is the
-                // edge of the panel, and a divider divides two things.
-                .listRowSeparator(
-                    index == session.entries.count - 1 ? .hidden : .visible, edges: .bottom)
+                .panelRow(Self.position(index, of: session.entries.count))
+                .listRowInsets(EdgeInsets(
+                    top: Spacing.tight, leading: SetTableMetrics.contentInset,
+                    bottom: Spacing.tight, trailing: SetTableMetrics.contentInset))
+                // No rules between rows: the gap and the names say where one
+                // exercise ends and the next begins.
+                .listRowSeparator(.hidden)
             }
-            .listRowBackground(Palette.panel)
-            .listRowSeparatorTint(Palette.rule)
         } header: {
             header
         }

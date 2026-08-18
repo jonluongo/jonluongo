@@ -41,6 +41,12 @@ struct ExerciseLogSection: View {
     var onDeleteSet: (LoggedSet, PlannedExercise) -> Void
     /// Told which exercise, and whether the set was ticked or taken back.
     var onCompletionChanged: (PlannedExercise, Bool) -> Void
+    /// Whether Claude wrote anything about this exercise, which decides which
+    /// row is the top of the panel.
+    private var hasNote: Bool {
+        (exercise.notes.map { !$0.isEmpty }) ?? false
+    }
+
     private var orderedSets: [LoggedSet] {
         (exercise.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }
     }
@@ -58,13 +64,13 @@ struct ExerciseLogSection: View {
                 Text(notes)
                     .font(.barbellSupport)
                     .foregroundStyle(Palette.muted)
-                    .listRowBackground(Palette.panel)
+                    .panelRow(.first)
                     .listRowSeparator(.hidden)
             }
 
             SetTableHeader(
                 firstColumn: "SET", measure: reading.measure, unit: profile.displayUnit)
-                .listRowBackground(Palette.panel)
+                .panelRow(hasNote ? .middle : .first)
                 .listRowSeparator(.hidden)
                 .listRowInsets(SetTableMetrics.headerInsets)
 
@@ -89,13 +95,13 @@ struct ExerciseLogSection: View {
                 // screen said the same thing far louder — two statements of one
                 // fact, and the louder of them a second colour across the whole
                 // table. Chanel's rule: take one thing off.
-                .listRowBackground(Palette.panel)
-                .listRowSeparatorTint(Palette.rule)
+                .panelRow(index == orderedSets.count - 1 ? .last : .middle)
                 .listRowInsets(SetTableMetrics.rowInsets)
-                // No rule under the last row: a divider divides two things, and
-                // below the final set there is only the edge of the panel.
-                .listRowSeparator(
-                    index == orderedSets.count - 1 ? .hidden : .visible, edges: .bottom)
+                // No rules between rows. Each row already carries a ruled cell
+                // under the two fields it is typed into, and a full-width line
+                // on top of that was the table drawn twice — the gap and the
+                // figures say where one set ends and the next begins.
+                .listRowSeparator(.hidden)
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) { onDeleteSet(set, exercise) } label: {
                         Label("Delete", systemImage: "trash")

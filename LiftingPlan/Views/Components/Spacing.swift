@@ -53,11 +53,17 @@ enum Radius {
     /// Inline controls that sit in a row: entry fields, badges.
     static let small: CGFloat = 8
 
+    /// The panel a table of figures is written on. Tighter than the system's
+    /// inset-grouped corner, which is drawn for cards of content: a softer
+    /// corner makes a table read as something to browse rather than something
+    /// to fill in.
+    static let panel: CGFloat = 6
+
     /// Surfaces that float over content: the rest bar.
     static let large: CGFloat = 20
 
-    /// Both radii, small first. For tests, as with `Spacing.all`.
-    static let all: [CGFloat] = [small, large]
+    /// Every radius, smallest first. For tests, as with `Spacing.all`.
+    static let all: [CGFloat] = [panel, small, large]
 }
 
 /// The smallest a control may be.
