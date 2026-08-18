@@ -52,17 +52,6 @@ enum SetTableMetrics {
     /// Between columns.
     static let columnGutter: CGFloat = Spacing.snug
 
-    /// How far the panel is inset from the edge of the screen.
-    ///
-    /// The same figure a heading is indented by, so the panel's edge lines up
-    /// with the name of the exercise above it rather than sitting outside it.
-    static let panelInset: CGFloat = Spacing.section
-
-    /// How far a row's content sits inside the panel's own edge. Nested one
-    /// step in, which is what says the row belongs to the panel rather than
-    /// running to the same edge as it.
-    static let contentInset: CGFloat = panelInset + Spacing.standard
-
     /// What surrounds one set row.
     ///
     /// The vertical figure is deliberately small. A list's default row inset is
@@ -71,11 +60,12 @@ enum SetTableMetrics {
     /// own. The controls inside still clear 44pt, so the row is tight without
     /// anything on it becoming hard to hit.
     static let rowInsets = EdgeInsets(
-        top: Spacing.tight, leading: contentInset,
-        bottom: Spacing.tight, trailing: contentInset)
+        top: Spacing.tight, leading: PanelMetrics.contentInset,
+        bottom: Spacing.tight, trailing: PanelMetrics.contentInset)
 
     /// What surrounds the column names. Tighter beneath, because the hairline
     /// under them belongs to the rows rather than to the label.
     static let headerInsets = EdgeInsets(
-        top: Spacing.snug, leading: contentInset, bottom: 0, trailing: contentInset)
+        top: Spacing.snug, leading: PanelMetrics.contentInset,
+        bottom: 0, trailing: PanelMetrics.contentInset)
 }

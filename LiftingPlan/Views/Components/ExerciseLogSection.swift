@@ -70,9 +70,8 @@ struct ExerciseLogSection: View {
 
             SetTableHeader(
                 firstColumn: "SET", measure: reading.measure, unit: profile.displayUnit)
-                .panelRow(hasNote ? .middle : .first)
+                .panelRow(hasNote ? .middle : .first, insets: SetTableMetrics.headerInsets)
                 .listRowSeparator(.hidden)
-                .listRowInsets(SetTableMetrics.headerInsets)
 
             ForEach(Array(orderedSets.enumerated()), id: \.element.persistentModelID) { index, set in
                 let number = workingNumber(at: index)
@@ -95,8 +94,9 @@ struct ExerciseLogSection: View {
                 // screen said the same thing far louder — two statements of one
                 // fact, and the louder of them a second colour across the whole
                 // table. Chanel's rule: take one thing off.
-                .panelRow(index == orderedSets.count - 1 ? .last : .middle)
-                .listRowInsets(SetTableMetrics.rowInsets)
+                .panelRow(
+                    index == orderedSets.count - 1 ? .last : .middle,
+                    insets: SetTableMetrics.rowInsets)
                 // No rules between rows. Each row already carries a ruled cell
                 // under the two fields it is typed into, and a full-width line
                 // on top of that was the table drawn twice — the gap and the

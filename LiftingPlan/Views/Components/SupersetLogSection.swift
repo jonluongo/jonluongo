@@ -41,9 +41,8 @@ struct SupersetLogSection: View {
         Group {
             SetTableHeader(
                 firstColumn: "LIFT", measure: rows.measure, unit: profile.displayUnit)
-                .panelRow(.first)
+                .panelRow(.first, insets: SetTableMetrics.headerInsets)
                 .listRowSeparator(.hidden)
-                .listRowInsets(SetTableMetrics.headerInsets)
 
             ForEach(rows.warmups) { row in
                 setRow(row)
@@ -83,9 +82,8 @@ struct SupersetLogSection: View {
 
     private func setRow(_ row: GroupRounds.Row) -> some View {
         setRowBody(row)
-            .panelRow(.middle)
+            .panelRow(.middle, insets: SetTableMetrics.rowInsets)
             .listRowSeparator(.hidden)
-            .listRowInsets(SetTableMetrics.rowInsets)
     }
 
     private func setRowBody(_ row: GroupRounds.Row) -> some View {

@@ -89,16 +89,19 @@ struct SessionFinishSection: View {
                 .listRowInsets(EdgeInsets(
                     top: Spacing.major, leading: Spacing.section,
                     bottom: Spacing.snug, trailing: Spacing.section))
-            }
-        } footer: {
-            // Said only where it is still true. A lifter about to press this
-            // should know it records the session rather than closes the screen —
-            // which is exactly the distinction the toolbar failed to draw.
-            if !isLogged {
+
+                // A row rather than the section's footer. A footer in a plain
+                // list draws on the default row background, so the sentence sat
+                // on a white band with a rule under it — a panel around a line
+                // of explanation, which is not a panel's job.
                 Text("Records this session as trained. Closing without it changes nothing.")
+                    .font(.barbellSupport)
                     .foregroundStyle(Palette.muted)
-                    .padding(.horizontal, Spacing.section)
-                    .padding(.bottom, Spacing.major)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(
+                        top: 0, leading: Spacing.section,
+                        bottom: Spacing.major, trailing: Spacing.section))
             }
         }
     }

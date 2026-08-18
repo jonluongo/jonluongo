@@ -36,9 +36,6 @@ struct TodaySessionSection: View {
                     }
                 }
                 .panelRow(.at(index, of: session.entries.count))
-                .listRowInsets(EdgeInsets(
-                    top: Spacing.tight, leading: SetTableMetrics.contentInset,
-                    bottom: Spacing.tight, trailing: SetTableMetrics.contentInset))
                 // No rules between rows: the gap and the names say where one
                 // exercise ends and the next begins.
                 .listRowSeparator(.hidden)
