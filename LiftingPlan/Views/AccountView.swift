@@ -23,9 +23,17 @@ import LiftingKit
 /// question and answered none either — the record was invisible in the app, so
 /// the lifter could tell Claude he weighs 185 and never see it again.
 ///
+/// **Three groups, because the page holds three contracts.** *What Claude knows*
+/// is his record and cannot be edited here. *Preferences* are his and can.
+/// *Data* is the one destructive thing. They were one undifferentiated list
+/// where a toggle he owns ranked equally with a fact he cannot change and a
+/// button that destroys his history — and four explanatory paragraphs were
+/// threaded between them, each saying something the grouping now says for free.
+///
 /// **What it depends on.** `AccountRecord` for every string it prints, the
-/// `Store/` models it queries, and the shared `IconCircleRow`. It writes only
-/// the display unit and the delete, exactly as before.
+/// `Store/` models it queries, `panelRow` for the panels and `note()` for the
+/// one sentence left. It writes only the display unit and the delete, exactly as
+/// before.
 struct AccountView: View {
     let profile: UserProfile
 
@@ -81,98 +89,9 @@ struct AccountView: View {
         VStack(alignment: .leading, spacing: 0) {
             PageTitle("Account")
             List {
-            Section {
-                if facts.isEmpty {
-                    Text("Nothing yet.")
-                        .font(.barbellBody)
-                        .foregroundStyle(Palette.muted)
-                        .panelRow(.only)
-                        .listRowSeparator(.hidden)
-                } else {
-                    ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
-                        IconCircleRow(
-                            systemImage: fact.systemImage, tint: .accentColor,
-                            title: fact.value, subtitle: fact.label
-                        )
-                        .panelRow(.at(index, of: facts.count))
-                        .listRowSeparator(.hidden)
-                    }
-                }
-                Text("Claude records these as you tell him; the app only shows them.")
-                    .note()
-            }
-
-            if !baselines.isEmpty {
-                Section {
-                    ForEach(Array(baselines.enumerated()), id: \.element.id) { index, baseline in
-                        IconCircleRow(
-                            systemImage: baseline.systemImage, tint: .accentColor,
-                            title: baseline.value, subtitle: baseline.label
-                        )
-                        .panelRow(.at(index, of: baselines.count))
-                        .listRowSeparator(.hidden)
-                    }
-                } header: {
-                    SectionHeading("Strength")
-                }
-            }
-
-            // Named rather than drawn as a row each: most of these are empty
-            // for most of a record's life, and eight blank rows would be the
-            // whole screen on day one. The sentence still answers what Claude
-            // could know, which a page showing nothing cannot.
-            if let notYetSaid {
-                Section {
-                    Text(notYetSaid)
-                        .font(.barbellBody)
-                        .foregroundStyle(Palette.muted)
-                        .panelRow(.only)
-                        .listRowSeparator(.hidden)
-                } header: {
-                    SectionHeading("Not yet said")
-                }
-            }
-
-            Section {
-                Picker("Weight unit", selection: unitBinding) {
-                    ForEach(MassUnit.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .panelRow(.only)
-                .listRowSeparator(.hidden)
-                Text("How weights are shown, and what new entries are entered in. Sets you have already logged keep the unit you logged them in.")
-                    .note()
-            } header: {
-                SectionHeading("Units")
-            }
-
-            // The second thing on this page that is the lifter's rather than
-            // the record's, and it sits beside the first for that reason. A
-            // lifter who does not want a countdown between sets should be able
-            // to say so once, not once per exercise; how long to rest on any
-            // particular one is still said on that exercise, where it means
-            // something.
-            Section {
-                Toggle("Rest timers", isOn: restTimerBinding)
-                    .panelRow(.only)
-                    .listRowSeparator(.hidden)
-                Text("When off, checking a set off starts no countdown. The rest Claude prescribed is still shown on every exercise — that is his prescription, not a feature of the app.")
-                    .note()
-            } header: {
-                SectionHeading("Rest Timer")
-            }
-
-            Section {
-                Button(role: .destructive) {
-                    showingResetConfirm = true
-                } label: {
-                    Text("Delete All Blocks")
-                }
-                .panelRow(.only)
-                .listRowSeparator(.hidden)
-                Text("Deletes every block and every set logged against it. Everything above is kept.")
-                    .note()
-            }
+                record
+                preferences
+                data
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
@@ -191,6 +110,104 @@ struct AccountView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "")
+        }
+    }
+
+    // MARK: - What Claude knows
+
+    /// The record: the facts, the baselines folded in beside them, and the line
+    /// naming what has not been said.
+    ///
+    /// One group rather than three, because a goal, a bench baseline and the
+    /// absence of a training-day answer are all the same kind of statement —
+    /// what Claude has been told, and what he has not. They were three sections
+    /// with three headings, which made the page look like it held three subjects
+    /// when it holds one.
+    @ViewBuilder
+    private var record: some View {
+        let rows = facts + baselines
+        Section {
+            // Under the heading rather than under the panel. It states the whole
+            // premise of the page — nothing here was asked by the app — so it
+            // frames what follows instead of footnoting it.
+            Text("Claude records these as you tell him. The app shows them and asks nothing.")
+                .note()
+
+            if rows.isEmpty {
+                Text("Nothing yet.")
+                    .font(.barbellBody)
+                    .foregroundStyle(Palette.muted)
+                    .panelRow(.only)
+            } else {
+                ForEach(Array(rows.enumerated()), id: \.element.id) { index, fact in
+                    LabeledContent {
+                        Text(fact.value)
+                            .font(.barbellSupport)
+                            .foregroundStyle(Palette.ink)
+                            .multilineTextAlignment(.trailing)
+                    } label: {
+                        Text(fact.label)
+                            .font(.barbellSupport)
+                            .foregroundStyle(Palette.muted)
+                    }
+                    .panelRow(.at(index, of: rows.count))
+                }
+            }
+
+            // The absence of a record, drawn as a note rather than as a panel:
+            // wrapping it in the same shape that holds facts would claim it is
+            // one of them.
+            if let notYetSaid {
+                Text("Not yet said: \(notYetSaid)")
+                    .note()
+            }
+        } header: {
+            SectionHeading("What Claude knows")
+        }
+    }
+
+    // MARK: - The lifter's own
+
+    /// The two things on this page he sets himself. Neither states anything
+    /// about training: one is how a number is drawn, the other whether his phone
+    /// counts down between sets.
+    private var preferences: some View {
+        Section {
+            Picker("Weight unit", selection: unitBinding) {
+                ForEach(MassUnit.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .panelRow(.first)
+
+            // The rest-timer note is gone: it restated what a switch labelled
+            // "Rest timers" already says.
+            Toggle("Rest timers", isOn: restTimerBinding)
+                .font(.barbellBody)
+                .panelRow(.last)
+
+            Text("Already-logged sets keep the unit you logged them in.")
+                .note()
+        } header: {
+            SectionHeading("Preferences")
+        }
+    }
+
+    // MARK: - The one destructive thing
+
+    /// Alone, at the bottom, and carrying no explanation of its own — the
+    /// confirmation states exactly what goes and what stays, which is the moment
+    /// that matters. Saying it twice made neither saying count.
+    private var data: some View {
+        Section {
+            Button(role: .destructive) {
+                showingResetConfirm = true
+            } label: {
+                Text("Delete All Blocks")
+                    .font(.barbellBody)
+            }
+            .panelRow(.only)
+        } header: {
+            SectionHeading("Data")
         }
     }
 

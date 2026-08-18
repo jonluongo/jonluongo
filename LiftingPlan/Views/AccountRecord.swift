@@ -5,8 +5,11 @@ import LiftingKit
 ///
 /// **What it does.** Carries the two strings a row prints and the glyph beside
 /// them. `value` is the fact — his words, his weight, his days — and `label`
-/// names it. The value leads because on this screen the fact is the content and
-/// its name is the qualifier; a weigh-in's date rides on the label for the same
+/// names it. The label leads on screen: six values of different lengths with no
+/// shared left edge gave the page no column to scan, and a fact about the lifter
+/// should read the same way as a fact about a movement, which
+/// `ExerciseAboutSections` already draws label-first. A weigh-in's date rides on
+/// the label for the same
 /// reason, as something that qualifies the number rather than something to give
 /// a row of its own.
 ///
@@ -24,8 +27,6 @@ struct LifterFactRow: Identifiable, Equatable {
 
     /// What the fact is called, and anything qualifying it.
     let label: String
-
-    let systemImage: String
 
     var id: String { label }
 }
@@ -63,15 +64,15 @@ enum AccountRecord {
         profile: UserProfile, weighIns: [BodyMetric], catalog: any ExerciseCatalogProviding
     ) -> [LifterFactRow] {
         [
-            row(profile.goal, "Goal", "target"),
-            row(profile.experience.map { sentenceCased($0.rawValue) }, "Experience", "figure.strengthtraining.traditional"),
-            row(profile.constraints, "Constraints", "bandage.fill"),
-            row(patterns(profile), "Avoided movements", "hand.raised.fill"),
-            row(exercises(profile, catalog: catalog), "Avoided exercises", "hand.raised.fill"),
+            row(profile.goal, "Goal"),
+            row(profile.experience.map { sentenceCased($0.rawValue) }, "Experience"),
+            row(profile.constraints, "Constraints"),
+            row(patterns(profile), "Avoided movements"),
+            row(exercises(profile, catalog: catalog), "Avoided exercises"),
             bodyweight(profile: profile, weighIns: weighIns),
-            row(equipment(profile), "Equipment", "dumbbell.fill"),
-            row(weekdays(profile), "Training days", "calendar"),
-            row(profile.preferredDurationMinutes.map { "\($0) min" }, "Session length", "clock.fill"),
+            row(equipment(profile), "Equipment"),
+            row(weekdays(profile), "Training days"),
+            row(profile.preferredDurationMinutes.map { "\($0) min" }, "Session length"),
         ].compactMap { $0 }
     }
 
@@ -89,8 +90,7 @@ enum AccountRecord {
                 LifterFactRow(
                     value: "\(load(baseline.load)) × \(baseline.reps)",
                     label: catalog.exercise(id: baseline.exerciseID)?.displayName
-                        ?? baseline.exerciseID.rawValue,
-                    systemImage: "figure.strengthtraining.traditional"
+                        ?? baseline.exerciseID.rawValue
                 )
             }
             .sorted { $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending }
@@ -148,7 +148,7 @@ enum AccountRecord {
             " · \($0.date.formatted(date: .abbreviated, time: .omitted))"
         }
         return LifterFactRow(
-            value: text(mass), label: "Bodyweight\(taken ?? "")", systemImage: "scalemass.fill")
+            value: text(mass), label: "Bodyweight\(taken ?? "")")
     }
 
     /// The weight the record stands behind: the last dated reading, or the copy
@@ -203,9 +203,9 @@ enum AccountRecord {
 
     // MARK: - Words
 
-    private static func row(_ value: String?, _ label: String, _ systemImage: String) -> LifterFactRow? {
+    private static func row(_ value: String?, _ label: String) -> LifterFactRow? {
         guard let value, !value.isEmpty else { return nil }
-        return LifterFactRow(value: value, label: label, systemImage: systemImage)
+        return LifterFactRow(value: value, label: label)
     }
 
     /// Taxonomy values sorted and joined, or `nil` when there are none. Sorted
