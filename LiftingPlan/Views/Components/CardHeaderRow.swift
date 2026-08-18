@@ -58,15 +58,13 @@ struct CardHeaderRow<Trailing: View>: View {
                     .frame(minWidth: TapTarget.minimum, minHeight: TapTarget.minimum)
             }
         }
-        // More above than below: the gap over a heading separates it from the
-        // panel it has finished with, and the gap under it binds it to the one
-        // it introduces. Equal padding made it float between the two.
-        //
-        // `standard` rather than `major`, because the first heading on a screen
-        // has no panel above it to be separated from — it was pushing the whole
-        // page down to hold a gap that only the second heading onwards needs.
-        .padding(.top, Spacing.standard)
-        .padding(.bottom, Spacing.snug)
+        // Even, because the header sits *inside* the panel now. It used to sit
+        // above one, where extra room on top separated it from the panel it had
+        // finished with — and carrying that inside made the panel's top airy
+        // while its last set row closed almost against the edge. The gap between
+        // panels does the separating; this only spaces the title from its own
+        // table.
+        .padding(.vertical, Spacing.snug)
     }
 }
 

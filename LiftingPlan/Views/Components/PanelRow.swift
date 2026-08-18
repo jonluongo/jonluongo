@@ -60,8 +60,12 @@ extension View {
         // separates one panel from the next. Without it two panels sat flush and
         // read as a single surface with a seam across it.
         var spaced = insets
-        if position == .first || position == .only { spaced.top += PanelMetrics.edge }
-        if position == .last || position == .only { spaced.bottom += PanelMetrics.edge }
+        if position == .first || position == .only {
+            spaced.top += PanelMetrics.edge + PanelMetrics.closing
+        }
+        if position == .last || position == .only {
+            spaced.bottom += PanelMetrics.edge + PanelMetrics.closing
+        }
         let shape = UnevenRoundedRectangle(
             topLeadingRadius: position.topRadius,
             bottomLeadingRadius: position.bottomRadius,

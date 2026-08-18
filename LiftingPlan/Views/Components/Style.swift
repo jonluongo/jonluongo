@@ -371,4 +371,10 @@ enum PanelMetrics {
     /// What surrounds an ordinary row of a panel.
     static let rowInsets = EdgeInsets(
         top: Spacing.snug, leading: contentInset, bottom: Spacing.snug, trailing: contentInset)
+
+    /// The room a panel keeps inside its own top and bottom edges, beyond what
+    /// the row already has. A set row's content is a field whose underline sits
+    /// at the very bottom of it, so without this the last rule in a table lands
+    /// against the panel's edge while the title above breathes.
+    static let closing: CGFloat = Spacing.standard
 }
