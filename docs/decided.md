@@ -52,6 +52,28 @@ but say so, rather than quietly re-adding the thing.
 | VoiceOver as a dedicated pass | On the plan because it is on a checklist, which is the reasoning this project rejects everywhere else. One user, sighted. |
 | An exercise `role` field | Claude prescribes a warm-up by prescribing it. A field so he can label it is a field nobody reads. |
 
+## Settled by investigation
+
+**Supersets are expressible and always were.** Claude reported on 2026-08-18 that
+"the plan format has no superset field. No grouping, no pairing." That is not
+true of this repo: `PlanDocumentEntry` is an enum of exercise-or-group,
+`ToolCatalog+WritePlan` documents `{"group": [ … ], "restSeconds": 90}` to him
+explicitly, `SnapshotExerciseGroup` carries a logged group back, and
+`SnapshotExporter` writes it. Probing the rebuilt server over stdio for
+`tools/list` shows `write_plan` mentioning both *group* and *superset*. He was
+talking to a binary built on 2026-08-17 at 17:17, before that work landed.
+**Rebuild the server and restart the connection after changing LiftingKit or
+LiftingMCP** — the client holds the old process otherwise, and the symptom is
+Claude describing a format that no longer exists.
+
+**The snapshot exporter drops nothing.** He also reported reading four sessions
+of a nine-session block. `SnapshotExporter` maps `orderedWeeks → orderedDays →
+exercises` with no filter, prefix or limit, and `SnapshotCompletenessTests` now
+asserts a three-week block of three days survives whole, keeps its exercises,
+and does not silently omit an empty week. A truncated snapshot is a stale
+`snapshot.json`: the phone writes it, and a phone that has not opened the app
+since the block changed has not rewritten it.
+
 ## Calibration
 
 Across a long day of building this, one pattern held without exception: **the
