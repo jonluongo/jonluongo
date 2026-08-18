@@ -181,18 +181,19 @@ struct TodayView: View {
         .padding(.bottom, Spacing.standard)
     }
 
-    /// What the session on screen amounts to, and the unit every weight under
-    /// it is written in — or nothing when there is no session.
+    /// What the session on screen amounts to, or nothing when there is none.
     ///
-    /// The unit was a column heading, redrawn above every exercise. It is one
-    /// word about every number on the screen and it changes only when he changes
-    /// it, so it is said once, here, rather than six times below.
+    /// The unit used to be here. It was a column heading before that, and moving
+    /// it up was compensation for a deletion that was itself compensation — a
+    /// lifter knows whether he counts in pounds or kilos, it never changes
+    /// without him changing it, and Account states it where it is set. A word on
+    /// every screen that tells him something he has never once needed to be told
+    /// is a word that has not earned its place.
     private var shape: String? {
         guard let selected else { return nil }
-        let shape = TodayPhrasing.sessionShape(
+        return TodayPhrasing.sessionShape(
             exercises: selected.orderedExercises.count,
             durationMinutes: selected.durationMinutes)
-        return [shape, profile.displayUnit.rawValue].compactMap { $0 }.joined(separator: " · ")
     }
 
     @ViewBuilder
