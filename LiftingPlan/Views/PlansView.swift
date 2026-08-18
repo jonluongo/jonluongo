@@ -38,24 +38,27 @@ struct PlansView: View {
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     var body: some View {
-        Group {
-            if plans.isEmpty {
-                NoBlockView()
-            } else {
-                List {
-                    PageTitle("Blocks")
-                    section(.current)
-                    section(.earlier)
+        // The title sits above the list rather than inside it, as it does on
+        // Home. There it has to: inside the pager's pages it swiped sideways
+        // with the workouts. Here it would have scrolled away quite happily —
+        // but a header that scrolls on two tabs and stays put on the third is
+        // the app disagreeing with itself about what a header is.
+        VStack(alignment: .leading, spacing: 0) {
+            PageTitle("Blocks")
+            Group {
+                if plans.isEmpty {
+                    NoBlockView()
+                } else {
+                    List {
+                        section(.current)
+                        section(.earlier)
+                    }
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .background(Palette.surface)
-        // Drawn as the first row rather than by the bar — see `PageTitle`. This
-        // screen's own title would have collapsed correctly, but a tab whose
-        // header behaves differently from the tab beside it is worse than
-        // either behaviour on its own, and Home's cannot.
         .toolbar(.hidden, for: .navigationBar)
     }
 

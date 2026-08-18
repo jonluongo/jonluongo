@@ -78,8 +78,9 @@ struct AccountView: View {
     }
 
     var body: some View {
-        List {
+        VStack(alignment: .leading, spacing: 0) {
             PageTitle("Account")
+            List {
             Section {
                 if facts.isEmpty {
                     Text("Nothing yet.")
@@ -97,9 +98,8 @@ struct AccountView: View {
                         .listRowSeparator(.hidden)
                     }
                 }
-            } footer: {
                 Text("Claude records these as you tell him; the app only shows them.")
-                    .foregroundStyle(Palette.muted)
+                    .note()
             }
 
             if !baselines.isEmpty {
@@ -138,10 +138,12 @@ struct AccountView: View {
                     ForEach(MassUnit.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }
                 .pickerStyle(.segmented)
-            } header: {
-                Text("Units")
-            } footer: {
+                .panelRow(.only)
+                .listRowSeparator(.hidden)
                 Text("How weights are shown, and what new entries are entered in. Sets you have already logged keep the unit you logged them in.")
+                    .note()
+            } header: {
+                SectionHeading("Units")
             }
 
             // The second thing on this page that is the lifter's rather than
@@ -152,10 +154,12 @@ struct AccountView: View {
             // something.
             Section {
                 Toggle("Rest timers", isOn: restTimerBinding)
-            } header: {
-                Text("Rest Timer")
-            } footer: {
+                    .panelRow(.only)
+                    .listRowSeparator(.hidden)
                 Text("When off, checking a set off starts no countdown. The rest Claude prescribed is still shown on every exercise — that is his prescription, not a feature of the app.")
+                    .note()
+            } header: {
+                SectionHeading("Rest Timer")
             }
 
             Section {
@@ -164,14 +168,18 @@ struct AccountView: View {
                 } label: {
                     Text("Delete All Blocks")
                 }
-            } footer: {
+                .panelRow(.only)
+                .listRowSeparator(.hidden)
                 Text("Deletes every block and every set logged against it. Everything above is kept.")
+                    .note()
             }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .background(Palette.surface)
-        // Drawn as the first row rather than by the bar — see `PageTitle`.
+        // Fixed above the list rather than scrolling with it, so all three tabs
+        // agree about what a header is — see `PlansView` for why Home forces it.
         .toolbar(.hidden, for: .navigationBar)
         .confirmationDialog("Delete all blocks?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
             Button("Delete Blocks", role: .destructive) { deleteAllPlans() }

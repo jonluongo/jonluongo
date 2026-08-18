@@ -90,18 +90,9 @@ struct SessionFinishSection: View {
                     top: Spacing.major, leading: Spacing.section,
                     bottom: Spacing.snug, trailing: Spacing.section))
 
-                // A row rather than the section's footer. A footer in a plain
-                // list draws on the default row background, so the sentence sat
-                // on a white band with a rule under it — a panel around a line
-                // of explanation, which is not a panel's job.
+                // A note rather than the section's footer — see `note()`.
                 Text("Records this session as trained. Closing without it changes nothing.")
-                    .font(.barbellSupport)
-                    .foregroundStyle(Palette.muted)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(
-                        top: 0, leading: Spacing.section,
-                        bottom: Spacing.major, trailing: Spacing.section))
+                    .note()
             }
         }
     }
