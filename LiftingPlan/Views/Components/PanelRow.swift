@@ -93,6 +93,14 @@ extension View {
                 }
             }
             .padding(.horizontal, PanelMetrics.inset)
+            // The gap between one panel and the next, taken off the background
+            // rather than added to the row. Adding it to the row's insets — the
+            // first attempt — padded the *inside* of the panel: the background
+            // still filled the whole row, so the panels stayed flush and read as
+            // one white column with faint seams. Space between objects has to
+            // come off the object.
+            .padding(.top, position == .first || position == .only ? PanelMetrics.edge : 0)
+            .padding(.bottom, position == .last || position == .only ? PanelMetrics.edge : 0)
         )
     }
 }
