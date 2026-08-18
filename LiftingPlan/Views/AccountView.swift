@@ -53,12 +53,6 @@ struct AccountView: View {
         Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
     }
 
-    /// Writes straight through to the store, so the change is saved the moment
-    /// it is made rather than waiting for a Done button that does not exist.
-    private var unitBinding: Binding<MassUnit> {
-        Binding(get: { profile.displayUnit }, set: { setDisplayUnit($0) })
-    }
-
     /// The master switch for the between-sets countdown. It writes to
     /// `RestPreferences`, never to the store: switching a clock off is a thing
     /// about this phone, not a fact about the lifter that Claude should read
@@ -159,34 +153,30 @@ struct AccountView: View {
                 Text("Not yet said: \(notYetSaid)")
                     .note()
             }
-        } header: {
-            SectionHeading("What Claude knows")
         }
     }
 
     // MARK: - The lifter's own
 
-    /// The two things on this page he sets himself. Neither states anything
-    /// about training: one is how a number is drawn, the other whether his phone
-    /// counts down between sets.
+    /// The one thing on this page he sets himself: whether his phone counts
+    /// down between sets.
+    ///
+    /// The unit was here too, and should not have been. "Pounds or kilos" is a
+    /// fact about how the lifter thinks, which is the same kind of thing as his
+    /// goal and his injuries — he says it in conversation and Claude records it,
+    /// through `ProfileUpdate.displayUnit`. A toggle for it was the app asking a
+    /// question, which is the one thing it does not do. The note that went with
+    /// it — that already-logged sets keep their unit — went too: it existed to
+    /// reassure him about a switch he no longer has.
     private var preferences: some View {
         Section {
-            Picker("Weight unit", selection: unitBinding) {
-                ForEach(MassUnit.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .panelRow(.first)
-
-            // The rest-timer note is gone: it restated what a switch labelled
-            // "Rest timers" already says.
+            // No heading. It read "Rest timer" above a switch labelled "Rest
+            // timers" — the same word twice, one of them singular, neither
+            // adding anything the other had not said.
             Toggle("Rest timers", isOn: restTimerBinding)
                 .font(.barbellBody)
-                .panelRow(.last)
-
-            Text("Already-logged sets keep the unit you logged them in.")
-                .note()
-        } header: {
-            SectionHeading("Preferences")
+                .panelRow(.only)
+                .listRowSeparator(.hidden)
         }
     }
 
@@ -204,16 +194,10 @@ struct AccountView: View {
                     .font(.barbellBody)
             }
             .panelRow(.only)
+            .listRowSeparator(.hidden)
         } header: {
             SectionHeading("Data")
         }
-    }
-
-    private func setDisplayUnit(_ unit: MassUnit) {
-        guard unit != profile.displayUnit else { return }
-        profile.displayUnit = unit
-        profile.updatedAt = Date()
-        save()
     }
 
     /// Deletes the blocks and, by cascade, every set logged against them.

@@ -19,8 +19,11 @@ app does not do.
 screen, and no settings form for a training question — days, session length,
 goal, equipment, experience and injuries are all things Claude asks better in
 conversation, and he records them with the `update_profile` tool. The one
-preference left in Settings is lb/kg, which is about how a number is drawn
-rather than about training. A profile that has been told nothing must read as
+preference left is whether the rest clock runs at all, which is about this phone
+rather than about the lifter. Even lb/kg is Claude's: pounds or kilos is a fact
+about how the lifter thinks, he says it in conversation like anything else, and
+`ProfileUpdate.displayUnit` carries it. A toggle for it was the app asking a
+question. A profile that has been told nothing must read as
 *not known*, never as a plausible default: `experience` is optional for exactly
 that reason, and `availableEquipment` is absent rather than empty when nobody
 has said — `nil` is "nobody asked", `[]` is "owns nothing", and the two must

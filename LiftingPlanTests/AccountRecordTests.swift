@@ -65,10 +65,12 @@ struct AccountRecordTests {
 
     @Test("The eight names read as one sentence rather than eight blank rows")
     func unstatedReadsAsASentence() throws {
+        // Lower case: the sentence follows "Not yet said:" on screen, and a
+        // capital mid-sentence reads as a mistake rather than as a list.
         let sentence = AccountRecord.sentence(["goal", "bodyweight", "equipment"])
-        #expect(sentence == "Goal, bodyweight and equipment.")
-        #expect(AccountRecord.sentence(["goal"]) == "Goal.")
-        #expect(AccountRecord.sentence(["goal", "bodyweight"]) == "Goal and bodyweight.")
+        #expect(sentence == "goal, bodyweight and equipment.")
+        #expect(AccountRecord.sentence(["goal"]) == "goal.")
+        #expect(AccountRecord.sentence(["goal", "bodyweight"]) == "goal and bodyweight.")
         #expect(AccountRecord.sentence([]) == nil)
     }
 

@@ -128,7 +128,10 @@ enum AccountRecord {
         let joined = names.count == 1
             ? last
             : names.dropLast().joined(separator: ", ") + " and " + last
-        return sentenceCased(joined) + "."
+        // Not sentence-cased. It used to lead its own line and now follows
+        // "Not yet said:", where a capital mid-sentence reads as a mistake
+        // rather than as a list.
+        return joined + "."
     }
 
     // MARK: - The facts, one at a time
