@@ -90,6 +90,15 @@ struct GroupRounds {
         rounds = working.enumerated().map { Round(number: $0.offset + 1, rows: $0.element) }
     }
 
+    /// Whether any round of the group has just been completed — the question a
+    /// tick inside a group actually asks, now that the movements are drawn as
+    /// movements rather than as rounds. Resting only after the group is what a
+    /// superset is, so the rest starts when every movement of a round has its
+    /// set, and not when one of them does.
+    var hasCompleteRound: Bool {
+        rounds.contains { $0.isComplete }
+    }
+
     /// Whether the round a row belongs to is finished. A warm-up belongs to no
     /// round and so never finishes one.
     func isComplete(round: Int?) -> Bool {

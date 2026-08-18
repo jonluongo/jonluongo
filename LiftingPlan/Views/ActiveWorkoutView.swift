@@ -158,26 +158,47 @@ struct ActiveWorkoutView: View {
     /// of work.
     @ViewBuilder
     private func section(for group: ExerciseGroup) -> some View {
+        // A group is drawn as its movements are drawn — each with the header and
+        // the set table an ungrouped exercise gets — sharing one panel with no
+        // gap between them. Every other exercise on the screen keeps a gap from
+        // its neighbour, so two that do not are visibly one thing. That is the
+        // whole of the notation: no "Superset A", no A1/A2, no legend decoding
+        // symbols the layout had invented, and no round labels restating a set
+        // number. Rest still runs when the round closes, which is what a
+        // superset actually is.
         Section {
-            SupersetHeaderView(
-                group: group,
-                unit: profile.displayUnit,
-                onShowInfo: { infoExercise = $0 },
-                onAddWarmup: { addSet(to: $0, warmup: true) },
-                onEditRest: { restEditing = RestTarget(group: $0) }
-            )
-            .panelRow(.first)
-            .listRowSeparator(.hidden)
+            ForEach(Array(group.members.enumerated()), id: \.element.id) { index, member in
+                ExerciseHeaderView(
+                    exercise: member,
+                    unit: profile.displayUnit,
+                    onShowInfo: { infoExercise = member },
+                    onEditRest: { restEditing = RestTarget(group: group) },
+                    onAddSet: { addSet(to: member, warmup: false) },
+                    onAddWarmup: { addSet(to: member, warmup: true) }
+                )
+                .panelRow(index == 0 ? .first : .middle)
+                .listRowSeparator(.hidden)
 
-            SupersetLogSection(
-                group: group,
-                profile: profile,
-                plans: plans,
-                onAddRound: addRound,
-                onDeleteSet: delete,
-                onRoundChanged: restChanged
-            )
+                ExerciseLogSection(
+                    exercise: member,
+                    profile: profile,
+                    plans: plans,
+                    onDeleteSet: delete,
+                    onCompletionChanged: { _, completed in
+                        roundChanged(group, completed)
+                    },
+                    closesPanel: index == group.members.count - 1
+                )
+            }
         }
+    }
+
+    /// Runs the group's rest when the round the lifter just finished is
+    /// complete. A set ticked inside a group is not the end of anything until
+    /// every movement of that round has one.
+    private func roundChanged(_ group: ExerciseGroup, _ completed: Bool) {
+        let rounds = GroupRounds(group: group, plans: plans, unit: profile.displayUnit)
+        restChanged(for: group, roundCompleted: completed && rounds.hasCompleteRound)
     }
 
     // MARK: - Actions

@@ -41,6 +41,10 @@ struct ExerciseLogSection: View {
     var onDeleteSet: (LoggedSet, PlannedExercise) -> Void
     /// Told which exercise, and whether the set was ticked or taken back.
     var onCompletionChanged: (PlannedExercise, Bool) -> Void
+    /// Whether this exercise's last set is the last row of the panel. It is on
+    /// its own; inside a superset the panel continues into the next movement,
+    /// which is the whole of how the pairing is shown.
+    var closesPanel: Bool = true
     /// Whether Claude wrote anything about this exercise, which decides which
     /// row is the top of the panel.
     private var hasNote: Bool {
