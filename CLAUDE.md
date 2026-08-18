@@ -165,6 +165,21 @@ compile until every place that logs one has been told what to do with it. That
 is deliberate — it is what stops the next measure from landing in the rep column
 the way a hold once did.
 
+**Data earns its place or it goes.** A stored field, a document key, a
+catalog column exists because something reads it and someone is better off for
+that. When nothing does, it is removed — the property, its migration, its
+tests, its mention in every doc comment — rather than left in place because it
+is cheap. Cheap is the argument that fills a schema with columns nobody can
+explain, and a field nobody can explain is a field nobody dares delete.
+
+The test is utility, not age. Some data looks dead and is not: the retired
+`equipmentAccessRaw` and `hasCompletedSetup` on `UserProfile` are read by
+exactly one thing — the migration that tells equipment the lifter *stated* from
+the `fullGym` a deleted setup form filled in for him. They stop earning their
+place the day every install has opened a build that migrates, and that is when
+they go. Ask what reads it and who is worse off without it; if the answer is
+nothing and nobody, remove it completely.
+
 **Refuse rather than discard.** An inbound document stating a key this format
 does not have is refused with the key named and nothing taken in — never read
 around. A silently dropped key tells the writer his prescription landed when
