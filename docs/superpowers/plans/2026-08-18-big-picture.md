@@ -1,6 +1,8 @@
 # Big Picture — Sprint Plan
 
 **Date:** 2026-08-18
+**Status:** Closed. Every numbered item is done except 2.3, which is Jon's
+decision and annotated in place. Tier 3 stays parked.
 **Context:** The app was rebuilt today from three tabs and a preview-plus-sheet
 into one screen: the session he is in. That deleted a lot and moved more. This
 plan is what the redesign left open, ordered by what can hurt.
@@ -133,9 +135,20 @@ has been drawn.
 **Nothing here is new product.** The whole sprint is closing what today opened,
 and the sequencing is deliberate: the app should be proved before it is extended.
 
-## The rule this plan is built on
+## The rule this plan was built on, and the sharper one it produced
 
-Ship nothing that has not been rendered. Every defect the owner found today was
-in code that compiled, passed its tests, and had never been looked at — and
-every screen that was screenshotted survived contact. Tests hold the logic;
-only a screenshot holds the layout.
+It began as: ship nothing that has not been rendered.
+
+That was not enough, and the sprint proved it four times. The panel padding
+reached the two screens I was looking at. The Account sections kept the system's
+dividers. One sheet of three kept a Done button. A group's set rows kept a
+background that overrode the panel. **Every one of those screens was rendered —
+the screen I was working on. The one that broke was its sibling.**
+
+So the rule is: **render everything the change touches.** When a modifier, a
+token or a shape changes, the question is not "does this screen still look
+right" but "who else draws this, and have I looked at them." A component with
+two callers has two screenshots owing.
+
+Tests hold the logic. A screenshot holds one layout. Only the list of callers
+holds the app.

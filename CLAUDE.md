@@ -216,6 +216,14 @@ doing too much.
 
 ## Verification
 
+**Render everything a change touches.** A screenshot of the screen being worked
+on is not verification — it is verification of that screen. Four defects in one
+sprint were siblings of a screen that had been rendered: panel insets applied to
+two callers of five, a completed-row background left on the group table after it
+was deleted from the exercise table, a Done button left on one sheet of three.
+When a shared modifier, token or shape changes, list its callers and look at each
+one. A component with two callers has two screenshots owing.
+
 Never claim work is complete without running the command and reading the
 output. State what was run and what it printed. If tests fail, say so.
 
