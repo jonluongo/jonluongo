@@ -19,10 +19,17 @@ import LiftingKit
 /// one — start this session — is what Home is for; the record is still reached
 /// from inside a session through an exercise's menu, and from the Blocks tab.
 ///
-/// **Every card is the same height.** It fills the space between the header and
-/// the tab bar rather than sizing to its contents, so swiping between a
-/// six-exercise session and a three-exercise one does not resize the thing under
-/// the thumb. A session too long to fit scrolls inside the card; the tap still
+/// **Every card is the same height, and every card is full.** It fills the space
+/// between the header and the tab bar rather than sizing to its contents, so
+/// swiping between a six-exercise session and a one-exercise one does not resize
+/// the thing under the thumb. Fixed height alone was not enough: a short session
+/// left most of the card white, which is a screen not doing its job. The rows
+/// share the height instead of stacking at their natural size, so a three-lift
+/// session is drawn in three tall rows rather than three short ones over a void.
+///
+/// The rows share it equally and nothing is held back: a cap plus a trailing
+/// spacer was two rules fighting, and it produced two tight rows above a void
+/// rather than three even ones. A session too long to fit scrolls; the tap still
 /// works, because a tap is not a drag.
 ///
 /// **What it depends on.** `WorkoutDay` from Store, `PrescribedExerciseRow` and
@@ -36,6 +43,11 @@ struct WorkoutCard: View {
     /// reads everything else in.
     let unit: MassUnit
     var onStart: () -> Void
+
+    /// The card's own height, so the rows inside it can be asked to fill one.
+    /// A scroll view proposes its contents nothing, so without this the rows
+    /// size to their text and the card holds a column of them against white.
+    @State private var height: CGFloat = 0
 
     private var shape: String? {
         TodayPhrasing.sessionShape(
@@ -61,11 +73,13 @@ struct WorkoutCard: View {
                             .frame(height: Palette.hairline)
                     }
                     row(for: entry)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: height, alignment: .leading)
         }
         .scrollBounceBehavior(.basedOnSize)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Palette.panel, in: .rect(cornerRadius: Radius.panel))
         .contentShape(.rect)
