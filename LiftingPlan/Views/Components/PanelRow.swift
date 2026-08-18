@@ -36,31 +36,6 @@ enum PanelPosition {
     }
 }
 
-/// The geometry every panel shares.
-///
-/// It lives here rather than in `SetTableMetrics` because a panel is not a set
-/// table: the block list, the account record and the exercise detail all draw
-/// one, and each of them had been given the background without the matching
-/// content inset — so the icon in a row sat four points inside the panel's edge
-/// while the text beside it sat twenty-eight. `panelRow` applies both now, and
-/// the pair cannot come apart.
-enum PanelMetrics {
-
-    /// How far the panel is inset from the edge of the screen. The same figure
-    /// a heading is indented by, so a panel's edge lines up with the name above
-    /// it rather than sitting outside it.
-    static let inset: CGFloat = Spacing.section
-
-    /// How far a row's content sits inside the panel's own edge. Nested one
-    /// step in, which is what says the row belongs to the panel rather than
-    /// running to the same edge as it.
-    static let contentInset: CGFloat = inset + Spacing.standard
-
-    /// What surrounds an ordinary row of a panel.
-    static let rowInsets = EdgeInsets(
-        top: Spacing.snug, leading: contentInset, bottom: Spacing.snug, trailing: contentInset)
-}
-
 extension View {
 
     /// Draws this row as part of an inset panel, rounded at whichever end of it

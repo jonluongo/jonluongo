@@ -176,11 +176,26 @@ struct SetRowView: View {
             // eight — and the sign says so. It replaces two column headings
             // redrawn above every exercise of every session, which said the
             // same thing to a lifter who has already used this once.
-            Text("×")
-                .font(.barbellSupport)
-                .foregroundStyle(Palette.muted)
+            //
+            // Drawn only where there are two figures to join. A plank carries no
+            // load, and `× 45 s` is a sign multiplying nothing.
+            if joinsTwoFigures {
+                Text("×")
+                    .font(.barbellSupport)
+                    .foregroundStyle(Palette.muted)
+            }
             // A distance can be a fraction of its unit; reps and seconds cannot.
             field(text: workText, placeholder: repTargetText, isDecimal: measuresDistance)
+            // What the figure beside it is measured in, on the one row that
+            // needs saying. A column header used to carry this — `SECS`, or a
+            // carry's own unit — and deleting it left a plank reading `34` with
+            // nothing anywhere on screen saying seconds. Counted work needs no
+            // suffix: the `×` has already said it.
+            if let workUnit {
+                Text(workUnit)
+                    .font(.barbellSupport)
+                    .foregroundStyle(Palette.muted)
+            }
 
             Spacer(minLength: 0)
 
@@ -229,6 +244,31 @@ struct SetRowView: View {
         self.set.isCompleted
             ? "Completed \(identity.spoken)"
             : "Complete \(identity.spoken)"
+    }
+
+    /// Whether this row has a load as well as a count — the two things the `×`
+    /// sits between. A set with no weight on it, prescribed or entered, has one
+    /// figure and needs no sign.
+    ///
+    /// `self` is written out for the same reason `completionLabel` writes it: a
+    /// property body opening with `set` reads as the start of a setter.
+    private var joinsTwoFigures: Bool {
+        self.set.load != nil || !loadTargetText.isEmpty
+    }
+
+    /// What the second figure is measured in, or `nil` for counted work.
+    ///
+    /// The suffix exists because the unit is no longer a column heading, and a
+    /// number whose unit is not on screen is the failure `WorkMeasure` was built
+    /// to prevent — not in the store, which still writes the right field, but
+    /// in front of the lifter, who cannot tell a hold from a rep count by
+    /// looking at `34`.
+    private var workUnit: String? {
+        switch measure {
+        case .repetitions: nil
+        case .time: "s"
+        case .distance(let unit): unit.rawValue
+        }
     }
 
     /// Whether the field the lifter types into holds a distance, which is the
