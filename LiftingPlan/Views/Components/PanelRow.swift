@@ -62,15 +62,16 @@ extension View {
         var spaced = insets
         if position == .first || position == .only { spaced.top += PanelMetrics.edge }
         if position == .last || position == .only { spaced.bottom += PanelMetrics.edge }
+        let shape = UnevenRoundedRectangle(
+            topLeadingRadius: position.topRadius,
+            bottomLeadingRadius: position.bottomRadius,
+            bottomTrailingRadius: position.bottomRadius,
+            topTrailingRadius: position.topRadius,
+            style: .continuous
+        )
         return listRowInsets(spaced)
         .listRowBackground(
-            UnevenRoundedRectangle(
-                topLeadingRadius: position.topRadius,
-                bottomLeadingRadius: position.bottomRadius,
-                bottomTrailingRadius: position.bottomRadius,
-                topTrailingRadius: position.topRadius,
-                style: .continuous
-            )
+            shape
             .fill(Palette.panel)
             .overlay(alignment: .leading) {
                 // The mark that two movements are one superset.
@@ -92,6 +93,11 @@ extension View {
                         .frame(width: PanelMetrics.pairing)
                 }
             }
+            // Clipped to the panel's own shape, so the rule follows the rounded
+            // corner instead of squaring it. Overlaid on the shape it filled the
+            // bounding box, and a superset's panel had two sharp corners that no
+            // other panel had.
+            .clipShape(shape)
             .padding(.horizontal, PanelMetrics.inset)
             // The gap between one panel and the next, taken off the background
             // rather than added to the row. Adding it to the row's insets — the
