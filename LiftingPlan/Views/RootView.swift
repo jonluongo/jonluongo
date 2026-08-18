@@ -109,23 +109,47 @@ struct RootView: View {
     }
 }
 
-/// The app, which is one screen: the session he is in.
+/// The app: a block, opened where the training is.
 ///
-/// **There is no tab bar.** There were three tabs, and two of them were opened
-/// roughly never — a block he has already been given and a record he cannot
-/// edit — while costing ninety points of every screen he actually uses. They
-/// are behind a control now, and the session has the phone.
+/// **What it does.** Roots a stack at the list of blocks and pushes the current
+/// one, so launching lands on the middle of the hierarchy — the week-by-week
+/// list where a day is chosen — with the back arrow reaching the blocks behind
+/// it. The session opens as a sheet from there.
 ///
-/// **There is no start button and no preview.** Home used to draw today's
-/// session read-only, and tapping it opened a sheet drawing the same session
-/// with fields in it. That was a mode and it bought nothing: a set row with an
-/// empty field *is* the preview, because the prescription is already the
-/// placeholder, and the session clock starts on the first ticked set rather
-/// than on a button. Opening the app puts him in the workout.
+/// **Why the middle.** The top of the tree costs a tap before every session, and
+/// the bottom of it — opening straight into today's workout, which is what this
+/// did — could show what was left of the week but never what was coming. The
+/// middle is the only place that is one tap from training and still shows the
+/// block.
 struct MainTabView: View {
     let profile: UserProfile
 
+    @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
+
+    /// The block the app opens into: the most recent one that is not closed, and
+    /// failing that the most recent there is. `nil` only when Claude has sent
+    /// nothing.
+    private var current: TrainingPlan? {
+        plans.first { $0.completedAt == nil } ?? plans.first
+    }
+
+    /// What is on the stack. Seeded with the current block so the app opens on
+    /// it, and emptied by the back arrow to reveal the list underneath.
+    @State private var path: [TrainingPlan] = []
+
     var body: some View {
-        TodayView(profile: profile)
+        NavigationStack(path: $path) {
+            PlansView(profile: profile)
+                .navigationDestination(for: TrainingPlan.self) { plan in
+                    BlockView(plan: plan, profile: profile)
+                }
+        }
+        // Only on the first appearance, and only when nothing has been chosen:
+        // pushing again on every return would trap a lifter who had just pressed
+        // back to look at an earlier block.
+        .onAppear {
+            guard path.isEmpty, let current else { return }
+            path = [current]
+        }
     }
 }

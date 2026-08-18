@@ -38,14 +38,10 @@ struct PlansView: View {
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     var body: some View {
-        // The title sits above the list rather than inside it, as it does on
-        // Home. There it has to: inside the pager's pages it swiped sideways
-        // with the workouts. Here it would have scrolled away quite happily —
-        // but a header that scrolls on two tabs and stays put on the third is
-        // the app disagreeing with itself about what a header is.
-        VStack(alignment: .leading, spacing: 0) {
-            PageTitle("Blocks")
-            Group {
+        // The navigation bar draws the title now: this is the root of a stack
+        // rather than a tab, so the bar is where a title belongs and where the
+        // account icon sits beside it.
+        Group {
                 if plans.isEmpty {
                     NoBlockView()
                 } else {
@@ -55,11 +51,12 @@ struct PlansView: View {
                     }
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .background(Palette.surface)
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("Blocks")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar { AccountToolbarItem(profile: profile) }
     }
 
     /// One group, or nothing at all when it holds no blocks — an empty

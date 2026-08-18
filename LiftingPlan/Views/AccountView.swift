@@ -80,20 +80,16 @@ struct AccountView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            PageTitle("Account")
-            List {
+        List {
                 record
                 preferences
                 data
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .background(Palette.surface)
-        // Fixed above the list rather than scrolling with it, so all three tabs
-        // agree about what a header is — see `PlansView` for why Home forces it.
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("Account")
+        .navigationBarTitleDisplayMode(.large)
         .confirmationDialog("Delete all blocks?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
             Button("Delete Blocks", role: .destructive) { deleteAllPlans() }
             Button("Cancel", role: .cancel) {}

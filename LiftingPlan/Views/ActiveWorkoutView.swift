@@ -10,6 +10,7 @@ struct ActiveWorkoutView: View {
     let profile: UserProfile
 
     @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
     @Environment(RestTimerModel.self) private var restTimer
     /// The lifter's own clock: whether it runs at all, and how long on each
     /// exercise. Not the prescription, and not in the store.
@@ -78,6 +79,14 @@ struct ActiveWorkoutView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ActiveWorkoutToolbar()
+                // The way out, back where it belongs. Top right means dismiss
+                // and only dismiss now: Finish lives under the last set, so the
+                // corner that once marked an untouched session as trained can
+                // safely hold the thing everyone reads it as.
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { dismiss() } label: { Image(systemName: "xmark") }
+                        .accessibilityLabel("Close workout")
+                }
             }
             .safeAreaInset(edge: .bottom) {
                 if restTimer.isRunning {
