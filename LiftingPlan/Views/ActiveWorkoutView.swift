@@ -113,12 +113,13 @@ struct ActiveWorkoutView: View {
                         displayName: exercise.displayName,
                         unit: profile.displayUnit
                     )
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button("Done") { infoExercise = nil }.fontWeight(.semibold)
-                        }
-                    }
                 }
+                // The grabber, as on the block and account sheets. This one had
+                // a Done button, so the app dismissed two of its sheets by
+                // swipe and one by tap — three sheets, two vocabularies. The
+                // platform does the dismissing either way; the button was chrome
+                // for a behaviour that already exists.
+                .presentationDragIndicator(.visible)
             }
         .onAppear(perform: seedSetsIfNeeded)
     }
