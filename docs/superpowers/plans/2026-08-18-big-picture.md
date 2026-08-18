@@ -110,17 +110,34 @@ has been drawn.
 
 ---
 
-## Tier 3 — Decisions waiting on the owner
+## What is left, and what was struck
 
-| Question | Why it is open |
+The app is two things: a datastore, and the interface an AI trainer works
+through. A parked list of six decisions was neither — it was the shape of a
+product with a roadmap, which this is not. Struck, with the reason:
+
+| Struck | Why it was not one of the two things |
 |---|---|
-| The `⋯` is the only route to Blocks and Account | Accepted deliberately today. Worth revisiting after a week of use, not before. |
-| ~121 mobility movements in the vendored catalog | Needs the coverage grid (pattern × equipment) to answer with evidence rather than taste. |
-| An exercise `role` — preparation vs work | Would let Claude mark a warm-up movement as such. No pressure until he wants to. |
-| Splitting `completedAt` into finished vs superseded | One field currently carries both meanings on `TrainingPlan`. Honest today; ambiguous the first time it matters. |
-| Barbell → Superset rename | Mechanical, touches everything, best done when nothing else is in flight. |
+| VoiceOver as a pass | On the plan because it is on a checklist. One user, sighted. |
+| An exercise `role` | Claude prescribes a warm-up by prescribing it. A field so he can label it is a field nobody reads. |
+| Barbell → Superset rename | Cosmetic. |
+| Revisiting the `⋯` as sole route | Settled. Re-opening it is churn. |
 
----
+What survives, and only this:
+
+**The record's honesty.** `TrainingPlan.completedAt` means both "the lifter
+finished this block" and "a later block superseded it". A field carrying two
+meanings is the datastore being ambiguous about itself, which is the one thing it
+may not be. Real, not urgent — it bites the first time something needs to tell
+the two apart.
+
+**Claude's vocabulary.** Whether the catalog holds the movements he reaches for.
+That is answered by asking him after a few blocks, not by building a coverage
+grid in advance.
+
+**The superset vocabulary**, because Jon asked. `Superset A` / `A1` / `A2` /
+`ROUND n` is a code plus the glossary that decodes it, where the layout could
+show the pairing instead.
 
 ## Order of work
 
