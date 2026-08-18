@@ -30,6 +30,12 @@ struct PrimaryActionButton: View {
     let title: String
     /// The symbol beside the title, or `nil` for a title on its own.
     var systemImage: String?
+    /// Whether this action is available but not the expected one yet — a
+    /// session finished with sets still unticked, say. It draws grey rather
+    /// than accent, and it is **not** disabled: the lifter may always press it,
+    /// because whether he is finished is his to say and not the app's. The
+    /// colour is the only thing that changes.
+    var isMuted: Bool = false
     let action: () -> Void
 
     var body: some View {
@@ -45,7 +51,7 @@ struct PrimaryActionButton: View {
                 .padding(.vertical, Spacing.tight)
         }
         .buttonStyle(.borderedProminent)
-        .tint(.accentColor)
+        .tint(isMuted ? Palette.muted : Palette.accent)
         // The floor, not the height: the style's own padding already clears
         // 44pt at ordinary text sizes, and this catches the case where it
         // would not.

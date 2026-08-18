@@ -64,4 +64,17 @@ final class WorkoutDay {
             .map(\.completedAt)
             .min()
     }
+
+    /// How many rows of this session have not been ticked.
+    ///
+    /// Rows exist from the moment the screen is opened — one per prescribed set
+    /// — so this counts what the plan asked for and the lifter has not yet
+    /// marked as done. It decides nothing: finishing a session with sets left is
+    /// entirely allowed, and often correct. It is only what the screen uses to
+    /// say so before it happens.
+    var unloggedSetCount: Int {
+        (exercises ?? [])
+            .flatMap { $0.loggedSets ?? [] }
+            .count { !$0.isCompleted }
+    }
 }

@@ -59,7 +59,8 @@ struct ActiveWorkoutView: View {
                     // finished arrives. It used to be top right, where it was
                     // pressed as a way out of the screen.
                     SessionFinishSection(
-                        isLogged: isLogged, onFinish: finish, onUnfinish: unfinish)
+                        isLogged: isLogged, unloggedSetCount: day.unloggedSetCount,
+                        onFinish: finish, onUnfinish: unfinish)
                 }
 
             }

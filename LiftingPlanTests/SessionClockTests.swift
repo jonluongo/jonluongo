@@ -109,3 +109,51 @@ struct SessionClockTests {
         #expect(day.startedAt == Self.eight.addingTimeInterval(300))
     }
 }
+
+/// What the finish control is told about a session that is not filled in.
+///
+/// The count decides a colour and a question, never a permission: finishing a
+/// session with sets left is the lifter's to do, and often the right thing.
+@Suite("Unlogged sets")
+struct UnloggedSetTests {
+
+    private func day(completed: [Bool]) throws -> WorkoutDay {
+        let context = ModelContext(try StoreContainer.inMemory())
+        let day = WorkoutDay(weekday: .monday, focus: "Push")
+        let exercise = PlannedExercise(
+            exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
+            displayName: "Barbell Bench Press", order: 0,
+            targetSets: completed.count, repRange: "5")
+        context.insert(day)
+        context.insert(exercise)
+        exercise.day = day
+        for (index, isCompleted) in completed.enumerated() {
+            let set = LoggedSet(setIndex: index, reps: 5, isCompleted: isCompleted)
+            context.insert(set)
+            set.exercise = exercise
+        }
+        try context.saveOrThrow()
+        return day
+    }
+
+    @Test("A session filled in has nothing left")
+    func fullyLogged() throws {
+        #expect(try day(completed: [true, true, true]).unloggedSetCount == 0)
+    }
+
+    @Test("What is left is counted exactly, not reported as some")
+    func countsWhatIsLeft() throws {
+        // One set short and nine sets short are different questions to ask.
+        #expect(try day(completed: [true, false, false]).unloggedSetCount == 2)
+    }
+
+    @Test("A session nobody has started is entirely unlogged")
+    func nothingTicked() throws {
+        #expect(try day(completed: [false, false]).unloggedSetCount == 2)
+    }
+
+    @Test("A session with no rows has nothing outstanding")
+    func noRows() throws {
+        #expect(try day(completed: []).unloggedSetCount == 0)
+    }
+}

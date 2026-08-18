@@ -5,8 +5,13 @@ import SwiftUI
 ///
 /// **What it does.** Draws the last section of the logging screen — `Finish` on
 /// a session still open, and on a finished one the fact that it is finished
-/// beside the way to take that back. It holds no state and reads no model:
-/// it is told which of the two it is, and reports which was pressed.
+/// beside the way to take that back.
+///
+/// **A session with sets left greys the button and asks once.** It is never
+/// disabled: whether he is finished is the lifter's to say, and a screen that
+/// refuses to record three good sets because the plan wrote four is the app
+/// making a training decision. So the colour says "not yet, surely?", the dialog
+/// counts exactly what is left, and pressing through is one tap away.
 ///
 /// **Why it is here rather than in the toolbar.** Top right is where iOS puts
 /// the button that dismisses a sheet, and a `Finish` there was pressed as a way
@@ -33,11 +38,24 @@ struct SessionFinishSection: View {
     /// Whether the session has been marked done, which decides which of the two
     /// shapes this draws.
     let isLogged: Bool
+    /// How many prescribed rows have not been ticked. Zero means the session is
+    /// filled in; anything else greys the button and asks once before it is
+    /// pressed. Neither prevents finishing.
+    let unloggedSetCount: Int
     var onFinish: () -> Void
     /// Takes a finished session back to unfinished. It is what makes reopening
     /// one mean anything — without it a mistaken tap is permanent, and this
     /// button exists because that tap happened.
     var onUnfinish: () -> Void
+
+    @State private var asking = false
+
+    /// What the dialog asks, counting what is actually left rather than saying
+    /// "some". A lifter who stopped one set short and one who stopped nine sets
+    /// short are being asked different questions.
+    private static func question(_ unlogged: Int) -> String {
+        "\(unlogged) set\(unlogged == 1 ? "" : "s") not logged. Finish anyway?"
+    }
 
     var body: some View {
         Section {
@@ -55,8 +73,17 @@ struct SessionFinishSection: View {
                 .listRowSeparator(.hidden)
             } else {
                 PrimaryActionButton(
-                    title: "Finish Workout", systemImage: "checkmark", action: onFinish)
+                    title: "Finish Workout", systemImage: "checkmark",
+                    isMuted: unloggedSetCount > 0,
+                    action: { if unloggedSetCount > 0 { asking = true } else { onFinish() } })
                 .accessibilityHint("Marks this session as logged")
+                .confirmationDialog(
+                    Self.question(unloggedSetCount), isPresented: $asking,
+                    titleVisibility: .visible
+                ) {
+                    Button("Finish Workout") { onFinish() }
+                    Button("Keep Going", role: .cancel) {}
+                }
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(
