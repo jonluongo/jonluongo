@@ -129,6 +129,11 @@ It is reference material for Claude â€” sensible splits, typical rest by role â€
 not rules the app applies. It is data about training, not a decision the app
 makes.
 
+`docs/decided.md` records what is settled and what was tried and killed, with the
+reason for each. **Read it before proposing anything on it.** A long session gets
+compacted and the reasoning goes first, so the predictable failure is not
+forgetting but confidently re-proposing a rejected idea. That file is the guard.
+
 Design specs live in `docs/superpowers/specs/`. Read the foundation
 architecture spec before changing the data model.
 
