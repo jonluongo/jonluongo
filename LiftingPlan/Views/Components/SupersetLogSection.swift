@@ -39,17 +39,22 @@ struct SupersetLogSection: View {
     var onRoundChanged: (ExerciseGroup, Bool) -> Void
     var body: some View {
         Group {
-            ForEach(rows.warmups) { row in
-                setRow(row)
+            ForEach(Array(rows.warmups.enumerated()), id: \.element.id) { index, row in
+                setRow(row, position: index == 0 ? .first : .middle)
             }
 
-            ForEach(rows.rounds) { round in
+            ForEach(Array(rows.rounds.enumerated()), id: \.element.id) { index, round in
                 Text("ROUND \(round.number)")
                     .font(.barbellLabel)
                     .tracking(Font.labelTracking)
                     .foregroundStyle(Palette.muted)
                     .accessibilityAddTraits(.isHeader)
-                    .panelRow(.middle)
+                    // The top of the panel when the group prescribes no warm-up,
+                    // which is the ordinary case. It was always `.middle`,
+                    // because the column header used to be the first row — and
+                    // deleting that header left the panel with no rounded top
+                    // and nothing to say where it began.
+                    .panelRow(index == 0 && rows.warmups.isEmpty ? .first : .middle)
                     .listRowSeparator(.hidden)
                 ForEach(round.rows) { row in
                     setRow(row)
@@ -75,9 +80,11 @@ struct SupersetLogSection: View {
         GroupRounds(group: group, plans: plans, unit: profile.displayUnit)
     }
 
-    private func setRow(_ row: GroupRounds.Row) -> some View {
+    private func setRow(
+        _ row: GroupRounds.Row, position: PanelPosition = .middle
+    ) -> some View {
         setRowBody(row)
-            .panelRow(.middle, insets: SetTableMetrics.rowInsets)
+            .panelRow(position, insets: SetTableMetrics.rowInsets)
             .listRowSeparator(.hidden)
     }
 
