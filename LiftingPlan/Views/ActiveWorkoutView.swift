@@ -72,13 +72,14 @@ struct ActiveWorkoutView: View {
             .scrollContentBackground(.hidden)
             .background(Palette.surface)
             .scrollDismissesKeyboard(.interactively)
-            // The session's own name, large at the top of the scroll and
-            // collapsing into the bar as it moves — the platform's own
-            // behaviour, and what fills a band that previously held a clock, a
-            // close button, and a hundred points of nothing.
-            .navigationTitle(
-                TodayPhrasing.sessionTitle(focus: day.focus, weekday: day.weekday))
-            .navigationBarTitleDisplayMode(.large)
+            // No title. It was the session's name, large, filling the band this
+            // screen used to waste — but the name is on the card the lifter
+            // came from and on every screen that led here, and a heading over a
+            // session he is already inside answers a question nobody has. An
+            // inline bar with nothing in the middle collapses to its own height,
+            // which is tighter than the large title was and tighter than the
+            // empty band before it.
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ActiveWorkoutToolbar(
                     startedAt: day.startedAt, finishedAt: day.completedAt, onClose: close)

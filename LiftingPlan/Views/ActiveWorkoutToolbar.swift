@@ -52,9 +52,10 @@ struct ActiveWorkoutToolbar: ToolbarContent {
         // How long he has been training — the one thing worth a glance that
         // nothing else on the screen says.
         //
-        // Leading rather than principal: the centre now belongs to the title,
-        // which collapses into the bar as the session scrolls, and two things
-        // competing for that spot is how a bar ends up drawing neither.
+        // It carries no background of its own. A toolbar item is drawn in a
+        // capsule now, which is the right shape for something that can be
+        // pressed and a lie about something that cannot — the clock was reading
+        // as a button nobody could work out the purpose of.
         //
         // It counts from the first ticked set rather than from the moment this
         // screen opened. Opening a screen is not training, and timing it meant
@@ -70,6 +71,7 @@ struct ActiveWorkoutToolbar: ToolbarContent {
                 }
             }
         }
+        .sharedBackgroundVisibility(.hidden)
         // There is no timer button here any more. Rest is prescribed per
         // exercise, so one control in the toolbar could not mean anything
         // specific — it opened a picker that started a stopwatch unrelated to
