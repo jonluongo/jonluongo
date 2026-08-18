@@ -364,6 +364,10 @@ enum PanelMetrics {
     /// panel keeps from the next.
     static let edge: CGFloat = Spacing.standard
 
+    /// The width of the rule marking movements performed as one superset. Thin
+    /// enough to read as an edge rather than a block of colour.
+    static let pairing: CGFloat = 3
+
     /// What surrounds an ordinary row of a panel.
     static let rowInsets = EdgeInsets(
         top: Spacing.snug, leading: contentInset, bottom: Spacing.snug, trailing: contentInset)

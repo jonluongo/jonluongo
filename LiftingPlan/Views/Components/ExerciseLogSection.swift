@@ -45,6 +45,9 @@ struct ExerciseLogSection: View {
     /// its own; inside a superset the panel continues into the next movement,
     /// which is the whole of how the pairing is shown.
     var closesPanel: Bool = true
+    /// Whether these sets belong to a movement performed as part of a superset,
+    /// which draws the rule down the panel's edge.
+    var paired: Bool = false
     /// Whether Claude wrote anything about this exercise, which decides which
     /// row is the top of the panel.
     private var hasNote: Bool {
@@ -68,7 +71,7 @@ struct ExerciseLogSection: View {
                 Text(notes)
                     .font(.barbellSupport)
                     .foregroundStyle(Palette.muted)
-                    .panelRow(.middle)
+                    .panelRow(.middle, paired: paired)
                     .listRowSeparator(.hidden)
             }
 
@@ -92,8 +95,8 @@ struct ExerciseLogSection: View {
                 // fact, and the louder of them a second colour across the whole
                 // table. Chanel's rule: take one thing off.
                 .panelRow(
-                    index == orderedSets.count - 1 ? .last : .middle,
-                    insets: SetTableMetrics.rowInsets)
+                    index == orderedSets.count - 1 && closesPanel ? .last : .middle,
+                    insets: SetTableMetrics.rowInsets, paired: paired)
                 // No rules between rows. Each row already carries a ruled cell
                 // under the two fields it is typed into, and a full-width line
                 // on top of that was the table drawn twice — the gap and the

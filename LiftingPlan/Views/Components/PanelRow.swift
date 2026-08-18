@@ -53,7 +53,8 @@ extension View {
     /// the inset the background draws to, and use it in a `.plain` list — an
     /// inset-grouped one would draw its own panel underneath this one.
     func panelRow(
-        _ position: PanelPosition, insets: EdgeInsets = PanelMetrics.rowInsets
+        _ position: PanelPosition, insets: EdgeInsets = PanelMetrics.rowInsets,
+        paired: Bool = false
     ) -> some View {
         // A panel's outer edges get more room than its inner rows, which is what
         // separates one panel from the next. Without it two panels sat flush and
@@ -71,6 +72,26 @@ extension View {
                 style: .continuous
             )
             .fill(Palette.panel)
+            .overlay(alignment: .leading) {
+                // The mark that two movements are one superset.
+                //
+                // The first attempt was an absence: two exercises sharing a
+                // panel with no gap, where every other pair has one. Rendered,
+                // that read as three separate exercises — a missing gap is
+                // invisible unless you are comparing two gaps side by side, and
+                // a lifter mid-set is looking at one exercise. A signal has to
+                // be present, not withheld.
+                //
+                // It is a rule rather than a word because "Superset A" was a
+                // code with a glossary, and this is the one thing in the app
+                // that ever draws it: a line down the edge of the movements that
+                // are performed together and rested after as one.
+                if paired {
+                    Rectangle()
+                        .fill(Palette.accent)
+                        .frame(width: PanelMetrics.pairing)
+                }
+            }
             .padding(.horizontal, PanelMetrics.inset)
         )
     }
