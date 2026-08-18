@@ -59,7 +59,15 @@ struct BlockView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { AccountToolbarItem(profile: profile) }
         .fullScreenCover(item: $openSession) { session in
-            ActiveWorkoutView(day: session, profile: profile)
+            // The session carries a toolbar — the way out, and the elapsed
+            // clock — and a toolbar draws nothing without a navigation
+            // container. It had one when it was the app's root and lost it when
+            // it became a page of a pager; presented as a cover with no stack it
+            // rendered no X at all, so a lifter who opened a workout could not
+            // leave it.
+            NavigationStack {
+                ActiveWorkoutView(day: session, profile: profile)
+            }
         }
     }
 
