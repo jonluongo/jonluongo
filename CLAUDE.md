@@ -78,7 +78,8 @@ important rule in the project.
 | `Catalog/` | `LiftingKit` package | Bundled reference data — the exercise catalog and the assembly rules — plus lookup and resolution. | Domain |
 | `Store/` | app target | SwiftData models. User data only. | LiftingKit |
 | `Services/` | app target | Queries over stored data, timing, and the one mapping into the store. | LiftingKit, Store |
-| `Views/` | app target | SwiftUI. | All of the above |
+| `Presentation/` | app target | Pure logic turning models into what a screen states — phrasing, prescriptions, row readings, formatting. No SwiftUI. | LiftingKit, Store |
+| `Views/` | app target | SwiftUI, and nothing else. | All of the above |
 
 `Domain/` importing nothing but Foundation is what makes the interesting logic
 testable without a database, simulator, or model. Do not erode it.
@@ -95,6 +96,13 @@ SwiftData into a command-line tool for nothing.
 The package's public surface is kept small on purpose. Something used only by
 tests stays internal — the suites use `@testable import LiftingKit` rather than
 widening the API.
+
+`Presentation/` is where the app's most testable code lives, and it was scattered
+through `Views/` because that is where each piece was first needed. A type that
+turns a `PlannedExercise` into `"3 × 6-8 · 80% effort"` is not a view — it holds
+no state, draws nothing, imports no SwiftUI, and is worth testing against
+strings. The test for the folder is mechanical: **if it does not import SwiftUI,
+it does not live in `Views/`.**
 
 `Services/` answers questions and maps data. It does not conclude anything about
 training. `PerformanceHistory` and `ExerciseTrend` report what happened;
