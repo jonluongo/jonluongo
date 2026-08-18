@@ -43,8 +43,8 @@ struct TodayView: View {
 
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
-    /// The session the logging screen is open on, or `nil`.
-    @State private var openSession: WorkoutDay?
+    /// Which of the two screens behind the menu is open, if either.
+    @State private var elsewhere: Elsewhere?
 
     /// The page he has swiped to, or `nil` before he has swiped at all — which
     /// shows the first workout left in the week.
@@ -71,9 +71,9 @@ struct TodayView: View {
         week.orderedDays.filter { $0.completedAt == nil && !$0.orderedExercises.isEmpty }
     }
 
-    /// The workout the button will start: the one swiped to, or the first left
-    /// when nothing has been swiped to — and the first again whenever the one he
-    /// had chosen leaves the week, which is what finishing it does.
+    /// The workout on screen: the one swiped to, or the first left when nothing
+    /// has been swiped to — and the first again whenever the one he had chosen
+    /// leaves the week, which is what finishing it does.
     private var selected: WorkoutDay? {
         remaining.first { $0.persistentModelID == chosen } ?? remaining.first
     }
@@ -101,9 +101,24 @@ struct TodayView: View {
             // the behaviour the bar could not give it.
             .toolbar(.hidden, for: .navigationBar)
         }
-        .fullScreenCover(item: $openSession) { session in
-            ActiveWorkoutView(day: session, profile: profile)
+        .sheet(item: $elsewhere) { destination in
+            NavigationStack {
+                switch destination {
+                case .blocks: PlansView(profile: profile)
+                case .account: AccountView(profile: profile)
+                }
+            }
         }
+    }
+
+    /// The two screens that are not the session: the block he is in, and the
+    /// record Claude keeps. They were tabs, opened roughly never and charging
+    /// ninety points of every screen for the privilege.
+    enum Elsewhere: String, Identifiable {
+        case blocks
+        case account
+
+        var id: String { rawValue }
     }
 
     @ViewBuilder
@@ -112,13 +127,66 @@ struct TodayView: View {
         // it swiped sideways along with the workouts — and the name of the
         // screen is not one of the things being swiped between.
         VStack(alignment: .leading, spacing: 0) {
-            PageTitle("Home")
+            header
             pages(plan)
         }
         // Stated, because the title is no longer inside a list and so inherits
         // nothing from one: it drew on white above grouped-grey content, a band
         // across the top of the screen.
         .background(Palette.surface)
+    }
+
+    /// The session's own name, and the way to everything that is not it.
+    ///
+    /// The name is the page's title because the session *is* the page — there
+    /// is no longer a screen called Home standing in front of it.
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: Spacing.tight) {
+                Text(selected.map {
+                    TodayPhrasing.sessionTitle(focus: $0.focus, weekday: $0.weekday)
+                } ?? "No workout")
+                    .font(.largeTitle.weight(.bold))
+                    .foregroundStyle(Palette.ink)
+                HStack(spacing: Spacing.snug) {
+                    if let shape {
+                        Text(shape)
+                            .font(.barbellSupport)
+                            .foregroundStyle(Palette.muted)
+                    }
+                    // How long he has been training, beside what he is training
+                    // — the one line on the screen that is not part of the log.
+                    // It counts from the first ticked set, so it says nothing
+                    // until he has done something.
+                    if let startedAt = selected?.startedAt {
+                        SessionClock(startedAt: startedAt, finishedAt: selected?.completedAt)
+                    }
+                }
+            }
+            Spacer()
+            Menu {
+                Button("Block", systemImage: "square.stack") { elsewhere = .blocks }
+                Button("Account", systemImage: "person.crop.circle") { elsewhere = .account }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.barbellBody)
+                    .foregroundStyle(Palette.muted)
+                    .frame(width: TapTarget.minimum, height: TapTarget.minimum, alignment: .trailing)
+                    .contentShape(.rect)
+            }
+            .accessibilityLabel("Block and account")
+        }
+        .padding(.horizontal, PanelMetrics.inset)
+        .padding(.top, Spacing.snug)
+        .padding(.bottom, Spacing.standard)
+    }
+
+    /// What the session on screen amounts to, or nothing when there is none.
+    private var shape: String? {
+        guard let selected else { return nil }
+        return TodayPhrasing.sessionShape(
+            exercises: selected.orderedExercises.count,
+            durationMinutes: selected.durationMinutes)
     }
 
     @ViewBuilder
@@ -132,15 +200,8 @@ struct TodayView: View {
             // choice exists that does not.
             TabView(selection: $chosen) {
                 ForEach(remaining) { workout in
-                    WorkoutCard(session: workout, unit: profile.displayUnit) {
-                        openSession = workout
-                    }
-                    .padding(.horizontal, PanelMetrics.inset)
-                    // Room under the card for the pager's dots, which a
-                    // full-height card had otherwise covered — the one thing on
-                    // the screen saying there is another workout to swipe to.
-                    .padding(.bottom, Spacing.major + Spacing.section)
-                    .tag(Optional(workout.persistentModelID))
+                    ActiveWorkoutView(day: workout, profile: profile)
+                        .tag(Optional(workout.persistentModelID))
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: remaining.count > 1 ? .always : .never))

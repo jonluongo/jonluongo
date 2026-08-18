@@ -10,7 +10,6 @@ struct ActiveWorkoutView: View {
     let profile: UserProfile
 
     @Environment(\.modelContext) private var context
-    @Environment(\.dismiss) private var dismiss
     @Environment(RestTimerModel.self) private var restTimer
     /// The lifter's own clock: whether it runs at all, and how long on each
     /// exercise. Not the prescription, and not in the store.
@@ -40,7 +39,6 @@ struct ActiveWorkoutView: View {
     }
 
     var body: some View {
-        NavigationStack {
             List {
                 if exercises.isEmpty {
                     ContentUnavailableView {
@@ -81,8 +79,7 @@ struct ActiveWorkoutView: View {
             // empty band before it.
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ActiveWorkoutToolbar(
-                    startedAt: day.startedAt, finishedAt: day.completedAt, onClose: close)
+                ActiveWorkoutToolbar()
             }
             .safeAreaInset(edge: .bottom) {
                 if restTimer.isRunning {
@@ -125,7 +122,6 @@ struct ActiveWorkoutView: View {
                     }
                 }
             }
-        }
         .onAppear(perform: seedSetsIfNeeded)
     }
 
@@ -258,8 +254,7 @@ struct ActiveWorkoutView: View {
         if day.completedAt == nil {
             day.completedAt = Date()
         }
-        guard save() else { return }
-        dismiss()
+        save()
     }
 
     /// Takes a finished session back to unfinished, which is what makes
@@ -267,19 +262,6 @@ struct ActiveWorkoutView: View {
     private func unfinish() {
         day.completedAt = nil
         save()
-    }
-
-    /// Leaves the session. It does **not** stop the rest timer.
-    ///
-    /// It used to, which meant closing the screen mid-rest threw the rest away
-    /// — and closing the screen is exactly what a lifter does with ninety
-    /// seconds to wait. The timer is date-based and lives above this screen, so
-    /// it keeps counting while he is elsewhere and the cue still reaches a
-    /// pocketed phone. Finishing stops it, because then there is nothing left
-    /// to be resting for.
-    private func close() {
-        guard save() else { return }
-        dismiss()
     }
 
     /// Fills the table in from the prescription the first time this session is

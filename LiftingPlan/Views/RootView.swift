@@ -109,42 +109,23 @@ struct RootView: View {
     }
 }
 
-/// The three tabs, which is the whole app: the day, the blocks, and the lifter.
+/// The app, which is one screen: the session he is in.
 ///
-/// Home is the front door. Blocks is every block he has been given — it was a
-/// link on Home until the block stopped being a detail of the day, and then a
-/// tab showing a single block, which quietly meant the one before it was
-/// unreachable the moment a new one arrived. It stands where a History tab used
-/// to: a tab listing every lift you have ever logged is a filing cabinet, and
-/// what a lifter actually wants from it is one exercise's record, so that moved
-/// onto the exercise itself and the tab became the thing the app is for.
+/// **There is no tab bar.** There were three tabs, and two of them were opened
+/// roughly never — a block he has already been given and a record he cannot
+/// edit — while costing ninety points of every screen he actually uses. They
+/// are behind a control now, and the session has the phone.
 ///
-/// The third tab is Account, and was Settings — a screen of app preferences
-/// while everything Claude knew about the lifter went unshown. The lifter is a
-/// better third tab than a gear.
-///
-/// Home carries its own stack rather than being wrapped in one here, because
-/// the week strip has to sit where the navigation bar would be.
+/// **There is no start button and no preview.** Home used to draw today's
+/// session read-only, and tapping it opened a sheet drawing the same session
+/// with fields in it. That was a mode and it bought nothing: a set row with an
+/// empty field *is* the preview, because the prescription is already the
+/// placeholder, and the session clock starts on the first ticked set rather
+/// than on a button. Opening the app puts him in the workout.
 struct MainTabView: View {
     let profile: UserProfile
 
     var body: some View {
-        TabView {
-            // Home, not Today. The screen was named for a date when it showed
-            // one; it shows the next workout in the block now and says so at the
-            // top, and a tab disagreeing with the title above it is the app
-            // contradicting itself. The calendar glyph went for the same reason
-            // — there is no calendar behind this tab any more, and the tab that
-            // does lay a block out week by week is the one beside it.
-            Tab("Home", systemImage: "house") {
-                TodayView(profile: profile)
-            }
-            Tab("Blocks", systemImage: "square.stack") {
-                NavigationStack { PlansView(profile: profile) }
-            }
-            Tab("Account", systemImage: "person.crop.circle") {
-                NavigationStack { AccountView(profile: profile) }
-            }
-        }
+        TodayView(profile: profile)
     }
 }
