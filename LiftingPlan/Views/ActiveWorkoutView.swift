@@ -56,7 +56,7 @@ struct ActiveWorkoutView: View {
                     // pressed as a way out of the screen.
                     SessionFinishSection(
                         isLogged: isLogged, unloggedSetCount: day.unloggedSetCount,
-                        onFinish: finish, onUnfinish: unfinish)
+                        onFinish: { write(log.finish) }, onUnfinish: { write(log.unfinish) })
                 }
 
             }
@@ -121,7 +121,7 @@ struct ActiveWorkoutView: View {
                 // for a behaviour that already exists.
                 .presentationDragIndicator(.visible)
             }
-        .onAppear(perform: seedSetsIfNeeded)
+        .onAppear { write(log.seedIfNeeded) }
     }
 
     // MARK: - One card per entry
@@ -138,8 +138,8 @@ struct ActiveWorkoutView: View {
                 unit: profile.displayUnit,
                 onShowInfo: { infoExercise = exercise },
                 onEditRest: { restEditing = RestTarget(exercise: exercise) },
-                onAddSet: { addSet(to: exercise, warmup: false) },
-                onAddWarmup: { addSet(to: exercise, warmup: true) }
+                onAddSet: { write { try log.addSet(to: exercise, warmup: false) } },
+                onAddWarmup: { write { try log.addSet(to: exercise, warmup: true) } }
             )
             .panelRow(.first)
             .listRowSeparator(.hidden)
@@ -148,8 +148,12 @@ struct ActiveWorkoutView: View {
                 exercise: exercise,
                 profile: profile,
                 plans: plans,
-                onDeleteSet: delete,
-                onCompletionChanged: restChanged
+                onDeleteSet: { set, exercise in
+                    write { try log.delete(set, from: exercise) }
+                },
+                onCompletionChanged: { exercise, completed in
+                    log.restChanged(for: exercise, isCompleted: completed)
+                }
             )
         }
     }
@@ -173,8 +177,8 @@ struct ActiveWorkoutView: View {
                     unit: profile.displayUnit,
                     onShowInfo: { infoExercise = member },
                     onEditRest: { restEditing = RestTarget(group: group) },
-                    onAddSet: { addSet(to: member, warmup: false) },
-                    onAddWarmup: { addSet(to: member, warmup: true) }
+                    onAddSet: { write { try log.addSet(to: member, warmup: false) } },
+                    onAddWarmup: { write { try log.addSet(to: member, warmup: true) } }
                 )
                 .panelRow(index == 0 ? .first : .middle)
                 .listRowSeparator(.hidden)
@@ -183,9 +187,11 @@ struct ActiveWorkoutView: View {
                     exercise: member,
                     profile: profile,
                     plans: plans,
-                    onDeleteSet: delete,
+                    onDeleteSet: { set, exercise in
+                        write { try log.delete(set, from: exercise) }
+                    },
                     onCompletionChanged: { _, completed in
-                        roundChanged(group, completed)
+                        log.roundChanged(group, completed: completed)
                     },
                     closesPanel: index == group.members.count - 1
                 )
@@ -193,124 +199,26 @@ struct ActiveWorkoutView: View {
         }
     }
 
-    /// Runs the group's rest when the round the lifter just finished is
-    /// complete. A set ticked inside a group is not the end of anything until
-    /// every movement of that round has one.
-    private func roundChanged(_ group: ExerciseGroup, _ completed: Bool) {
-        let rounds = GroupRounds(group: group, plans: plans, unit: profile.displayUnit)
-        restChanged(for: group, roundCompleted: completed && rounds.hasCompleteRound)
+    // MARK: - Doing
+
+    /// Everything this screen does rather than draws. Built per redraw from what
+    /// the view already holds, so there is no second copy of the session's state
+    /// to keep in step with the first.
+    private var log: SessionLog {
+        SessionLog(
+            day: day, context: context, restTimer: restTimer,
+            restPreferences: restPreferences, plans: plans, unit: profile.displayUnit)
     }
 
-    // MARK: - Actions
-
-    /// Runs the rest this exercise asks for when a set is ticked, and stops it
-    /// when one is taken back.
-    ///
-    /// Unchecking used to leave the timer running, which made the bar outlast
-    /// the thing it was counting for. A set taken back did not happen, so there
-    /// is nothing to be resting from.
-    ///
-    /// **How long it runs is the lifter's to say and Claude's to prescribe, in
-    /// that order.** `RestPreferences` answers with the prescribed rest until
-    /// the lifter says otherwise, with his own length once he has, and with
-    /// nothing when he has switched the clock off here or everywhere. When the
-    /// plan prescribed no rest and he has asked for none, no timer starts — the
-    /// app does not invent one.
-    private func restChanged(for exercise: PlannedExercise, isCompleted: Bool) {
-        guard isCompleted else {
-            restTimer.stop()
-            return
-        }
-        guard let seconds = restPreferences.runningSeconds(
-            prescribed: exercise.restSeconds, for: exercise.exerciseID
-        ) else { return }
-        restTimer.start(seconds: seconds, context: exercise.displayName)
-    }
-
-    /// Runs the group's rest when a *round* finishes, and stops it when a set of
-    /// a finished round is taken back.
-    ///
-    /// This is the one behavioural difference a group makes, and the reason the
-    /// grouping is worth expressing: resting only after the group is what a
-    /// superset is. Ticking A1 starts nothing, because the next movement of the
-    /// round follows immediately.
-    ///
-    /// How long it runs is the lifter's to say and Claude's to prescribe, in
-    /// that order — the same rule an exercise on its own follows, asked of the
-    /// exercise the round ends with, which is the one that carries the rest.
-    private func restChanged(for group: ExerciseGroup, roundCompleted: Bool) {
-        guard roundCompleted else {
-            restTimer.stop()
-            return
-        }
-        guard let key = group.restKey,
-            let seconds = restPreferences.runningSeconds(
-                prescribed: group.restSeconds, for: key)
-        else { return }
-        restTimer.start(seconds: seconds, context: group.title)
-    }
-
-    private func addSet(to exercise: PlannedExercise, warmup: Bool) {
-        SetSeeding.addSet(to: exercise, warmup: warmup, in: context)
-        save()
-    }
-
-    /// One more round: one row on every movement of the group, because a round
-    /// is one set of each and half a round is not a round.
-    private func addRound(to group: ExerciseGroup) {
-        for member in group.members {
-            SetSeeding.addSet(to: member, warmup: false, in: context)
-        }
-        save()
-    }
-
-    private func delete(_ set: LoggedSet, from exercise: PlannedExercise) {
-        exercise.loggedSets?.removeAll { $0 === set }
-        context.delete(set)
-        let remaining = (exercise.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }
-        for (index, set) in remaining.enumerated() {
-            set.setIndex = index
-        }
-        save()
-    }
-
-    private func finish() {
-        restTimer.stop()
-        if day.completedAt == nil {
-            day.completedAt = Date()
-        }
-        save()
-    }
-
-    /// Takes a finished session back to unfinished, which is what makes
-    /// reopening one mean anything.
-    private func unfinish() {
-        day.completedAt = nil
-        save()
-    }
-
-    /// Fills the table in from the prescription the first time this session is
-    /// opened. The rule for what each row starts as lives in `SetSeeding`; what
-    /// belongs here is the save, and showing the lifter when it fails.
-    private func seedSetsIfNeeded() {
-        SetSeeding.seedMissingSets(for: exercises, in: context)
-        save()
-    }
-
-    // MARK: - Saving
-
-    /// Persists pending changes, surfacing any failure via `errorMessage`
-    /// rather than discarding it. Returns whether the save succeeded, so
-    /// callers that should only proceed on success (`finish`, `close`) can
-    /// bail out and leave the sheet open for the lifter to retry.
-    @discardableResult
-    private func save() -> Bool {
+    /// Runs a write and shows the lifter when it fails, rather than discarding
+    /// the error. With CloudKit sync a save conflict is expected, not
+    /// exceptional.
+    private func write(_ change: () throws -> Void) {
         do {
-            try context.saveOrThrow()
-            return true
+            try change()
         } catch {
-            errorMessage = (error as? PersistenceError)?.errorDescription ?? error.localizedDescription
-            return false
+            errorMessage = (error as? PersistenceError)?.errorDescription
+                ?? error.localizedDescription
         }
     }
 }
