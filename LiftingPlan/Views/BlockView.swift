@@ -36,14 +36,18 @@ struct BlockView: View {
                 let days = Self.trainingDays(of: week)
                 if !days.isEmpty {
                     Section {
-                        ForEach(Array(days.enumerated()), id: \.element.id) { index, day in
+                        ForEach(days) { day in
                             Button {
                                 openSession = day
                             } label: {
                                 DayRow(day: day)
                             }
                             .buttonStyle(.plain)
-                            .panelRow(.at(index, of: days.count))
+                            // Each day its own panel. Sharing one per week made
+                            // a week a single object with three names in it;
+                            // a session is the thing being chosen, and the
+                            // week is what it sits under.
+                            .panelRow(.only)
                             .listRowSeparator(.hidden)
                         }
                     } header: {
