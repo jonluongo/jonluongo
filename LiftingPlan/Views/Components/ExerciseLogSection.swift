@@ -68,11 +68,6 @@ struct ExerciseLogSection: View {
                     .listRowSeparator(.hidden)
             }
 
-            SetTableHeader(
-                firstColumn: "SET", measure: reading.measure, unit: profile.displayUnit)
-                .panelRow(hasNote ? .middle : .first, insets: SetTableMetrics.headerInsets)
-                .listRowSeparator(.hidden)
-
             ForEach(Array(orderedSets.enumerated()), id: \.element.persistentModelID) { index, set in
                 let number = workingNumber(at: index)
                 let prescribed = reading.prescription(
@@ -80,10 +75,8 @@ struct ExerciseLogSection: View {
                 SetRowView(
                     set: set,
                     identity: set.isWarmup ? .warmup : .working(number),
-                    previousText: reading.previousText(
-                        workingIndex: number - 1, isWarmup: set.isWarmup),
                     repTargetText: RepPrescription.targetText(for: prescribed?.repRange),
-                    loadTargetText: reading.loadTarget(prescribed),
+                    loadTargetText: loadPlaceholder(prescribed, number: number, set: set),
                     prescriptionDetail: PrescriptionSummary.detail(for: prescribed, in: exercise),
                     measure: reading.measure,
                     unit: profile.displayUnit,
@@ -109,6 +102,24 @@ struct ExerciseLogSection: View {
                 }
             }
         }
+    }
+
+    /// What an empty weight field shows: the load the plan prescribed, and
+    /// failing that what he lifted on this set last time. Claude's figure always
+    /// wins; the ghost only fills a field that would otherwise be blank.
+    private func loadPlaceholder(
+        _ prescribed: SetPrescription?, number: Int, set: LoggedSet
+    ) -> String {
+        let target = reading.loadTarget(prescribed)
+        guard target.isEmpty else { return target }
+        return reading.previousLoad(workingIndex: number - 1, isWarmup: set.isWarmup)
+    }
+
+    /// Where a row sits in the panel. The note, when Claude wrote one, is the
+    /// top of it; without one the first set is.
+    private static func position(_ index: Int, of count: Int, hasNote: Bool) -> PanelPosition {
+        if index == count - 1 { return index == 0 && !hasNote ? .only : .last }
+        return index == 0 && !hasNote ? .first : .middle
     }
 
     /// 1-based working-set number for the row at `index` (warmups don't count).

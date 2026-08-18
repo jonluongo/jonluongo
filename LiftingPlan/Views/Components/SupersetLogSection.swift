@@ -22,7 +22,7 @@ import LiftingKit
 /// to a movement rather than to a round.
 ///
 /// **What it depends on.** `ExerciseGroup` from Services, `SetRowView` and
-/// `SetTableHeader` — the same row and the same header an ungrouped exercise
+/// `SetRowView` — the same row an ungrouped exercise
 /// draws — `SetRowPrescription` for what each row is shown, and
 /// `RestPrescription` for the rest line. The only thing it writes is the log.
 struct SupersetLogSection: View {
@@ -39,11 +39,6 @@ struct SupersetLogSection: View {
     var onRoundChanged: (ExerciseGroup, Bool) -> Void
     var body: some View {
         Group {
-            SetTableHeader(
-                firstColumn: "LIFT", measure: rows.measure, unit: profile.displayUnit)
-                .panelRow(.first, insets: SetTableMetrics.headerInsets)
-                .listRowSeparator(.hidden)
-
             ForEach(rows.warmups) { row in
                 setRow(row)
             }
@@ -90,7 +85,6 @@ struct SupersetLogSection: View {
         SetRowView(
             set: row.set,
             identity: row.identity,
-            previousText: row.previousText,
             repTargetText: RepPrescription.targetText(for: row.prescribed?.repRange),
             loadTargetText: row.loadTarget,
             prescriptionDetail: PrescriptionSummary.detail(

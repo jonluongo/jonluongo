@@ -18,8 +18,7 @@ import LiftingKit
 /// **What it depends on.** `WorkPrescription` and `PerformanceHistory` for the
 /// readings, `PlannedExercise` and `TrainingPlan` from Store, and `MassUnit`
 /// from LiftingKit. It writes nothing and invents nothing: an absent
-/// prescription stays absent, which in a field is an empty field and in the
-/// column that reports the last session is `—`.
+/// prescription stays absent, which in a field is an empty field.
 struct SetRowPrescription {
 
     let exercise: PlannedExercise
@@ -52,33 +51,29 @@ struct SetRowPrescription {
     /// rather than a value, so the prescription reaches him without the app
     /// claiming he lifted it.
     ///
-    /// Empty rather than `—`, which is the mark this type uses for a *reading*
-    /// that does not exist. Inside a field it was neither: a placeholder is a
-    /// hint about what to type, and a dash hints at nothing while making a
-    /// fresh table look broken. `previousText` keeps the dash, because that
-    /// column is read rather than typed into and a lift with no history genuinely
-    /// has nothing to report.
+    /// Empty rather than `—`: a placeholder is a hint about what to type, and a
+    /// dash hints at nothing while making a fresh table look broken.
     func loadTarget(_ prescription: SetPrescription?) -> String {
         guard let load = prescription?.suggestedLoad else { return "" }
         return load.converted(to: unit).value.compactString
     }
 
-    /// What he did on this set last time, in the unit he did it in. A hold is
-    /// reported as the seconds it was held and a carry as the distance it
-    /// covered; nothing here converts one measure into another, because they are
-    /// not the same measurement.
-    func previousText(workingIndex: Int, isWarmup: Bool) -> String {
-        guard !isWarmup, workingIndex >= 0 else { return "—" }
+    /// What an empty weight field shows when the plan named no load: what he put
+    /// on the bar for this set last time, or nothing at all the first time.
+    ///
+    /// **The prescription always wins.** This is asked only where Claude
+    /// prescribed no load, so it never stands in front of a figure he wrote — it
+    /// fills a field that would otherwise be blank, with the one number a lifter
+    /// would have looked up anyway. It is a placeholder and never a value: the
+    /// app is not claiming he lifted it, and nothing is logged until he types.
+    func previousLoad(workingIndex: Int, isWarmup: Bool) -> String {
+        guard !isWarmup, workingIndex >= 0 else { return "" }
         let previous = PerformanceHistory.latestHistory(
             for: exercise.exerciseID, excluding: exercise, from: plans
         )?.recentSets ?? []
-        guard workingIndex < previous.count else { return "—" }
-        let record = previous[workingIndex]
-        let measured = record.durationSeconds.map { "\($0)s" } ?? record.distance?.description
-        let work = measured ?? "\(record.reps)"
-        if let load = record.load?.converted(to: unit), load.value > 0 {
-            return "\(load.value.compactString) × \(work)"
-        }
-        return measured != nil ? work : "\(work) reps"
+        guard workingIndex < previous.count,
+            let load = previous[workingIndex].load?.converted(to: unit), load.value > 0
+        else { return "" }
+        return load.value.compactString
     }
 }

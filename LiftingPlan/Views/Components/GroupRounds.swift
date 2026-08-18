@@ -30,7 +30,6 @@ struct GroupRounds {
         /// to a movement rather than to a round.
         let round: Int?
         let prescribed: SetPrescription?
-        let previousText: String
         let loadTarget: String
         let measure: WorkMeasure
     }
@@ -112,10 +111,22 @@ struct GroupRounds {
             identity: identity,
             round: round,
             prescribed: prescribed,
-            previousText: reading.previousText(
+            loadTarget: Self.loadPlaceholder(
+                reading, prescribed: prescribed,
                 workingIndex: (workingNumber ?? 0) - 1, isWarmup: set.isWarmup),
-            loadTarget: reading.loadTarget(prescribed),
             measure: reading.measure
         )
+    }
+
+    /// What an empty weight field shows: the load the plan prescribed, and
+    /// failing that what he lifted on this set last time. Claude's figure always
+    /// wins; the ghost only fills a field that would otherwise be blank.
+    private static func loadPlaceholder(
+        _ reading: SetRowPrescription, prescribed: SetPrescription?,
+        workingIndex: Int, isWarmup: Bool
+    ) -> String {
+        let target = reading.loadTarget(prescribed)
+        guard target.isEmpty else { return target }
+        return reading.previousLoad(workingIndex: workingIndex, isWarmup: isWarmup)
     }
 }

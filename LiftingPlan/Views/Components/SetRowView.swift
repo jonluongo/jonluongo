@@ -20,6 +20,14 @@ import LiftingKit
 /// *seconds*, and writing it into a rep count is how a plank became thirty-four
 /// repetitions in every report that followed.
 ///
+/// **The last session's figures are the placeholders, not a column.** A
+/// `PREVIOUS` column stood beside the fields reporting what he did last time,
+/// which is a quarter of the table's width spent on a number he is about to
+/// type over. It sits *in* the field now: the ghost he overwrites is the load
+/// he used, so the field opens with a starting point instead of a dash and the
+/// column is gone. What the plan prescribed still wins where the two differ —
+/// see `SetRowPrescription`.
+///
 /// **Anything else this set asks sits directly under it**, as a quiet line: the
 /// note written about it, and the effort prescribed for it where no load was.
 /// A sixth column would crowd five that are already tight, and a block above the
@@ -35,7 +43,6 @@ struct SetRowView: View {
     /// What this row is called — the badge it draws and the name it says aloud.
     /// A number on an exercise of its own, `A1` inside a group.
     var identity: SetIdentity
-    var previousText: String
     /// The target the plan prescribed *for this set*, shown in the second field
     /// while it is empty — `"8-12"`, `"AMRAP"`, `"30 seconds"`, or `"—"` when
     /// the plan named none. It is a placeholder rather than a value so the
@@ -162,15 +169,20 @@ struct SetRowView: View {
             .accessibilityLabel(identity.spoken)
             .accessibilityHint("Changes whether this set counts as working volume")
 
-            Text(previousText)
-                .font(.barbellSupport)
-                .foregroundStyle(Palette.muted)
-                .frame(maxWidth: .infinity)
-                .lineLimit(1)
+            Spacer(minLength: 0)
 
             field(text: weightText, placeholder: loadTargetText, isDecimal: true)
+            // The two figures are one statement — a hundred and thirty-five for
+            // eight — and the sign says so. It replaces two column headings
+            // redrawn above every exercise of every session, which said the
+            // same thing to a lifter who has already used this once.
+            Text("×")
+                .font(.barbellSupport)
+                .foregroundStyle(Palette.muted)
             // A distance can be a fraction of its unit; reps and seconds cannot.
             field(text: workText, placeholder: repTargetText, isDecimal: measuresDistance)
+
+            Spacer(minLength: 0)
 
             Button {
                 complete()
@@ -230,7 +242,11 @@ struct SetRowView: View {
         TextField(placeholder, text: text)
             .keyboardType(isDecimal ? .decimalPad : .numberPad)
             .multilineTextAlignment(.center)
-            .foregroundStyle(Palette.ink)
+            // Not stated. A colour set here paints the placeholder as well, and
+            // a prescribed load drawn in the same ink as a logged one is the app
+            // claiming he lifted a figure he has not typed — which is the one
+            // thing this row must never do. Left to the system, a placeholder
+            // reads as grey and what he enters reads as his.
             // The weight and the work are what this screen is for, and they are
             // read at arm's length: they are the type ramp's Metric, which is
             // the role that exists for exactly these two fields.

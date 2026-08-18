@@ -181,12 +181,18 @@ struct TodayView: View {
         .padding(.bottom, Spacing.standard)
     }
 
-    /// What the session on screen amounts to, or nothing when there is none.
+    /// What the session on screen amounts to, and the unit every weight under
+    /// it is written in — or nothing when there is no session.
+    ///
+    /// The unit was a column heading, redrawn above every exercise. It is one
+    /// word about every number on the screen and it changes only when he changes
+    /// it, so it is said once, here, rather than six times below.
     private var shape: String? {
         guard let selected else { return nil }
-        return TodayPhrasing.sessionShape(
+        let shape = TodayPhrasing.sessionShape(
             exercises: selected.orderedExercises.count,
             durationMinutes: selected.durationMinutes)
+        return [shape, profile.displayUnit.rawValue].compactMap { $0 }.joined(separator: " · ")
     }
 
     @ViewBuilder
