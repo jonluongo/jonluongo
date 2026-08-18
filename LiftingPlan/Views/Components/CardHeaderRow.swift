@@ -50,7 +50,11 @@ struct CardHeaderRow<Trailing: View>: View {
         // More above than below: the gap over a heading separates it from the
         // panel it has finished with, and the gap under it binds it to the one
         // it introduces. Equal padding made it float between the two.
-        .padding(.top, Spacing.major)
+        //
+        // `standard` rather than `major`, because the first heading on a screen
+        // has no panel above it to be separated from — it was pushing the whole
+        // page down to hold a gap that only the second heading onwards needs.
+        .padding(.top, Spacing.standard)
         .padding(.bottom, Spacing.snug)
     }
 }

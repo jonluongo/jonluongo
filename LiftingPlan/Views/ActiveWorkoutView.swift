@@ -71,7 +71,13 @@ struct ActiveWorkoutView: View {
             .scrollContentBackground(.hidden)
             .background(Palette.surface)
             .scrollDismissesKeyboard(.interactively)
-            .navigationBarTitleDisplayMode(.inline)
+            // The session's own name, large at the top of the scroll and
+            // collapsing into the bar as it moves — the platform's own
+            // behaviour, and what fills a band that previously held a clock, a
+            // close button, and a hundred points of nothing.
+            .navigationTitle(
+                TodayPhrasing.sessionTitle(focus: day.focus, weekday: day.weekday))
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ActiveWorkoutToolbar(
                     startedAt: day.startedAt, finishedAt: day.completedAt, onClose: close)

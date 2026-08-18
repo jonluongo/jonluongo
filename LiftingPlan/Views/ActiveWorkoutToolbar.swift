@@ -52,10 +52,14 @@ struct ActiveWorkoutToolbar: ToolbarContent {
         // How long he has been training — the one thing worth a glance that
         // nothing else on the screen says.
         //
+        // Leading rather than principal: the centre now belongs to the title,
+        // which collapses into the bar as the session scrolls, and two things
+        // competing for that spot is how a bar ends up drawing neither.
+        //
         // It counts from the first ticked set rather than from the moment this
         // screen opened. Opening a screen is not training, and timing it meant
         // the clock restarted every time the session was closed and resumed.
-        ToolbarItem(placement: .principal) {
+        ToolbarItem(placement: .topBarLeading) {
             if let startedAt {
                 if let finishedAt {
                     clock(Self.elapsed(from: startedAt, to: finishedAt))
