@@ -31,15 +31,19 @@ struct TodayPhrasingTests {
         #expect(TodayPhrasing.sessionTitle(focus: "", weekday: .monday) == "Monday")
     }
 
-    @Test("Every word on the button is something to do")
-    func actionTitleFollowsProgress() {
-        #expect(TodayPhrasing.actionTitle(for: .notStarted) == "Start Workout")
-        #expect(TodayPhrasing.actionTitle(for: .inProgress) == "Continue Workout")
-        // A finished session still opens: a logged day used to be a dead end, so
-        // a mis-tapped Finish or a weight typed wrong could not be put right. It
-        // said "Open Session", which names a screen rather than an action —
-        // going back into either one is continuing the workout.
-        #expect(TodayPhrasing.actionTitle(for: .finished(Self.monday)) == "Continue Workout")
+    @Test("A session nobody has touched says nothing about its progress")
+    func untouchedSessionSaysNothing() {
+        // The ordinary case. A card that printed "Not started" would be telling
+        // him what he already knows on every session he has not begun.
+        #expect(TodayPhrasing.progressNote(for: .notStarted) == nil)
+    }
+
+    @Test("A session under way and one already logged each say which")
+    func progressNoteReportsWhereHeGotTo() {
+        #expect(TodayPhrasing.progressNote(for: .inProgress) == "In progress")
+        // Reported, not concluded: a logged session is still open to correction,
+        // so nothing here says he is finished with it.
+        #expect(TodayPhrasing.progressNote(for: .finished(Self.monday)) == "Logged")
     }
 
     // MARK: - Counts

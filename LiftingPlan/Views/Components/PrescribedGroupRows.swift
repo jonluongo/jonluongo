@@ -52,3 +52,40 @@ struct PrescribedGroupRows: View {
         }
     }
 }
+
+
+/// A group as it reads on a card that is itself the control: the same lines
+/// `PrescribedGroupRows` draws, with nothing separately tappable inside them.
+///
+/// It exists because `WorkoutCard` is one tap target and a link within it would
+/// be a second — see that type for why. The two are deliberately the same shape,
+/// so a superset on Home and a superset in a week both read as one thing with
+/// its movements legended under it.
+struct PrescribedGroupSummary: View {
+
+    let group: ExerciseGroup
+    let unit: MassUnit
+
+    private var shape: String {
+        let rounds = group.prescribedRounds
+        let rest = group.restSeconds.map { " · \(RestPrescription.durationText($0)) after each round" }
+        return "\(rounds) round\(rounds == 1 ? "" : "s")\(rest ?? "")"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.tight) {
+            Text(group.title)
+                .font(.barbellTitle)
+                .foregroundStyle(Palette.ink)
+            Text(shape)
+                .font(.barbellSupport)
+                .foregroundStyle(Palette.muted)
+            ForEach(group.members) { member in
+                PrescribedExerciseRow(
+                    exercise: member, unit: unit, notation: group.notation(for: member))
+            }
+        }
+        .padding(.vertical, Spacing.tight)
+        .accessibilityElement(children: .combine)
+    }
+}

@@ -123,18 +123,23 @@ struct TodayView: View {
 
     @ViewBuilder
     private func pages(_ plan: TrainingPlan) -> some View {
-        if let selected {
-            // One page per workout left in the week. The dots are drawn only
-            // where there is more than one, because an indicator under a single
-            // page says a choice exists that does not.
+        if selected != nil {
+            // One page per workout left in the week, each of them a card that
+            // is itself the control — there is no separate start button, and no
+            // page sizes to its own contents, so swiping does not resize the
+            // thing under the thumb. The dots are drawn only where there is
+            // more than one, because an indicator under a single page says a
+            // choice exists that does not.
             TabView(selection: $chosen) {
                 ForEach(remaining) { workout in
-                    List {
-                        TodaySessionSection(session: workout, unit: profile.displayUnit)
+                    WorkoutCard(session: workout, unit: profile.displayUnit) {
+                        openSession = workout
                     }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
-                    .background(Palette.surface)
+                    .padding(.horizontal, PanelMetrics.inset)
+                    // Room under the card for the pager's dots, which a
+                    // full-height card had otherwise covered — the one thing on
+                    // the screen saying there is another workout to swipe to.
+                    .padding(.bottom, Spacing.major + Spacing.section)
                     .tag(Optional(workout.persistentModelID))
                 }
             }
@@ -143,8 +148,7 @@ struct TodayView: View {
             // Stated because a pager does not hand its background up the way a
             // list does: the navigation bar behind the title drew white over
             // grouped-grey content, a seam across the top of the screen.
-            .background(Color(.systemGroupedBackground))
-            .safeAreaInset(edge: .bottom) { action(selected) }
+            .background(Palette.surface)
         } else {
             // Every session logged, or a block with nothing in it. Both read the
             // same to a lifter: there is no next workout, and the next one comes
@@ -158,18 +162,5 @@ struct TodayView: View {
         }
     }
 
-    /// Start, or pick up where the session was left — whichever page he is on.
-    /// A workout with prescribed exercises always has one: `remaining` never
-    /// holds an empty session, so there is no button here that opens a screen
-    /// with nothing on it.
-    private func action(_ workout: WorkoutDay) -> some View {
-        PrimaryActionButton(
-            title: TodayPhrasing.actionTitle(for: TodayInPlan.progress(of: workout)),
-            systemImage: "play.fill"
-        ) {
-            openSession = workout
-        }
-        .padding(Spacing.section)
-        .background(Palette.surface)
-    }
+
 }

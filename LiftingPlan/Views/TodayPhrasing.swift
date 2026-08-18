@@ -25,23 +25,20 @@ enum TodayPhrasing {
         focus.isEmpty ? weekday.fullName : focus
     }
 
-    /// The word on the button, which names an action every time.
+    /// What the card says about how far a session has got, or `nil` when it has
+    /// not been touched — which is the ordinary case and says nothing.
     ///
-    /// It used to read "Open Session" on a workout already logged — a
-    /// description of a screen rather than something to do, and the owner said
-    /// so. Going back into a session is continuing the workout whether it was
-    /// finished or abandoned mid-set, and which of the two it was is already
-    /// said elsewhere; the button does not need to say it twice.
-    ///
-    /// A finished session still opens. It used to offer nothing at all, which
-    /// left a logged day with no door: a mis-tapped Finish, a weight typed
-    /// wrong, or a set done after the lifter thought he was done were all
-    /// unreachable. The app is the record, and a record that cannot be
-    /// corrected is not one.
-    static func actionTitle(for progress: SessionProgress) -> String {
+    /// This was the word on a button: "Start Workout", "Continue Workout". The
+    /// card is the button now, so there is no word to put on one — but whether
+    /// he already started this session is still worth a glance, and a card that
+    /// looked identical either way would lose it. It reports, and never
+    /// instructs: a finished session is still open to correction, so nothing
+    /// here says he is done with it.
+    static func progressNote(for progress: SessionProgress) -> String? {
         switch progress {
-        case .notStarted: "Start Workout"
-        case .inProgress, .finished: "Continue Workout"
+        case .notStarted: nil
+        case .inProgress: "In progress"
+        case .finished: "Logged"
         }
     }
 
