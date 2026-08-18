@@ -154,7 +154,7 @@ struct AccountView: View {
                 Text("Deletes every block and every set logged against it. Everything above is kept.")
             }
         }
-        .listStyle(.plain)
+        .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle("Account")

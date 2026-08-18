@@ -42,7 +42,7 @@ struct BlockWeekView: View {
                 }
             }
         }
-        .listStyle(.plain)
+        .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle(PlanWeekSelection.title(for: week))

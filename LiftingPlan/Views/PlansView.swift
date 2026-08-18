@@ -48,7 +48,7 @@ struct PlansView: View {
                 }
             }
         }
-        .listStyle(.plain)
+        .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle("Blocks")

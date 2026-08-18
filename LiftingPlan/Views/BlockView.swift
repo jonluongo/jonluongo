@@ -34,7 +34,7 @@ struct BlockView: View {
 
     var body: some View {
         weeks(of: plan)
-            .listStyle(.plain)
+            .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle(PlansListing.title(of: plan))

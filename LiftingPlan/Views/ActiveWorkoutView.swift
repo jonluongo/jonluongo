@@ -63,12 +63,16 @@ struct ActiveWorkoutView: View {
                 }
 
             }
-            // Plain, not inset-grouped. A rounded white card per exercise
-            // boxed each table in a shape that said "one item in a list of
-            // items", when the table *is* the screen. Rules separate them now,
-            // which is how a page of columns is separated from the next page of
-            // columns.
-            .listStyle(.plain)
+            // Inset and rounded. It was full-width and square for a while — the
+            // instrument argument being that a card boxes the table in a shape
+            // saying "one item in a list of items" when the table *is* the
+            // screen. On the device it just read as a plainer panel: a
+            // full-bleed white band against a grey one is what every stock list
+            // looks like before it is styled, so the change spent the corners
+            // and bought nothing. Everything else the pass established — the
+            // rules between rows, the tightened density, the typed hierarchy —
+            // holds inside the inset card.
+            .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(Palette.surface)
             .scrollDismissesKeyboard(.interactively)
