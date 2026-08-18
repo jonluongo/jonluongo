@@ -69,17 +69,36 @@ Both were built as tabs and are now presented as sheets from the `⋯`. A sheet
 has a different top, a different dismiss, and different safe areas. Their
 `PageTitle` and hidden navigation bar were designed for a tab. Unverified.
 
-### 2.3 VoiceOver on the new structure
+### 2.3 VoiceOver on the new structure — **recommended for deletion, awaiting Jon**
 
 The card that was a tap target is gone; the session is the root; the `⋯` is now
 the only route to two screens. None of the new labels or traits have been heard.
 
-### 2.4 The MCP loop, end to end
+**But this item is on the plan because it is on the standard checklist, which is
+exactly the reasoning the rest of this project rejects.** There is one user, he
+is sighted, and nobody will ever hear these labels. The honest recommendation is
+to drop it as a dedicated pass, keep writing labels while building, and treat a
+nonsensical one as evidence of a control doing two jobs — which is how a
+workout card that was both "start the session" and "open this exercise" would
+have announced itself before it looked wrong. It becomes real work the day this
+goes in front of anyone else. Left standing rather than struck, because the plan
+is Jon's.
 
-Neither document format changed today, so this *should* be intact — but the
-snapshot has not been exported and read back since the calendar was deleted, and
-`SnapshotPlan` still carries `weekdays` that nothing in the app now displays.
-Worth one real round trip rather than an assumption.
+### 2.4 The MCP loop, end to end — **verified 2026-08-18**
+
+Exercised for real rather than assumed: the app's `SnapshotExporter` wrote a
+snapshot from a live store, and `LiftingMCPKit` decoded that exact file and
+answered questions about it — both logged sets present, with the right exercise
+ID, reps, load and focus, and `isCompletedWorkingSet` true. The read half of the
+loop is intact after the calendar's deletion.
+
+The scaffolding was deleted afterwards rather than kept: a test that depends on
+a file in `/tmp` written by a different target is not a test, it is a procedure,
+and leaving it would have been a permanently red suite waiting to happen.
+
+`SnapshotPlan.weekdays` survives this pass. Nothing in the app displays it, but
+the server still sends it to Claude, and whether he wants it is a question for
+Jon rather than a deletion to make quietly — see Tier 3.
 
 ### 2.5 Empty and edge states
 
