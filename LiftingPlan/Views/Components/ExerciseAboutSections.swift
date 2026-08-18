@@ -19,25 +19,20 @@ import LiftingKit
 /// from the name is how a record starts describing the wrong lift.
 ///
 /// **What it depends on.** `Exercise` from LiftingKit, `ExerciseAbout` for the
-/// words, `Spacing` and `Radius`. It reads no store and writes nothing.
+/// words and `Spacing`. It reads no store and writes nothing.
+///
+/// **There is no demonstration well.** A four-by-three placeholder stood at the
+/// top of this screen reading "Demonstration coming soon" — the largest element
+/// on the page, promising a feature that does not exist and telling a lifter
+/// nothing about the movement he opened it to read. It comes back when there is
+/// an animation to put in it.
 struct ExerciseAboutSections: View {
 
     /// The catalog entry, or `nil` when there is none for this exercise.
     let entry: Exercise?
 
-    /// How tall the demonstration well stands. A MoveKit loop is a wide frame
-    /// of a person lifting; four-by-three holds one without letting it take the
-    /// whole screen from the numbers underneath.
-    private static let mediaAspectRatio: CGFloat = 4 / 3
-
     var body: some View {
         if let entry {
-            Section {
-                demonstration
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-            }
-
             Section {
                 let facts = ExerciseAbout.facts(for: entry)
                 ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
@@ -70,28 +65,5 @@ struct ExerciseAboutSections: View {
                 }
             }
         }
-    }
-
-    /// The demonstration's place, held open and honestly empty.
-    ///
-    /// It says what it is rather than pretending to be loading something: no
-    /// animation ships yet, and a spinner over an empty box would be the screen
-    /// claiming a file is on its way.
-    private var demonstration: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: Radius.large)
-                .fill(.quaternary)
-            VStack(spacing: Spacing.snug) {
-                Image(systemName: "figure.strengthtraining.traditional")
-                    .font(.title)
-                Text("Demonstration coming soon")
-                    .font(.barbellSupport)
-            }
-            .foregroundStyle(.secondary)
-        }
-        .aspectRatio(Self.mediaAspectRatio, contentMode: .fit)
-        .padding(.vertical, Spacing.snug)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Demonstration coming soon")
     }
 }

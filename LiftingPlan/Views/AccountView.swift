@@ -130,8 +130,6 @@ struct AccountView: View {
             // Under the heading rather than under the panel. It states the whole
             // premise of the page — nothing here was asked by the app — so it
             // frames what follows instead of footnoting it.
-            Text("Claude records these as you tell him. The app shows them and asks nothing.")
-                .note()
 
             if rows.isEmpty {
                 Text("Nothing yet.")

@@ -90,9 +90,6 @@ struct SessionFinishSection: View {
                     top: Spacing.major, leading: Spacing.section,
                     bottom: Spacing.snug, trailing: Spacing.section))
 
-                // A note rather than the section's footer — see `note()`.
-                Text("Records this session as trained. Closing without it changes nothing.")
-                    .note()
             }
         }
     }

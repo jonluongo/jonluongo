@@ -43,8 +43,6 @@ struct ActiveWorkoutView: View {
                 if exercises.isEmpty {
                     ContentUnavailableView {
                         Label("No exercises", systemImage: "dumbbell")
-                    } description: {
-                        Text("This day has no prescribed exercises to log.")
                     }
                 } else {
                     ForEach(entries) { entry in

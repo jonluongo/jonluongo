@@ -30,8 +30,6 @@ struct BlockWeekView: View {
             if week.orderedDays.isEmpty {
                 ContentUnavailableView {
                     Label("No sessions in this week", systemImage: "calendar.badge.exclamationmark")
-                } description: {
-                    Text("This week has no training days yet. They appear here as they're added.")
                 }
             } else {
                 ForEach(week.orderedDays) { day in

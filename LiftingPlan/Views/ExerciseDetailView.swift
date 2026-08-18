@@ -111,7 +111,7 @@ struct ExerciseDetailView: View {
                 .listRowSeparator(.hidden)
                 .padding(.vertical, Spacing.snug)
             } header: {
-                SectionHeading("Heaviest set (\(unit.rawValue))")
+                SectionHeading("Heaviest set")
             }
         }
     }

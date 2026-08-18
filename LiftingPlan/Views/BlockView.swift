@@ -75,8 +75,6 @@ struct BlockView: View {
                 Section {
                     ContentUnavailableView {
                         Label("No weeks yet", systemImage: "calendar")
-                    } description: {
-                        Text("This block's weeks appear here as they arrive.")
                     }
                 }
             } else {

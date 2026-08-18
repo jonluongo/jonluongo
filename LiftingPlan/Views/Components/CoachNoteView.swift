@@ -25,10 +25,6 @@ struct CoachNoteView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.snug) {
-            Text("From Claude")
-                .font(.barbellLabel)
-                .textCase(.uppercase)
-                .foregroundStyle(.secondary)
             Text(note)
                 .font(.barbellBody)
         }
