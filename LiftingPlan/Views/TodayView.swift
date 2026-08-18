@@ -87,16 +87,19 @@ struct TodayView: View {
                     NoBlockView()
                 }
             }
-            .navigationTitle("Home")
-            // Inline, in the bar itself. A large title only collapses when it
-            // is attached to the scroll view it should track, and the scrolling
-            // here happens inside the pager's pages rather than in the view the
-            // title sits on — so it had no scroll to follow and stood
-            // permanently large, a hundred points of band that could never
-            // fade. Inline is the same word in the same place at every scroll
-            // position, which is what was wanted from the fade: the header on
-            // the header bar, and the workout starting at the top of the screen.
-            .navigationBarTitleDisplayMode(.inline)
+            // No navigation bar at all, and the title drawn as the first row of
+            // the content instead.
+            //
+            // A large title only collapses when it is attached to the scroll
+            // view it should track. The scrolling here happens inside the
+            // pager's pages while the title sat on the view holding the pager,
+            // so it had nothing to follow: it stood permanently large in a band
+            // with the full large-title inset above it, about fifty points
+            // lower than the same word sits in Podcasts, and no amount of
+            // trimming underneath was going to move it. Drawn as a row it sits
+            // where it should and scrolls away with everything else, which is
+            // the behaviour the bar could not give it.
+            .toolbar(.hidden, for: .navigationBar)
         }
         .fullScreenCover(item: $openSession) { session in
             ActiveWorkoutView(day: session, profile: profile)
@@ -112,6 +115,7 @@ struct TodayView: View {
             TabView(selection: $chosen) {
                 ForEach(remaining) { workout in
                     List {
+                        PageTitle("Home")
                         TodaySessionSection(session: workout, unit: profile.displayUnit)
                     }
                     .listStyle(.plain)
@@ -132,6 +136,7 @@ struct TodayView: View {
             // same to a lifter: there is no next workout, and the next one comes
             // from Claude.
             List {
+                PageTitle("Home")
                 TodayFinishedSection(plan: plan)
             }
             .listStyle(.plain)
