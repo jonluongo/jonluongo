@@ -5,6 +5,78 @@ import Testing
 @Suite("Training snapshot")
 struct TrainingSnapshotTests {
 
+    // MARK: - A snapshot from a build this one cannot read
+
+    /// The shape a v2 reader would otherwise take in silently: a version it has
+    /// never seen, and the training under a key it does not know.
+    private static func laterSnapshot(version: Int) -> Data {
+        Data("""
+            {
+              "version": \(version),
+              "catalogVersion": 5,
+              "generatedAt": "2023-11-14T22:13:20Z",
+              "routines": [{ "everything": "the lifter has ever trained" }]
+            }
+            """.utf8)
+    }
+
+    @Test("A snapshot from a later build is refused, naming both versions")
+    func laterVersionIsRefused() throws {
+        let error = #expect(throws: DocumentRefusal.self) {
+            try TrainingSnapshot.makeDecoder().decode(
+                TrainingSnapshot.self, from: Self.laterSnapshot(version: 99))
+        }
+
+        #expect(error == .snapshotFromLaterBuild(99, understood: TrainingSnapshot.currentVersion))
+    }
+
+    @Test("The refusal says what would otherwise be reported, and how to fix it")
+    func refusalNamesTheFailureAndTheRemedy() {
+        let message = DocumentRefusal
+            .snapshotFromLaterBuild(3, understood: 2).errorDescription ?? ""
+
+        #expect(message.contains("version 3"))
+        #expect(message.contains("version 2"))
+        // The point of refusing rather than reading: the alternative is a
+        // well-formed report of a lifter who has done nothing.
+        #expect(message.contains("trained less than he has"))
+        #expect(message.contains("Rebuild the MCP server"))
+    }
+
+    @Test("Refusing comes before anything else is held against the document")
+    func versionIsCheckedFirst() throws {
+        // The fixture states no `generatedAt`, which is required. A reader that
+        // checked keys first would report a missing timestamp — true, useless,
+        // and it would send whoever read it looking in the wrong place.
+        let stated = Data("""
+            {"version": 99, "catalogVersion": 5}
+            """.utf8)
+
+        let error = #expect(throws: DocumentRefusal.self) {
+            try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: stated)
+        }
+
+        #expect(error == .snapshotFromLaterBuild(99, understood: TrainingSnapshot.currentVersion))
+    }
+
+    @Test("A snapshot this build writes, and an older one, are read as before")
+    func currentAndOlderVersionsStillRead() throws {
+        let current = try TrainingSnapshot.makeEncoder().encode(snapshot())
+        #expect(throws: Never.self) {
+            try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: current)
+        }
+
+        // Version 1 dropped nothing this reader needs: it is the same document
+        // with a per-set `rpe` that no longer exists.
+        let older = Data("""
+            {"version": 1, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
+            """.utf8)
+        let decoded = try TrainingSnapshot.makeDecoder()
+            .decode(TrainingSnapshot.self, from: older)
+        #expect(decoded.version == 1)
+        #expect(decoded.plans.isEmpty)
+    }
+
     // MARK: - Fixtures
 
     /// A fixed instant on a second boundary. ISO 8601 encodes whole seconds,

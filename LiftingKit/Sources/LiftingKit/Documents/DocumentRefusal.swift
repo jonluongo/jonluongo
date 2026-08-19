@@ -32,6 +32,15 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
     /// type exists to end.
     case laterVersion(Int, understood: Int)
 
+    /// A snapshot written by a phone this build cannot read.
+    ///
+    /// The mirror of `laterVersion`, and it needs its own sentence because the
+    /// audience is the other way round: a plan is written by the coach and read
+    /// by the app, so its refusal tells the coach to write an older format. A
+    /// snapshot is written by the app and read by the server, and the only
+    /// thing the coach can do about it is rebuild the server.
+    case snapshotFromLaterBuild(Int, understood: Int)
+
     /// Two things the document says that cannot both be true, said in full.
     case contradiction(String)
 
@@ -60,6 +69,12 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
                 + "reads version \(understood). Nothing was taken in, because reading only the "
                 + "parts this build recognizes would silently discard the rest. Write version "
                 + "\(understood), or update the app."
+        case .snapshotFromLaterBuild(let stated, let understood):
+            "The training log on disk is written in snapshot format version \(stated), and "
+                + "this server reads version \(understood). Nothing was read, because taking "
+                + "in only the parts this build recognizes would report a lifter who has "
+                + "trained less than he has — which reads as a fact rather than as a failure. "
+                + "Rebuild the MCP server from the current source."
         case .contradiction(let detail):
             detail
         case .unreadableValue(let detail):

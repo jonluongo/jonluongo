@@ -75,9 +75,22 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// rather than failing. The three version and timestamp fields are
     /// required: a document that cannot say what it is or when it was made is
     /// not a snapshot.
+    ///
+    /// **A snapshot from a later build is refused whole, before any of its keys
+    /// are held against it.** That tolerance of absent sections is exactly what
+    /// makes the check necessary: a version this build has never seen would
+    /// most likely have moved or renamed the section holding the training, and
+    /// an absent section reads as *empty*. The coach would be told, in perfectly
+    /// well-formed data, that the lifter has done nothing — a failure that
+    /// reports itself as a fact. The two write formats have refused skew since
+    /// they were written; this one had the version and never looked at it.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         version = try container.decode(Int.self, forKey: .version)
+        guard version <= Self.currentVersion else {
+            throw DocumentRefusal.snapshotFromLaterBuild(
+                version, understood: Self.currentVersion)
+        }
         catalogVersion = try container.decode(Int.self, forKey: .catalogVersion)
         generatedAt = try container.decode(Date.self, forKey: .generatedAt)
         profile = try container.decodeIfPresent(SnapshotProfile.self, forKey: .profile)
