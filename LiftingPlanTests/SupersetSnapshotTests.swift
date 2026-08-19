@@ -24,7 +24,7 @@ struct SupersetSnapshotTests {
     }
 
     /// A store holding one ungrouped press and one superset, exported.
-    private func exportedDay() throws -> SnapshotDay {
+    private func exported() throws -> TrainingSnapshot {
         let context = ModelContext(try StoreContainer.inMemory())
         let document = PlanDocument(
             id: UUID(), catalogVersion: 5, generatedAt: Self.instant,
@@ -37,58 +37,51 @@ struct SupersetSnapshotTests {
         try PlanImporter.import(
             document, into: context, catalog: try ExerciseCatalog.bundled(),
             importedAt: Self.instant)
-        let snapshot = try SnapshotExporter.export(
+        return try SnapshotExporter.export(
             from: context, catalogVersion: 5, generatedAt: Self.instant)
-        let plan = try #require(snapshot.plans.first)
-        let week = try #require(plan.weeks.first)
-        return try #require(week.days.first)
     }
 
     @Test("Every movement is still one of the day's exercises, in prescribed order")
     func exercisesStayFlatAndOrdered() throws {
-        let day = try exportedDay()
-
-        #expect(day.exercises.map(\.exerciseID) == [Self.bench, Self.fly, Self.pushdown])
-        #expect(day.exercises.map(\.order) == [0, 1, 2])
+        // Reading the day's entries flat is what a caller counting movements
+        // does; the grouping is still stated, one level up.
+        #expect(try exported().firstDayExercises.map(\.exerciseID)
+            == [Self.bench, Self.fly, Self.pushdown])
     }
 
-    @Test("A grouped exercise reports the group it was performed in, and its place in the round")
-    func groupedExercisesReportTheirGroup() throws {
-        let exercises = try exportedDay().exercises
-        let first = try #require(exercises[1].group)
-        let second = try #require(exercises[2].group)
+    @Test("The superset comes back as a group, not as a marker on each member")
+    func groupSurvivesAsAGroup() throws {
+        let day = try #require(try exported().firstDay)
 
-        #expect(first.id == second.id, "both were the same group")
-        #expect(first.notation == "A1")
-        #expect(second.notation == "A2")
-        #expect(first.size == 2)
-        #expect(first.restSeconds == 90, "the rest after the round is the group's")
-        #expect(second.restSeconds == 90)
+        #expect(day.entries.count == 2, "one exercise and one group, not three exercises")
+        let group = try #require(day.entries[1].group)
+        #expect(group.exercises.map(\.exerciseID) == [Self.fly, Self.pushdown])
+        #expect(group.restSeconds == 90, "the rest after the round is the group's")
     }
 
-    @Test("An exercise performed on its own reports no group")
-    func ungroupedExerciseReportsNoGroup() throws {
-        let exercises = try exportedDay().exercises
+    @Test("An exercise performed on its own keeps its own rest and is not a group")
+    func ungroupedExerciseIsNotAGroup() throws {
+        let day = try #require(try exported().firstDay)
 
-        #expect(exercises[0].group == nil)
-        #expect(exercises[0].restSeconds == 180, "its own rest is still its own")
+        #expect(day.entries[0].group == nil)
+        #expect(day.entries[0].exercises[0].restSeconds == 180)
     }
 
-    @Test("A member's own rest is the rest taken after it, which is none but the last")
-    func memberRestIsTheRestAfterIt() throws {
-        let exercises = try exportedDay().exercises
+    @Test("No member states a rest of its own: a rest inside a group is one nobody takes")
+    func membersStateNoRest() throws {
+        let group = try #require(try exported().firstDay?.entries[1].group)
 
-        #expect(exercises[1].restSeconds == nil)
-        #expect(exercises[2].restSeconds == 90)
+        #expect(group.exercises.allSatisfy { $0.restSeconds == nil })
     }
 
     @Test("The grouping survives the encoder both clients share")
     func groupingSurvivesTheWire() throws {
-        let day = try exportedDay()
-        let data = try TrainingSnapshot.makeEncoder().encode(day)
-        let decoded = try TrainingSnapshot.makeDecoder().decode(SnapshotDay.self, from: data)
+        let snapshot = try exported()
+        let data = try TrainingSnapshot.makeEncoder().encode(snapshot)
+        let decoded = try TrainingSnapshot.makeDecoder()
+            .decode(TrainingSnapshot.self, from: data)
 
-        #expect(decoded.exercises[1].group?.notation == "A1")
-        #expect(decoded.exercises[0].group == nil)
+        #expect(decoded.firstDay?.entries[1].group?.exercises.count == 2)
+        #expect(decoded.firstDay?.entries[0].group == nil)
     }
 }

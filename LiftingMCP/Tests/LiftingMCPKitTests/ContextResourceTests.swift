@@ -45,7 +45,9 @@ struct ContextResourceTests {
         let block = try #require(try context()["currentBlock"])
 
         #expect(block["title"]?.stringValue == "Autumn strength")
-        #expect(block["weekCount"] == 4)
+        // The count of weeks the plan states, rather than a separately stored
+        // number that could disagree with it.
+        #expect(block["weeksPrescribed"] == 2)
         #expect(block["weekdays"] == ["Monday", "Thursday"])
         #expect(block["durationMinutes"] == 60)
         #expect(block["weeksLogged"] == 1)

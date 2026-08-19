@@ -75,6 +75,8 @@ about it for even one build.
 
 | Decision | Why |
 |---|---|
+| The snapshot carries the plan document itself, and the log is flat | A prescription lived in three vocabularies, and two of them disagreed: a document *nests* a group, the old `Snapshot*` tree *flattened* it into a marker on each member. One description now, written by the format that prescribed it. The log is a series and was nested five deep, so every reading tool began by flattening it — the wire does it once. |
+| A snapshot is refused in **both** directions; a plan and a profile update are not | A plan is an archive: the coach wrote it, it is the only copy, and an older one must read forever. A snapshot is a cache the phone rewrites whenever the record changes, so an old one is a stale file rather than history. Reading either skew half-way reports a lifter who has trained less than he has, which is the one failure that arrives looking like a fact. |
 | The app is a datastore and the interface an AI trainer works through | Everything that is neither is bloat. This is the filter for any proposal. |
 | The app makes no training decisions and asks the lifter nothing | Claude decides; the app records. No form, no default that asserts something nobody said. |
 | Blocks → a block → the session, and the app opens in the middle | The top of the tree costs a tap before every session; the bottom could show what was left of the week but never what was coming. The block page is the only place that is one tap from training and still shows the block. Supersedes *one screen: the session he is in*, and the swipeable pager that replaced it. |

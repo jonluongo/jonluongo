@@ -27,19 +27,18 @@ extension ToolRunner {
                     + "because history is keyed on exercise identity.")
         }
 
-        let sets = TrainingLog.records(in: snapshot)
-            .filter { $0.exercise.exerciseID == id }
+        let prescriptions = Prescriptions(snapshot)
+        let sets = TrainingLog.records(in: snapshot).filter { $0.exerciseID == id }
         return .report([
             "exerciseID": .string(id.rawValue),
             "displayName": .string(exercise.displayName),
-            "inCatalog": true,
             "setCount": .integer(sets.count),
             "baselines": .array(
                 snapshot.baselines.filter { $0.exerciseID == id }.map {
                     ["recordedAt": .date($0.recordedAt), "load": .mass($0.load),
                      "reps": .integer($0.reps)]
                 }),
-            "sets": .array(sets.map(Self.historyEntry)),
+            "sets": .array(sets.map { Self.historyEntry($0, in: snapshot, prescriptions) }),
         ])
     }
 
@@ -50,22 +49,32 @@ extension ToolRunner {
     /// and nulls for the other two, a hold reports the seconds it was held, and
     /// a carry reports how far it went and in what unit. Adding any of them into
     /// another is the mistake this trio exists to make impossible.
-    private static func historyEntry(_ record: LoggedSetRecord) -> JSONValue {
-        [
-            "date": .date(record.loggedSet.completedAt),
-            "load": .mass(record.loggedSet.load),
-            "reps": .integer(record.loggedSet.reps),
-            "durationSeconds": .integer(record.loggedSet.durationSeconds),
-            "distance": .distance(record.loggedSet.distance),
-            "isCompleted": .bool(record.loggedSet.isCompleted),
-            "isWarmup": .bool(record.loggedSet.isWarmup),
-            "plan": .string(record.planTitle),
+    private static func historyEntry(
+        _ record: LoggedSetRecord, in snapshot: TrainingSnapshot, _ prescriptions: Prescriptions
+    ) -> JSONValue {
+        let routine = snapshot.routines.first { $0.document.id == record.routineID }
+        let week = routine?.document.weeks.indices.contains(record.weekOrdinal - 1) == true
+            ? routine?.document.weeks[record.weekOrdinal - 1] : nil
+        let day = week?.days.first { $0.weekday == record.weekday }
+        return [
+            "date": .date(record.completedAt),
+            "load": .mass(record.load),
+            "reps": .integer(record.reps),
+            "durationSeconds": .integer(record.durationSeconds),
+            "distance": .distance(record.distance),
+            "isCompleted": .bool(record.isCompleted),
+            "isWarmup": .bool(record.isWarmup),
+            "plan": .string(routine?.document.title ?? ""),
             "week": .integer(record.weekOrdinal),
-            "weekLabel": .string(record.weekLabel),
-            "isDeload": .bool(record.isDeload),
+            "weekLabel": .string(week?.label ?? ""),
+            "isDeload": .bool(week?.isDeload ?? false),
             "weekday": .string(record.weekday.fullName),
-            "focus": .string(record.focus),
-            "prescribed": prescription(record.exercise),
+            "focus": .string(day?.focus ?? ""),
+            // The prescription is looked up in the document the coach wrote
+            // rather than carried beside the set. `null` when the block it names
+            // no longer holds that position — reported as unknown rather than
+            // guessed at.
+            "prescribed": prescriptions.exercise(for: record).map(prescription) ?? .null,
         ]
     }
 
@@ -79,9 +88,9 @@ extension ToolRunner {
     /// for; the reps and load logged against it are what was given, and the
     /// lifter is asked for no rating on top. Nothing here draws the comparison
     /// or converts one scale into another.
-    static func prescription(_ exercise: SnapshotPlannedExercise) -> JSONValue {
+    static func prescription(_ exercise: PlanDocumentExercise) -> JSONValue {
         [
-            "sets": .integer(exercise.targetSets),
+            "sets": .integer(exercise.sets),
             "repRange": .string(exercise.repRange),
             "suggestedLoad": .mass(exercise.suggestedLoad),
             "restSeconds": .integer(exercise.restSeconds),
@@ -135,50 +144,101 @@ extension ToolRunner {
             "weekday": .string(session.weekday.fullName),
             "focus": .string(session.focus),
             "durationMinutes": .integer(session.durationMinutes),
-            "exercises": .array(session.exercises.map(sessionExercise)),
+            "exercises": .array(exercises(of: session)),
         ]
     }
 
-    private static func sessionExercise(_ exercise: SnapshotPlannedExercise) -> JSONValue {
-        [
-            "exerciseID": .string(exercise.exerciseID.rawValue),
-            "displayName": .string(exercise.displayName),
-            "order": .integer(exercise.order),
-            // `null` for the ordinary exercise performed on its own. Where it is
-            // present, these sets were performed in rounds with the others of
-            // the same group — which a flat list of sets cannot say, and which
-            // is the whole of what makes them a superset.
-            "group": group(exercise.group),
-            "prescribed": prescription(exercise),
-            "completedWorkingSets": .integer(
-                exercise.loggedSets.count { $0.isCompleted && !$0.isWarmup }),
-            "sets": .array(
-                exercise.loggedSets.map {
-                    [
-                        "setIndex": .integer($0.setIndex),
-                        "load": .mass($0.load),
-                        "reps": .integer($0.reps),
-                        "durationSeconds": .integer($0.durationSeconds),
-                        "distance": .distance($0.distance),
-                        "isCompleted": .bool($0.isCompleted),
-                        "isWarmup": .bool($0.isWarmup),
-                    ]
-                }),
-        ]
-    }
-
-    /// The group an exercise was performed in, as it was written on the plan.
+    /// The day's movements in prescribed order, each with the sets logged
+    /// against it.
     ///
-    /// `notation` is the A1 / A2 a lifter reads, and `restSeconds` is the rest
-    /// after each round — the group's, and the only rest a group has.
-    private static func group(_ group: SnapshotExerciseGroup?) -> JSONValue {
-        guard let group else { return .null }
-        return [
-            "id": .string(group.id.uuidString),
-            "notation": .string(group.notation),
-            "position": .integer(group.position),
-            "of": .integer(group.size),
-            "restSeconds": .integer(group.restSeconds),
+    /// The prescription and the log come from two places now — the document the
+    /// coach wrote and the flat series — and this is where they are put back
+    /// together, by the movement's position in the day. A set logged against a
+    /// position the document no longer holds keeps its own entry rather than
+    /// being dropped: the work happened.
+    private static func exercises(of session: SessionRecord) -> [JSONValue] {
+        let byOrder = Dictionary(grouping: session.sets, by: \.exerciseOrder)
+        let day = session.day
+        var letters: [Int: String] = [:]
+        var position = 0
+        var groupOrdinal = 0
+        for entry in day?.entries ?? [] {
+            if entry.group != nil {
+                for member in 0..<entry.exercises.count {
+                    letters[position + member] = "\(letter(at: groupOrdinal))\(member + 1)"
+                }
+                groupOrdinal += 1
+            }
+            position += entry.exercises.count
+        }
+
+        return session.exercises.enumerated().map { order, exercise in
+            let sets = (byOrder[order] ?? []).sorted { $0.setIndex < $1.setIndex }
+            return [
+                "exerciseID": .string(exercise.exerciseID.rawValue),
+                "displayName": .string(exercise.displayName),
+                "order": .integer(order),
+                // `null` for the ordinary exercise performed on its own. Where
+                // it is present, these sets were performed in rounds with the
+                // others of the same group — which a flat list of sets cannot
+                // say, and which is the whole of what makes them a superset.
+                "group": group(at: order, in: day, notation: letters[order]),
+                "prescribed": prescription(exercise),
+                "completedWorkingSets": .integer(sets.count { $0.isCompletedWorkingSet }),
+                "sets": .array(sets.map(loggedSet)),
+            ]
+        }
+    }
+
+    private static func loggedSet(_ record: LoggedSetRecord) -> JSONValue {
+        [
+            "setIndex": .integer(record.setIndex),
+            "load": .mass(record.load),
+            "reps": .integer(record.reps),
+            "durationSeconds": .integer(record.durationSeconds),
+            "distance": .distance(record.distance),
+            "isCompleted": .bool(record.isCompleted),
+            "isWarmup": .bool(record.isWarmup),
         ]
+    }
+
+    /// The letter for the group at `index`: A, B, … Z, then AA. Spreadsheet
+    /// order, which is the one everybody already reads and never runs out.
+    private static func letter(at index: Int) -> String {
+        var remaining = index
+        var letters = ""
+        repeat {
+            // swiftlint:disable:next force_unwrapping
+            let scalar = UnicodeScalar(UInt8(65 + remaining % 26))
+            letters = String(Character(scalar)) + letters
+            remaining = remaining / 26 - 1
+        } while remaining >= 0
+        return letters
+    }
+
+    /// The group an exercise was performed in, as the plan wrote it.
+    ///
+    /// `notation` is the A1 / A2 a lifter reads — derived from the day's own
+    /// order rather than stored, since the document states which movements are a
+    /// group and the letters are only a way of saying it aloud. `restSeconds` is
+    /// the rest after each round, which is the only rest a group has.
+    private static func group(
+        at order: Int, in day: PlanDocumentDay?, notation: String?
+    ) -> JSONValue {
+        guard let day, let notation else { return .null }
+        var position = 0
+        for entry in day.entries {
+            let count = entry.exercises.count
+            if (position..<(position + count)).contains(order), let group = entry.group {
+                return [
+                    "notation": .string(notation),
+                    "position": .integer(order - position + 1),
+                    "of": .integer(count),
+                    "restSeconds": .integer(group.restSeconds),
+                ]
+            }
+            position += count
+        }
+        return .null
     }
 }

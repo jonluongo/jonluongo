@@ -27,13 +27,13 @@ struct TrainingSnapshotTests {
                 TrainingSnapshot.self, from: Self.laterSnapshot(version: 99))
         }
 
-        #expect(error == .snapshotFromLaterBuild(99, understood: TrainingSnapshot.currentVersion))
+        #expect(error == .snapshotVersionMismatch(99, understood: TrainingSnapshot.currentVersion))
     }
 
     @Test("The refusal says what would otherwise be reported, and how to fix it")
     func refusalNamesTheFailureAndTheRemedy() {
         let message = DocumentRefusal
-            .snapshotFromLaterBuild(3, understood: 2).errorDescription ?? ""
+            .snapshotVersionMismatch(3, understood: 2).errorDescription ?? ""
 
         #expect(message.contains("version 3"))
         #expect(message.contains("version 2"))
@@ -56,25 +56,30 @@ struct TrainingSnapshotTests {
             try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: stated)
         }
 
-        #expect(error == .snapshotFromLaterBuild(99, understood: TrainingSnapshot.currentVersion))
+        #expect(error == .snapshotVersionMismatch(99, understood: TrainingSnapshot.currentVersion))
     }
 
-    @Test("A snapshot this build writes, and an older one, are read as before")
-    func currentAndOlderVersionsStillRead() throws {
+    @Test("A snapshot this build writes reads; one written in any other version does not")
+    func onlyTheCurrentVersionReads() throws {
         let current = try TrainingSnapshot.makeEncoder().encode(snapshot())
         #expect(throws: Never.self) {
             try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: current)
         }
 
-        // Version 1 dropped nothing this reader needs: it is the same document
-        // with a per-set `rpe` that no longer exists.
+        // Older is refused as well as newer, which the two write formats do not
+        // do. A plan is an archive and must be read forever; a snapshot is a
+        // cache the phone rewrites whenever the record changes, so an old one is
+        // a stale file rather than history — and reading it as though its
+        // sections were merely absent would report a lifter who has never
+        // trained.
         let older = Data("""
-            {"version": 1, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
+            {"version": 2, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
             """.utf8)
-        let decoded = try TrainingSnapshot.makeDecoder()
-            .decode(TrainingSnapshot.self, from: older)
-        #expect(decoded.version == 1)
-        #expect(decoded.plans.isEmpty)
+        #expect(throws: DocumentRefusal.snapshotVersionMismatch(
+            2, understood: TrainingSnapshot.currentVersion)
+        ) {
+            try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: older)
+        }
     }
 
     // MARK: - Fixtures
@@ -84,10 +89,14 @@ struct TrainingSnapshotTests {
     /// equality is a fair assertion.
     private static let instant = Date(timeIntervalSince1970: 1_700_000_000)
 
-    private func loggedSet(load: Mass?) -> SnapshotLoggedSet {
-        SnapshotLoggedSet(
-            setIndex: 0, load: load, reps: 5,
-            isCompleted: true, isWarmup: false, completedAt: Self.instant
+    private static let routineID = UUID(uuidString: "3E7F7E2E-2B47-4C51-9E58-52C1D1F0A0B1")!
+
+    private func loggedSet(load: Mass?) -> LoggedSetRecord {
+        LoggedSetRecord(
+            routineID: Self.routineID, weekOrdinal: 1, weekday: .monday, exerciseOrder: 0,
+            exerciseID: ExerciseID(rawValue: "barbell-bench-press"), setIndex: 0,
+            isWarmup: false, isCompleted: true, completedAt: Self.instant,
+            load: load, reps: 5
         )
     }
 
@@ -97,23 +106,25 @@ struct TrainingSnapshotTests {
         avoidedPatterns: [MovementPattern] = [.hinge],
         availableEquipment: [EquipmentType] = [.barbell]
     ) -> TrainingSnapshot {
-        let exercise = SnapshotPlannedExercise(
+        let exercise = PlanDocumentExercise(
             exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
-            displayName: "Barbell Bench Press",
-            order: 0, targetSets: 3, repRange: "5",
+            displayName: "Barbell Bench Press", sets: 3, repRange: "5",
+            restSeconds: restSeconds,
             suggestedLoad: Mass(value: 100, unit: .kilograms),
-            restSeconds: restSeconds, tempo: "3-0-1-0", notes: "Pause the last rep",
-            loggedSets: [loggedSet(load: load)]
+            tempo: "3-0-1-0", notes: "Pause the last rep"
         )
-        let day = SnapshotDay(
-            weekday: .monday, focus: "Push", durationMinutes: 60,
-            completedAt: Self.instant, exercises: [exercise]
-        )
-        let week = SnapshotWeek(ordinal: 1, label: "Accumulation", isDeload: false, days: [day])
-        let plan = SnapshotPlan(
-            title: "Strength block", goal: "Bigger bench", startDate: Self.instant,
-            weekCount: 4, completedAt: nil, catalogVersion: 5,
-            weekdays: [.monday, .thursday], durationMinutes: 60, weeks: [week]
+        let routine = SnapshotRoutine(
+            document: PlanDocument(
+                id: Self.routineID, catalogVersion: 5, generatedAt: Self.instant,
+                title: "Strength block", goal: "Bigger bench", durationMinutes: 60,
+                weeks: [PlanDocumentWeek(
+                    label: "Accumulation", isDeload: false,
+                    days: [PlanDocumentDay(
+                        weekday: .monday, focus: "Push", durationMinutes: 60,
+                        exercises: [exercise])])]),
+            startDate: Self.instant,
+            sessions: [SnapshotSession(
+                weekOrdinal: 1, weekday: .monday, completedAt: Self.instant)]
         )
         let profile = SnapshotProfile(
             displayUnit: .pounds, experience: .intermediate,
@@ -134,7 +145,8 @@ struct TrainingSnapshotTests {
                 exerciseID: ExerciseID(rawValue: "barbell-back-squat"),
                 load: Mass(value: 225, unit: .pounds), reps: 5, recordedAt: Self.instant
             )],
-            plans: [plan]
+            routines: [routine],
+            log: [loggedSet(load: load)]
         )
     }
 
@@ -143,12 +155,17 @@ struct TrainingSnapshotTests {
         return try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
     }
 
-    private func firstLoggedSet(in snapshot: TrainingSnapshot) throws -> SnapshotLoggedSet {
-        let plan = try #require(snapshot.plans.first)
-        let week = try #require(plan.weeks.first)
+    private func firstLoggedSet(in snapshot: TrainingSnapshot) throws -> LoggedSetRecord {
+        try #require(snapshot.log.first)
+    }
+
+    /// The one movement the fixture prescribes, read out of the document the
+    /// routine carries.
+    private func firstExercise(in snapshot: TrainingSnapshot) throws -> PlanDocumentExercise {
+        let routine = try #require(snapshot.routines.first)
+        let week = try #require(routine.document.weeks.first)
         let day = try #require(week.days.first)
-        let exercise = try #require(day.exercises.first)
-        return try #require(exercise.loggedSets.first)
+        return try #require(day.entries.flatMap(\.exercises).first)
     }
 
     // MARK: - Round trip
@@ -193,7 +210,7 @@ struct TrainingSnapshotTests {
     @Test("Every weight in a snapshot keeps its own unit, not one shared unit")
     func weightsKeepIndependentUnits() throws {
         let decoded = try roundTrip(snapshot(load: Mass(value: 135, unit: .pounds)))
-        let exercise = try #require(decoded.plans.first?.weeks.first?.days.first?.exercises.first)
+        let exercise = try firstExercise(in: decoded)
 
         // The set was logged in pounds and the prescription written in kilograms.
         #expect(try firstLoggedSet(in: decoded).load?.unit == .pounds)
@@ -227,7 +244,7 @@ struct TrainingSnapshotTests {
     func unknownValuesFromRawJSONDecode() throws {
         let json = """
         {
-          "version": 1,
+          "version": 3,
           "catalogVersion": 99,
           "generatedAt": "2023-11-14T22:13:20Z",
           "profile": {
@@ -263,20 +280,22 @@ struct TrainingSnapshotTests {
         #expect(decoded.profile == nil)
         #expect(decoded.bodyMetrics.isEmpty)
         #expect(decoded.baselines.isEmpty)
-        #expect(decoded.plans.isEmpty)
+        #expect(decoded.routines.isEmpty)
+        #expect(decoded.log.isEmpty)
         #expect(decoded == empty)
     }
 
     @Test("Absent sections decode as empty rather than failing")
     func absentSectionsDecodeAsEmpty() throws {
         let json = """
-        {"version": 1, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
+        {"version": 3, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
         """
         let decoded = try TrainingSnapshot.makeDecoder()
             .decode(TrainingSnapshot.self, from: Data(json.utf8))
 
         #expect(decoded.profile == nil)
-        #expect(decoded.plans.isEmpty)
+        #expect(decoded.routines.isEmpty)
+        #expect(decoded.log.isEmpty)
         #expect(decoded.generatedAt == Self.instant)
     }
 
@@ -323,7 +342,7 @@ struct TrainingSnapshotTests {
     func profileWithoutStatedFactsDecodes() throws {
         let json = """
         {
-          "version": 1,
+          "version": 3,
           "catalogVersion": 5,
           "generatedAt": "2023-11-14T22:13:20Z",
           "profile": {
@@ -349,8 +368,7 @@ struct TrainingSnapshotTests {
     @Test("An unprescribed rest stays absent rather than becoming a number")
     func absentRestStaysAbsent() throws {
         let decoded = try roundTrip(snapshot(restSeconds: nil))
-        let exercise = try #require(decoded.plans.first?.weeks.first?.days.first?.exercises.first)
-        #expect(exercise.restSeconds == nil)
+        #expect(try firstExercise(in: decoded).restSeconds == nil)
     }
 
     @Test("A bodyweight set has no load rather than a zero load")

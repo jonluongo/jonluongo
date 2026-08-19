@@ -26,13 +26,15 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// The format version this build writes. Bump it when a reader would need
     /// to behave differently, not for an additive field.
     ///
-    /// Version 2 dropped the per-set `rpe` a lifter used to be asked for. That
-    /// is a removal rather than an addition, so a reader that went looking for
-    /// the key would find a version 1 document answering it and a version 2 one
-    /// silent, and needs to know which it is holding. A version 1 snapshot
-    /// still reads: `rpe` is simply a key this format no longer has, and the
-    /// sets around it are unchanged.
-    public static let currentVersion = 2
+    /// Version 3 replaced `plans` — a tree of snapshot types that restated the
+    /// plan document in a second shape — with `routines`, which carry the
+    /// document itself, and `log`, a flat series of every set logged against
+    /// them. A version 2 reader would find neither key and report a lifter who
+    /// has never trained, which is why `init(from:)` refuses a version it does
+    /// not know before it looks at anything else.
+    ///
+    /// Version 2 dropped the per-set `rpe` a lifter used to be asked for.
+    public static let currentVersion = 3
 
     /// The format version of this document, as written.
     public let version: Int
@@ -49,8 +51,13 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     public let bodyMetrics: [SnapshotBodyMetric]
     /// Stated starting strength per exercise, oldest first.
     public let baselines: [SnapshotBaseline]
-    /// Every training block the lifter has, oldest first.
-    public let plans: [SnapshotPlan]
+    /// Every training block the lifter has, oldest first, each carrying the
+    /// document the coach wrote it as.
+    public let routines: [SnapshotRoutine]
+    /// Every set ever logged, oldest first, flat. Each row names the block, the
+    /// week, the day and the movement it answers to, so what was prescribed for
+    /// it is a lookup into that block's document rather than a copy beside it.
+    public let log: [LoggedSetRecord]
 
     public init(
         version: Int = TrainingSnapshot.currentVersion,
@@ -59,7 +66,8 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
         profile: SnapshotProfile? = nil,
         bodyMetrics: [SnapshotBodyMetric] = [],
         baselines: [SnapshotBaseline] = [],
-        plans: [SnapshotPlan] = []
+        routines: [SnapshotRoutine] = [],
+        log: [LoggedSetRecord] = []
     ) {
         self.version = version
         self.catalogVersion = catalogVersion
@@ -67,7 +75,8 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
         self.profile = profile
         self.bodyMetrics = bodyMetrics
         self.baselines = baselines
-        self.plans = plans
+        self.routines = routines
+        self.log = log
     }
 
     /// Decoding tolerates an absent section, so a snapshot from a lifter with
@@ -76,19 +85,22 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// required: a document that cannot say what it is or when it was made is
     /// not a snapshot.
     ///
-    /// **A snapshot from a later build is refused whole, before any of its keys
-    /// are held against it.** That tolerance of absent sections is exactly what
-    /// makes the check necessary: a version this build has never seen would
-    /// most likely have moved or renamed the section holding the training, and
-    /// an absent section reads as *empty*. The coach would be told, in perfectly
-    /// well-formed data, that the lifter has done nothing — a failure that
-    /// reports itself as a fact. The two write formats have refused skew since
-    /// they were written; this one had the version and never looked at it.
+    /// **Any version but this one is refused whole, before a key is held
+    /// against it.** That tolerance of absent sections is exactly what makes the
+    /// check necessary: a version this build does not write would have moved or
+    /// renamed the section holding the training, and an absent section reads as
+    /// *empty*. The coach would be told, in well-formed data, that the lifter
+    /// has done nothing.
+    ///
+    /// **Older is refused too, which the write formats do not do.** A plan is an
+    /// archive and must be read forever; a snapshot is a cache the phone
+    /// rewrites whenever the record changes, so an old one is a stale file
+    /// rather than history — see `DocumentRefusal.snapshotVersionMismatch`.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         version = try container.decode(Int.self, forKey: .version)
-        guard version <= Self.currentVersion else {
-            throw DocumentRefusal.snapshotFromLaterBuild(
+        guard version == Self.currentVersion else {
+            throw DocumentRefusal.snapshotVersionMismatch(
                 version, understood: Self.currentVersion)
         }
         catalogVersion = try container.decode(Int.self, forKey: .catalogVersion)
@@ -98,7 +110,8 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
             [SnapshotBodyMetric].self, forKey: .bodyMetrics) ?? []
         baselines = try container.decodeIfPresent(
             [SnapshotBaseline].self, forKey: .baselines) ?? []
-        plans = try container.decodeIfPresent([SnapshotPlan].self, forKey: .plans) ?? []
+        routines = try container.decodeIfPresent([SnapshotRoutine].self, forKey: .routines) ?? []
+        log = try container.decodeIfPresent([LoggedSetRecord].self, forKey: .log) ?? []
     }
 
     /// The encoder both clients use. ISO 8601 dates and sorted keys, so a

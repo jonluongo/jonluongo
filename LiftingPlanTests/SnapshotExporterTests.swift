@@ -18,9 +18,13 @@ struct SnapshotExporterTests {
         restSeconds: Int? = 180
     ) throws -> ModelContext {
         let context = try context()
+        // Built the way `PlanImporter` builds one: a block that states no
+        // document identity cannot be read back as the document it came from,
+        // and the exporter reports it as absent rather than inventing one.
         let plan = TrainingPlan(
-            title: "Strength block", goal: "Bigger bench", weekCount: 4,
-            weekdays: [.monday], durationMinutes: 60, catalogVersion: 5
+            title: "Strength block", goal: "Bigger bench", generatedAt: Date(),
+            weekCount: 4, weekdays: [.monday], durationMinutes: 60,
+            catalogVersion: 5, sourceDocumentID: UUID()
         )
         let week = TrainingWeek(ordinal: 1, label: "Accumulation")
         let day = WorkoutDay(weekday: .monday, focus: "Push", durationMinutes: 60)
@@ -43,11 +47,8 @@ struct SnapshotExporterTests {
 
     private func firstExercise(
         in snapshot: TrainingSnapshot
-    ) throws -> SnapshotPlannedExercise {
-        let plan = try #require(snapshot.plans.first)
-        let week = try #require(plan.weeks.first)
-        let day = try #require(week.days.first)
-        return try #require(day.exercises.first)
+    ) throws -> PlanDocumentExercise {
+        try #require(snapshot.firstPrescribedExercise)
     }
 
     // MARK: - Absence is normal
@@ -61,7 +62,7 @@ struct SnapshotExporterTests {
         #expect(snapshot.profile == nil)
         #expect(snapshot.bodyMetrics.isEmpty)
         #expect(snapshot.baselines.isEmpty)
-        #expect(snapshot.plans.isEmpty)
+        #expect(snapshot.routines.isEmpty)
     }
 
     @Test("An empty snapshot still encodes and decodes")
@@ -70,7 +71,7 @@ struct SnapshotExporterTests {
         let data = try TrainingSnapshot.makeEncoder().encode(snapshot)
         let decoded = try TrainingSnapshot.makeDecoder()
             .decode(TrainingSnapshot.self, from: data)
-        #expect(decoded.plans.isEmpty)
+        #expect(decoded.routines.isEmpty)
     }
 
     @Test("An unprescribed rest is exported as absent, not as a number")
@@ -84,7 +85,7 @@ struct SnapshotExporterTests {
     func bodyweightSetHasNoLoad() throws {
         let context = try contextWithOneLoggedSet(load: nil)
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
-        let set = try #require(try firstExercise(in: snapshot).loggedSets.first)
+        let set = try #require(snapshot.firstLoggedSet)
         #expect(set.load == nil)
         #expect(set.reps == 5)
     }
@@ -95,7 +96,7 @@ struct SnapshotExporterTests {
     func loggedSetKeepsEnteredUnit() throws {
         let context = try contextWithOneLoggedSet(load: Mass(value: 135, unit: .pounds))
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
-        let load = try #require(try firstExercise(in: snapshot).loggedSets.first?.load)
+        let load = try #require(snapshot.firstLoggedSet?.load)
 
         #expect(load.unit == .pounds)
         #expect(load.value == 135)
@@ -122,7 +123,7 @@ struct SnapshotExporterTests {
             .decode(TrainingSnapshot.self, from: data)
 
         let exercise = try firstExercise(in: decoded)
-        #expect(exercise.loggedSets.first?.load == Mass(value: 135, unit: .pounds))
+        #expect(decoded.firstLoggedSet?.load == Mass(value: 135, unit: .pounds))
         // Prescribed in kilograms while the set was logged in pounds: one
         // snapshot carries both, each as written.
         #expect(exercise.suggestedLoad == Mass(value: 100, unit: .kilograms))
@@ -234,10 +235,12 @@ struct SnapshotExporterTests {
         let context = try contextWithOneLoggedSet()
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 7)
 
-        let plan = try #require(snapshot.plans.first)
+        let plan = try #require(snapshot.firstDocument)
         #expect(plan.title == "Strength block")
-        #expect(plan.weekCount == 4)
-        #expect(plan.weekdays == [.monday])
+        // Derived from the weeks it states rather than stored beside them, so
+        // there is no second number to disagree with the document.
+        #expect(plan.weekCount == 1)
+        #expect(plan.weeks.first?.days.map(\.weekday) == [.monday])
         // The plan keeps the catalog version it was built against, which need
         // not be the one the snapshot was produced under.
         #expect(plan.catalogVersion == 5)
@@ -246,15 +249,21 @@ struct SnapshotExporterTests {
         let exercise = try firstExercise(in: snapshot)
         #expect(exercise.exerciseID == ExerciseID(rawValue: "barbell-bench-press"))
         #expect(exercise.displayName == "Barbell Bench Press")
-        #expect(exercise.targetSets == 3)
+        #expect(exercise.sets == 3)
         #expect(exercise.repRange == "5")
         #expect(exercise.restSeconds == 180)
         #expect(exercise.tempo == "3-0-1-0")
         #expect(exercise.notes == "Pause the last rep")
 
-        let set = try #require(exercise.loggedSets.first)
+        let set = try #require(snapshot.firstLoggedSet)
         #expect(set.reps == 5)
         #expect(set.isCompleted)
+        // The row names where it sits, which is how the prescription above is
+        // found again.
+        #expect(set.weekOrdinal == 1)
+        #expect(set.weekday == .monday)
+        #expect(set.exerciseOrder == 0)
+        #expect(set.routineID == plan.id)
     }
 
     @Test("Warmup and unfinished sets are exported too, labelled rather than dropped")
@@ -273,14 +282,15 @@ struct SnapshotExporterTests {
         day.exercises = [exercise]
         let week = TrainingWeek(ordinal: 1)
         week.days = [day]
-        let plan = TrainingPlan(title: "Block")
+        let plan = TrainingPlan(
+            title: "Block", generatedAt: Date(), catalogVersion: 5,
+            sourceDocumentID: UUID())
         plan.weeks = [week]
         context.insert(plan)
         try context.saveOrThrow()
 
-        let sets = try firstExercise(
-            in: try SnapshotExporter.export(from: context, catalogVersion: 5)
-        ).loggedSets
+        let sets = try SnapshotExporter.export(from: context, catalogVersion: 5).log
+            .sorted { $0.setIndex < $1.setIndex }
         #expect(sets.count == 3)
         #expect(sets.map(\.setIndex) == [0, 1, 2])
         #expect(sets.map(\.isWarmup) == [true, false, false])
@@ -290,7 +300,9 @@ struct SnapshotExporterTests {
     @Test("Weeks, days, exercises, and sets export in order")
     func graphExportsInOrder() throws {
         let context = try context()
-        let plan = TrainingPlan(title: "Block")
+        let plan = TrainingPlan(
+            title: "Block", generatedAt: Date(), catalogVersion: 5,
+            sourceDocumentID: UUID())
         let firstWeek = TrainingWeek(ordinal: 1)
         let secondWeek = TrainingWeek(ordinal: 2, label: "Deload", isDeload: true)
         let thursday = WorkoutDay(weekday: .thursday, focus: "Pull")
@@ -303,9 +315,13 @@ struct SnapshotExporterTests {
             exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
             displayName: "Barbell Bench Press", order: 0
         )
+        // Stamped out of order on purpose, and stated rather than left to the
+        // clock: the log is a series, so its order is the order the work
+        // happened in, not the order the rows were built in.
+        let started = Date(timeIntervalSince1970: 1_700_000_000)
         first.loggedSets = [
-            LoggedSet(setIndex: 1, reps: 5),
-            LoggedSet(setIndex: 0, reps: 5),
+            LoggedSet(setIndex: 1, reps: 5, completedAt: started.addingTimeInterval(180)),
+            LoggedSet(setIndex: 0, reps: 5, completedAt: started),
         ]
         monday.exercises = [second, first]
         firstWeek.days = [thursday, monday]
@@ -314,11 +330,14 @@ struct SnapshotExporterTests {
         try context.saveOrThrow()
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
-        let exportedPlan = try #require(snapshot.plans.first)
-        #expect(exportedPlan.weeks.map(\.ordinal) == [1, 2])
+        let exportedPlan = try #require(snapshot.firstDocument)
+        // A week's ordinal is its position in the list now, so the order *is*
+        // the ordinal: the deload week stated second comes second.
+        #expect(exportedPlan.weeks.count == 2)
+        #expect(exportedPlan.weeks.map(\.isDeload) == [false, true])
         #expect(exportedPlan.weeks.first?.days.map(\.weekday) == [.monday, .thursday])
         #expect(try firstExercise(in: snapshot).displayName == "Barbell Bench Press")
-        #expect(try firstExercise(in: snapshot).loggedSets.map(\.setIndex) == [0, 1])
+        #expect(snapshot.log.map(\.setIndex) == [0, 1], "oldest first")
     }
 
     @Test("Body metrics and baselines export oldest first")

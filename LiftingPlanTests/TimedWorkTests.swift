@@ -108,7 +108,7 @@ struct TimedWorkTests {
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
         let reported = try #require(
-            snapshot.plans.first?.weeks.first?.days.first?.exercises.first?.loggedSets.first)
+            snapshot.firstLoggedSet)
 
         #expect(reported.durationSeconds == 34)
         #expect(reported.reps == 0, "thirty-four seconds is not thirty-four repetitions")
@@ -125,7 +125,7 @@ struct TimedWorkTests {
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
         let reported = try #require(
-            snapshot.plans.first?.weeks.first?.days.first?.exercises.first?.loggedSets.first)
+            snapshot.firstLoggedSet)
 
         #expect(reported.reps == 5)
         #expect(reported.durationSeconds == nil)
@@ -145,7 +145,7 @@ struct TimedWorkTests {
         let decoded = try TrainingSnapshot.makeDecoder()
             .decode(TrainingSnapshot.self, from: data)
         let reported = try #require(
-            decoded.plans.first?.weeks.first?.days.first?.exercises.first?.loggedSets.first)
+            decoded.firstLoggedSet)
 
         #expect(reported.durationSeconds == 34)
         #expect(String(decoding: data, as: UTF8.self).contains("\"durationSeconds\" : 34"))

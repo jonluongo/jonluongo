@@ -241,40 +241,35 @@ struct SupersetPlanTests {
 @Suite("Reading a superset back")
 struct SupersetReportTests {
 
-    private static let groupID = UUID()
-
-    private func member(
-        _ id: String, order: Int, restSeconds: Int?, position: Int?
-    ) -> SnapshotPlannedExercise {
-        SnapshotPlannedExercise(
-            exerciseID: ExerciseID(rawValue: id), displayName: id, order: order,
-            targetSets: 3, repRange: "12-15", suggestedLoad: nil, restSeconds: restSeconds,
-            tempo: nil, notes: nil,
-            loggedSets: [
-                SnapshotLoggedSet(
-                    setIndex: 0, load: nil, reps: 12,
-                    isCompleted: true, isWarmup: false, completedAt: daysAgo(1))
-            ],
-            group: position.map {
-                SnapshotExerciseGroup(
-                    id: Self.groupID, letter: "A", position: $0, size: 2, restSeconds: 90)
-            }
-        )
+    private func member(_ id: String, restSeconds: Int?) -> PlanDocumentExercise {
+        PlanDocumentExercise(
+            exerciseID: ExerciseID(rawValue: id), displayName: id, sets: 3,
+            repRange: "12-15", restSeconds: restSeconds)
     }
 
     private func sessionExercises() throws -> [JSONValue] {
-        let day = SnapshotDay(
+        // A day of one plain exercise and one pair performed as rounds. The
+        // pairing is stated by the document — the log says only which movement
+        // and which position — so this is also the test that the report can put
+        // the two back together.
+        let logged = [set(0, nil, 12, at: daysAgo(1))]
+        let day = fixtureDay(
             weekday: .monday, focus: "Push", durationMinutes: 60, completedAt: daysAgo(1),
             exercises: [
-                member("barbell-bench-press", order: 0, restSeconds: 180, position: nil),
-                member("barbell-curl", order: 1, restSeconds: nil, position: 1),
-                member("lat-pulldown", order: 2, restSeconds: 90, position: 2),
-            ])
-        let plan = SnapshotPlan(
-            title: "Autumn", goal: "Bigger arms", startDate: daysAgo(10), weekCount: 1,
-            completedAt: nil, catalogVersion: 5, weekdays: [.monday], durationMinutes: 60,
-            weeks: [SnapshotWeek(ordinal: 1, label: "", isDeload: false, days: [day])])
-        let documents = InMemoryDocuments(snapshot: fixtureSnapshot(plans: [plan]))
+                FixtureExercise(
+                    exercise: member("barbell-bench-press", restSeconds: 180), logged: logged)
+            ],
+            groups: [PlanDocumentGroup(
+                exercises: [
+                    member("barbell-curl", restSeconds: nil),
+                    member("lat-pulldown", restSeconds: nil),
+                ],
+                restSeconds: 90)])
+        let block = fixtureRoutine(
+            title: "Autumn", goal: "Bigger arms", startDate: daysAgo(10),
+            durationMinutes: 60,
+            weeks: [(label: nil, isDeload: false, days: [day])])
+        let documents = InMemoryDocuments(snapshot: fixtureSnapshot(blocks: [block]))
         let outcome = try makeRunner(documents: documents)
             .call(ToolCatalog.recentSessions, arguments: [:])
         let report = try #require(outcome.report)
@@ -292,7 +287,6 @@ struct SupersetReportTests {
         #expect(group["of"]?.intValue == 2)
         #expect(group["restSeconds"]?.intValue == 90)
         #expect(exercises[2]["group"]?["notation"]?.stringValue == "A2")
-        #expect(exercises[1]["group"]?["id"] == exercises[2]["group"]?["id"])
     }
 
     @Test("An exercise performed on its own reports a null group")

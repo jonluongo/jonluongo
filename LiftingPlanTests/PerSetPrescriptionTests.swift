@@ -169,12 +169,12 @@ struct PerSetPrescriptionTests {
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
         let reported = try #require(
-            snapshot.plans.first?.weeks.first?.days.first?.exercises.first)
+            snapshot.firstPrescribedExercise)
 
         #expect(reported.intensity == IntensityTarget(scale: .rpe, value: "8"))
         // What was asked for, beside what was put up against it. Nobody was
         // asked to rate the set, so nothing here reports a rating.
-        #expect(reported.loggedSets.map(\.reps) == [5, 4])
+        #expect(snapshot.log.sorted { $0.setIndex < $1.setIndex }.map(\.reps) == [5, 4])
         #expect(reported.prescribedSets.count == 2)
         #expect(reported.prescribedSets.allSatisfy {
             $0.intensity == IntensityTarget(scale: .rpe, value: "8")
@@ -203,9 +203,9 @@ struct PerSetPrescriptionTests {
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
         let reported = try #require(
-            snapshot.plans.first?.weeks.first?.days.first?.exercises.first)
+            snapshot.firstPrescribedExercise)
 
-        #expect(reported.targetSets == 3)
+        #expect(reported.sets == 3)
         #expect(reported.prescribedSets.map { $0.suggestedLoad?.value } == [60, 70, 80])
         #expect(reported.prescribedSets.map(\.repRange) == ["5", "5", "5"])
         #expect(reported.prescribedSets.last?.intensity?.value == "9")
@@ -233,7 +233,7 @@ struct PerSetPrescriptionTests {
         let decoded = try TrainingSnapshot.makeDecoder()
             .decode(TrainingSnapshot.self, from: data)
         let reported = try #require(
-            decoded.plans.first?.weeks.first?.days.first?.exercises.first)
+            decoded.firstPrescribedExercise)
 
         #expect(reported.prescribedSets.map(\.repRange) == ["5", "AMRAP"])
         #expect(reported.prescribedSets.map { $0.suggestedLoad?.value } == [60, 80])
@@ -266,11 +266,15 @@ struct PerSetPrescriptionTests {
         // with itself whatever those keys are called, and what a reader on the
         // other side of the file depends on is the names.
         let root = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let plans = try #require(root["plans"] as? [[String: Any]])
-        let weeks = try #require(plans.first?["weeks"] as? [[String: Any]])
+        let routines = try #require(root["routines"] as? [[String: Any]])
+        let document = try #require(routines.first?["document"] as? [String: Any])
+        let weeks = try #require(document["weeks"] as? [[String: Any]])
         let days = try #require(weeks.first?["days"] as? [[String: Any]])
         let exercises = try #require(days.first?["exercises"] as? [[String: Any]])
-        let sets = try #require(exercises.first?["prescribedSets"] as? [[String: Any]])
+        // The sets the plan listed one at a time, under the key the format that
+        // wrote them uses — the block travels as the document the coach wrote,
+        // so this is his own key rather than a restatement of it.
+        let sets = try #require(exercises.first?["sets"] as? [[String: Any]])
 
         #expect(sets.count == 2)
         #expect(sets.first?["repRange"] as? String == "5")
@@ -283,264 +287,28 @@ struct PerSetPrescriptionTests {
         #expect(load["unit"] as? String == "kg")
     }
 
-    @Test("A snapshot written before per-set prescriptions existed still reads")
-    func olderSnapshotStillDecodes() throws {
+    @Test("A snapshot written before this format existed is refused, not read half-way")
+    func olderSnapshotIsRefused() throws {
+        // The shape moved in version 3: a block used to be restated beside the
+        // document rather than carried as it. An older file decoded leniently
+        // would report a lifter with no training at all, so it is refused and
+        // says which build wrote it.
         let json = """
         {
           "version": 1, "catalogVersion": 5,
           "generatedAt": "2023-11-14T22:13:20Z",
           "plans": [{
             "title": "Old block", "goal": "", "startDate": "2023-11-14T22:13:20Z",
-            "catalogVersion": 5, "weekdays": [], "weeks": [{
-              "ordinal": 1, "label": "", "isDeload": false, "days": [{
-                "weekday": 2, "focus": "Push", "exercises": [{
-                  "exerciseID": "barbell-bench-press", "displayName": "Bench",
-                  "order": 0, "targetSets": 3, "repRange": "5", "loggedSets": []
-                }]
-              }]
-            }]
+            "catalogVersion": 5, "weekdays": [], "weeks": []
           }]
         }
         """
-        let decoded = try TrainingSnapshot.makeDecoder()
-            .decode(TrainingSnapshot.self, from: Data(json.utf8))
-        let exercise = try #require(
-            decoded.plans.first?.weeks.first?.days.first?.exercises.first)
 
-        #expect(exercise.targetSets == 3)
-        #expect(exercise.intensity == nil)
-        #expect(exercise.prescribedSets.isEmpty, "a format that could not say it did not say it")
-    }
-
-    // MARK: - What the lifter is shown
-
-    @Test("Each logged row is seeded with its own set's load and reps")
-    func seedingUsesEachSetsOwnPrescription() throws {
-        let exercise = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.squat, displayName: "Squat",
-                sets: [
-                    SetPrescription(suggestedLoad: kg(60)),
-                    SetPrescription(suggestedLoad: kg(70)),
-                    SetPrescription(repRange: "3", suggestedLoad: kg(80)),
-                ],
-                repRange: "5")
-        ])
-        let seeds = exercise.prescribedSets.map {
-            ($0.suggestedLoad?.value, RepPrescription.seededReps(for: $0.repRange))
+        #expect(throws: DocumentRefusal.snapshotVersionMismatch(
+            1, understood: TrainingSnapshot.currentVersion)
+        ) {
+            try TrainingSnapshot.makeDecoder()
+                .decode(TrainingSnapshot.self, from: Data(json.utf8))
         }
-
-        #expect(seeds.map(\.0) == [60, 70, 80])
-        #expect(seeds.map(\.1) == [5, 5, 3])
-    }
-
-    @Test("A set whose prescription names a range seeds no reps, as it always did")
-    func aRangeStillSeedsNothing() {
-        #expect(RepPrescription.seededReps(for: "8-12") == nil)
-        #expect(RepPrescription.seededReps(for: nil) == nil)
-        #expect(RepPrescription.targetText(for: nil) == "")
-        #expect(RepPrescription.targetText(for: "8-12") == "8-12")
-    }
-
-    @Test("An intensity target is shown as the plan wrote it, never converted")
-    func intensityIsShownAsWritten() {
-        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .rpe, value: "8"))
-            == "80% effort")
-        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .repsInReserve, value: "2"))
-            == "2 RIR")
-        #expect(IntensityPrescription.label(
-            for: IntensityTarget(scale: .percentOfOneRepMax, value: "80")) == "80% 1RM")
-        // A scale nobody here has heard of is still shown, as written.
-        #expect(IntensityPrescription.label(
-            for: IntensityTarget(scale: IntensityScale(rawValue: "m/s"), value: "0.45"))
-            == "m/s 0.45")
-        #expect(IntensityPrescription.label(for: nil) == nil)
-    }
-
-    @Test("A uniform prescription gains nothing under its rows")
-    func uniformRowsSayNothingNew() throws {
-        let plain = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8")
-        ])
-        #expect(plain.prescribedSets.allSatisfy {
-            PrescriptionSummary.detail(for: $0, in: plain) == nil
-        })
-
-        // The effort every set asks for is stated once, above the table. A row
-        // repeating it would be the screen saying the same thing three times.
-        let rated = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8",
-                intensity: IntensityTarget(scale: .rpe, value: "8"))
-        ])
-        #expect(rated.prescribedSets.allSatisfy {
-            PrescriptionSummary.detail(for: $0, in: rated) == nil
-        })
-    }
-
-    /// The weight is the prescription when there is one, and the intensity is
-    /// the reasoning behind it. A row that already shows 80 kg does not also
-    /// need to be told the number was chosen to feel like an RPE 9.
-    @Test("A set given a load is not also told the effort behind it")
-    func loadedSetIsNotToldItsEffort() throws {
-        let ramp = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.squat, displayName: "Squat",
-                sets: [
-                    SetPrescription(suggestedLoad: kg(60)),
-                    SetPrescription(suggestedLoad: kg(70)),
-                    SetPrescription(
-                        suggestedLoad: kg(80),
-                        intensity: IntensityTarget(scale: .rpe, value: "9"), notes: "Top set"),
-                ],
-                repRange: "5")
-        ])
-
-        #expect(ramp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: ramp) }
-            == [nil, nil, "Top set"], "the note is its own; the RPE is what 80 kg already says")
-    }
-
-    /// Without a load the intensity *is* the prescription: "work up to a top
-    /// single at RPE 8" is Claude deliberately leaving the weight to the lifter,
-    /// and a row that hid it would leave him nothing to go on.
-    @Test("A set given no load is told the effort asked of it, which is all it has")
-    func unloadedSetStatesItsEffort() throws {
-        let workUp = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.squat, displayName: "Squat",
-                sets: [
-                    SetPrescription(repRange: "5", suggestedLoad: kg(60)),
-                    SetPrescription(repRange: "3", suggestedLoad: kg(80)),
-                    SetPrescription(
-                        repRange: "1", intensity: IntensityTarget(scale: .rpe, value: "8"),
-                        notes: "Top single"),
-                ])
-        ])
-
-        #expect(workUp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: workUp) }
-            == [nil, nil, "80% effort · Top single"])
-    }
-
-    @Test("A set with neither a load nor an effort is told nothing extra")
-    func unloadedSetWithNoEffortSaysNothing() throws {
-        let bare = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8-12")
-        ])
-
-        #expect(bare.prescribedSets.allSatisfy {
-            PrescriptionSummary.detail(for: $0, in: bare) == nil
-        })
-    }
-
-    @Test("A note about one set of a drop set is stated on that set's row")
-    func dropSetNoteSitsOnItsOwnRow() throws {
-        let drop = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.bench, displayName: "Bench",
-                sets: [
-                    SetPrescription(),
-                    SetPrescription(),
-                    SetPrescription(repRange: "AMRAP", suggestedLoad: kg(70), notes: "Drop set"),
-                ],
-                repRange: "8", suggestedLoad: kg(100))
-        ])
-
-        #expect(drop.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: drop) }
-            == [nil, nil, "Drop set"])
-    }
-
-    @Test("A row the plan said nothing about adds no line of its own")
-    func unprescribedRowAddsNothing() throws {
-        let exercise = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8",
-                intensity: IntensityTarget(scale: .rpe, value: "8"))
-        ])
-
-        // A warm-up, or a set added past the ones prescribed.
-        #expect(PrescriptionSummary.detail(for: nil, in: exercise) == nil)
-    }
-
-    /// The session read before it is trained states the *shape* of a ramp in one
-    /// line. Every set of it still reaches the lifter in full on the logging
-    /// screen: its own load and reps as the placeholders in its two fields, and
-    /// what Claude asked of it in particular on the row it is lifted on.
-    @Test("A ramp is one line to browse and every set of it under the bar")
-    func rampIsSpannedToBrowseAndStatedInFullToLog() throws {
-        let ramp = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.squat, displayName: "Squat",
-                sets: [
-                    SetPrescription(suggestedLoad: kg(60)),
-                    SetPrescription(
-                        suggestedLoad: kg(80),
-                        intensity: IntensityTarget(scale: .rpe, value: "9"), notes: "Top set"),
-                ],
-                repRange: "5")
-        ])
-
-        // Nothing about the individual sets is lost: the loads are what each
-        // row's weight field is seeded with, and what was asked of the top set
-        // is on the top set's row.
-        let reading = SetRowPrescription(exercise: ramp, plans: [], unit: .kilograms)
-        #expect(ramp.prescribedSets.map { reading.loadTarget($0) } == ["60", "80"])
-        #expect(ramp.prescribedSets.map { PrescriptionSummary.detail(for: $0, in: ramp) }
-            == [nil, "Top set"])
-    }
-}
-
-/// How a prescribed effort is written on screen.
-///
-/// The figure is Claude's and only the wording is the app's, so these assert
-/// that the wording restates the prescription and never converts it into a
-/// different claim about training.
-@Suite("Effort wording")
-struct EffortWordingTests {
-
-    @Test("An RPE is written out of a hundred rather than out of ten")
-    func rpeReadsAsEffort() {
-        // Eight out of ten written as eighty out of a hundred. The same figure,
-        // without the jargon.
-        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .rpe, value: "8"))
-            == "80% effort")
-    }
-
-    @Test("A span keeps both of its ends")
-    func rpeSpanReadsAsEffort() {
-        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .rpe, value: "7-8"))
-            == "70-80% effort")
-    }
-
-    @Test("A half-point stays a half-point")
-    func fractionalRPE() {
-        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .rpe, value: "7.5"))
-            == "75% effort")
-    }
-
-    @Test("An RPE that is not a number is shown as written, not mangled into one")
-    func unreadableRPEIsPrintedAsWritten() {
-        // Refusing to invent beats printing a figure the plan does not contain.
-        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .rpe, value: "top set"))
-            == "RPE top set")
-    }
-
-    @Test("A percentage of a maximum is never derived from an effort")
-    func oneRepMaxIsItsOwnClaim() {
-        // "80% effort" and "80% 1RM" are different sentences that both say "%".
-        // The second appears only where Claude prescribed it himself: mapping an
-        // RPE onto a percentage of a maximum is a table lookup that depends on
-        // the rep count, and it is a training claim this app does not make.
-        #expect(IntensityPrescription.label(
-            for: IntensityTarget(scale: .percentOfOneRepMax, value: "80")) == "80% 1RM")
-        #expect(IntensityPrescription.label(
-            for: IntensityTarget(scale: .rpe, value: "8")) != "80% 1RM")
-    }
-
-    @Test("Reps in reserve is a different scale and is left alone")
-    func repsInReserveUnchanged() {
-        #expect(IntensityPrescription.label(for: IntensityTarget(scale: .repsInReserve, value: "2"))
-            == "2 RIR")
     }
 }

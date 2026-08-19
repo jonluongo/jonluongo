@@ -10,14 +10,14 @@ import LiftingKit
 /// running total, because adding yards to metres would need a conversion this
 /// project does not do anywhere.
 ///
-/// Depends on: `SnapshotLoggedSet`, `Distance` and `JSONValue`.
+/// Depends on: `LoggedSetRecord`, `Distance` and `JSONValue`.
 struct WorkTotals {
     private(set) var sets = 0
     private(set) var reps = 0
     private(set) var seconds = 0
     private(set) var distance: [DistanceUnit: Double] = [:]
 
-    mutating func add(_ set: SnapshotLoggedSet) {
+    mutating func add(_ set: LoggedSetRecord) {
         sets += 1
         reps += set.reps
         seconds += set.durationSeconds ?? 0
@@ -42,7 +42,7 @@ struct WorkTotals {
 /// `reported(as:)`. Primary and secondary counts stay apart because combining
 /// them would require a weighting, which is a training opinion.
 ///
-/// Depends on: `WorkTotals`, `MuscleGroup`, `SnapshotLoggedSet` and `JSONValue`.
+/// Depends on: `WorkTotals`, `MuscleGroup`, `LoggedSetRecord` and `JSONValue`.
 struct MuscleVolume {
     private var primary = WorkTotals()
     private var secondary = WorkTotals()
@@ -51,8 +51,8 @@ struct MuscleVolume {
     /// report orders muscles by.
     var primarySets: Int { primary.sets }
 
-    mutating func addPrimary(_ set: SnapshotLoggedSet) { primary.add(set) }
-    mutating func addSecondary(_ set: SnapshotLoggedSet) { secondary.add(set) }
+    mutating func addPrimary(_ set: LoggedSetRecord) { primary.add(set) }
+    mutating func addSecondary(_ set: LoggedSetRecord) { secondary.add(set) }
 
     func reported(as muscle: MuscleGroup) -> JSONValue {
         [
@@ -82,7 +82,7 @@ struct MuscleVolume {
 /// It totals and names; it does not rank. Nothing here decides what an hour of
 /// cycling is worth beside five sets of squats, which is a training judgement.
 ///
-/// Depends on: `WorkTotals`, `Exercise`, `SnapshotLoggedSet` and `JSONValue`.
+/// Depends on: `WorkTotals`, `Exercise`, `LoggedSetRecord` and `JSONValue`.
 struct ExcludedWork {
     private var totals: [ExerciseCategory: WorkTotals] = [:]
     private var identifiers: [ExerciseCategory: Set<ExerciseID>] = [:]
@@ -90,7 +90,7 @@ struct ExcludedWork {
     /// How many completed working sets were left out of the muscle totals.
     private(set) var sets = 0
 
-    mutating func add(_ set: SnapshotLoggedSet, from exercise: Exercise) {
+    mutating func add(_ set: LoggedSetRecord, from exercise: Exercise) {
         sets += 1
         totals[exercise.category, default: WorkTotals()].add(set)
         identifiers[exercise.category, default: []].insert(exercise.id)

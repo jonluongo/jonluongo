@@ -88,7 +88,9 @@ struct ExerciseHistoryTests {
         let report = try history("push-up")
 
         #expect(report["setCount"] == 0)
-        #expect(report["inCatalog"] == true)
+        // No `inCatalog` key: it could only ever say `true`, because an ID the
+        // catalog does not have fails before the report is built.
+        #expect(report["inCatalog"] == nil)
     }
 
     @Test("An ID the catalog does not have says so, so a typo is visible immediately")

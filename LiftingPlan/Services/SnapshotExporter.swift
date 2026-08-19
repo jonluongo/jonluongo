@@ -58,7 +58,8 @@ enum SnapshotExporter {
             profile: profiles.first.map(snapshot(of:)),
             bodyMetrics: metrics.map(snapshot(of:)),
             baselines: baselines.map(snapshot(of:)),
-            plans: plans.map(snapshot(of:))
+            routines: plans.compactMap(routine(of:)),
+            log: log(of: plans)
         )
     }
 
@@ -101,96 +102,88 @@ enum SnapshotExporter {
         )
     }
 
-    /// One block, including the note its author wrote about it.
+    /// One block: the document the coach wrote, and the three things the store
+    /// knows that it cannot.
     ///
-    /// `notes` goes back out because the coach who reads this snapshot is the
-    /// coach who wrote the note, and a block whose own words are missing from
-    /// the record reads as a block nobody said anything about. `generatedAt` is
-    /// when the plan was written, carried beside the `startDate` it arrived on;
-    /// both are `nil`-safe absences rather than one standing in for the other.
-    private static func snapshot(of plan: TrainingPlan) -> SnapshotPlan {
-        SnapshotPlan(
-            title: plan.title, goal: plan.goal, notes: plan.notes,
-            startDate: plan.startDate, generatedAt: plan.generatedAt,
-            weekCount: plan.weekCount, completedAt: plan.completedAt,
-            catalogVersion: plan.catalogVersion, weekdays: plan.orderedWeekdays,
-            durationMinutes: plan.durationMinutes,
-            weeks: plan.orderedWeeks.map(snapshot(of:))
+    /// **The document is read back rather than restated.** It used to be copied
+    /// into a parallel tree of snapshot types, which described a superset in a
+    /// different shape from the format that prescribed it — flattened here,
+    /// nested there — and had to be kept in step by hand.
+    /// `PlanDocument(reconstructing:)` is the one mapping now, and its round-trip
+    /// suite is what says the store holds everything the document stated.
+    ///
+    /// A block whose store row carries no document identity cannot be
+    /// reconstructed, and is left out rather than sent as an invented one.
+    /// Nothing in the app can produce such a row — `PlanImporter` is the only
+    /// producer and it writes all three fields — so this is an absence that
+    /// should never occur, reported as an absence rather than as a plan.
+    private static func routine(of plan: TrainingPlan) -> SnapshotRoutine? {
+        guard let document = PlanDocument(reconstructing: plan) else { return nil }
+        return SnapshotRoutine(
+            document: document,
+            startDate: plan.startDate,
+            completedAt: plan.completedAt,
+            sessions: plan.orderedWeeks.flatMap { week in
+                week.orderedDays.map { day in
+                    SnapshotSession(
+                        weekOrdinal: week.ordinal, weekday: day.weekday,
+                        completedAt: day.completedAt)
+                }
+            }
         )
     }
 
-    private static func snapshot(of week: TrainingWeek) -> SnapshotWeek {
-        SnapshotWeek(
-            ordinal: week.ordinal, label: week.label, isDeload: week.isDeload,
-            days: week.orderedDays.map(snapshot(of:))
-        )
-    }
-
-    /// One day, with each exercise saying which group it was performed in.
+    /// Every set ever logged, flat and oldest first.
     ///
-    /// The exercises stay a flat list in prescribed order — that is what they
-    /// are, and a reader counting a day's movements should not have to know
-    /// about grouping to do it. What a flat list cannot say is that some of them
-    /// were performed as rounds, so each grouped exercise carries the group. A
-    /// superset reported without it is six unrelated sets.
-    private static func snapshot(of day: WorkoutDay) -> SnapshotDay {
-        var groups: [PersistentIdentifier: SnapshotExerciseGroup] = [:]
-        for case .group(let group) in day.entries {
-            for (position, member) in group.members.enumerated() {
-                groups[member.persistentModelID] = SnapshotExerciseGroup(
-                    id: group.id, letter: group.letter, position: position + 1,
-                    size: group.members.count, restSeconds: group.restSeconds
-                )
+    /// **The shape every reader wanted.** The sets used to travel nested inside
+    /// the exercise inside the day inside the week inside the plan, and each
+    /// reading tool began by flattening them; the flattening is done once, here,
+    /// on the way out. Each row names where it sits — block, week ordinal,
+    /// weekday, the movement's position in the day — so what was prescribed for
+    /// it is a lookup into that block's document.
+    ///
+    /// `exerciseOrder` is the movement's stored `order`, which is its identity
+    /// within the day: the same movement may be prescribed twice, and the
+    /// position is what tells the two apart.
+    ///
+    /// Warm-ups and rows nobody ticked go out flagged rather than filtered: a
+    /// reader deciding what counts as work has to see what was there.
+    private static func log(of plans: [TrainingPlan]) -> [LoggedSetRecord] {
+        var records: [LoggedSetRecord] = []
+        for plan in plans {
+            guard let routineID = plan.sourceDocumentID else { continue }
+            for week in plan.orderedWeeks {
+                for day in week.orderedDays {
+                    for exercise in day.orderedExercises {
+                        for set in (exercise.loggedSets ?? []).sorted(by: { $0.setIndex < $1.setIndex }) {
+                            records.append(LoggedSetRecord(
+                                routineID: routineID,
+                                weekOrdinal: week.ordinal,
+                                weekday: day.weekday,
+                                exerciseOrder: exercise.order,
+                                exerciseID: exercise.exerciseID,
+                                setIndex: set.setIndex,
+                                isWarmup: set.isWarmup,
+                                isCompleted: set.isCompleted,
+                                completedAt: set.completedAt,
+                                load: set.load,
+                                reps: set.reps,
+                                durationSeconds: set.durationSeconds,
+                                distance: set.distance
+                            ))
+                        }
+                    }
+                }
             }
         }
-        return SnapshotDay(
-            weekday: day.weekday, focus: day.focus,
-            durationMinutes: day.durationMinutes, completedAt: day.completedAt,
-            icon: day.icon,
-            exercises: day.orderedExercises.map {
-                snapshot(of: $0, in: groups[$0.persistentModelID])
-            }
-        )
-    }
-
-    /// One prescription and everything logged against it.
-    ///
-    /// `prescribedSets` states every set in full and in order, so a ramp or a
-    /// drop set is reported as the sets it is rather than as one prescription
-    /// that no set actually matched. `intensity` is the effort that was asked
-    /// for, carried beside the sets that were logged against it — the app never
-    /// compares them, converts between scales, or decides a target was met, and
-    /// it asks the lifter for no rating of his own to put there.
-    private static func snapshot(
-        of exercise: PlannedExercise, in group: SnapshotExerciseGroup?
-    ) -> SnapshotPlannedExercise {
-        SnapshotPlannedExercise(
-            exerciseID: exercise.exerciseID, displayName: exercise.displayName,
-            order: exercise.order, targetSets: exercise.targetSets,
-            repRange: exercise.repRange, suggestedLoad: exercise.suggestedLoad,
-            restSeconds: exercise.restSeconds, intensity: exercise.intensity,
-            tempo: exercise.tempo, notes: exercise.notes,
-            prescribedSets: exercise.prescribedSets,
-            // Warmups and unfinished rows are carried too, labelled rather
-            // than filtered: what was skipped is as informative as what was
-            // done, and deciding what to make of it is not the app's call.
-            loggedSets: (exercise.loggedSets ?? [])
-                .sorted { $0.setIndex < $1.setIndex }
-                .map(snapshot(of:)),
-            group: group
-        )
-    }
-
-    /// One logged set, in the unit it was logged in. A hold crosses as seconds,
-    /// a carry as a distance with the unit it was carried in, and a counted set
-    /// as reps; none of the three is converted into another, and a set that was
-    /// not timed or not carried reports nothing there rather than a zero.
-    private static func snapshot(of set: LoggedSet) -> SnapshotLoggedSet {
-        SnapshotLoggedSet(
-            setIndex: set.setIndex, load: set.load, reps: set.reps,
-            durationSeconds: set.durationSeconds, distance: set.distance,
-            isCompleted: set.isCompleted, isWarmup: set.isWarmup,
-            completedAt: set.completedAt
-        )
+        // Oldest first, and ties broken by where the set sits. Two sets ticked
+        // in the same second are ordinary — a lifter filling in a table he
+        // already trained does it in one breath — and a sort that left their
+        // order to chance would report a different history each time the
+        // snapshot was written.
+        return records.sorted {
+            ($0.completedAt, $0.weekOrdinal, $0.exerciseOrder, $0.setIndex)
+                < ($1.completedAt, $1.weekOrdinal, $1.exerciseOrder, $1.setIndex)
+        }
     }
 }

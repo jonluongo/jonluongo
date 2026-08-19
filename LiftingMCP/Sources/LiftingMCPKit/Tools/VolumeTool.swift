@@ -62,23 +62,23 @@ extension ToolRunner {
 
         for record in TrainingLog.records(in: snapshot)
         where record.isCompletedWorkingSet
-            && record.loggedSet.completedAt >= windowStart
-            && record.loggedSet.completedAt <= windowEnd
+            && record.completedAt >= windowStart
+            && record.completedAt <= windowEnd
         {
-            guard let exercise = catalog.exercise(id: record.exercise.exerciseID) else {
+            guard let exercise = catalog.exercise(id: record.exerciseID) else {
                 unattributedSets += 1
-                unattributedIDs.insert(record.exercise.exerciseID)
+                unattributedIDs.insert(record.exerciseID)
                 continue
             }
             guard exercise.isResistanceTraining else {
-                excluded.add(record.loggedSet, from: exercise)
+                excluded.add(record, from: exercise)
                 continue
             }
             for muscle in exercise.primaryMuscles {
-                totals[muscle, default: MuscleVolume()].addPrimary(record.loggedSet)
+                totals[muscle, default: MuscleVolume()].addPrimary(record)
             }
             for muscle in exercise.secondaryMuscles {
-                totals[muscle, default: MuscleVolume()].addSecondary(record.loggedSet)
+                totals[muscle, default: MuscleVolume()].addSecondary(record)
             }
         }
 

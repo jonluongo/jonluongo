@@ -95,157 +95,235 @@ func fixtureProfile(
     )
 }
 
-private func set(
-    _ index: Int, _ pounds: Double?, _ reps: Int, at date: Date,
-    warmup: Bool = false, completed: Bool = true
-) -> SnapshotLoggedSet {
-    SnapshotLoggedSet(
-        setIndex: index,
-        load: pounds.map { Mass(value: $0, unit: .pounds) },
-        reps: reps, isCompleted: completed, isWarmup: warmup, completedAt: date
-    )
+// MARK: - Building a block
+
+// A block is written as a `PlanDocument` and the work against it as a flat log,
+// so a fixture has to produce both and keep them keyed to each other. These
+// builders mirror the nesting the fixtures used to be written in — set, then
+// exercise, then day, then block — and hand back the two halves the wire
+// carries.
+
+/// One logged set, before it knows where it sits. `Fixture.day` gives it its
+/// position, which is the only thing it cannot know about itself.
+struct FixtureSet {
+    var index: Int
+    var pounds: Double?
+    var reps: Int
+    var date: Date
+    var warmup = false
+    var completed = true
+    var durationSeconds: Int?
+    var distance: Distance?
 }
 
-private func prescribed(
-    _ id: String, _ name: String, order: Int, sets: Int, reps: String,
+func set(
+    _ index: Int, _ pounds: Double?, _ reps: Int, at date: Date,
+    warmup: Bool = false, completed: Bool = true,
+    durationSeconds: Int? = nil, distance: Distance? = nil
+) -> FixtureSet {
+    FixtureSet(
+        index: index, pounds: pounds, reps: reps, date: date, warmup: warmup,
+        completed: completed, durationSeconds: durationSeconds, distance: distance)
+}
+
+/// One movement of a day: what was prescribed, and what was logged against it.
+struct FixtureExercise {
+    var exercise: PlanDocumentExercise
+    var logged: [FixtureSet]
+}
+
+func prescribed(
+    _ id: String, _ name: String, order: Int = 0, sets: Int, reps: String,
     load: Double?, rest: Int?, intensity: IntensityTarget? = nil,
-    logged: [SnapshotLoggedSet] = []
-) -> SnapshotPlannedExercise {
-    let suggested = load.map { Mass(value: $0, unit: .pounds) }
-    return SnapshotPlannedExercise(
-        exerciseID: ExerciseID(rawValue: id), displayName: name, order: order,
-        targetSets: sets, repRange: reps,
-        suggestedLoad: suggested,
-        restSeconds: rest, intensity: intensity, tempo: nil, notes: nil,
-        prescribedSets: SetPrescription.everySet(
-            stated: [], count: sets, repRange: reps,
-            suggestedLoad: suggested, intensity: intensity),
-        loggedSets: logged
-    )
+    logged: [FixtureSet] = []
+) -> FixtureExercise {
+    FixtureExercise(
+        exercise: PlanDocumentExercise(
+            exerciseID: ExerciseID(rawValue: id), displayName: name, sets: sets,
+            repRange: reps, restSeconds: rest,
+            suggestedLoad: load.map { Mass(value: $0, unit: .pounds) },
+            intensity: intensity),
+        logged: logged)
+}
+
+/// One prescribed day and everything logged on it.
+struct FixtureDay {
+    var day: PlanDocumentDay
+    var completedAt: Date?
+    /// The day's sets, each already knowing which movement it belongs to.
+    var logged: [(order: Int, set: FixtureSet)]
+}
+
+func fixtureDay(
+    weekday: Weekday, focus: String = "", durationMinutes: Int? = nil,
+    completedAt: Date? = nil, exercises: [FixtureExercise] = [],
+    groups: [PlanDocumentGroup] = []
+) -> FixtureDay {
+    let entries = exercises.map { PlanDocumentEntry.exercise($0.exercise) }
+        + groups.map(PlanDocumentEntry.group)
+    var logged: [(order: Int, set: FixtureSet)] = []
+    for (order, exercise) in exercises.enumerated() {
+        logged += exercise.logged.map { (order, $0) }
+    }
+    return FixtureDay(
+        day: PlanDocumentDay(
+            weekday: weekday, focus: focus, durationMinutes: durationMinutes,
+            entries: entries),
+        completedAt: completedAt, logged: logged)
+}
+
+/// A block: the document, the sessions the record knows about, and the log.
+func fixtureRoutine(
+    id: UUID = UUID(), title: String, goal: String = "", startDate: Date,
+    completedAt: Date? = nil, durationMinutes: Int? = nil, catalogVersion: Int = 5,
+    weeks: [(label: String?, isDeload: Bool, days: [FixtureDay])]
+) -> (routine: SnapshotRoutine, log: [LoggedSetRecord]) {
+    var sessions: [SnapshotSession] = []
+    var log: [LoggedSetRecord] = []
+    for (index, week) in weeks.enumerated() {
+        let ordinal = index + 1
+        for day in week.days {
+            sessions.append(SnapshotSession(
+                weekOrdinal: ordinal, weekday: day.day.weekday, completedAt: day.completedAt))
+            let byOrder = day.day.entries.flatMap(\.exercises)
+            for (order, set) in day.logged {
+                guard byOrder.indices.contains(order) else { continue }
+                log.append(LoggedSetRecord(
+                    routineID: id, weekOrdinal: ordinal, weekday: day.day.weekday,
+                    exerciseOrder: order, exerciseID: byOrder[order].exerciseID,
+                    setIndex: set.index, isWarmup: set.warmup, isCompleted: set.completed,
+                    completedAt: set.date,
+                    load: set.pounds.map { Mass(value: $0, unit: .pounds) },
+                    reps: set.reps, durationSeconds: set.durationSeconds,
+                    distance: set.distance))
+            }
+        }
+    }
+    let routine = SnapshotRoutine(
+        document: PlanDocument(
+            id: id, catalogVersion: catalogVersion, generatedAt: startDate,
+            title: title, goal: goal, durationMinutes: durationMinutes,
+            weeks: weeks.map {
+                PlanDocumentWeek(label: $0.label, isDeload: $0.isDeload, days: $0.days.map(\.day))
+            }),
+        startDate: startDate, completedAt: completedAt, sessions: sessions)
+    return (routine, log)
 }
 
 /// The finished block: one full-body day, thirty days ago.
-private func basePlan() -> SnapshotPlan {
+private func basePlan() -> (routine: SnapshotRoutine, log: [LoggedSetRecord]) {
     let day = daysAgo(30)
-    return SnapshotPlan(
+    return fixtureRoutine(
         title: "Base block", goal: "Get the lifts moving", startDate: daysAgo(60),
-        weekCount: 4, completedAt: daysAgo(14), catalogVersion: 5,
-        weekdays: [.monday], durationMinutes: 50,
-        weeks: [
-            SnapshotWeek(
-                ordinal: 1, label: "Introduction", isDeload: false,
-                days: [
-                    SnapshotDay(
-                        weekday: .monday, focus: "Full body", durationMinutes: 50,
-                        completedAt: day,
-                        exercises: [
-                            prescribed(
-                                "barbell-bench-press", "Barbell Bench Press", order: 0,
-                                sets: 3, reps: "5", load: 215, rest: 180,
-                                logged: [
-                                    set(0, 135, 5, at: day, warmup: true),
-                                    set(1, 215, 5, at: day),
-                                    set(2, 215, 5, at: day),
-                                    set(3, 215, 5, at: day),
-                                ]),
-                            prescribed(
-                                "barbell-squat", "Barbell Squat", order: 1,
-                                sets: 3, reps: "5", load: 275, rest: 210,
-                                logged: [
-                                    set(0, 275, 5, at: day),
-                                    set(1, 275, 5, at: day),
-                                    set(2, 275, 5, at: day),
-                                ]),
-                        ])
-                ])
-        ])
+        completedAt: daysAgo(14), durationMinutes: 50,
+        weeks: [(
+            label: "Introduction", isDeload: false,
+            days: [
+                fixtureDay(
+                    weekday: .monday, focus: "Full body", durationMinutes: 50,
+                    completedAt: day,
+                    exercises: [
+                        prescribed(
+                            "barbell-bench-press", "Barbell Bench Press",
+                            sets: 3, reps: "5", load: 215, rest: 180,
+                            logged: [
+                                set(0, 135, 5, at: day, warmup: true),
+                                set(1, 215, 5, at: day),
+                                set(2, 215, 5, at: day),
+                                set(3, 215, 5, at: day),
+                            ]),
+                        prescribed(
+                            "barbell-squat", "Barbell Squat",
+                            sets: 3, reps: "5", load: 275, rest: 210,
+                            logged: [
+                                set(0, 275, 5, at: day),
+                                set(1, 275, 5, at: day),
+                                set(2, 275, 5, at: day),
+                            ]),
+                    ])
+            ])])
 }
 
 /// The running block: a pull day four days ago, a push day two days ago, and a
 /// second week that has been prescribed but not trained.
-private func currentPlan() -> SnapshotPlan {
+private func currentPlan() -> (routine: SnapshotRoutine, log: [LoggedSetRecord]) {
     let pullDay = daysAgo(4)
     let pushDay = daysAgo(2)
-    return SnapshotPlan(
+    return fixtureRoutine(
         title: "Autumn strength", goal: "Add 20 lb to the bench", startDate: daysAgo(14),
-        weekCount: 4, completedAt: nil, catalogVersion: 5,
-        weekdays: [.monday, .thursday], durationMinutes: 60,
+        durationMinutes: 60,
         weeks: [
-            SnapshotWeek(
-                ordinal: 1, label: "Accumulation", isDeload: false,
-                days: [
-                    SnapshotDay(
-                        weekday: .thursday, focus: "Pull", durationMinutes: 60,
-                        completedAt: pullDay,
-                        exercises: [
-                            prescribed(
-                                "barbell-bent-over-row", "Barbell Bent Over Row", order: 0,
-                                sets: 3, reps: "8", load: 185, rest: 120,
-                                logged: [
-                                    set(0, 95, 8, at: pullDay, warmup: true),
-                                    set(1, 185, 8, at: pullDay),
-                                    set(2, 185, 8, at: pullDay),
-                                    set(3, 185, 7, at: pullDay),
-                                ]),
-                            prescribed(
-                                "lat-pulldown", "Lat Pulldown", order: 1,
-                                sets: 3, reps: "12", load: 120, rest: 90,
-                                logged: [
-                                    set(0, 120, 12, at: pullDay),
-                                    set(1, 120, 12, at: pullDay),
-                                    set(2, 120, 12, at: pullDay),
-                                ]),
-                        ]),
-                    SnapshotDay(
-                        weekday: .monday, focus: "Push", durationMinutes: 60,
-                        completedAt: pushDay,
-                        exercises: [
-                            prescribed(
-                                "barbell-bench-press", "Barbell Bench Press", order: 0,
-                                sets: 3, reps: "5", load: 225, rest: 180,
-                                // The effort the plan asked for, so it can be
-                                // read beside the reps and load actually logged
-                                // below. Nobody is asked to rate a set.
-                                intensity: IntensityTarget(scale: .rpe, value: "8"),
-                                logged: [
-                                    set(0, 135, 5, at: pushDay, warmup: true),
-                                    set(1, 225, 5, at: pushDay),
-                                    set(2, 225, 5, at: pushDay),
-                                    set(3, 225, 4, at: pushDay),
-                                    // On screen but never finished.
-                                    set(4, 225, 0, at: pushDay, completed: false),
-                                ]),
-                            prescribed(
-                                "barbell-curl", "Barbell Curl", order: 1,
-                                sets: 3, reps: "10", load: 65, rest: 60,
-                                logged: [
-                                    set(0, 65, 10, at: pushDay),
-                                    set(1, 65, 10, at: pushDay),
-                                    set(2, 65, 10, at: pushDay),
-                                ]),
-                        ]),
-                ]),
-            SnapshotWeek(
-                ordinal: 2, label: "Accumulation", isDeload: false,
-                days: [
-                    SnapshotDay(
-                        weekday: .monday, focus: "Push", durationMinutes: 60,
-                        completedAt: nil,
-                        exercises: [
-                            prescribed(
-                                "barbell-bench-press", "Barbell Bench Press", order: 0,
-                                sets: 3, reps: "5", load: 230, rest: 180)
-                        ])
-                ]),
+            (label: "Accumulation", isDeload: false, days: [
+                fixtureDay(
+                    weekday: .thursday, focus: "Pull", durationMinutes: 60,
+                    completedAt: pullDay,
+                    exercises: [
+                        prescribed(
+                            "barbell-bent-over-row", "Barbell Bent Over Row",
+                            sets: 3, reps: "8", load: 185, rest: 120,
+                            logged: [
+                                set(0, 95, 8, at: pullDay, warmup: true),
+                                set(1, 185, 8, at: pullDay),
+                                set(2, 185, 8, at: pullDay),
+                                set(3, 185, 7, at: pullDay),
+                            ]),
+                        prescribed(
+                            "lat-pulldown", "Lat Pulldown",
+                            sets: 3, reps: "12", load: 120, rest: 90,
+                            logged: [
+                                set(0, 120, 12, at: pullDay),
+                                set(1, 120, 12, at: pullDay),
+                                set(2, 120, 12, at: pullDay),
+                            ]),
+                    ]),
+                fixtureDay(
+                    weekday: .monday, focus: "Push", durationMinutes: 60,
+                    completedAt: pushDay,
+                    exercises: [
+                        prescribed(
+                            "barbell-bench-press", "Barbell Bench Press",
+                            sets: 3, reps: "5", load: 225, rest: 180,
+                            // The effort the plan asked for, so it can be read
+                            // beside the reps and load actually logged. Nobody
+                            // is asked to rate a set.
+                            intensity: IntensityTarget(scale: .rpe, value: "8"),
+                            logged: [
+                                set(0, 135, 5, at: pushDay, warmup: true),
+                                set(1, 225, 5, at: pushDay),
+                                set(2, 225, 5, at: pushDay),
+                                set(3, 225, 4, at: pushDay),
+                                // On screen but never finished.
+                                set(4, 225, 0, at: pushDay, completed: false),
+                            ]),
+                        prescribed(
+                            "barbell-curl", "Barbell Curl",
+                            sets: 3, reps: "10", load: 65, rest: 60,
+                            logged: [
+                                set(0, 65, 10, at: pushDay),
+                                set(1, 65, 10, at: pushDay),
+                                set(2, 65, 10, at: pushDay),
+                            ]),
+                    ]),
+            ]),
+            (label: "Accumulation", isDeload: false, days: [
+                fixtureDay(
+                    weekday: .monday, focus: "Push", durationMinutes: 60,
+                    exercises: [
+                        prescribed(
+                            "barbell-bench-press", "Barbell Bench Press",
+                            sets: 3, reps: "5", load: 230, rest: 180)
+                    ])
+            ]),
         ])
 }
 
 func fixtureSnapshot(
     profile: SnapshotProfile? = fixtureProfile(),
-    plans: [SnapshotPlan]? = nil,
+    blocks: [(routine: SnapshotRoutine, log: [LoggedSetRecord])]? = nil,
     catalogVersion: Int = 5
 ) -> TrainingSnapshot {
-    TrainingSnapshot(
+    let built = blocks ?? [basePlan(), currentPlan()]
+    return TrainingSnapshot(
         catalogVersion: catalogVersion,
         generatedAt: daysAgo(1),
         profile: profile,
@@ -258,7 +336,8 @@ func fixtureSnapshot(
                 exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
                 load: Mass(value: 205, unit: .pounds), reps: 5, recordedAt: daysAgo(90))
         ],
-        plans: plans ?? [basePlan(), currentPlan()]
+        routines: built.map(\.routine),
+        log: built.flatMap(\.log).sorted { $0.completedAt < $1.completedAt }
     )
 }
 

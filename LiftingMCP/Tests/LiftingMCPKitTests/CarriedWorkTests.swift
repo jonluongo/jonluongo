@@ -40,49 +40,40 @@ struct CarriedWorkTests {
 
     /// One carry prescribed over a distance, with the sets logged against it.
     private func carried(
-        _ id: ExerciseID, target: String, name: String, sets: [SnapshotLoggedSet]
-    ) -> SnapshotPlannedExercise {
-        SnapshotPlannedExercise(
-            exerciseID: id, displayName: name, order: 0, targetSets: sets.count,
-            repRange: target, suggestedLoad: Mass(value: 32, unit: .kilograms),
-            restSeconds: 90, tempo: nil, notes: nil,
-            prescribedSets: SetPrescription.everySet(
-                stated: [], count: sets.count, repRange: target,
-                suggestedLoad: Mass(value: 32, unit: .kilograms), intensity: nil),
-            loggedSets: sets
-        )
+        _ id: ExerciseID, target: String, name: String, sets: [FixtureSet]
+    ) -> FixtureExercise {
+        FixtureExercise(
+            exercise: PlanDocumentExercise(
+                exerciseID: id, displayName: name, sets: sets.count, repRange: target,
+                restSeconds: 90, suggestedLoad: Mass(value: 32, unit: .kilograms)),
+            logged: sets)
     }
 
-    private func loggedCarry(_ index: Int, _ distance: Distance?) -> SnapshotLoggedSet {
-        SnapshotLoggedSet(
-            setIndex: index, load: Mass(value: 32, unit: .kilograms), reps: 0,
-            distance: distance, isCompleted: true, isWarmup: false,
-            completedAt: daysAgo(2))
+    private func loggedCarry(_ index: Int, _ distance: Distance?) -> FixtureSet {
+        set(index, 32 * 2.20462, 0, at: daysAgo(2), distance: distance)
     }
 
     /// A block of carries: two farmer's carries in metres, one sled push in
     /// yards. Two units on purpose — nothing may add them together.
     private func carriedSnapshot() -> TrainingSnapshot {
-        let day = SnapshotDay(
-            weekday: .monday, focus: "Carries", durationMinutes: nil,
-            completedAt: daysAgo(2),
-            exercises: [
-                carried(
-                    Self.carry, target: "40 metres", name: "Kettlebell Farmers Carry",
-                    sets: [
-                        loggedCarry(0, Distance(value: 40, unit: .metres)),
-                        loggedCarry(1, Distance(value: 38, unit: .metres)),
-                    ]),
-                carried(
-                    Self.sled, target: "20 yards", name: "Sled Push",
-                    sets: [loggedCarry(0, Distance(value: 20, unit: .yards))]),
-            ])
-        let plan = SnapshotPlan(
-            title: "Carry block", goal: "Grip", startDate: daysAgo(10), weekCount: 1,
-            completedAt: nil, catalogVersion: 5, weekdays: [.monday], durationMinutes: nil,
-            weeks: [SnapshotWeek(ordinal: 1, label: "", isDeload: false, days: [day])]
-        )
-        return fixtureSnapshot(plans: [plan])
+        let block = fixtureRoutine(
+            title: "Carry block", goal: "Grip", startDate: daysAgo(10),
+            weeks: [(label: nil, isDeload: false, days: [
+                fixtureDay(
+                    weekday: .monday, focus: "Carries", completedAt: daysAgo(2),
+                    exercises: [
+                        carried(
+                            Self.carry, target: "40 metres", name: "Kettlebell Farmers Carry",
+                            sets: [
+                                loggedCarry(0, Distance(value: 40, unit: .metres)),
+                                loggedCarry(1, Distance(value: 38, unit: .metres)),
+                            ]),
+                        carried(
+                            Self.sled, target: "20 yards", name: "Sled Push",
+                            sets: [loggedCarry(0, Distance(value: 20, unit: .yards))]),
+                    ])
+            ])])
+        return fixtureSnapshot(blocks: [block])
     }
 
     private func report(_ tool: String, _ arguments: JSONValue = [:]) throws -> JSONValue {

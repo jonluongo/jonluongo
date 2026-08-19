@@ -119,7 +119,7 @@ struct CarriedWorkTests {
     /// One carry logged against a prescription, exported.
     private func exported(
         target: String, distance: Distance?, reps: Int = 0, durationSeconds: Int? = nil
-    ) throws -> SnapshotLoggedSet {
+    ) throws -> LoggedSetRecord {
         let context = try context()
         let exercise = try imported(target, sets: 1, into: context)
         let set = LoggedSet(
@@ -131,7 +131,7 @@ struct CarriedWorkTests {
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
         return try #require(
-            snapshot.plans.first?.weeks.first?.days.first?.exercises.first?.loggedSets.first)
+            snapshot.firstLoggedSet)
     }
 
     @Test("A carried set records its distance and no repetitions and no seconds")
@@ -185,7 +185,7 @@ struct CarriedWorkTests {
         let decoded = try TrainingSnapshot.makeDecoder()
             .decode(TrainingSnapshot.self, from: data)
         let reported = try #require(
-            decoded.plans.first?.weeks.first?.days.first?.exercises.first?.loggedSets.first)
+            decoded.firstLoggedSet)
 
         #expect(reported.distance == Distance(value: 38, unit: .metres))
         #expect(String(decoding: data, as: UTF8.self).contains("\"distance\""))

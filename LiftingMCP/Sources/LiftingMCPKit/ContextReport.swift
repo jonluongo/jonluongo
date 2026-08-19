@@ -18,6 +18,14 @@ import LiftingKit
 struct ContextReport {
     let runner: ToolRunner
     let snapshot: TrainingSnapshot
+    /// What a logged set was asked to be, looked up in the document that asked.
+    private let prescriptions: Prescriptions
+
+    init(runner: ToolRunner, snapshot: TrainingSnapshot) {
+        self.runner = runner
+        self.snapshot = snapshot
+        prescriptions = Prescriptions(snapshot)
+    }
 
     /// How many recent sessions ride along before the tools take over.
     static let carriedSessions = 5
@@ -76,26 +84,32 @@ struct ContextReport {
     // MARK: - What he is on
 
     private var currentBlock: JSONValue {
-        guard let plan = TrainingLog.currentBlock(in: snapshot) else { return .null }
+        guard let routine = TrainingLog.currentRoutine(in: snapshot) else { return .null }
+        let plan = routine.document
+        // Which weeks hold logged work, read off the flat log rather than by
+        // walking the plan: the plan says what was asked for and the log says
+        // what happened, and they are two different documents now.
+        let loggedWeeks = Set(
+            snapshot.log.filter { $0.routineID == plan.id }.map(\.weekOrdinal))
         return [
             "title": .string(plan.title),
             "goal": .string(plan.goal),
-            "startDate": .date(plan.startDate),
-            "weekCount": .integer(plan.weekCount),
-            "weekdays": .array(plan.weekdays.map { .string($0.fullName) }),
+            "startDate": .date(routine.startDate),
+            "weekdays": .array(
+                Set(plan.weeks.flatMap(\.days).map(\.weekday))
+                    .sorted { Weekday.displayOrder.firstIndex(of: $0) ?? 0
+                        < Weekday.displayOrder.firstIndex(of: $1) ?? 0 }
+                    .map { .string($0.fullName) }),
             "durationMinutes": .integer(plan.durationMinutes),
             "weeksPrescribed": .integer(plan.weeks.count),
-            "weeksLogged": .integer(
-                plan.weeks.count { week in
-                    week.days.contains { $0.exercises.contains { !$0.loggedSets.isEmpty } }
-                }),
+            "weeksLogged": .integer(loggedWeeks.count),
             "days": .array(
                 plan.weeks.flatMap(\.days).map {
                     [
                         "weekday": .string($0.weekday.fullName),
                         "focus": .string($0.focus),
                         "exercises": .array(
-                            $0.exercises.map { .string($0.displayName) }),
+                            $0.entries.flatMap(\.exercises).map { .string($0.displayName) }),
                     ]
                 }),
         ]
@@ -113,11 +127,13 @@ struct ContextReport {
                     "weekday": .string(session.weekday.fullName),
                     "focus": .string(session.focus),
                     "exercises": .array(
-                        session.exercises.map { exercise in
-                            .string(
-                                "\(exercise.displayName): "
-                                    + "\(exercise.loggedSets.count { $0.isCompleted && !$0.isWarmup })"
-                                    + " of \(exercise.targetSets) working sets")
+                        session.exercises.enumerated().map { order, exercise in
+                            let done = session.sets.count {
+                                $0.exerciseOrder == order && $0.isCompletedWorkingSet
+                            }
+                            return .string(
+                                "\(exercise.displayName): \(done) of \(exercise.sets)"
+                                    + " working sets")
                         }),
                 ]
             })
@@ -139,13 +155,15 @@ struct ContextReport {
     private var workingWeights: JSONValue {
         .array(
             TrainingLog.lastWorkingSets(in: snapshot).map { record in
-                [
-                    "exerciseID": .string(record.exercise.exerciseID.rawValue),
-                    "displayName": .string(record.exercise.displayName),
-                    "load": .mass(record.loggedSet.load),
-                    "reps": .integer(record.loggedSet.reps),
-                    "prescribedIntensity": .intensity(record.exercise.intensity),
-                    "lastTrained": .date(record.loggedSet.completedAt),
+                let prescribed = prescriptions.exercise(for: record)
+                return [
+                    "exerciseID": .string(record.exerciseID.rawValue),
+                    "displayName": .string(
+                        prescribed?.displayName ?? record.exerciseID.rawValue),
+                    "load": .mass(record.load),
+                    "reps": .integer(record.reps),
+                    "prescribedIntensity": .intensity(prescribed?.intensity),
+                    "lastTrained": .date(record.completedAt),
                 ]
             })
     }

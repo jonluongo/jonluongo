@@ -45,61 +45,62 @@ struct ConditioningVolumeTests {
     private func logged(
         _ index: Int, reps: Int, seconds: Int? = nil, distance: Distance? = nil,
         load: Mass? = nil, warmup: Bool = false
-    ) -> SnapshotLoggedSet {
-        SnapshotLoggedSet(
-            setIndex: index, load: load, reps: reps, durationSeconds: seconds,
-            distance: distance, isCompleted: true, isWarmup: warmup,
-            completedAt: daysAgo(2))
+    ) -> FixtureSet {
+        FixtureSet(
+            index: index, pounds: load.map { $0.converted(to: .pounds).value },
+            reps: reps, date: daysAgo(2), warmup: warmup,
+            durationSeconds: seconds, distance: distance)
     }
 
     private func performed(
-        _ id: String, _ name: String, order: Int, target: String,
-        sets: [SnapshotLoggedSet]
-    ) -> SnapshotPlannedExercise {
-        SnapshotPlannedExercise(
-            exerciseID: ExerciseID(rawValue: id), displayName: name, order: order,
-            targetSets: sets.count, repRange: target, suggestedLoad: nil,
-            restSeconds: nil, tempo: nil, notes: nil,
-            prescribedSets: SetPrescription.everySet(
-                stated: [], count: sets.count, repRange: target,
-                suggestedLoad: nil, intensity: nil),
-            loggedSets: sets)
+        _ id: String, _ name: String, target: String, sets: [FixtureSet]
+    ) -> FixtureExercise {
+        FixtureExercise(
+            exercise: PlanDocumentExercise(
+                exerciseID: ExerciseID(rawValue: id), displayName: name,
+                sets: sets.count, repRange: target),
+            logged: sets)
     }
 
     /// One day: three working sets of bench, forty minutes on the bike over
     /// fifteen kilometres, and two held stretches.
     private func mixedSnapshot() -> TrainingSnapshot {
         let bar = Mass(value: 225, unit: .pounds)
-        let day = SnapshotDay(
-            weekday: .monday, focus: "Push and conditioning", durationMinutes: 75,
-            completedAt: daysAgo(2),
-            exercises: [
-                performed(
-                    "barbell-bench-press", "Barbell Bench Press", order: 0, target: "5",
-                    sets: [
-                        logged(0, reps: 5, load: Mass(value: 135, unit: .pounds), warmup: true),
-                        logged(1, reps: 5, load: bar),
-                        logged(2, reps: 5, load: bar),
-                        logged(3, reps: 4, load: bar),
-                    ]),
-                performed(
-                    "assault-bike", "Assault Bike", order: 1, target: "40 minutes",
-                    sets: [
-                        logged(
-                            0, reps: 0, seconds: 2400,
-                            distance: Distance(value: 15, unit: .kilometres))
-                    ]),
-                performed(
-                    "abdominals-stretch-variation-one", "Abdominals Stretch Variation One",
-                    order: 2, target: "30 seconds",
-                    sets: [logged(0, reps: 0, seconds: 30), logged(1, reps: 0, seconds: 30)]),
-            ])
-        let plan = SnapshotPlan(
+        let block = fixtureRoutine(
             title: "Mixed block", goal: "Bench and conditioning", startDate: daysAgo(10),
-            weekCount: 1, completedAt: nil, catalogVersion: 5, weekdays: [.monday],
             durationMinutes: 75,
-            weeks: [SnapshotWeek(ordinal: 1, label: "", isDeload: false, days: [day])])
-        return fixtureSnapshot(plans: [plan])
+            weeks: [(label: nil, isDeload: false, days: [
+                fixtureDay(
+                    weekday: .monday, focus: "Push and conditioning", durationMinutes: 75,
+                    completedAt: daysAgo(2),
+                    exercises: [
+                        performed(
+                            "barbell-bench-press", "Barbell Bench Press", target: "5",
+                            sets: [
+                                logged(
+                                    0, reps: 5, load: Mass(value: 135, unit: .pounds),
+                                    warmup: true),
+                                logged(1, reps: 5, load: bar),
+                                logged(2, reps: 5, load: bar),
+                                logged(3, reps: 4, load: bar),
+                            ]),
+                        performed(
+                            "assault-bike", "Assault Bike", target: "40 minutes",
+                            sets: [
+                                logged(
+                                    0, reps: 0, seconds: 2400,
+                                    distance: Distance(value: 15, unit: .kilometres))
+                            ]),
+                        performed(
+                            "abdominals-stretch-variation-one",
+                            "Abdominals Stretch Variation One", target: "30 seconds",
+                            sets: [
+                                logged(0, reps: 0, seconds: 30),
+                                logged(1, reps: 0, seconds: 30),
+                            ]),
+                    ])
+            ])])
+        return fixtureSnapshot(blocks: [block])
     }
 
     private func volume() throws -> JSONValue {

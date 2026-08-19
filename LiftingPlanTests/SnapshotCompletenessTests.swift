@@ -19,7 +19,9 @@ struct SnapshotCompletenessTests {
 
     /// Three weeks of three training days, each with one exercise of three sets.
     private func block(in context: ModelContext) throws {
-        let plan = TrainingPlan(title: "Push Pull Legs", goal: "Hypertrophy", weekCount: 3)
+        let plan = TrainingPlan(
+            title: "Push Pull Legs", goal: "Hypertrophy", generatedAt: Date(),
+            weekCount: 3, catalogVersion: 5, sourceDocumentID: UUID())
         context.insert(plan)
         for ordinal in 1...3 {
             let week = TrainingWeek(ordinal: ordinal, label: "Week \(ordinal)")
@@ -48,9 +50,9 @@ struct SnapshotCompletenessTests {
         try block(in: context)
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 4)
-        let plan = try #require(snapshot.plans.first)
+        let plan = try #require(snapshot.firstDocument)
 
-        #expect(snapshot.plans.count == 1)
+        #expect(snapshot.routines.count == 1)
         #expect(plan.weeks.count == 3, "three weeks were prescribed")
         #expect(plan.weeks.allSatisfy { $0.days.count == 3 }, "three days in every week")
         #expect(plan.weeks.flatMap(\.days).count == 9, "nine sessions in all")
@@ -62,7 +64,7 @@ struct SnapshotCompletenessTests {
         try block(in: context)
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 4)
-        let days = try #require(snapshot.plans.first).weeks.flatMap(\.days)
+        let days = try #require(snapshot.firstDocument).weeks.flatMap(\.days)
 
         // Not just the count: a day that crossed with no exercises would read as
         // a rest day to Claude, which is a different block from the one written.
@@ -77,7 +79,9 @@ struct SnapshotCompletenessTests {
         // not one the snapshot quietly omits — the second reads as a shorter
         // block than he prescribed.
         let context = ModelContext(try StoreContainer.inMemory())
-        let plan = TrainingPlan(title: "Sparse", weekCount: 2)
+        let plan = TrainingPlan(
+            title: "Sparse", generatedAt: Date(), weekCount: 2, catalogVersion: 5,
+            sourceDocumentID: UUID())
         context.insert(plan)
         for ordinal in 1...2 {
             let week = TrainingWeek(ordinal: ordinal)
@@ -87,6 +91,6 @@ struct SnapshotCompletenessTests {
         try context.saveOrThrow()
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 4)
-        #expect(try #require(snapshot.plans.first).weeks.count == 2)
+        #expect(try #require(snapshot.firstDocument).weeks.count == 2)
     }
 }

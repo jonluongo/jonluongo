@@ -32,14 +32,23 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
     /// type exists to end.
     case laterVersion(Int, understood: Int)
 
-    /// A snapshot written by a phone this build cannot read.
+    /// A snapshot written in a format this build does not read — in either
+    /// direction.
     ///
-    /// The mirror of `laterVersion`, and it needs its own sentence because the
-    /// audience is the other way round: a plan is written by the coach and read
-    /// by the app, so its refusal tells the coach to write an older format. A
-    /// snapshot is written by the app and read by the server, and the only
-    /// thing the coach can do about it is rebuild the server.
-    case snapshotFromLaterBuild(Int, understood: Int)
+    /// **The snapshot is refused both ways, and the write formats are not.** A
+    /// plan and a profile update are archives: the coach wrote them, they are
+    /// the only copy, and an older one must go on being read forever. A snapshot
+    /// is a cache — the phone regenerates the whole thing whenever the record
+    /// changes — so an old one is not history, it is a stale file that will be
+    /// replaced the moment the app opens. Reading it half-way would report a
+    /// lifter who has trained less than he has, which is the one failure that
+    /// arrives looking like a fact.
+    ///
+    /// It carries its own sentence rather than reusing `laterVersion` because
+    /// the audience is the other way round: a plan's refusal tells the coach to
+    /// write an older format, and there is nothing he can do about a snapshot
+    /// except rebuild the server or open the app.
+    case snapshotVersionMismatch(Int, understood: Int)
 
     /// Two things the document says that cannot both be true, said in full.
     case contradiction(String)
@@ -69,12 +78,15 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
                 + "reads version \(understood). Nothing was taken in, because reading only the "
                 + "parts this build recognizes would silently discard the rest. Write version "
                 + "\(understood), or update the app."
-        case .snapshotFromLaterBuild(let stated, let understood):
+        case .snapshotVersionMismatch(let stated, let understood):
             "The training log on disk is written in snapshot format version \(stated), and "
                 + "this server reads version \(understood). Nothing was read, because taking "
                 + "in only the parts this build recognizes would report a lifter who has "
                 + "trained less than he has — which reads as a fact rather than as a failure. "
-                + "Rebuild the MCP server from the current source."
+                + (stated > understood
+                    ? "Rebuild the MCP server from the current source."
+                    : "The phone wrote it with an older build: open the app once and it will "
+                        + "write a current one.")
         case .contradiction(let detail):
             detail
         case .unreadableValue(let detail):

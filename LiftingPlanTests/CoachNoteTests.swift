@@ -111,7 +111,7 @@ struct CoachNoteTests {
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
 
-        #expect(snapshot.plans.first?.notes == Self.note)
+        #expect(snapshot.firstDocument?.notes == Self.note)
     }
 
     @Test("The note survives the snapshot's own encoding, under its own key")
@@ -123,7 +123,7 @@ struct CoachNoteTests {
         let decoded = try TrainingSnapshot.makeDecoder()
             .decode(TrainingSnapshot.self, from: data)
 
-        #expect(decoded.plans.first?.notes == Self.note)
+        #expect(decoded.firstDocument?.notes == Self.note)
         #expect(String(decoding: data, as: UTF8.self).contains("\"notes\""))
     }
 
@@ -133,7 +133,7 @@ struct CoachNoteTests {
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
 
-        #expect(snapshot.plans.first?.notes == nil)
+        #expect(snapshot.firstDocument?.notes == nil)
     }
 
     // MARK: - The block's name
@@ -145,7 +145,7 @@ struct CoachNoteTests {
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
 
         #expect(plan.title == "Autumn strength")
-        #expect(snapshot.plans.first?.title == "Autumn strength")
+        #expect(snapshot.firstDocument?.title == "Autumn strength")
     }
 
     @Test("A block the coach did not name has an empty title, never an invented one")
@@ -179,7 +179,9 @@ struct CoachNoteTests {
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
 
-        #expect(snapshot.plans.first?.generatedAt == Self.written)
-        #expect(snapshot.plans.first?.startDate == Self.arrived)
+        // When it was written is the document's own; when it arrived is the
+        // record's, and sits beside the document rather than inside it.
+        #expect(snapshot.firstDocument?.generatedAt == Self.written)
+        #expect(snapshot.routines.first?.startDate == Self.arrived)
     }
 }

@@ -17,32 +17,23 @@ struct TimedWorkTests {
     /// A block whose only movement is held for time: three sets of a
     /// thirty-second hold, two of them logged — one at 34 seconds and one at 28.
     private func heldSnapshot() -> TrainingSnapshot {
-        let exercise = SnapshotPlannedExercise(
-            exerciseID: Self.plank, displayName: "Push Up", order: 0, targetSets: 3,
-            repRange: "30 seconds", suggestedLoad: nil, restSeconds: 60,
-            tempo: nil, notes: nil,
-            prescribedSets: SetPrescription.everySet(
-                stated: [], count: 3, repRange: "30 seconds",
-                suggestedLoad: nil, intensity: nil),
-            loggedSets: [
-                SnapshotLoggedSet(
-                    setIndex: 0, load: nil, reps: 0, durationSeconds: 34,
-                    isCompleted: true, isWarmup: false, completedAt: daysAgo(2)),
-                SnapshotLoggedSet(
-                    setIndex: 1, load: nil, reps: 0, durationSeconds: 28,
-                    isCompleted: true, isWarmup: false, completedAt: daysAgo(2)),
-            ]
-        )
-        let plan = SnapshotPlan(
-            title: "Hold block", goal: "Trunk", startDate: daysAgo(10), weekCount: 1,
-            completedAt: nil, catalogVersion: 5, weekdays: [.monday], durationMinutes: nil,
-            weeks: [SnapshotWeek(
-                ordinal: 1, label: "", isDeload: false,
-                days: [SnapshotDay(
-                    weekday: .monday, focus: "Trunk", durationMinutes: nil,
-                    completedAt: daysAgo(2), exercises: [exercise])])]
-        )
-        return fixtureSnapshot(plans: [plan])
+        let block = fixtureRoutine(
+            title: "Hold block", goal: "Trunk", startDate: daysAgo(10),
+            weeks: [(label: nil, isDeload: false, days: [
+                fixtureDay(
+                    weekday: .monday, focus: "Trunk", completedAt: daysAgo(2),
+                    exercises: [
+                        FixtureExercise(
+                            exercise: PlanDocumentExercise(
+                                exerciseID: Self.plank, displayName: "Push Up", sets: 3,
+                                repRange: "30 seconds", restSeconds: 60),
+                            logged: [
+                                set(0, nil, 0, at: daysAgo(2), durationSeconds: 34),
+                                set(1, nil, 0, at: daysAgo(2), durationSeconds: 28),
+                            ])
+                    ])
+            ])])
+        return fixtureSnapshot(blocks: [block])
     }
 
     private func report(_ tool: String, _ arguments: JSONValue = [:]) throws -> JSONValue {

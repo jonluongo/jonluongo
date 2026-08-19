@@ -147,29 +147,31 @@ struct SessionIconWireTests {
 
     // MARK: - And back again
 
-    @Test("The snapshot carries the mark back under the same name")
+    @Test("The snapshot carries the mark back, in the document it was written in")
     func snapshotCarriesTheMark() throws {
-        let day = SnapshotDay(
-            weekday: .monday, focus: "Push", durationMinutes: 60,
-            completedAt: nil, icon: .strength, exercises: [])
+        // The mark travels back inside the plan document rather than in a
+        // restatement of it, which is the whole point of carrying the document:
+        // there is one place a session's mark is written, and it is the place
+        // the coach wrote it.
+        let document = PlanDocument(
+            id: UUID(), catalogVersion: 5, generatedAt: Self.instant, title: "Block",
+            days: [PlanDocumentDay(
+                weekday: .monday, focus: "Push", durationMinutes: 60, icon: .strength,
+                exercises: [])])
         let snapshot = TrainingSnapshot(
-            catalogVersion: 5, generatedAt: Self.instant, profile: nil,
-            bodyMetrics: [], baselines: [],
-            plans: [SnapshotPlan(
-                title: "Block", goal: "", notes: nil, startDate: Self.instant,
-                generatedAt: nil, weekCount: 1, completedAt: nil,
-                catalogVersion: 5, weekdays: [.monday], durationMinutes: 60,
-                weeks: [SnapshotWeek(ordinal: 1, label: "", isDeload: false, days: [day])])])
+            catalogVersion: 5, generatedAt: Self.instant,
+            routines: [SnapshotRoutine(document: document, startDate: Self.instant)])
 
         let data = try TrainingSnapshot.makeEncoder().encode(snapshot)
         let object = try #require(
             try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let plans = try #require(object["plans"] as? [[String: Any]])
-        let weeks = try #require(plans.first?["weeks"] as? [[String: Any]])
+        let routines = try #require(object["routines"] as? [[String: Any]])
+        let plan = try #require(routines.first?["document"] as? [String: Any])
+        let weeks = try #require(plan["weeks"] as? [[String: Any]])
         let days = try #require(weeks.first?["days"] as? [[String: Any]])
         #expect(days.first?["icon"] as? String == "strength")
 
         let read = try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
-        #expect(read.plans.first?.weeks.first?.days.first?.icon == .strength)
+        #expect(read.routines.first?.document.weeks.first?.days.first?.icon == .strength)
     }
 }

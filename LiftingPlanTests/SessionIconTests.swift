@@ -80,7 +80,7 @@ struct SessionIconTests {
             catalog: try ExerciseCatalog.bundled(), importedAt: Self.instant)
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
-        let day = try #require(snapshot.plans.first?.weeks.first?.days.first)
+        let day = try #require(snapshot.firstDay)
         #expect(day.icon == .strength)
     }
 
