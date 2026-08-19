@@ -78,4 +78,44 @@ struct RepPrescriptionTests {
         #expect(RepPrescription.seededReps(for: "5") == 5)
         #expect(previous.completedWorkingSets.map(\.reps) == [8, 8])
     }
+
+    // MARK: - The hint, without the unit the row already draws
+
+    @Test("A counted target is hinted exactly as the plan wrote it")
+    func countedFigureIsUntouched() {
+        // The `×` beside the field is all the unit a counted row has, so
+        // nothing is taken off.
+        #expect(RepPrescription.targetFigure(for: "8-12", measure: .repetitions) == "8-12")
+        #expect(RepPrescription.targetFigure(for: "AMRAP", measure: .repetitions) == "AMRAP")
+    }
+
+    @Test("A hold is hinted as its figure, because the row draws the seconds")
+    func heldFigureDropsTheUnit() {
+        // `45 seconds` in a field sized for three figures reads `45 sec…`, and
+        // says seconds twice over — the suffix beside it already does.
+        #expect(RepPrescription.targetFigure(for: "45 seconds", measure: .time) == "45")
+        #expect(RepPrescription.targetFigure(for: "30-45 seconds", measure: .time) == "30-45")
+    }
+
+    @Test("A clock is hinted as the seconds it means")
+    func clockBecomesSeconds() {
+        // Read through `WorkDuration` rather than by trimming words, so this
+        // cannot disagree with the reader that decided the row is a hold.
+        #expect(RepPrescription.targetFigure(for: "1:30", measure: .time) == "90")
+    }
+
+    @Test("A carry is hinted as its figure, in the unit it keeps")
+    func carriedFigureDropsTheUnit() {
+        #expect(RepPrescription.targetFigure(for: "40 metres", measure: .distance(.metres)) == "40")
+        #expect(RepPrescription.targetFigure(for: "20 yd", measure: .distance(.yards)) == "20")
+        #expect(RepPrescription.targetFigure(
+            for: "50-100 metres", measure: .distance(.metres)) == "50-100")
+    }
+
+    @Test("A prescription the readers cannot parse is hinted as written")
+    func unparsedFallsBackToTheWording() {
+        // Better the plan's own words than an empty hint.
+        #expect(RepPrescription.targetFigure(for: "as long as you can", measure: .time)
+            == "as long as you can")
+    }
 }

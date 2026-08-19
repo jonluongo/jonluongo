@@ -42,6 +42,41 @@ enum RepPrescription {
     static func targetText(for repRange: String?) -> String {
         (repRange ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    /// The same hint, with the unit taken off when the row already names it.
+    ///
+    /// A counted row shows the target as written — `"8-12"`, `"AMRAP"` — because
+    /// the `×` beside it is all the unit it has. A hold and a carry are
+    /// different: the row draws `s` or `m` after the field, so a placeholder
+    /// reading `45 seconds` says the unit twice and, in a field sized for three
+    /// figures, says it as `45 sec…`. The figure alone is the hint; the suffix
+    /// is the unit.
+    ///
+    /// Read through `WorkDuration` and `WorkDistance` rather than by trimming
+    /// words off the string, so `"1:30"` becomes `90` and `"30-45 seconds"`
+    /// becomes `30-45` — and so this cannot disagree with the readers that
+    /// decided what the row records in the first place. A prescription those
+    /// readers cannot parse falls back to what the plan wrote, which is still
+    /// better than nothing.
+    static func targetFigure(for repRange: String?, measure: WorkMeasure) -> String {
+        let written = targetText(for: repRange)
+        switch measure {
+        case .repetitions:
+            return written
+        case .time:
+            let held = WorkDuration(written)
+            guard !held.isEmpty else { return written }
+            return held.lowerSeconds == held.upperSeconds
+                ? "\(held.lowerSeconds)"
+                : "\(held.lowerSeconds)-\(held.upperSeconds)"
+        case .distance:
+            let carried = WorkDistance(written)
+            guard !carried.isEmpty else { return written }
+            return carried.lowerValue == carried.upperValue
+                ? carried.lowerValue.compactString
+                : "\(carried.lowerValue.compactString)-\(carried.upperValue.compactString)"
+        }
+    }
 }
 
 /// What a prescribed hold puts into a set the app creates, and which of the two

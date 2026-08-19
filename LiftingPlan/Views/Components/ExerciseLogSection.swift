@@ -71,7 +71,8 @@ struct ExerciseLogSection: View {
                 SetRowView(
                     set: set,
                     identity: set.isWarmup ? .warmup : .working(number),
-                    repTargetText: RepPrescription.targetText(for: prescribed?.repRange),
+                    repTargetText: RepPrescription.targetFigure(
+                        for: prescribed?.repRange, measure: reading.measure),
                     loadTargetText: loadPlaceholder(prescribed, number: number, set: set),
                     prescriptionDetail: PrescriptionSummary.detail(for: prescribed, in: exercise),
                     measure: reading.measure,
