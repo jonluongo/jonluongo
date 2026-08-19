@@ -28,7 +28,10 @@ final class RestTimerModel {
     /// The rest length the current countdown started from, for the progress ring.
     private(set) var total: Int = 0
     private(set) var isRunning = false
-    /// Label of what the lifter just finished, shown under the timer.
+    /// What the lifter just finished, carried into the screen-locked cue —
+    /// `Next up: Barbell Bench Press` — so the one moment he is not looking at
+    /// the bar is the one moment he is told. The bar itself does not draw it:
+    /// there is no room beside the controls, and on screen he already knows.
     private(set) var contextLabel: String = ""
     /// Why the screen-locked cue cannot fire, ready to show. `nil` when it can,
     /// or when nothing has been attempted yet.

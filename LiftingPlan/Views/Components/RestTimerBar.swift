@@ -58,23 +58,19 @@ struct RestTimerBar: View {
                 font: .supersetSupport
             )
 
-            // The text takes the room the controls do not, rather than a
-            // `Spacer` taking it first. With one, the movement's name truncated
-            // to `Barbell B…` while blank space sat immediately to its right:
-            // an `HStack` hands flexible width to a `Spacer` before it hands it
-            // to a `Text`, so the one thing on the bar that names what is being
-            // rested from was the one thing squeezed.
-            VStack(alignment: .leading, spacing: Spacing.tight) {
-                Text("Resting")
-                    .font(.supersetTitle)
-                if !restTimer.contextLabel.isEmpty {
-                    Text(restTimer.contextLabel)
-                        .font(.supersetSupport)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            // **The movement is not named here.** The ring, `−15`, `+15` and
+            // skip take most of the bar, so the name arrived as
+            // `Barbell Benc…` — a label naming nothing, in the one place the
+            // lifter already knows the answer, because he ticked the set a
+            // second ago. Inside a group it would be worse than useless: the
+            // rest belongs to the round, not to whichever movement closed it.
+            //
+            // It is still carried by the notification, which is the case where
+            // he is *not* looking at this screen and the name is the whole
+            // point — `Next up: Barbell Bench Press`.
+            Text("Resting")
+                .font(.supersetTitle)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             Button("−15") { restTimer.addTime(-15) }
                 .buttonStyle(.bordered)
