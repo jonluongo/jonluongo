@@ -48,7 +48,7 @@ struct TimerRing: View {
                     // Running is the app pointing at something; ready is not,
                     // and a second hue for it would be the only other colour on
                     // the screen saying nothing the word beneath it does not.
-                    isRunning ? Palette.accent : Palette.muted,
+                    isRunning ? Palette.ink : Palette.muted,
                     style: StrokeStyle(lineWidth: lineWidth * textScale, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))

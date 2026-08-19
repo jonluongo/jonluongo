@@ -154,7 +154,7 @@ struct SetRowView: View {
             } label: {
                 Text(identity.badge)
                     .font(.supersetSupport)
-                    .foregroundStyle(set.isWarmup ? Palette.accent : Palette.ink)
+                    .foregroundStyle(set.isWarmup ? Palette.muted : Palette.ink)
                     .frame(
                         width: SetTableMetrics.setColumnWidth,
                         height: SetTableMetrics.controlHeight

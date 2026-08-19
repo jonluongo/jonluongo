@@ -47,7 +47,7 @@ struct CardHeaderRow<Trailing: View>: View {
                         .textCase(.uppercase)
                 }
                 .font(.supersetLabel)
-                .foregroundStyle(Palette.accent)
+                .foregroundStyle(Palette.ink)
             }
             HStack(spacing: Spacing.standard) {
                 VStack(alignment: .leading, spacing: Spacing.tight) {

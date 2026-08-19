@@ -27,7 +27,7 @@ struct ProgressRule: View {
             let filled = proxy.size.width * min(max(fraction, 0), 1)
             ZStack(alignment: .leading) {
                 Capsule().fill(Palette.rule)
-                Capsule().fill(Palette.accent).frame(width: filled)
+                Capsule().fill(Palette.ink).frame(width: filled)
             }
         }
         .frame(height: ProgressMetrics.height)

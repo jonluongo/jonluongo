@@ -37,7 +37,11 @@ struct RecordedMark: View {
                     if isRecorded {
                         Image(systemName: "checkmark")
                             .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(Palette.panel)
+                            // Ink on the highlighter, not the panel's white: the
+                            // fill is lighter than the panel in dark appearance
+                            // and near enough it in light, so a white tick would
+                            // be a tick nobody can read either way.
+                            .foregroundStyle(Palette.onAccent)
                     }
                 }
         }

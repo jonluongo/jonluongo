@@ -54,7 +54,7 @@ struct PrimaryActionButton: View {
                 .padding(.vertical, Spacing.tight)
         }
         .buttonStyle(.borderedProminent)
-        .tint(isMuted ? Palette.muted : Palette.accentFill)
+        .tint(isMuted ? Palette.muted : Palette.accent)
         // The floor, not the height: the style's own padding already clears
         // 44pt at ordinary text sizes, and this catches the case where it
         // would not.

@@ -30,21 +30,28 @@ import UIKit
 /// training decisions, states only what was prescribed and what was performed,
 /// and refuses to invent a figure.
 ///
-/// **One colour, and it is a highlighter.** `#DCFF5C` is the theme, and the
-/// whole palette is built under it: the neutrals carry a whisper of its hue —
-/// two or three per cent, enough that the greys and the accent read as one
-/// object rather than a grey app with a sticker on it — and every other colour
-/// was removed. The green that used to mean *recorded* is gone: a training log
-/// is a thing you mark off, and the mark is the same colour whether it says
-/// *this is done* or *this is what to press*. Two hues meant the screen had to
-/// be read twice.
+/// **One colour, and it is a highlighter.** `#DCFF5C` is the theme. The green
+/// that used to mean *recorded* is gone: a training log is a thing you mark off,
+/// and the mark is the same colour whether it says *this is done* or *this is
+/// what to press*.
 ///
-/// **It appears at two strengths, because a highlighter cannot be ink.**
-/// `#DCFF5C` is a fill: pure, it is brighter than white paper and no thin stroke
-/// of it survives on a light screen. So `accent` is the mark — deepened in light
-/// appearance to the same hue seen dark, unchanged in dark, where it is already
-/// perfect — and `accentFill` is the one bright surface on a screen, carrying
-/// `onAccent` on top of it. A screen gets one of those, at most.
+/// **The neutrals are clean, and that is the whole trick.** Tinting them toward
+/// the theme was tried — two or three per cent, on the reasoning that the greys
+/// and the accent should read as one object — and at this hue two per cent of
+/// yellow-green is the difference between a grey and a dirty one. Every surface
+/// went khaki and the app looked ill. A highlighter reads as a highlighter
+/// because the paper under it is white; the neutrals here are neutral, and the
+/// one colour does all the work of being colour.
+///
+/// **It is a fill and never a line.** `#DCFF5C` is lighter than white paper, so
+/// no stroke or word of it survives on a light screen. Deepening it for light
+/// appearance was the other half of the same mistake: carried dark enough to
+/// read, this hue is army olive, which is not the theme by any description. So
+/// the theme appears only as a filled shape with `onAccent` on top — the button
+/// that is the thing to press, the box that says a set happened, the wash under
+/// a session already trained — and everything that has to be a line or a word is
+/// `ink` or `muted`. There is no light-mode variant, because there is nothing
+/// for one to do.
 ///
 /// **How it is used.** `Palette.ink`, `Palette.rule`, and so on. Each resolves
 /// against the trait collection, so dark mode is the same seven jobs in darker
@@ -55,43 +62,37 @@ import UIKit
 /// because the system draws it in places this app does not control.
 enum Palette {
 
-    /// Behind everything. Neutral, with the theme's hue at a couple of per
-    /// cent — enough to keep it from going blue beside the accent, not enough
-    /// for anyone to call it green.
-    static let surface = dynamic(light: 0xF3F4EE, dark: 0x0E0F0B)
+    /// Behind everything. A clean neutral, carrying none of the theme's hue.
+    static let surface = dynamic(light: 0xF1F1F3, dark: 0x0B0B0D)
 
     /// The ground a table of sets is written on.
-    static let panel = dynamic(light: 0xFFFFFF, dark: 0x171912)
+    static let panel = dynamic(light: 0xFFFFFF, dark: 0x161618)
 
     /// Hairlines. The instrument's ruling — it separates columns and rows
     /// without boxing them, which is what a card does.
-    static let rule = dynamic(light: 0xDCDDD4, dark: 0x2B2D24)
+    static let rule = dynamic(light: 0xE3E3E7, dark: 0x2B2B30)
 
-    /// Text and, above all, numbers.
-    static let ink = dynamic(light: 0x15170F, dark: 0xF2F3EA)
+    /// Text and, above all, numbers. It is also every line and every word this
+    /// app draws in something other than grey: the rule down a superset, the
+    /// filled part of a progress track, the eyebrow over a paired movement. The
+    /// theme cannot do that job — see below — and a second hue invented to do it
+    /// would be the app having two colours again.
+    static let ink = dynamic(light: 0x0F0F11, dark: 0xF4F4F6)
 
     /// Anything qualifying something else: column names, units, the last
-    /// session's figures.
-    static let muted = dynamic(light: 0x6C6F62, dark: 0x8C8F80)
+    /// session's figures, and the glyphs that open a menu.
+    static let muted = dynamic(light: 0x6B6B73, dark: 0x8B8B93)
 
-    /// The theme as a **mark**: a rule, a stroke, a ticked box, a word of
-    /// eyebrow type.
+    /// The theme, at full strength, in both appearances — a fill and never a
+    /// line. `onAccent` is what sits on it.
     ///
-    /// Deepened in light appearance and left alone in dark. `#DCFF5C` on white
-    /// is a highlighter on paper — it works as a wash under something and
-    /// disappears as a line, so a light-mode mark is the same hue carried to a
-    /// depth that survives on white. In dark it needs no help.
-    static let accent = dynamic(light: 0x5F7600, dark: 0xDCFF5C)
+    /// The same value light and dark, because a highlighter is a highlighter; it
+    /// is the paper around it that changes. A screen gets one of these at most,
+    /// plus whatever is already in the record.
+    static let accent = fixed(0xDCFF5C)
 
-    /// The theme at full strength, as a **surface**: the one bright thing on a
-    /// screen, and never more than one. `onAccent` is what sits on it.
-    ///
-    /// The same value in both appearances, because a highlighter is a
-    /// highlighter — it is the paper around it that changes.
-    static let accentFill = fixed(0xDCFF5C)
-
-    /// What is written on `accentFill`. Near-black in both appearances, since
-    /// the fill is lighter than white in one and than the panel in the other.
+    /// What is written on `accent`. Near-black in both appearances, since the
+    /// fill is lighter than white in one and than the panel in the other.
     static let onAccent = fixed(0x14150F)
 
     /// The ground a panel is written on once what it holds is in the record.
@@ -101,18 +102,29 @@ enum Palette {
     /// panel carries it now, so a logged session is legible before anything on
     /// it is read. Thin rather than saturated: a session already trained is an
     /// ordinary thing to open and correct, not a prize.
-    static let recordedPanel = dynamic(light: 0xF4FADC, dark: 0x1D2312)
+    static let recordedPanel = dynamic(light: 0xF7FFDD, dark: 0x1F2610)
 
     /// The line around a panel.
     ///
-    /// **A shadow is a lift; an edge is a shape.** Six points of blur says the
-    /// panel is off the ground and says nothing about where it stops, so the
-    /// corner arrived as a gradient and the panels read soft. A hairline is what
-    /// makes the edge an edge — and in dark appearance, where a black shadow on
-    /// a near-black ground is invisible at any opacity worth drawing, it is the
-    /// only thing separating the panel from the surface at all.
+    /// **A shadow is a lift; an edge is a shape, and a panel wants both.** Six
+    /// points of blur says the panel is off the ground and says nothing about
+    /// where it stops, so the corner arrived as a gradient and the panels read
+    /// soft. The hairline is what makes the edge an edge. In dark appearance,
+    /// where a black shadow on a near-black ground is invisible at any opacity
+    /// worth drawing, it is the only thing separating the panel from the surface
+    /// at all.
     static let panelEdge = dynamicAlpha(
-        light: 0x000000, lightAlpha: 0.09, dark: 0xFFFFFF, darkAlpha: 0.07)
+        light: 0x000000, lightAlpha: 0.10, dark: 0xFFFFFF, darkAlpha: 0.07)
+
+    /// What a panel casts on the surface behind it.
+    ///
+    /// **Light only, and sharp.** Twelve points of blur at a four-point drop
+    /// spread far enough that the panel had no edge; six at two puts the darkest
+    /// part right against its underside. In dark the panel's own lighter fill
+    /// and the edge do the separating, and a black blur on a near-black ground
+    /// would be drawn to no effect.
+    static let panelShadow = dynamicAlpha(
+        light: 0x0A0C10, lightAlpha: 0.10, dark: 0x000000, darkAlpha: 0)
 
     /// The width of a hairline.
     ///
@@ -450,6 +462,11 @@ enum PanelMetrics {
     /// at the very bottom of it, so without this the last rule in a table lands
     /// against the panel's edge while the title above breathes.
     static let closing: CGFloat = Spacing.standard
+
+    /// How far a panel's shadow spreads, and how far it falls. Sharp and close:
+    /// the darkest part of the blur belongs against the panel's underside.
+    static let shadowRadius: CGFloat = 6
+    static let shadowY: CGFloat = 2
 
     /// What surrounds Claude's note about an exercise, which closes the panel.
     ///

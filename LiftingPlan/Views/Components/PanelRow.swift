@@ -180,7 +180,7 @@ extension View {
                 // are performed together and rested after as one.
                 if paired {
                     Rectangle()
-                        .fill(Palette.accent)
+                        .fill(Palette.ink)
                         .frame(width: PanelMetrics.pairing)
                 }
             }
@@ -202,18 +202,22 @@ extension View {
             // What keeps the extended ends of that shape off the neighbouring
             // rows.
             .clipped()
-            // **No panel casts a shadow, because not every panel can.** A
-            // `List` gives each row its own layer, so a blur cast by a row in
-            // the middle of a set table lands on its neighbours rather than
-            // behind them — and casting it instead from the panel's own
-            // extended shape, which is what the edge is drawn from, paints that
-            // shape's fill over the rows above and below. Rendered, the table
-            // came out as three white slabs stacked over each other.
+            // **A panel of one row casts a shadow; a table of sets does not.**
+            // A `List` gives every row its own layer, so a blur cast by an
+            // interior row lands on its neighbours rather than behind them, and
+            // casting it instead from the panel's own extended shape — the
+            // geometry the edge is drawn from — paints that shape's fill over
+            // the rows above and below. Rendered, the set table came out as
+            // three white slabs stacked over each other. There is no way to lift
+            // a panel drawn by its rows without leaving `List`.
             //
-            // So the edge carries it alone, which is what was missing when the
-            // panels read soft: a blur says a panel is off the ground and says
-            // nothing about where it stops. Every panel is drawn the same way
-            // now — one fill, one hairline, one radius — which is the point.
+            // So the panels being chosen from are lifted, the tables are not,
+            // and the hairline is what every panel has in common: a shadow says
+            // a panel is off the ground and says nothing about where it stops.
+            .shadow(
+                color: position == .only && !recessed ? Palette.panelShadow : .clear,
+                radius: PanelMetrics.shadowRadius,
+                y: PanelMetrics.shadowY)
             .padding(.horizontal, PanelMetrics.inset)
             // The gap between one panel and the next, taken off the background
             // rather than added to the row. Adding it to the row's insets — the
