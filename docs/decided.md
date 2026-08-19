@@ -28,7 +28,12 @@ but say so, rather than quietly re-adding the thing.
 | No calendar, and no date on anything he is training | `PlanImporter` takes the start date from when the file arrived, so a date on the block he is *on* would be dressing an arrival up as a plan. A block behind him is dated — that is the honest thing to say about a block there is nothing left to do in — and the block he is training says which week he is on instead. |
 | Sessions are trained in the block's order, and the record says when | Removes the question of what happens when Tuesday's session is trained on Wednesday. |
 | Finish greys and asks while sets are unticked, but is never disabled | Whether he is finished is his to say. Refusing to record three good sets because the plan wrote four would be the app deciding. |
-| The session clock runs from the first ticked set to the last | Both ends are facts the record already holds, so it survives closing, backgrounding and syncing with nothing new stored — and it does not run overnight on a session left open. It states hours when there are hours. |
+| The session clock counts live from the first ticked set and stops at Finish | The start is a fact the record holds, so it survives closing, backgrounding and syncing with nothing new stored. It states hours in `h:mm:ss` when there are hours. **Freezing it at the last ticked set instead was tried and reversed** — see below. |
+| Every panel that opens something draws `DisclosureChevron` | The app's mark, not the presentation's: a `NavigationLink` gets one from the system and a `Button` presenting a sheet does not, which is how two lists one screen apart came to speak differently. |
+| A panel that acts as a button is tappable across the whole panel | The band between the content's inset and the panel's edge is painted by the row's background; without `fillsPanel` it is dead, and a panel that looks like a button and ignores a third of itself is worse than one that looks inert. |
+| A logged session tints its whole panel | `Palette.recordedPanel`, with the check kept beside it. A 24pt mark alone made a list of sessions read as identical panels with a small green square somewhere on the right. Colour never carries it alone. |
+| A block states how far through it is, as a rule under the line | `ProgressRule` draws the fraction the words already give — `3 of 12 logged` — and adds no target, no pace and no verdict on whether that is enough by now, because that is a training judgement. A block prescribing nothing draws no track rather than an empty one. |
+| Blocks are never tinted by completion | `completedAt` on a block means a later plan superseded it, not that he finished it. Green there would claim what the record cannot know. |
 | An icon names an action a word will not fit, or marks a state that varies — nothing else | And a varying icon varies along **one axis**. SF Symbols only; see *Standards* in `CLAUDE.md`. |
 | The app is called Superset; the bundle id and iCloud container are not | `com.jonluongo.LiftingPlan` and `iCloud.com.jonluongo.LiftingPlan` stay. Renaming either makes this a different app to iOS, with an empty store and no way back to what is on the phone. `AppIdentityTests` guards all three. |
 | Every number lives in `Style.swift` | A number written in a view is a number nobody chose. |
@@ -58,7 +63,12 @@ but say so, rather than quietly re-adding the thing.
 | `Current` and `Earlier` headings on the blocks list | They named a standing the order already gives. What distinguishes the blocks is what the rows *say*: the one being trained reports where he is in it, a block behind him reports when it ran. |
 | A dumbbell for the open block, a calendar for a closed one | Not two values of one thing — two subjects in one slot, so the change from one to the other read as noise rather than as information. Both went, and `IconCircleRow` with them. |
 | Section *headers* | A plain `List` pins them: a week's name sat frozen over the days of a different week, claiming to describe what was passing beneath it. `SectionHeading` is the first row of its section. |
-| A day row of name, count, minutes and two movement names | Three lines of grey wrapping unevenly, with the mark floating against the middle of them. The count said in a figure what the names say concretely. Name and mark on one line, movements on one line under them, truncated at the edge. |
+| A day row of name, count, minutes and movement names | It began as three lines of grey wrapping unevenly with the mark floating against the middle of them; the count went first, and then the movements too — they crowded the check and the chevron and truncated before finishing the second name. The row is the session's name and its two marks. What is in it is one tap away, in full. |
+| Removing the chevron to make the two lists agree | The right instinct, the wrong direction — Jon: *"No i want the chevron just make it consistent."* Both rows draw one now. Consistency by addition where the mark is doing a job. |
+| Freezing the session clock at the last ticked set | It fixed a session left open overnight reading `1429:59` and broke every ordinary session: the figure moved only when a set was ticked, which is a clock reporting the past rather than one you can train against. Live until Finish; the overnight case is answered by finishing. |
+| The rest-timer master switch | A single toggle silencing every countdown was the coarse version of a choice that already exists per exercise, on the exercise it is about — and it was the last preference on a page whose premise is that the app asks nothing. Removed whole: the toggle, the stored flag, its defaults key, and the argument threaded through `LifterRest` and the rest sheet. |
+| The movement's name on the rest bar | `Barbell Bench Press` arrived as `Barbell Benc…` beside the ring and three controls — a label naming nothing, in the one place the lifter already knows the answer. It is still carried by the screen-locked notification, where he is *not* looking at the bar and the name is the whole point. |
+| A model logo per block | Asked for and deferred by Jon: nothing records which model wrote a plan, `write_plan` carries no author, and every block so far was written by Claude — so the mark would be identical on all of them, which is the rule that removed the last two glyphs. Revisit when a second model has written one, as an `author` field rather than as bundled brand art. |
 | `GroupRounds` and the interleaved round table | A group is drawn as its movements, so the notation, the per-row prescription, the round a row belongs to and the warm-ups outside the rounds had no reader. One line survived — whether a round just closed, which starts the group's rest — and it lives on `ExerciseGroup`. |
 | A right-aligned value that wraps | `Add size to my chest and back without losing / the squat`, the tail stranded against the right edge. `FactRow` offers the one-line arrangement first and the wrapping one when it does not fit. |
 
@@ -94,7 +104,9 @@ not the assistant's, and re-opening them is churn.
 | Where the `SUPERSET` label sits | Above the movement's name, on its own line, with the `⋯` on the title line as on every other card. |
 | A long fact that wraps | Wraps left-aligned under the label; short values stay right-aligned, so the column of figures still reads down the page. |
 | What replaces the blocks list's headings | Nothing — the rows say where he is instead. |
-| What a session clock does overnight | Stops at the last ticked set. It advances as sets are ticked rather than by the clock on the wall. |
+| What a session clock does overnight | Stops at the last ticked set. **Reversed the next day**, on seeing it in use: it must tick, and Finish is what stops it. The answer to a stale session is to finish it. |
+| Whether the rest bar names the movement | No. There is no room beside the ring and three controls, and he already knows what he just ticked. |
+| What replaces the check on a completed session | The panel's own ground, tinted. Jon: *"the check mark icons not enough… maybe we make them green or something."* |
 
 **A block's `completedAt` is not renamed, because no reader sees it.** The field
 records that a later plan superseded the block — nothing in the app lets a lifter
@@ -119,6 +131,17 @@ overruled far more often than not.
 What follows from it: fix what is broken freely, and stop and ask on anything
 that is merely a defensible taste call. Two designs that both work is his choice,
 not a gap to fill.
+
+**The pattern held again, twice in a day, and both times on a call made from the
+better argument rather than from use.** The chevron was removed because a mark
+identical on every row distinguishes nothing — true, and wrong, because the mark
+was doing the other job the rule allows: naming an action. The clock was frozen
+at the last ticked set because that is the only span the record can vouch for —
+true, and wrong, because a clock that moves only when you tick is not a clock you
+can train against. Both were reversed by Jon within a day. The lesson is narrower
+than "ask more": **a rule about what a thing means is not evidence about what it
+does.** Where the argument is about use, the render is not enough — the answer is
+in using it, which he does and this session does not.
 
 The second pattern, four times over: **a change made where the assistant was
 looking and not where its siblings were** — panel insets applied to two callers
