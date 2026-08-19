@@ -41,6 +41,36 @@ reading `Store/`:
 The wire keys follow the store rather than the vocabulary for the same reason: a
 `weeks` key that Claude already writes is not worth a format version to rename.
 
+## Held open — finish the rename
+
+Two pieces of the routine/block rename are deliberately unfinished. They are not
+forgotten and they are not settled; they are waiting on a condition.
+
+**1. The two `@Model` class names.** `TrainingPlan` should be `Routine` and
+`TrainingWeek` should be `Block`. SwiftData derives the CloudKit record type from
+the entity name, so renaming either leaves every set already synced under a
+record type the app no longer asks for: the store opens empty with the data
+still in the container, and no error is raised.
+
+*What it needs:* a `VersionedSchema` for the current shape, a second for the
+renamed one, a `SchemaMigrationPlan` with a stage that carries the rows across,
+and a test that opens a store written under the old schema and finds the logged
+sets intact. **Verify against the real phone, not a fixture** — the failure mode
+is CloudKit's, and an in-memory container cannot show it.
+
+**2. The `weeks` key in `plan.json` and `snapshot.json`.** Under the vocabulary
+it should be `blocks`. Both formats are versioned, so the mechanism exists:
+bump `PlanDocument.currentVersion`, accept `weeks` from any earlier version and
+`blocks` from the new one, and refuse a newer version whole as both readers
+already do.
+
+*What it needs:* the version bump, the reader's two-key path, wire tests for
+both spellings, and the MCP schema and tool description updated in the same
+commit — Claude writes that key, so the server and the phone must not disagree
+about it for even one build.
+
+*Do them in that order.* The store rename is the one with data behind it.
+
 ## Settled
 
 | Decision | Why |

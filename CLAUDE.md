@@ -132,6 +132,12 @@ It is reference material for Claude — sensible splits, typical rest by role �
 not rules the app applies. It is data about training, not a decision the app
 makes.
 
+**Two renames are held open, and `docs/decided.md` opens with them.** The store's
+`@Model` names and the `weeks` key on the wire still use the old vocabulary, each
+for a stated reason and each with the work it needs written down. They are held,
+not forgotten — read that section before concluding the rename is done or that
+the old names are an oversight.
+
 `docs/decided.md` records what is settled and what was tried and killed, with the
 reason for each. **Read it before proposing anything on it.** A long session gets
 compacted and the reasoning goes first, so the predictable failure is not
