@@ -374,4 +374,16 @@ enum PanelMetrics {
     /// at the very bottom of it, so without this the last rule in a table lands
     /// against the panel's edge while the title above breathes.
     static let closing: CGFloat = Spacing.standard
+
+    /// What a row that *is* a button pads itself by, having been given the
+    /// panel's whole area to be tappable in.
+    ///
+    /// It is the sum of what the panel and the row used to contribute
+    /// separately — the panel's `closing`, the row's own inset above and below,
+    /// and the panel's step in from its own edge on each side — so a tappable
+    /// row is the same size as the row it replaced while reaching the panel's
+    /// edges.
+    static let buttonInsets = EdgeInsets(
+        top: closing + Spacing.standard, leading: Spacing.standard,
+        bottom: closing + Spacing.standard, trailing: Spacing.standard)
 }

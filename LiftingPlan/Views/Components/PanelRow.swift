@@ -52,19 +52,34 @@ extension View {
     /// occupies. Pair it with `.listRowInsets` so the row's content sits inside
     /// the inset the background draws to, and use it in a `.plain` list — an
     /// inset-grouped one would draw its own panel underneath this one.
+    ///
+    /// **`fillsPanel` is for a row that is a button.** The row's content is
+    /// normally inset from the panel's edge, which leaves a band of panel that
+    /// is drawn but not tappable — so tapping a session near its edge did
+    /// nothing, and the panel looked like a button that sometimes ignored you.
+    /// With it, the content is handed the panel's whole area and pads itself by
+    /// `PanelMetrics.buttonInsets`, which is the same room by a different owner.
     func panelRow(
         _ position: PanelPosition, insets: EdgeInsets = PanelMetrics.rowInsets,
-        paired: Bool = false
+        paired: Bool = false, fillsPanel: Bool = false
     ) -> some View {
         // A panel's outer edges get more room than its inner rows, which is what
         // separates one panel from the next. Without it two panels sat flush and
         // read as a single surface with a seam across it.
-        var spaced = insets
+        var spaced = fillsPanel
+            ? EdgeInsets(
+                top: 0, leading: PanelMetrics.inset,
+                bottom: 0, trailing: PanelMetrics.inset)
+            : insets
+        // The gap between panels is the row's, the room inside the panel is the
+        // content's — except when the content fills the panel, where the inside
+        // room is its own padding instead.
+        let closing = fillsPanel ? 0 : PanelMetrics.closing
         if position == .first || position == .only {
-            spaced.top += PanelMetrics.edge + PanelMetrics.closing
+            spaced.top += PanelMetrics.edge + closing
         }
         if position == .last || position == .only {
-            spaced.bottom += PanelMetrics.edge + PanelMetrics.closing
+            spaced.bottom += PanelMetrics.edge + closing
         }
         let shape = UnevenRoundedRectangle(
             topLeadingRadius: position.topRadius,
