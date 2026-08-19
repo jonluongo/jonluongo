@@ -140,6 +140,20 @@ what the field holds, which is where the risk actually was: the next person to
 need "did he finish it" would have found a plausible answer waiting. The real
 answer is the sessions, week by week, and they are already in the document.
 
+**The write half of the loop was re-proven on 2026-08-19, with marks and groups.**
+Not by reading the code: the release binary was driven over stdio with a real
+`write_plan` — two days, a per-exercise note, a group of two, and a mark on each
+day — and the file it wrote was read back off disk. It carries `"icon":
+"strength"` and `"icon": "intervals"`, the group as a group rather than as two
+loose exercises, and the note. The same call with `"icon": "deadlift"` failed
+with the name and the list of the ten it will take, and wrote nothing. An
+`exerciseID` the catalog does not have fails the same way, which is how the first
+run of this probe failed — my invented IDs, not the app's.
+
+Worth knowing where the file lands, since it cost a wrong turn: `--documents` *is*
+the Documents folder. The server writes `<that path>/plan.json`, not
+`<that path>/Documents/plan.json`.
+
 ## Calibration
 
 Across a long day of building this, one pattern held without exception: **the
