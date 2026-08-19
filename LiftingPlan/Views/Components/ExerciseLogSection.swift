@@ -100,14 +100,29 @@ struct ExerciseLogSection: View {
             // places. At the foot it is additive: everything above it is where
             // it always is, and the note is simply there or not.
             if let notes = exercise.notes, !notes.isEmpty {
-                Text(notes)
-                    .font(.supersetSupport)
-                    .foregroundStyle(Palette.muted)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, PanelMetrics.edge)
-                    .padding(.top, Spacing.standard)
+                note(notes, isLifters: false)
+            }
+            // **His own, under the coach's, and in his own ink.** The two say
+            // different things — the coach's is extra detail on the work, and
+            // this is what happened while doing it — so they are two lines
+            // rather than one, and the darker of them is the one he wrote.
+            if let mine = exercise.lifterNote, !mine.isEmpty {
+                note(mine, isLifters: true)
             }
         }
+    }
+
+    /// A line at the foot of the panel: the coach's in support grey, the
+    /// lifter's in ink. Neither is labelled — a note in a training log is
+    /// either the plan's or his, and the one he typed is the one that reads
+    /// like him.
+    private func note(_ text: String, isLifters: Bool) -> some View {
+        Text(text)
+            .font(.supersetSupport)
+            .foregroundStyle(isLifters ? Palette.ink : Palette.muted)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, PanelMetrics.edge)
+            .padding(.top, Spacing.standard)
     }
 
     /// What an empty weight field shows: the load the plan prescribed, and

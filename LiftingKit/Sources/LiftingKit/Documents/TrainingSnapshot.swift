@@ -58,6 +58,9 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// week, the day and the movement it answers to, so what was prescribed for
     /// it is a lookup into that block's document rather than a copy beside it.
     public let log: [LoggedSetRecord]
+    /// What the lifter wrote about performing a movement, in his own words.
+    /// Empty when he has written nothing, which is nearly always.
+    public let lifterNotes: [LifterNote]
 
     public init(
         version: Int = TrainingSnapshot.currentVersion,
@@ -67,7 +70,8 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
         bodyMetrics: [SnapshotBodyMetric] = [],
         baselines: [SnapshotBaseline] = [],
         routines: [SnapshotRoutine] = [],
-        log: [LoggedSetRecord] = []
+        log: [LoggedSetRecord] = [],
+        lifterNotes: [LifterNote] = []
     ) {
         self.version = version
         self.catalogVersion = catalogVersion
@@ -77,6 +81,7 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
         self.baselines = baselines
         self.routines = routines
         self.log = log
+        self.lifterNotes = lifterNotes
     }
 
     /// Decoding tolerates an absent section, so a snapshot from a lifter with
@@ -112,6 +117,8 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
             [SnapshotBaseline].self, forKey: .baselines) ?? []
         routines = try container.decodeIfPresent([SnapshotRoutine].self, forKey: .routines) ?? []
         log = try container.decodeIfPresent([LoggedSetRecord].self, forKey: .log) ?? []
+        lifterNotes = try container.decodeIfPresent(
+            [LifterNote].self, forKey: .lifterNotes) ?? []
     }
 
     /// The encoder both clients use. ISO 8601 dates and sorted keys, so a

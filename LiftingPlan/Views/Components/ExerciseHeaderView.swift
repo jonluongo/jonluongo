@@ -54,6 +54,8 @@ struct ExerciseHeaderView: View {
     /// Records a set past the ones prescribed — the fifth he actually did.
     var onAddSet: () -> Void
     var onAddWarmup: () -> Void
+    /// Opens the lifter's own note about performing this movement today.
+    var onWriteNote: () -> Void
     /// Whether this movement is performed as part of a superset, which names it
     /// above the prescription and draws the rule down the panel's edge.
     var paired: Bool = false
@@ -91,6 +93,15 @@ struct ExerciseHeaderView: View {
                 }
                 Button { onEditRest() } label: {
                     Label("Rest Timer", systemImage: "timer")
+                }
+                // His own words about performing it, which the record keeps and
+                // the coach reads. Named for what he does rather than for what
+                // it is: *note* is what the coach's is called too, and only one
+                // of the two is his to write.
+                Button { onWriteNote() } label: {
+                    Label(
+                        exercise.lifterNote?.isEmpty == false ? "Edit My Note" : "Add My Note",
+                        systemImage: "square.and.pencil")
                 }
                 // Warm-up first, extra set last, and the extra set says
                 // *extra*: "Add Set" beside "Add Warmup Set" read as though one

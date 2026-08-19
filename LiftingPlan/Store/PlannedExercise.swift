@@ -61,7 +61,23 @@ final class PlannedExercise {
     var intensity: IntensityTarget?
     /// Optional rep tempo like "3-0-1-0".
     var tempo: String?
+    /// What the coach wrote about this movement — extra detail on the work he
+    /// prescribed. His, and only ever written by an imported plan.
     var notes: String?
+
+    /// What the lifter wrote about performing it — *my knee hurt at the end*.
+    ///
+    /// **A separate field, because it is a separate thing.** The coach's note is
+    /// part of the prescription and is rewritten whenever he sends a new plan;
+    /// this is part of the record and must survive that. Sharing one field would
+    /// mean whichever of them wrote last silently erased the other, and nothing
+    /// afterwards could say whose sentence it had been.
+    ///
+    /// `nil` when he has written nothing, which is nearly always. It reaches the
+    /// coach in the snapshot: *the knee hurt on the last set* is exactly the
+    /// kind of fact that should change what comes next, and it is the only thing
+    /// in the record he cannot infer from the numbers.
+    var lifterNote: String?
 
     var day: WorkoutDay?
 

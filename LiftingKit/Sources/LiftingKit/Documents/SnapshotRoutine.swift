@@ -90,6 +90,45 @@ public struct SnapshotSession: Codable, Hashable, Sendable {
     }
 }
 
+/// What the lifter wrote about performing one movement on one day.
+///
+/// **What it does.** Carries a sentence the numbers cannot: *knee hurt at the
+/// end*, *bar felt light*. It is the one thing in the record the coach cannot
+/// infer from the log, and the reason it crosses at all.
+///
+/// **It is not the coach's note.** His is part of the prescription and travels
+/// inside the plan document; this is part of what happened, is written after the
+/// fact, and survives the next plan. They are stored apart on the phone for the
+/// same reason.
+///
+/// **It names its position the way a logged set does** — block, week, day, and
+/// the movement's place in that day — so it can be read beside the sets it is
+/// about without being nested inside them.
+///
+/// **What it depends on.** `ExerciseID` and `Weekday`.
+public struct LifterNote: Codable, Hashable, Sendable {
+
+    public let routineID: UUID
+    public let weekOrdinal: Int
+    public let weekday: Weekday
+    public let exerciseOrder: Int
+    public let exerciseID: ExerciseID
+    /// What he wrote, as he wrote it.
+    public let text: String
+
+    public init(
+        routineID: UUID, weekOrdinal: Int, weekday: Weekday, exerciseOrder: Int,
+        exerciseID: ExerciseID, text: String
+    ) {
+        self.routineID = routineID
+        self.weekOrdinal = weekOrdinal
+        self.weekday = weekday
+        self.exerciseOrder = exerciseOrder
+        self.exerciseID = exerciseID
+        self.text = text
+    }
+}
+
 /// One logged set, with enough about where it sits to find what was prescribed
 /// for it.
 ///

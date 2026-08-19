@@ -59,7 +59,8 @@ enum SnapshotExporter {
             bodyMetrics: metrics.map(snapshot(of:)),
             baselines: baselines.map(snapshot(of:)),
             routines: plans.compactMap(routine(of:)),
-            log: log(of: plans)
+            log: log(of: plans),
+            lifterNotes: lifterNotes(of: plans)
         )
     }
 
@@ -131,6 +132,32 @@ enum SnapshotExporter {
                 }
             }
         )
+    }
+
+    /// Everything the lifter wrote about performing a movement, flat.
+    ///
+    /// **The one thing in the record the coach cannot infer.** A knee that hurt
+    /// on the last set does not appear in a load or a rep count, and it is
+    /// exactly the fact that should change what comes next. It travels beside
+    /// the log rather than inside the plan, because the plan is his and this is
+    /// not.
+    private static func lifterNotes(of plans: [TrainingPlan]) -> [LifterNote] {
+        var notes: [LifterNote] = []
+        for plan in plans {
+            guard let routineID = plan.sourceDocumentID else { continue }
+            for week in plan.orderedWeeks {
+                for day in week.orderedDays {
+                    for exercise in day.orderedExercises {
+                        guard let text = exercise.lifterNote, !text.isEmpty else { continue }
+                        notes.append(LifterNote(
+                            routineID: routineID, weekOrdinal: week.ordinal,
+                            weekday: day.weekday, exerciseOrder: exercise.order,
+                            exerciseID: exercise.exerciseID, text: text))
+                    }
+                }
+            }
+        }
+        return notes
     }
 
     /// Every set ever logged, flat and oldest first.

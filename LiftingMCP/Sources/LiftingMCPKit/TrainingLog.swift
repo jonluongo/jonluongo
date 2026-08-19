@@ -17,6 +17,8 @@ struct SessionRecord: Sendable {
     let lastLoggedAt: Date?
     /// The sets logged on this day, in the order they were logged.
     let sets: [LoggedSetRecord]
+    /// What the lifter wrote about performing the movements of this day.
+    let notes: [LifterNote]
 
     var planTitle: String { routine.document.title }
     /// What the plan calls this week, or empty when it named it nothing.
@@ -39,6 +41,12 @@ struct SessionRecord: Sendable {
     /// The movements prescribed for this day, in order, groups flattened into
     /// the sequence they are performed in.
     var exercises: [PlanDocumentExercise] { day?.entries.flatMap(\.exercises) ?? [] }
+
+    /// What he wrote about the movement at `order`, or `nil` when he wrote
+    /// nothing about it.
+    func lifterNote(atOrder order: Int) -> String? {
+        notes.first { $0.exerciseOrder == order }?.text
+    }
 
     /// When the session happened. The last set logged is the truer answer than
     /// the day's own completion mark, which a lifter may never tap; the mark is
@@ -81,6 +89,13 @@ enum TrainingLog {
         for record in records(in: snapshot) {
             setsByDay[DayKey(record), default: []].append(record)
         }
+        var notesByDay: [DayKey: [LifterNote]] = [:]
+        for note in snapshot.lifterNotes {
+            let key = DayKey(
+                routineID: note.routineID, weekOrdinal: note.weekOrdinal,
+                weekday: note.weekday)
+            notesByDay[key, default: []].append(note)
+        }
 
         var sessions: [SessionRecord] = []
         for routine in snapshot.routines {
@@ -93,7 +108,8 @@ enum TrainingLog {
                 sessions.append(SessionRecord(
                     routine: routine, weekOrdinal: session.weekOrdinal,
                     weekday: session.weekday, completedAt: session.completedAt,
-                    lastLoggedAt: sets.map(\.completedAt).max(), sets: sets))
+                    lastLoggedAt: sets.map(\.completedAt).max(), sets: sets,
+                    notes: notesByDay[key] ?? []))
             }
         }
         // A day with sets logged against it that no routine claims. It cannot be
@@ -103,7 +119,8 @@ enum TrainingLog {
             guard let routine = routines[key.routineID] else { continue }
             sessions.append(SessionRecord(
                 routine: routine, weekOrdinal: key.weekOrdinal, weekday: key.weekday,
-                completedAt: nil, lastLoggedAt: sets.map(\.completedAt).max(), sets: sets))
+                completedAt: nil, lastLoggedAt: sets.map(\.completedAt).max(), sets: sets,
+                notes: notesByDay[key] ?? []))
         }
         return sessions.sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
     }

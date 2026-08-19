@@ -24,6 +24,8 @@ struct ActiveWorkoutView: View {
     /// being read about.
     @State private var restEditing: RestTarget?
     @State private var infoExercise: PlannedExercise?
+    /// The exercise whose own note the lifter is writing.
+    @State private var noteExercise: PlannedExercise?
     /// The set to bring into view, set when a group's round moves on.
     @State private var scrollTarget: PersistentIdentifier?
     @State private var errorMessage: String?
@@ -145,6 +147,18 @@ struct ActiveWorkoutView: View {
                 // three, left on the one nobody had opened since.
                 .presentationDragIndicator(.visible)
             }
+            // What he wants to remember about performing it: his words, kept
+            // apart from the coach's and sent on to him.
+            .sheet(item: $noteExercise) { exercise in
+                LifterNoteSheet(
+                    exerciseName: exercise.displayName, note: exercise.lifterNote
+                ) { note in
+                    write {
+                        exercise.lifterNote = note
+                        try context.saveOrThrow()
+                    }
+                }
+            }
             // The same screen the exercise row pushes elsewhere in the app —
             // what the movement is and what has been lifted on it are one
             // exercise, and were never worth two destinations.
@@ -228,6 +242,7 @@ struct ActiveWorkoutView: View {
                 },
                 onAddSet: { write { try log.addSet(to: exercise, warmup: false) } },
                 onAddWarmup: { write { try log.addSet(to: exercise, warmup: true) } },
+                onWriteNote: { noteExercise = exercise },
                 paired: paired
             )
             .padding(.horizontal, PanelMetrics.edge)

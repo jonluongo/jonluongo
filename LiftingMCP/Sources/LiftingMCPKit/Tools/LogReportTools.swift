@@ -184,6 +184,11 @@ extension ToolRunner {
                 // say, and which is the whole of what makes them a superset.
                 "group": group(at: order, in: day, notation: letters[order]),
                 "prescribed": prescription(exercise),
+                // What the lifter wrote about doing it, in his own words. Not
+                // the coach's note — that is inside `prescribed`, and it is
+                // detail about the work rather than a report of it. `null` when
+                // he wrote nothing, which is nearly always.
+                "lifterNote": .string(session.lifterNote(atOrder: order)),
                 "completedWorkingSets": .integer(sets.count { $0.isCompletedWorkingSet }),
                 "sets": .array(sets.map(loggedSet)),
             ]
