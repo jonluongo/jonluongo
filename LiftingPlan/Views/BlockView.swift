@@ -44,7 +44,7 @@ struct BlockView: View {
                 Section {
                     if !plan.goal.isEmpty {
                         Text(plan.goal)
-                            .font(.barbellTitle)
+                            .font(.supersetTitle)
                             .foregroundStyle(Palette.ink)
                             .panelRow(hasNote ? .first : .only)
                             .listRowSeparator(.hidden)
@@ -151,7 +151,7 @@ private struct DayRow: View {
         VStack(alignment: .leading, spacing: Spacing.tight) {
             HStack(spacing: Spacing.standard) {
                 Text(title)
-                    .font(.barbellTitle)
+                    .font(.supersetTitle)
                     .foregroundStyle(Palette.ink)
                 Spacer()
                 // Only where it is true: a list of days marking every unlogged
@@ -162,7 +162,7 @@ private struct DayRow: View {
             }
             if let movements {
                 Text(movements)
-                    .font(.barbellSupport)
+                    .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)
                     .lineLimit(1)
                     .truncationMode(.tail)

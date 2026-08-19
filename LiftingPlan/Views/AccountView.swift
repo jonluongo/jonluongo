@@ -123,7 +123,7 @@ struct AccountView: View {
 
             if rows.isEmpty {
                 Text("Nothing yet.")
-                    .font(.barbellBody)
+                    .font(.supersetBody)
                     .foregroundStyle(Palette.muted)
                     .panelRow(.only)
             } else {
@@ -162,7 +162,7 @@ struct AccountView: View {
             // timers" — the same word twice, one of them singular, neither
             // adding anything the other had not said.
             Toggle("Rest timers", isOn: restTimerBinding)
-                .font(.barbellBody)
+                .font(.supersetBody)
                 .panelRow(.only)
                 .listRowSeparator(.hidden)
         }
@@ -180,7 +180,7 @@ struct AccountView: View {
                 showingResetConfirm = true
             } label: {
                 Text("Delete All Blocks")
-                    .font(.barbellBody)
+                    .font(.supersetBody)
             }
             .panelRow(.only)
             .listRowSeparator(.hidden)

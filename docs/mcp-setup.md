@@ -1,9 +1,9 @@
-# Connecting Claude to Barbell
+# Connecting Claude to Superset
 
 How to point Claude Desktop at your training data, and what to expect the first
 time.
 
-The app is called **Barbell** on the Home Screen. The Xcode project, the bundle
+The app is called **Superset** on the Home Screen. The Xcode project, the bundle
 identifier and the iCloud container are all still `LiftingPlan` — renaming those
 would orphan the data already on the phone, so the name changed and nothing
 else did.
@@ -13,7 +13,7 @@ else did.
 Claude reads your training log and writes plans back into the app.
 
 ```
-  Claude (Mac)                                    Barbell (iPhone)
+  Claude (Mac)                                    Superset (iPhone)
       │                                               │
       │  reads snapshot.json  ◀───────────────────────┤  written when the app backgrounds
       │                                               │

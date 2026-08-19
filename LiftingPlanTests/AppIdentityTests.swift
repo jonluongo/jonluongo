@@ -5,24 +5,25 @@ import Testing
 /// What the app is called, and what it must go on being called underneath.
 ///
 /// The two halves of this are not the same kind of fact. The name on the Home
-/// Screen is provisional — it is Barbell "for now" — and changing it costs
-/// nothing but a build setting. The bundle identifier and the iCloud container
+/// Screen costs nothing but a build setting, and has been changed once already —
+/// it was Barbell. The bundle identifier and the iCloud container
 /// are the opposite: the app is installed on a real device with a real snapshot
 /// already synced into that container, and renaming either would orphan every
 /// file in it and every row behind it. Nothing would fail loudly; the phone
 /// would simply start again from empty.
 ///
-/// So this suite asserts the *old* name in two places on purpose. A rename that
-/// looks tidy in a diff and quietly abandons the user's data is exactly the
-/// change these are here to stop.
+/// So the identifier and the container are asserted as they have always been, on
+/// purpose, while the display name is asserted as whatever it currently is. A
+/// rename that looks tidy in a diff and quietly abandons the user's data is
+/// exactly the change these are here to stop.
 @Suite("App identity")
 struct AppIdentityTests {
 
-    @Test("The name on the Home Screen is Barbell")
-    func displayNameIsBarbell() throws {
+    @Test("The name on the Home Screen is Superset")
+    func displayNameIsSuperset() throws {
         let displayName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
 
-        #expect(displayName == "Barbell")
+        #expect(displayName == "Superset")
     }
 
     @Test("The bundle identifier did not travel with the name")

@@ -26,7 +26,7 @@ struct SectionHeading: View {
 
     var body: some View {
         Text(text)
-            .font(.barbellHeading)
+            .font(.supersetHeading)
             .foregroundStyle(Palette.ink)
             .textCase(nil)
             .padding(.top, Spacing.standard)

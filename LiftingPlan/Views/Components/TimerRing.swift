@@ -30,7 +30,7 @@ struct TimerRing: View {
     var showsLabel: Bool = true
     /// The countdown's type role. Metric by default, which is what a ring drawn
     /// at full size shows.
-    var font: Font = .barbellMetric
+    var font: Font = .supersetMetric
 
     /// The lifter's text scale, expressed as a multiplier so the ring's own
     /// geometry can follow the type inside it.
@@ -56,7 +56,7 @@ struct TimerRing: View {
                     .contentTransition(.numericText())
                 if showsLabel {
                     Text(isRunning ? "REST" : "READY")
-                        .font(.barbellLabel)
+                        .font(.supersetLabel)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -75,7 +75,7 @@ struct TimerRing: View {
         TimerRing(progress: 0.4, timeText: "2:30", isRunning: true)
         TimerRing(
             progress: 0.4, timeText: "59:59", isRunning: true,
-            size: 52, lineWidth: 5, showsLabel: false, font: .barbellSupport
+            size: 52, lineWidth: 5, showsLabel: false, font: .supersetSupport
         )
     }
     .padding()

@@ -65,7 +65,7 @@ struct ExerciseLogSection: View {
         Group {
             if let notes = exercise.notes, !notes.isEmpty {
                 Text(notes)
-                    .font(.barbellSupport)
+                    .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)
                     .panelRow(.middle, paired: paired)
                     .listRowSeparator(.hidden)

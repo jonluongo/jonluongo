@@ -106,7 +106,7 @@ struct ExerciseHeaderView: View {
                 // centres it, which is the whole reason that width is stated
                 // there.
                 Image(systemName: "ellipsis")
-                    .font(.barbellBody)
+                    .font(.supersetBody)
                     .foregroundStyle(.secondary)
                     .contentShape(.rect)
             }

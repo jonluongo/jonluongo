@@ -26,7 +26,7 @@ struct CoachNoteView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.snug) {
             Text(note)
-                .font(.barbellBody)
+                .font(.supersetBody)
         }
         .padding(.vertical, Spacing.tight)
     }

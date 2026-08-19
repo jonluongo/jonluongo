@@ -67,11 +67,11 @@ struct SessionFinishSection: View {
                 HStack(spacing: Spacing.standard) {
                     RecordedMark(isRecorded: true)
                     Text("Logged")
-                        .font(.barbellBody)
+                        .font(.supersetBody)
                         .foregroundStyle(Palette.recorded)
                     Spacer()
                     Button("Mark as unfinished", action: onUnfinish)
-                        .font(.barbellSupport)
+                        .font(.supersetSupport)
                         .foregroundStyle(Palette.accent)
                 }
                 .panelRow(.only)

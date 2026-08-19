@@ -56,7 +56,7 @@ struct SessionClock: View {
             // it sits beside: a small figure in support grey read as a caption
             // hung off the bar rather than as the bar's own line. Monospaced
             // digits stay, so a counting number never reflows under a thumb.
-            .font(.barbellTitle)
+            .font(.supersetTitle)
             .foregroundStyle(Palette.ink)
             .monospacedDigit()
     }

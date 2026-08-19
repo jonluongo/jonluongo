@@ -136,7 +136,7 @@ struct SetRowView: View {
             // off the edge of the card at accessibility sizes.
             if let prescriptionDetail {
                 Text(prescriptionDetail)
-                    .font(.barbellSupport)
+                    .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -158,7 +158,7 @@ struct SetRowView: View {
                 }
             } label: {
                 Text(identity.badge)
-                    .font(.barbellSupport)
+                    .font(.supersetSupport)
                     .foregroundStyle(set.isWarmup ? Palette.accent : Palette.ink)
                     .frame(
                         width: SetTableMetrics.setColumnWidth,
@@ -181,7 +181,7 @@ struct SetRowView: View {
             // load, and `× 45 s` is a sign multiplying nothing.
             if joinsTwoFigures {
                 Text("×")
-                    .font(.barbellSupport)
+                    .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)
             }
             // A distance can be a fraction of its unit; reps and seconds cannot.
@@ -193,7 +193,7 @@ struct SetRowView: View {
             // suffix: the `×` has already said it.
             if let workUnit {
                 Text(workUnit)
-                    .font(.barbellSupport)
+                    .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)
             }
 
@@ -276,7 +276,7 @@ struct SetRowView: View {
             // The weight and the work are what this screen is for, and they are
             // read at arm's length: they are the type ramp's Metric, which is
             // the role that exists for exactly these two fields.
-            .font(.barbellMetric)
+            .font(.supersetMetric)
             // A prescribed target like "8-12" is wider than a logged number;
             // shrink it rather than truncate the prescription.
             .lineLimit(1)

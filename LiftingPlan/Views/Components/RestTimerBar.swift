@@ -28,7 +28,7 @@ struct RestTimerBar: View {
             if let errorMessage = restTimer.errorMessage {
                 Button { restTimer.dismissError() } label: {
                     Label(errorMessage, systemImage: "bell.slash")
-                        .font(.barbellSupport)
+                        .font(.supersetSupport)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -55,15 +55,15 @@ struct RestTimerBar: View {
                 // logging screen's own work, which is where the bar's shape is
                 // decided; what matters here is that it is a text style at all,
                 // so it grows when the lifter's type does.
-                font: .barbellSupport
+                font: .supersetSupport
             )
 
             VStack(alignment: .leading, spacing: Spacing.tight) {
                 Text("Resting")
-                    .font(.barbellTitle)
+                    .font(.supersetTitle)
                 if !restTimer.contextLabel.isEmpty {
                     Text(restTimer.contextLabel)
-                        .font(.barbellSupport)
+                        .font(.supersetSupport)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -87,7 +87,7 @@ struct RestTimerBar: View {
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
         }
-        .font(.barbellSupport)
+        .font(.supersetSupport)
         .padding(.horizontal, Self.contentInset)
         .padding(.vertical, Spacing.snug)
         .background(.regularMaterial, in: .rect(cornerRadius: Radius.large))

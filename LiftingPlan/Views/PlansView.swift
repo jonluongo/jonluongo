@@ -86,10 +86,10 @@ private struct BlockCard: View {
         } label: {
             VStack(alignment: .leading, spacing: Spacing.tight) {
                 Text(title)
-                    .font(.barbellTitle)
+                    .font(.supersetTitle)
                     .foregroundStyle(Palette.ink)
                 Text(subtitle)
-                    .font(.barbellSupport)
+                    .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)
             }
             .padding(.vertical, Spacing.tight)

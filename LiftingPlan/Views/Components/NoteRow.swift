@@ -18,7 +18,7 @@ extension View {
     /// **What it depends on.** `Spacing`, `Palette` and the type ramp.
     func note() -> some View {
         self
-            .font(.barbellSupport)
+            .font(.supersetSupport)
             .foregroundStyle(Palette.muted)
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)

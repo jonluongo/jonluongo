@@ -49,13 +49,13 @@ struct FactRow: View {
 
     private var labelText: some View {
         Text(label)
-            .font(.barbellSupport)
+            .font(.supersetSupport)
             .foregroundStyle(Palette.muted)
     }
 
     private var valueText: some View {
         Text(value)
-            .font(.barbellSupport)
+            .font(.supersetSupport)
             .foregroundStyle(Palette.ink)
     }
 }

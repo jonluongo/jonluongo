@@ -65,7 +65,7 @@ struct ExerciseDetailView: View {
                 Section {
                     SectionHeading("Sessions")
                     Text("Nothing logged yet. Sets you log against this exercise show up here.")
-                        .font(.barbellBody)
+                        .font(.supersetBody)
                         .foregroundStyle(Palette.muted)
                         .panelRow(.only)
                         .listRowSeparator(.hidden)
@@ -132,7 +132,7 @@ struct ExerciseDetailView: View {
                             .foregroundStyle(Palette.ink)
                     }
                 }
-                .font(.barbellSupport)
+                .font(.supersetSupport)
                 .panelRow(.at(index, of: points.count))
                 .listRowSeparator(.hidden)
             }

@@ -75,22 +75,22 @@ struct DesignSystemTests {
         // to be scanned is set in mono. The size is still semantic, so Dynamic
         // Type carries it.
         #expect(
-            Font.barbellMetric == Font.system(.title3, design: .monospaced).weight(.semibold))
+            Font.supersetMetric == Font.system(.title3, design: .monospaced).weight(.semibold))
         // A heading has to win against the rows inside the panel it introduces.
         // Both were `.headline`, so position was the only thing saying which
         // was which.
-        #expect(Font.barbellHeading == Font.title3.weight(.bold))
-        #expect(Font.barbellTitle == Font.headline)
-        #expect(Font.barbellBody == Font.body)
-        #expect(Font.barbellSupport == Font.subheadline.monospacedDigit())
-        #expect(Font.barbellLabel == Font.caption2.weight(.semibold))
+        #expect(Font.supersetHeading == Font.title3.weight(.bold))
+        #expect(Font.supersetTitle == Font.headline)
+        #expect(Font.supersetBody == Font.body)
+        #expect(Font.supersetSupport == Font.subheadline.monospacedDigit())
+        #expect(Font.supersetLabel == Font.caption2.weight(.semibold))
     }
 
     @Test("The six roles are six distinct treatments")
     func rolesAreDistinct() {
         let roles: [Font] = [
-            .barbellMetric, .barbellHeading, .barbellTitle,
-            .barbellBody, .barbellSupport, .barbellLabel,
+            .supersetMetric, .supersetHeading, .supersetTitle,
+            .supersetBody, .supersetSupport, .supersetLabel,
         ]
         #expect(Set(roles).count == 6)
     }

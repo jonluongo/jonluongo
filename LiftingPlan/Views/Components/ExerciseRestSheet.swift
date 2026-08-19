@@ -90,7 +90,7 @@ struct ExerciseRestSheet: View {
                 if !timersEnabled {
                     Section {
                         Text("Rest timers are off for every exercise. Turn them back on in Account.")
-                            .font(.barbellBody)
+                            .font(.supersetBody)
                             .foregroundStyle(.secondary)
                     }
                 }

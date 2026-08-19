@@ -48,10 +48,10 @@ struct ExerciseAboutSections: View {
                     ForEach(Array(entry.instructions.enumerated()), id: \.offset) { index, step in
                         HStack(alignment: .firstTextBaseline, spacing: Spacing.standard) {
                             Text("\(index + 1)")
-                                .font(.barbellSupport)
+                                .font(.supersetSupport)
                                 .foregroundStyle(Palette.muted)
                             Text(step)
-                                .font(.barbellBody)
+                                .font(.supersetBody)
                                 .foregroundStyle(Palette.ink)
                         }
                         .accessibilityElement(children: .combine)

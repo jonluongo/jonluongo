@@ -13,7 +13,7 @@ import UIKit
 //
 // **The rule this file exists to enforce.** No view states a colour, a point
 // size, a gap or a radius. It asks for the job — `Palette.ink`, `Spacing.snug`,
-// `.font(.barbellMetric)` — and the answer lives here, once. A number that
+// `.font(.supersetMetric)` — and the answer lives here, once. A number that
 // appears in a view is a number nobody chose.
 //
 // Nothing here decides anything about training. These are drawing figures; the
@@ -108,7 +108,7 @@ extension UIColor {
 /// Every one is built on a semantic text style, so Dynamic Type carries all of
 /// it and no number in this file is a point size.
 ///
-/// **How it is used.** `.font(.barbellSupport)` and so on. Pick by role:
+/// **How it is used.** `.font(.supersetSupport)` and so on. Pick by role:
 ///
 /// - **Metric** — a number the lifter reads mid-set, at arm's length: a
 ///   countdown, a weight, a rep count. These are the content of the logging
@@ -146,23 +146,23 @@ extension Font {
     /// width as a number changes, so nothing reflows under a thumb mid-set.
     /// Everything around it stays in the system face; a page set entirely in
     /// mono is a terminal, not an instrument.
-    static let barbellMetric: Font = .system(.title3, design: .monospaced).weight(.semibold)
+    static let supersetMetric: Font = .system(.title3, design: .monospaced).weight(.semibold)
 
     /// The name of a section, drawn above the panel that holds its contents.
-    /// A step clear of `barbellTitle` so the hierarchy is visible rather than
+    /// A step clear of `supersetTitle` so the hierarchy is visible rather than
     /// implied by position alone.
-    static let barbellHeading: Font = .title3.weight(.bold)
+    static let supersetHeading: Font = .title3.weight(.bold)
 
     /// The name of a thing inside a list.
-    static let barbellTitle: Font = .headline
+    static let supersetTitle: Font = .headline
 
     /// Prose.
-    static let barbellBody: Font = .body
+    static let supersetBody: Font = .body
 
     /// Everything that qualifies something else. Monospaced digits belong here
     /// too: most supporting text in this app is a prescription or a
     /// performance, which is mostly numerals.
-    static let barbellSupport: Font = .subheadline.monospacedDigit()
+    static let supersetSupport: Font = .subheadline.monospacedDigit()
 
     /// Column headers. Uppercasing is the call site's, since it is a property
     /// of the string rather than of the type — as is the tracking, which is a
@@ -170,9 +170,9 @@ extension Font {
     /// figure to use: letter-spaced capitals are how a measuring instrument
     /// labels a scale, and at this size they stop reading as shouting and start
     /// reading as engraving.
-    static let barbellLabel: Font = .caption2.weight(.semibold)
+    static let supersetLabel: Font = .caption2.weight(.semibold)
 
-    /// The tracking a `barbellLabel` is drawn with.
+    /// The tracking a `supersetLabel` is drawn with.
     static let labelTracking: CGFloat = 0.8
 }
 

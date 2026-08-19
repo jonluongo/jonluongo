@@ -78,13 +78,13 @@ struct PrescribedExerciseRow: View {
             HStack {
                 if let notation {
                     Text(notation)
-                        .font(.barbellLabel)
+                        .font(.supersetLabel)
                         .monospaced()
                         .foregroundStyle(.secondary)
                         .accessibilityLabel("\(notation),")
                 }
                 Text(exercise.displayName)
-                    .font(.barbellTitle)
+                    .font(.supersetTitle)
                     .foregroundStyle(Palette.ink)
                 Spacer()
             }
@@ -92,7 +92,7 @@ struct PrescribedExerciseRow: View {
             // sizes. It never shortens: every character the plan wrote reaches
             // the lifter, which is the whole job of this row.
             Text(prescription)
-                .font(.barbellSupport)
+                .font(.supersetSupport)
                 .foregroundStyle(Palette.muted)
                 .fixedSize(horizontal: false, vertical: true)
         }

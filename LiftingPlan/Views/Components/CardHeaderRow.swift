@@ -46,17 +46,17 @@ struct CardHeaderRow<Trailing: View>: View {
                         .tracking(Font.labelTracking)
                         .textCase(.uppercase)
                 }
-                .font(.barbellLabel)
+                .font(.supersetLabel)
                 .foregroundStyle(Palette.accent)
             }
             HStack(spacing: Spacing.standard) {
                 VStack(alignment: .leading, spacing: Spacing.tight) {
                     Text(title)
-                        .font(.barbellHeading)
+                        .font(.supersetHeading)
                         .foregroundStyle(Palette.ink)
                     if let subtitle {
                         Text(subtitle)
-                            .font(.barbellSupport)
+                            .font(.supersetSupport)
                             .foregroundStyle(Palette.muted)
                     }
                 }
