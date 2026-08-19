@@ -15,6 +15,9 @@ struct ActiveWorkoutView: View {
     /// The lifter's own clock: whether it runs at all, and how long on each
     /// exercise. Not the prescription, and not in the store.
     @Environment(RestPreferences.self) private var restPreferences
+    /// The outbox the finished session is sent through. Optional so a preview
+    /// need not supply one; the app always does.
+    @Environment(SnapshotOutbox.self) private var snapshotOutbox: SnapshotOutbox?
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     /// The clock being edited — an exercise's, or a group's — and the exercise
@@ -60,7 +63,8 @@ struct ActiveWorkoutView: View {
                     // pressed as a way out of the screen.
                     SessionFinishSection(
                         isLogged: isLogged, unloggedSetCount: day.unloggedSetCount,
-                        onFinish: { write(log.finish) }, onUnfinish: { write(log.unfinish) })
+                        onFinish: { writeAndShare(log.finish) },
+                        onUnfinish: { writeAndShare(log.unfinish) })
                 }
 
             }
@@ -276,6 +280,28 @@ struct ActiveWorkoutView: View {
         SessionLog(
             day: day, context: context, restTimer: restTimer,
             restPreferences: restPreferences)
+    }
+
+    /// Runs a write and sends the record back out to the coach.
+    ///
+    /// **Finishing is the moment the snapshot goes stale.** Until this, the
+    /// only thing that wrote it was the app being backgrounded, so a lifter who
+    /// trained four sessions without ever leaving the app left Claude reading a
+    /// document that knew about none of them — which is exactly the shape of
+    /// the report that the snapshot held four sessions where the block
+    /// prescribed nine. Unfinishing sends it too: taking a session back is a
+    /// change to the record like any other, and a coach reading a session that
+    /// was withdrawn is wrong in the same way.
+    ///
+    /// Only finishing, not every tick. A snapshot is the whole store
+    /// serialized and written to iCloud, and doing that between sets would
+    /// spend the lifter's battery to tell the coach something he is not
+    /// reading yet. A failure is held by the outbox and shown the next time the
+    /// app opens, exactly as a background export's is.
+    private func writeAndShare(_ change: () throws -> Void) {
+        write(change)
+        guard errorMessage == nil, let snapshotOutbox else { return }
+        Task { await snapshotOutbox.exportSnapshot() }
     }
 
     /// Runs a write and shows the lifter when it fails, rather than discarding

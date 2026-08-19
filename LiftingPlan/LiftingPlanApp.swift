@@ -66,7 +66,15 @@ struct LiftingPlanApp: App {
                 .task { await restTimer.requestNotificationAuthorization() }
                 // Started once, for the life of the app: anything arriving
                 // from the Mac is taken in wherever the lifter happens to be.
-                .task { documentInbox.start() }
+                // The snapshot goes back out the moment something lands, so the
+                // coach is never reading a record written before the plan he
+                // just sent — see `DocumentInbox.onApplied`.
+                .task {
+                    documentInbox.onApplied = { [snapshotOutbox] in
+                        await snapshotOutbox.exportSnapshot()
+                    }
+                    documentInbox.start()
+                }
         }
         .modelContainer(container)
         // Exporting on background, rather than behind a button, is what keeps

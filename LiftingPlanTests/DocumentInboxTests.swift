@@ -90,6 +90,81 @@ struct DocumentInboxTests {
         try context.fetch(FetchDescriptor<TrainingPlan>())
     }
 
+    // MARK: - What lands goes back out
+
+    @Test("A plan that lands sends the record back out, so the coach is never behind it")
+    func arrivalSendsTheRecordBack() async throws {
+        // The failure this closes: the snapshot was written only when the app
+        // backgrounded, so a plan that arrived while the lifter had the app
+        // open left the coach reading a record written before it existed.
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: try context())
+        var sent = 0
+        inbox.onApplied = { sent += 1 }
+        try folder.writePlan(document())
+
+        inbox.start()
+        await watcher.announceArrival()
+
+        #expect(sent == 1)
+    }
+
+    @Test("A folder announcing itself again sends nothing, so the two halves cannot loop")
+    func reannouncementSendsNothing() async throws {
+        // The snapshot is written into the folder this watches, so an export
+        // announces an arrival. If a document merely re-announced counted as
+        // one that landed, the inbox and the outbox would write to each other
+        // forever.
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: try context())
+        var sent = 0
+        inbox.onApplied = { sent += 1 }
+        try folder.writePlan(document())
+
+        inbox.start()
+        await watcher.announceArrival()
+        await watcher.announceArrival()
+        await watcher.announceArrival()
+
+        #expect(sent == 1, "only the arrival that changed the record sends")
+    }
+
+    @Test("An empty folder sends nothing")
+    func nothingWaitingSendsNothing() async throws {
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: try context())
+        var sent = 0
+        inbox.onApplied = { sent += 1 }
+
+        inbox.start()
+        await watcher.announceArrival()
+
+        #expect(sent == 0)
+    }
+
+    @Test("A document that was refused sends nothing, because nothing changed")
+    func refusedDocumentSendsNothing() async throws {
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: try context())
+        var sent = 0
+        inbox.onApplied = { sent += 1 }
+        try folder.writePlan(document(exerciseID: ExerciseID(rawValue: "not-a-real-exercise")))
+
+        inbox.start()
+        await watcher.announceArrival()
+
+        #expect(inbox.errorMessage != nil)
+        #expect(sent == 0)
+    }
+
     // MARK: - A plan that arrives is imported
 
     @Test("A plan that arrives is imported without the lifter asking for it")

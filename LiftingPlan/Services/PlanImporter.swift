@@ -147,6 +147,17 @@ enum PlanImporter {
         }
     }
 
+    /// Whether this document's identity is already in the store.
+    ///
+    /// Asked by `DocumentInbox` *before* importing, so it can tell a plan that
+    /// landed from one that was merely announced again. `import` answers the
+    /// same question itself and returns the existing plan untouched; this is
+    /// the same query, so the two cannot disagree about what "already imported"
+    /// means.
+    static func isImported(_ document: PlanDocument, in context: ModelContext) throws -> Bool {
+        try plan(forDocument: document.id, in: context) != nil
+    }
+
     /// The plan already imported from this document, if there is one.
     ///
     /// Filtered in memory rather than by predicate: a lifter has a handful of

@@ -11,6 +11,7 @@ import SwiftData
 /// it; it simply starts with nothing in it.
 struct RootView: View {
     @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase
     /// The inbox that takes in arriving documents. Optional so a preview need
     /// not supply one; the app always does.
     @Environment(DocumentInbox.self) private var documentInbox: DocumentInbox?
@@ -19,6 +20,9 @@ struct RootView: View {
     @Query private var allProfiles: [UserProfile]
 
     @State private var saveErrorMessage: String?
+    /// A failed export, taken up when the lifter arrives rather than the moment
+    /// it happens. See `exportFailureAlertBinding`.
+    @State private var exportFailure: String?
 
     var body: some View {
         Group {
@@ -50,13 +54,23 @@ struct RootView: View {
         // The mirror of the alert above, for the same reason. A snapshot that
         // never left the phone breaks the loop permanently and invisibly: the
         // app looks fine while the coach reads a document that stopped being
-        // true weeks ago. The export happens as the app leaves the screen, so
-        // this is shown on the next opening — the first moment there is anyone
-        // to show it to.
-        .alert("Couldn't Share Your Log", isPresented: exportErrorAlertBinding) {
+        // true weeks ago.
+        //
+        // **Taken up when he arrives, not when it happens.** The snapshot is
+        // written when a session is finished and when one of Claude's documents
+        // lands, and both can happen while the lifter is mid-workout — where an
+        // alert about iCloud interrupts training to report something he cannot
+        // act on with a barbell in his hands. The outbox holds the failure; this
+        // reads it at the moment the app becomes his again, which is the first
+        // moment there is anyone to show it to.
+        .alert("Couldn't Share Your Log", isPresented: exportFailureAlertBinding) {
             Button("OK", role: .cancel) { snapshotOutbox?.dismissError() }
         } message: {
-            Text(snapshotOutbox?.errorMessage ?? "")
+            Text(exportFailure ?? "")
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            exportFailure = snapshotOutbox?.errorMessage
         }
     }
 
@@ -71,10 +85,15 @@ struct RootView: View {
         )
     }
 
-    private var exportErrorAlertBinding: Binding<Bool> {
+    private var exportFailureAlertBinding: Binding<Bool> {
         Binding(
-            get: { snapshotOutbox?.errorMessage != nil },
-            set: { if !$0 { snapshotOutbox?.dismissError() } }
+            get: { exportFailure != nil },
+            set: {
+                if !$0 {
+                    exportFailure = nil
+                    snapshotOutbox?.dismissError()
+                }
+            }
         )
     }
 

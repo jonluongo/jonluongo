@@ -72,6 +72,16 @@ enum ProfileUpdater {
     /// Throws `ProfileUpdateError.unknownExercise` when a baseline names an
     /// exercise the catalog does not have, `PersistenceError.saveFailed` when
     /// the write fails, and whatever the fetches throw.
+    /// Whether this update's identity has already been applied.
+    ///
+    /// Asked by `DocumentInbox` before applying, for the same reason
+    /// `PlanImporter.isImported` is: an update announced again is not an update
+    /// that landed. It reads the same field `apply` guards on, so the two
+    /// cannot disagree.
+    static func isApplied(_ update: ProfileUpdate, in context: ModelContext) throws -> Bool {
+        try existingProfile(in: context)?.appliedProfileUpdateID == update.id
+    }
+
     @discardableResult
     static func apply(
         _ update: ProfileUpdate,

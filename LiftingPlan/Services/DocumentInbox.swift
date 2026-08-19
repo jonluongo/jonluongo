@@ -53,7 +53,9 @@ protocol DocumentArrivalWatching: AnyObject {
 /// an empty screen with no idea why.
 ///
 /// Re-reading is safe: both documents carry a stable identity and both are
-/// applied once, so they are left in place rather than consumed.
+/// applied once, so they are left in place rather than consumed. Re-applying
+/// an identity already applied changes nothing and announces nothing, so a
+/// folder announcing itself repeatedly does not write the snapshot repeatedly.
 ///
 /// Depends on: `DocumentTransport` and `ExerciseCatalogProviding` from
 /// `LiftingKit`, `DocumentArrivalWatching`, `PlanImporter`, `ProfileUpdater`,
@@ -65,6 +67,29 @@ final class DocumentInbox {
     /// What went wrong the last time the folder was read, ready to show. `nil`
     /// when nothing has gone wrong — which includes there being nothing there.
     private(set) var errorMessage: String?
+
+    /// Called after a document has actually been applied — never when the
+    /// folder was empty, and never when everything in it was refused.
+    ///
+    /// **It exists so the snapshot cannot be older than the plan it describes.**
+    /// The record changes the moment Claude's plan lands, and until this the
+    /// only thing that wrote the snapshot back out was the app being
+    /// backgrounded. A lifter who received a block, trained it, and never left
+    /// the app left the coach reading a document written before the block
+    /// existed — which is the shape of the report that the snapshot held four
+    /// sessions when the block prescribed nine.
+    ///
+    /// **Announced is not applied, and the difference is load-bearing.** The
+    /// snapshot is written into the same folder this watches, so an export
+    /// announces the folder, which reads it again. If a document that was
+    /// merely re-announced counted as an arrival, that would export again, and
+    /// the two halves would write to each other forever. Both importers are
+    /// asked whether the identity is already in the store *before* applying,
+    /// which is the same question they answer internally.
+    ///
+    /// The inbox does not know what an outbox is: the composition root wires
+    /// this, so neither half of the loop depends on the other.
+    var onApplied: (@MainActor () async -> Void)?
 
     private let transport: any DocumentTransport
     private let watcher: any DocumentArrivalWatching
@@ -125,17 +150,22 @@ final class DocumentInbox {
     /// so they cross between them.
     func importWaitingDocuments() async {
         var failures: [String] = []
+        var applied = false
         do {
             // Nothing waiting is the normal state, not something to report.
             if let update = try await Self.readProfileUpdate(from: transport) {
+                let isNew = try !ProfileUpdater.isApplied(update, in: context)
                 try ProfileUpdater.apply(update, to: context, catalog: catalog)
+                applied = applied || isNew
             }
         } catch {
             failures.append(Self.describe(error))
         }
         do {
             if let document = try await Self.readPlan(from: transport) {
+                let isNew = try !PlanImporter.isImported(document, in: context)
                 try PlanImporter.import(document, into: context, catalog: catalog)
+                applied = applied || isNew
             }
         } catch {
             failures.append(Self.describe(error))
@@ -143,6 +173,10 @@ final class DocumentInbox {
         // A transport that cannot be reached at all fails both reads with the
         // same sentence; saying it twice would read as two separate problems.
         errorMessage = Self.deduplicated(failures).joined(separator: "\n\n").nilWhenEmpty
+        // After the failures are recorded, so a partial pass — a profile update
+        // that landed beside a plan that was refused — still tells the coach
+        // what did change. A refusal changes nothing, and reports nothing here.
+        if applied { await onApplied?() }
     }
 
     /// What to put in front of the lifter when something could not be taken in.
