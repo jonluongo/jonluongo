@@ -73,7 +73,7 @@ struct BlockView: View {
                             // a week a single object with three names in it;
                             // a session is the thing being chosen, and the
                             // week is what it sits under.
-                            .panelRow(.only)
+                            .panelRow(.only, fillsPanel: true)
                             .listRowSeparator(.hidden)
                         }
                     }
@@ -154,11 +154,14 @@ private struct DayRow: View {
                     .font(.supersetTitle)
                     .foregroundStyle(Palette.ink)
                 Spacer()
-                // Only where it is true: a list of days marking every unlogged
-                // one with an empty box would be a column of boxes saying
-                // nothing. Beside the name, because that is the line it is
-                // about.
+                // Two marks doing two jobs. The check appears only where it is
+                // true — a column of empty boxes beside every unlogged day
+                // would say nothing — and the chevron appears on every row,
+                // because every row opens something. The blocks list draws the
+                // same chevron, so a session and a block are chosen the same
+                // way.
                 RecordedMark(isRecorded: day.completedAt != nil, showsEmpty: false)
+                DisclosureChevron()
             }
             if let movements {
                 Text(movements)
@@ -168,7 +171,8 @@ private struct DayRow: View {
                     .truncationMode(.tail)
             }
         }
-        .padding(.vertical, Spacing.tight)
+        .padding(PanelMetrics.buttonInsets)
+        // The panel's whole area, not the text's.
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)

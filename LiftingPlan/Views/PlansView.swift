@@ -52,7 +52,7 @@ struct PlansView: View {
                         // block screen. One panel holding every block made the
                         // one he is training and the ones behind him a single
                         // object with several names in it.
-                        .panelRow(.only)
+                        .panelRow(.only, fillsPanel: true)
                         .listRowSeparator(.hidden)
                     }
                 }
@@ -76,12 +76,12 @@ struct PlansView: View {
 /// score: the app decides nothing about a block, including whether it went well,
 /// and the record cannot tell a block he finished from one a new plan replaced.
 ///
-/// **A `Button`, not a `NavigationLink`.** A link in a list draws a disclosure
-/// chevron, so a block row carried one and a day row — a button that presents
-/// the session — did not, which made the same act read two ways one screen
-/// apart. Every panel in this app is tapped to open what it names; a mark on all
-/// of them says nothing, and the day row's trailing slot already belongs to the
-/// mark that says whether it is in the record.
+/// **A `Button`, not a `NavigationLink`.** The link drew the system's own
+/// disclosure chevron, which a button presenting a sheet does not get — so the
+/// blocks list had one and the day rows had none, and the same act read two ways
+/// one screen apart. Both draw `DisclosureChevron` now, so the mark is the app's
+/// rather than the presentation's, and neither row can drift from the other
+/// again.
 private struct BlockCard: View {
 
     let plan: TrainingPlan
@@ -94,15 +94,22 @@ private struct BlockCard: View {
 
     var body: some View {
         Button(action: onOpen) {
-            VStack(alignment: .leading, spacing: Spacing.tight) {
-                Text(title)
-                    .font(.supersetTitle)
-                    .foregroundStyle(Palette.ink)
-                Text(subtitle)
-                    .font(.supersetSupport)
-                    .foregroundStyle(Palette.muted)
+            HStack(spacing: Spacing.standard) {
+                VStack(alignment: .leading, spacing: Spacing.tight) {
+                    Text(title)
+                        .font(.supersetTitle)
+                        .foregroundStyle(Palette.ink)
+                    Text(subtitle)
+                        .font(.supersetSupport)
+                        .foregroundStyle(Palette.muted)
+                }
+                Spacer(minLength: Spacing.standard)
+                DisclosureChevron()
             }
-            .padding(.vertical, Spacing.tight)
+            .padding(PanelMetrics.buttonInsets)
+            // The panel's whole area, not the text's: a tap near the edge of a
+            // row that looks like a button has to behave like one.
+            .contentShape(.rect)
             .accessibilityElement(children: .combine)
             // A screen reader hears one row at a time, with no order to read the
             // standing from, so the row says it in a word.
