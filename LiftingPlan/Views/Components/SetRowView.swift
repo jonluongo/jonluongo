@@ -167,6 +167,22 @@ struct SetRowView: View {
             Spacer(minLength: 0)
 
             field(text: weightText, placeholder: loadTargetText, isDecimal: true)
+            // **The unit, wherever there is a weight to name.** The field said
+            // `185` and left the reader to know what in; it says `185 lb` now,
+            // in the same device the hold and the carry already use for their
+            // seconds and their metres. A dash was the other candidate and is
+            // the one thing this field must not draw — a placeholder is a hint
+            // about what to type, and a dash hints at nothing.
+            //
+            // It is drawn under exactly the condition the `×` is, which is what
+            // keeps a push-up honest: an exercise carrying no load has an empty
+            // field on purpose, and `lb` beside it would be the app asking for
+            // a number nobody prescribed.
+            if joinsTwoFigures {
+                Text(unit.rawValue)
+                    .font(.supersetSupport)
+                    .foregroundStyle(Palette.muted)
+            }
             // The two figures are one statement — a hundred and thirty-five for
             // eight — and the sign says so. It replaces two column headings
             // redrawn above every exercise of every session, which said the
@@ -262,6 +278,12 @@ struct SetRowView: View {
     private func field(text: Binding<String>, placeholder: String, isDecimal: Bool) -> some View {
         TextField(placeholder, text: text)
             .keyboardType(isDecimal ? .decimalPad : .numberPad)
+            // **The caret is ink, and stated rather than inherited.** It takes
+            // the tint, and the tint is the theme — a highlighter, which on a
+            // white panel is a caret nobody can see. Nothing about where this
+            // field sits should decide whether the lifter can tell it is
+            // focused.
+            .tint(Palette.ink)
             .multilineTextAlignment(.center)
             // Not stated. A colour set here paints the placeholder as well, and
             // a prescribed load drawn in the same ink as a logged one is the app
