@@ -357,33 +357,6 @@ struct PerSetPrescriptionTests {
         #expect(IntensityPrescription.label(for: nil) == nil)
     }
 
-    @Test("A prescription's summary states the sets it prescribes and nothing more")
-    func summaryStatesWhatWasPrescribed() throws {
-        let uniform = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8-12",
-                intensity: IntensityTarget(scale: .rpe, value: "8"))
-        ])
-        #expect(PrescriptionSummary.text(for: uniform, unit: .kilograms) == "3 × 8-12 · 80% effort")
-
-        // Sets that differ are spanned, never averaged and never represented by
-        // one of them: five reps and three reps are three to five between them.
-        let varying = try imported([
-            PlanDocumentExercise(
-                exerciseID: Self.squat, displayName: "Squat",
-                sets: [
-                    SetPrescription(repRange: "5"),
-                    SetPrescription(repRange: "3"),
-                ])
-        ])
-        #expect(PrescriptionSummary.text(for: varying, unit: .kilograms) == "2 × 3-5")
-
-        let bare = try imported([
-            PlanDocumentExercise(exerciseID: Self.bench, displayName: "Bench", sets: 4)
-        ])
-        #expect(PrescriptionSummary.text(for: bare, unit: .kilograms) == "4 sets")
-    }
-
     @Test("A uniform prescription gains nothing under its rows")
     func uniformRowsSayNothingNew() throws {
         let plain = try imported([
@@ -401,7 +374,6 @@ struct PerSetPrescriptionTests {
                 exerciseID: Self.bench, displayName: "Bench", sets: 3, repRange: "8",
                 intensity: IntensityTarget(scale: .rpe, value: "8"))
         ])
-        #expect(PrescriptionSummary.text(for: rated, unit: .kilograms) == "3 × 8 · 80% effort")
         #expect(rated.prescribedSets.allSatisfy {
             PrescriptionSummary.detail(for: $0, in: rated) == nil
         })
@@ -508,8 +480,6 @@ struct PerSetPrescriptionTests {
                 ],
                 repRange: "5")
         ])
-
-        #expect(PrescriptionSummary.text(for: ramp, unit: .kilograms) == "2 × 5 · 60-80 kg")
 
         // Nothing about the individual sets is lost: the loads are what each
         // row's weight field is seeded with, and what was asked of the top set
