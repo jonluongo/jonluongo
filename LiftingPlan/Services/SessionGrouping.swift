@@ -38,10 +38,7 @@ enum SessionEntry: Identifiable {
 /// round order, and the rest taken after the round.
 ///
 /// **What it does.** Answers the questions a screen asks about a group — what it
-/// is called, what each member is called within it, how many rounds it runs, and
-/// how long to rest when one finishes. `A1` / `A2` is the notation lifters
-/// already read on paper: the first group of a day is A, the second B, and a
-/// member's number is its position in the round.
+/// is called, how long to rest when a round finishes, and whether one just did.
 ///
 /// **How it is used.** Built by `SessionGrouping` and handed to the logging
 /// screen and the read-only week. It never writes and decides nothing about
@@ -70,10 +67,36 @@ struct ExerciseGroup: Identifiable {
     /// that is the exercise a choice about this group is recorded against.
     var restKey: ExerciseID? { members.last?.exerciseID }
 
-    /// How many rounds the plan prescribes: the most sets any member asks for.
-    /// A group whose members ask for different counts runs until the longest of
-    /// them is done, which is the only reading that loses no prescribed set.
-    var prescribedRounds: Int { members.map(\.targetSets).max() ?? 0 }
+    /// Whether any round of this group is finished — every movement of it
+    /// ticked.
+    ///
+    /// This is the one behavioural difference a group makes, and the whole
+    /// reason the grouping is worth expressing: resting only after the round is
+    /// what a superset *is*, so ticking one movement starts nothing, because the
+    /// next follows immediately.
+    ///
+    /// A round is the sets at one position across the members. A movement
+    /// prescribed more sets than its partner still has its later positions
+    /// counted — they are rounds of one, which is what the lifter is actually
+    /// doing by then.
+    ///
+    /// It lived in `GroupRounds`, a value type that also built every row of a
+    /// screen: the notation, the prescription, the ghost load, the warm-ups
+    /// outside the rounds. That screen was replaced by movements drawn as
+    /// movements, and this was the only line of it anything still asked for.
+    var hasCompleteRound: Bool {
+        var rounds: [[LoggedSet]] = []
+        for member in members {
+            let working = (member.loggedSets ?? [])
+                .filter { !$0.isWarmup }
+                .sorted { $0.setIndex < $1.setIndex }
+            for (position, set) in working.enumerated() {
+                while rounds.count <= position { rounds.append([]) }
+                rounds[position].append(set)
+            }
+        }
+        return rounds.contains { !$0.isEmpty && $0.allSatisfy(\.isCompleted) }
+    }
 
     /// What the group is called: the standard word for a group of this size,
     /// with its letter. Vocabulary a lifter already reads, not a judgement about
@@ -84,13 +107,6 @@ struct ExerciseGroup: Identifiable {
         case 3: "Tri-set \(letter)"
         default: "Giant set \(letter)"
         }
-    }
-
-    /// How one member is written — `A1`, `A2` — or `nil` when it is not in this
-    /// group at all.
-    func notation(for exercise: PlannedExercise) -> String? {
-        guard let position = members.firstIndex(where: { $0 === exercise }) else { return nil }
-        return "\(letter)\(position + 1)"
     }
 }
 

@@ -250,7 +250,7 @@ struct TickPersistenceTests {
         set.isCompleted = true
         let log = SessionLog(
             day: day, context: context, restTimer: RestTimerModel(),
-            restPreferences: RestPreferences(), plans: [], unit: .pounds)
+            restPreferences: RestPreferences())
         try log.completionChanged(for: exercise, isCompleted: true)
 
         // A second context over the same store sees only what was written.
@@ -270,7 +270,7 @@ struct TickPersistenceTests {
         set.isCompleted = false
         let log = SessionLog(
             day: day, context: context, restTimer: RestTimerModel(),
-            restPreferences: RestPreferences(), plans: [], unit: .pounds)
+            restPreferences: RestPreferences())
         try log.completionChanged(for: exercise, isCompleted: false)
 
         let reader = ModelContext(container)

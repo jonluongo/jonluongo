@@ -161,10 +161,7 @@ struct SupersetStoreTests {
         }
         #expect(group.members.map(\.exerciseID) == [Self.fly, Self.pushdown])
         #expect(group.restSeconds == 90)
-        #expect(group.prescribedRounds == 3)
         #expect(group.title == "Superset A")
-        #expect(group.notation(for: group.members[0]) == "A1")
-        #expect(group.notation(for: group.members[1]) == "A2")
     }
 
     @Test("The first group of a day is A and the next is B")

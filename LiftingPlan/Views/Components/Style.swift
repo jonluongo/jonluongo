@@ -335,12 +335,6 @@ enum SetTableMetrics {
     static let rowInsets = EdgeInsets(
         top: Spacing.tight, leading: PanelMetrics.contentInset,
         bottom: Spacing.tight, trailing: PanelMetrics.contentInset)
-
-    /// What surrounds the column names. Tighter beneath, because the hairline
-    /// under them belongs to the rows rather than to the label.
-    static let headerInsets = EdgeInsets(
-        top: Spacing.snug, leading: PanelMetrics.contentInset,
-        bottom: 0, trailing: PanelMetrics.contentInset)
 }
 
 /// The geometry every panel shares.

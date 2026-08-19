@@ -111,30 +111,10 @@ struct PlanMappingTests {
         #expect(exercise.suggestedLoad?.unit == .kilograms)
     }
 
-    @Test("Parses rep-range bounds when building exercise history")
-    func repRangeBounds() {
-        let ranged = PlannedExercise(
-            exerciseID: ExerciseID(rawValue: "a"), displayName: "A",
-            order: 0, targetSets: 3, repRange: "8-12", restSeconds: 60
-        )
-        #expect(PerformanceHistory.history(from: ranged).repTargetUpper == 12)
-
-        let single = PlannedExercise(
-            exerciseID: ExerciseID(rawValue: "b"), displayName: "B",
-            order: 0, targetSets: 3, repRange: "5", restSeconds: 60
-        )
-        #expect(PerformanceHistory.history(from: single).repTargetUpper == 5)
-    }
-
     @Test("A hold prescribed in seconds is not turned into a rep target")
     func timedPrescriptionIsNotARepTarget() {
-        let plank = PlannedExercise(
-            exerciseID: ExerciseID(rawValue: "plank"), displayName: "Plank",
-            order: 0, targetSets: 3, repRange: "30 seconds", restSeconds: 60
-        )
-        // It used to come back as 30 — a rep target nobody prescribed, seeded
-        // into the log and counted as 30 reps by everything downstream.
-        #expect(PerformanceHistory.history(from: plank).repTargetUpper == 0)
+        // It used to seed 30 reps — a number nobody prescribed and nobody
+        // performed, counted as reps by everything downstream.
         #expect(RepPrescription.seededReps(for: "30 seconds") == nil)
         // The prescription itself is untouched: it is shown as it was written.
         #expect(RepPrescription.targetText(for: "30 seconds") == "30 seconds")

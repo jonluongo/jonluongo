@@ -231,7 +231,7 @@ struct ActiveWorkoutView: View {
     private var log: SessionLog {
         SessionLog(
             day: day, context: context, restTimer: restTimer,
-            restPreferences: restPreferences, plans: plans, unit: profile.displayUnit)
+            restPreferences: restPreferences)
     }
 
     /// Runs a write and shows the lifter when it fails, rather than discarding

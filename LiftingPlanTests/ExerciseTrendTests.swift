@@ -99,7 +99,6 @@ struct ExerciseTrendTests {
         #expect(trend.points.map(\.topLoad) == [
             Mass(value: 60, unit: .kilograms), Mass(value: 80, unit: .kilograms),
         ])
-        #expect(trend.latestLoad == Mass(value: 80, unit: .kilograms))
     }
 
     @Test("An exercise with no logged sets produces no trend")

@@ -23,7 +23,7 @@ import LiftingKit
 /// anything, no clock starts: the app does not invent one.
 ///
 /// **What it depends on.** `WorkoutDay`, `PlannedExercise` and `LoggedSet` from
-/// Store, `ExerciseGroup` and `GroupRounds` for a group's arithmetic,
+/// Store, `ExerciseGroup` for a group's rounds,
 /// `SetSeeding` for what a new row starts as, and the rest timer and
 /// preferences it is handed.
 @MainActor
@@ -35,8 +35,6 @@ struct SessionLog {
     let restPreferences: RestPreferences
     /// Every block, for the one question a group's rest asks that reaches
     /// outside this session.
-    let plans: [TrainingPlan]
-    let unit: MassUnit
 
     // MARK: - Writing to the record
 
@@ -124,8 +122,7 @@ struct SessionLog {
     /// expressing: ticking one movement starts nothing, because the next
     /// follows immediately.
     private func roundChanged(_ group: ExerciseGroup, completed: Bool) {
-        let rounds = GroupRounds(group: group, plans: plans, unit: unit)
-        guard completed, rounds.hasCompleteRound else { return restTimer.stop() }
+        guard completed, group.hasCompleteRound else { return restTimer.stop() }
         guard let key = group.restKey,
             let seconds = restPreferences.runningSeconds(
                 prescribed: group.restSeconds, for: key)

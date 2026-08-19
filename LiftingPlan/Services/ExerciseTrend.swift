@@ -50,8 +50,6 @@ struct ExerciseTrend: Identifiable {
     let displayName: String
     let points: [TrendPoint]
 
-    var latestLoad: Mass? { points.last?.topLoad }
-
     /// Build one trend per exercise id across all plans.
     static func build(from plans: [TrainingPlan]) -> [ExerciseTrend] {
         let loggedExercises = PerformanceHistory.allExercises(in: plans)

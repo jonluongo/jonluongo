@@ -30,8 +30,6 @@ struct ExerciseHistory: Equatable {
     var exerciseID: ExerciseID
     /// For display only — never compared or used as a key.
     var displayName: String
-    /// Upper bound of the prescribed rep range (e.g. "8-12" -> 12).
-    var repTargetUpper: Int
     /// Sets from the lifter's most recent session on this exercise, in order.
     var recentSets: [SetRecord]
 }
@@ -78,7 +76,6 @@ enum PerformanceHistory {
         return ExerciseHistory(
             exerciseID: exercise.exerciseID,
             displayName: exercise.displayName,
-            repTargetUpper: RepRange(exercise.repRange).upperBound,
             recentSets: records
         )
     }
