@@ -10,7 +10,7 @@ import LiftingKit
 /// **Why it is a sheet and not the top of the block.** The goal and the note sat
 /// above the weeks, where they were read once and scrolled past every session
 /// after that. They are what the block *is*, which is worth having and is not
-/// worth the first screenful of every visit. The `info.circle` on the bar is
+/// worth the first screenful of every visit. The `info` mark on the bar is
 /// where a lifter goes to ask.
 ///
 /// **It states and never concludes.** No verdict on whether he is on schedule,

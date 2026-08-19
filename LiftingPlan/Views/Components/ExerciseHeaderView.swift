@@ -86,7 +86,7 @@ struct ExerciseHeaderView: View {
         CardHeaderRow(title: exercise.displayName, subtitle: subtitle, eyebrow: eyebrow) {
             Menu {
                 Button { onShowInfo() } label: {
-                    Label("About This Exercise", systemImage: "info.circle")
+                    Label("About This Exercise", systemImage: "info")
                 }
                 Button { onEditRest() } label: {
                     Label("Rest Timer", systemImage: "timer")

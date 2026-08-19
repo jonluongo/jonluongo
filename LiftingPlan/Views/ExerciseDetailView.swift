@@ -26,7 +26,7 @@ import LiftingKit
 ///
 /// **It shares its chrome with the block's information sheet.** Both are an
 /// `InfoSheet`: the same surface, the same inline title, the same grabber, and
-/// both reached by the same `info.circle`. A block and a movement are the same
+/// both reached by the same `info` mark. A block and a movement are the same
 /// kind of question — *tell me about this* — and were two designs answering it.
 ///
 /// **What it depends on.** `InfoSheet` for that chrome, `ExerciseAboutSections`

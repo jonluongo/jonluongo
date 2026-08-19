@@ -14,7 +14,7 @@ import SwiftUI
 /// what makes the two sheets siblings rather than two designs that happen to
 /// agree today.
 ///
-/// **Both are reached by the same mark.** `info.circle`, on the block's toolbar
+/// **Both are reached by the same mark.** `info`, on the block's toolbar
 /// and in an exercise's menu. One glyph, one job: *tell me about this*.
 ///
 /// **What it depends on.** `Palette`. It holds no state and reads no model.

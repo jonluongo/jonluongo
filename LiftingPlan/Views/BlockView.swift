@@ -20,7 +20,7 @@ import LiftingKit
 /// this, with the week's remaining workouts swiped between; that could show what
 /// was left but never what was coming, so looking ahead or back was impossible.
 ///
-/// **What the block is for is behind the `info.circle`, not above the weeks.**
+/// **What the block is for is behind the `info` mark, not above the weeks.**
 /// The goal and the coach's note opened this screen, where they were read once
 /// and scrolled past on every visit after that. They are what the block *is*,
 /// which is worth having and is not worth the first screenful every time —
@@ -44,14 +44,16 @@ struct BlockView: View {
         List {
             ForEach(plan.orderedWeeks) { week in
                 let days = Self.trainingDays(of: week)
+                let later = isLater(week)
                 if !days.isEmpty {
                     Section {
-                        SectionHeading(PlanWeekSelection.title(for: week))
+                        SectionHeading(
+                            PlanWeekSelection.title(for: week), recessed: later)
                         ForEach(days) { day in
                             Button {
                                 openSession = day
                             } label: {
-                                DayRow(day: day)
+                                DayRow(day: day, isLater: later)
                             }
                             .buttonStyle(.plain)
                             // Each day its own panel. Sharing one per week made
@@ -60,7 +62,8 @@ struct BlockView: View {
                             // week is what it sits under.
                             .panelRow(
                                 .only, fillsPanel: true,
-                                isRecorded: day.completedAt != nil)
+                                isRecorded: day.completedAt != nil,
+                                recessed: later)
                             .listRowSeparator(.hidden)
                         }
                     }
@@ -77,8 +80,13 @@ struct BlockView: View {
             // Account is on the blocks list, which is the screen it belongs to:
             // it is about the lifter, not about the block he is reading.
             ToolbarItem(placement: .topBarTrailing) {
+                // `info`, not `info.circle`: the toolbar draws the circle, and
+                // a circular symbol inside a circular button is a ring in a
+                // ring — it reads heavier than the back chevron opposite it,
+                // which is a bare mark in the same glass. Same button, same
+                // target; the glyph inside now matches.
                 Button { showingInfo = true } label: {
-                    Image(systemName: "info.circle")
+                    Image(systemName: "info")
                 }
                 .accessibilityLabel("About this block")
             }
@@ -98,6 +106,23 @@ struct BlockView: View {
                 ActiveWorkoutView(day: session, profile: profile)
             }
         }
+    }
+
+    /// Whether this week comes after the one he is on.
+    ///
+    /// The week he is on is the earliest still holding an unfinished session —
+    /// read from the record rather than from the calendar, so a fortnight away
+    /// does not move him on, and a session skipped in week one keeps week one
+    /// current until he logs it or trains past it.
+    ///
+    /// **Nothing is closed by this.** A later week is drawn quieter and flatter;
+    /// every row still opens. Refusing to open one would mean refusing to record
+    /// a session he actually trained, which is the one thing this app may not
+    /// do — the same reason Finish greys and asks but is never disabled.
+    private func isLater(_ week: TrainingWeek) -> Bool {
+        guard let current = PlanWeekSelection.currentWeekOrdinal(in: plan.orderedWeeks)
+        else { return false }
+        return week.ordinal > current
     }
 
     /// The days of a week that prescribe work, in order.
@@ -123,6 +148,9 @@ struct BlockView: View {
 private struct DayRow: View {
 
     let day: WorkoutDay
+    /// Whether this session is in a week he has not reached. Drawn quieter; it
+    /// opens exactly as any other does.
+    var isLater: Bool = false
 
     private var title: String {
         TodayPhrasing.sessionTitle(focus: day.focus, weekday: day.weekday)
@@ -138,7 +166,7 @@ private struct DayRow: View {
             }
             Text(title)
                 .font(.supersetTitle)
-                .foregroundStyle(Palette.ink)
+                .foregroundStyle(isLater ? Palette.muted : Palette.ink)
             Spacer()
             // Two marks doing two jobs. The check appears only where it is true
             // — a column of empty boxes beside every unlogged day would say
