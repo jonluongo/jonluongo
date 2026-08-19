@@ -102,8 +102,11 @@ enum Palette {
     /// invisible at any opacity worth drawing, so the panel's own lighter fill
     /// does the separating and the shadow is switched off rather than drawn to
     /// no effect.
+    /// The opacity goes up as the blur comes down: spread over twelve points
+    /// eight per cent was all it could carry without smearing, and packed into
+    /// six it is what gives the edge its definition.
     static let panelShadow = dynamicAlpha(
-        light: 0x0A0C10, lightAlpha: 0.08, dark: 0x000000, darkAlpha: 0)
+        light: 0x0A0C10, lightAlpha: 0.10, dark: 0x000000, darkAlpha: 0)
 
     private static func dynamic(light: Int, dark: Int) -> Color {
         Color(uiColor: UIColor { traits in
@@ -431,12 +434,14 @@ enum PanelMetrics {
 
     /// How far a panel's shadow spreads, and how far it falls.
     ///
-    /// A wide, soft, almost-invisible shadow with a short drop — the shape the
-    /// platform's own layered surfaces cast. A tight dark one reads as a
-    /// drop-shadow effect from a decade ago; this is only meant to lift the
-    /// panel off the ground, not to be seen.
-    static let shadowRadius: CGFloat = 12
-    static let shadowY: CGFloat = 4
+    /// **Sharp and close, not wide and soft.** It was twelve points of blur at
+    /// four, which spread far enough that the panel had no edge to it — the
+    /// shadow read as a haze under the card rather than as the card sitting on
+    /// something. Six at two puts the darkest part of it right against the
+    /// panel's underside, which is what makes the edge crisp, and it stops
+    /// before it reaches the next panel.
+    static let shadowRadius: CGFloat = 6
+    static let shadowY: CGFloat = 2
 
     /// What surrounds Claude's note about an exercise, which closes the panel.
     ///
