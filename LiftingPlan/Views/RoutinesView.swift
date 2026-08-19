@@ -24,9 +24,9 @@ import LiftingKit
 /// pushes — rather than holding a `NavigationLink`, which would draw a
 /// disclosure chevron on every row.
 ///
-/// **What it depends on.** `TrainingPlan` from Store, `PlansListing` for every
-/// string it prints, and `NoBlockView`. It writes nothing.
-struct PlansView: View {
+/// **What it depends on.** `TrainingPlan` from Store, `RoutineListing` for every
+/// string it prints, and `NoRoutineView`. It writes nothing.
+struct RoutinesView: View {
 
     let profile: UserProfile
     /// What to do when a block is chosen. The stack's path lives above this
@@ -39,14 +39,14 @@ struct PlansView: View {
     var body: some View {
         Group {
             if plans.isEmpty {
-                NoBlockView()
+                NoRoutineView()
             } else {
                 List {
                     ForEach(plans) { plan in
                         BlockCard(
                             plan: plan,
-                            subtitle: PlansListing.subtitle(of: plan, calendar: calendar),
-                            fraction: PlansListing.loggedFraction(of: plan),
+                            subtitle: RoutineListing.subtitle(of: plan, calendar: calendar),
+                            fraction: RoutineListing.loggedFraction(of: plan),
                             onOpen: { onOpen(plan) }
                         )
                         // Each block its own panel, as each session is on the
@@ -93,7 +93,7 @@ private struct BlockCard: View {
     let fraction: Double?
     let onOpen: () -> Void
 
-    private var title: String { PlansListing.title(of: plan) }
+    private var title: String { RoutineListing.title(of: plan) }
 
     var body: some View {
         Button(action: onOpen) {
@@ -124,7 +124,7 @@ private struct BlockCard: View {
             // A screen reader hears one row at a time, with no order to read the
             // standing from, so the row says it in a word.
             .accessibilityLabel(
-                "\(title), \(PlansListing.standing(of: plan).spoken), \(subtitle)")
+                "\(title), \(RoutineListing.standing(of: plan).spoken), \(subtitle)")
         }
         .buttonStyle(.plain)
     }

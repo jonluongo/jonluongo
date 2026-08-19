@@ -11,12 +11,12 @@ import Foundation
 /// inventing the one fact that was missing.
 ///
 /// **How it is used.** The app builds one from its stored `TrainingPlan` and
-/// hands it to `BlockCalendar`. It is a snapshot, not a store: nothing here is
+/// hands it to `RoutineCalendar`. It is a snapshot, not a store: nothing here is
 /// written back, and the answer refers to weeks and weekdays rather than to
 /// records, so the caller looks its own rows back up by position.
 ///
 /// **What it depends on.** `Weekday`, and Foundation's `Date`. Nothing else.
-public struct BlockSchedule: Hashable, Sendable {
+public struct RoutineSchedule: Hashable, Sendable {
 
     /// When the block's first week begins. `nil` when the block states no
     /// start date — absence, never today.
@@ -44,7 +44,7 @@ public struct BlockSchedule: Hashable, Sendable {
 /// which days it trains.
 ///
 /// **What it does.** States a week's position and its sessions without the
-/// store. **How it is used.** Assembled into a `BlockSchedule`.
+/// store. **How it is used.** Assembled into a `RoutineSchedule`.
 /// **What it depends on.** `ScheduledDay`.
 public struct ScheduledWeek: Hashable, Sendable {
 
@@ -72,7 +72,7 @@ public struct ScheduledWeek: Hashable, Sendable {
 ///
 /// **What it does.** Names the weekday the session falls on, what it is for,
 /// and how far the lifter has got with it. **How it is used.** Assembled into a
-/// `ScheduledWeek`; `BlockCalendar` gives it a date.
+/// `ScheduledWeek`; `RoutineCalendar` gives it a date.
 /// **What it depends on.** `Weekday` and `SessionProgress`.
 public struct ScheduledDay: Hashable, Sendable {
 

@@ -63,10 +63,14 @@ snapshot file and must never link SwiftData.
   surface) and `ExerciseResolver` (free text → a real `ExerciseID`).
 - **`Store/`** — SwiftData `@Model` types: `UserProfile`, `TrainingPlan`,
   `TrainingWeek`, `WorkoutDay`, `PlannedExercise`, `LoggedSet`,
-  `StrengthBaseline`, `BodyMetric`.
+  `StrengthBaseline`, `BodyMetric`. **These keep their original names on
+  purpose**: CloudKit derives its record types from the entity name, so renaming
+  one orphans everything already synced. A `TrainingPlan` is what the app calls a
+  *routine*, a `TrainingWeek` is a *block*, a `WorkoutDay` is a *session* — see
+  `docs/decided.md`.
 - **`Services/`**
-  - `PlanBlueprint` — plain-value plan representation and the single mapping
-    into SwiftData, which records what it is handed without alteration.
+  - `RoutineBlueprint` — plain-value routine representation and the single
+    mapping into SwiftData, which records what it is handed without alteration.
   - `DocumentInbox` / `ProfileUpdater` — the inbound half of the loop: a plan
     and a profile update arrive in the shared folder, and this is what applies
     them. `ProfileUpdater` is the only way a fact about the lifter is stored.
@@ -74,11 +78,11 @@ snapshot file and must never link SwiftData.
     `ExerciseID`.
   - `ExerciseTrend` — per-exercise top-set and estimated-1RM series.
   - `RestTimerModel` — the date-based pace timer.
-- **`Views/`** — `RootView`, `BlockView`,
-  `ActiveWorkoutView`, `HistoryView`, `SettingsView`, plus small components.
-  previewing the same session.
+- **`Views/`** — `RootView`, `RoutinesView` (the list), `RoutineView` (one
+  routine, its blocks and their sessions), `ActiveWorkoutView` (logging a
+  session), `AccountView`, plus small components.
   There is deliberately no setup or onboarding view: the app asks the lifter
-  nothing, and `SettingsView` holds only the lb/kg preference and the reset.
+  nothing, and Account holds only the record and the delete.
 
 `LiftingKit/Sources/LiftingKit/Catalog/Resources/assembly-rules.json` is inert
 reference material for Claude. No Swift code decodes it, by design.

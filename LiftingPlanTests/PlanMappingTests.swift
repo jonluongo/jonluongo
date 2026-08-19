@@ -7,7 +7,7 @@ struct PlanMappingTests {
 
     @Test("Maps a blueprint into an ordered SwiftData plan")
     func mapsOrdered() {
-        let blueprint = PlanBlueprint(goal: "Get strong", durationMinutes: 45, days: [
+        let blueprint = RoutineBlueprint(goal: "Get strong", durationMinutes: 45, days: [
             DayBlueprint(weekday: .monday, focus: "Push", durationMinutes: 45, exercises: [
                 ExerciseBlueprint(
                     exerciseID: ExerciseID(rawValue: "barbell-bench-press"), displayName: "Bench",
@@ -51,7 +51,7 @@ struct PlanMappingTests {
         // Each is legitimate: 10x3 is a real prescription, 720 seconds is a
         // real rest between heavy singles, and an unstated rep range means
         // unstated — not "8-12".
-        let blueprint = PlanBlueprint(durationMinutes: 30, days: [
+        let blueprint = RoutineBlueprint(durationMinutes: 30, days: [
             DayBlueprint(weekday: .friday, focus: "", durationMinutes: 5, exercises: [
                 ExerciseBlueprint(
                     exerciseID: ExerciseID(rawValue: "barbell-back-squat"), displayName: "Squat",
@@ -75,7 +75,7 @@ struct PlanMappingTests {
 
     @Test("Zero prescribed sets is recorded as zero, not floored to one")
     func recordsZeroSets() {
-        let blueprint = PlanBlueprint(days: [
+        let blueprint = RoutineBlueprint(days: [
             DayBlueprint(weekday: .monday, focus: "Push", durationMinutes: 45, exercises: [
                 ExerciseBlueprint(
                     exerciseID: ExerciseID(rawValue: "barbell-bench-press"), displayName: "Bench",
@@ -94,7 +94,7 @@ struct PlanMappingTests {
 
     @Test("Carries a suggested load through with its unit intact")
     func suggestedLoadCarriesUnit() {
-        let blueprint = PlanBlueprint(days: [
+        let blueprint = RoutineBlueprint(days: [
             DayBlueprint(weekday: .monday, focus: "Push", durationMinutes: 45, exercises: [
                 ExerciseBlueprint(
                     exerciseID: ExerciseID(rawValue: "barbell-bench-press"), displayName: "Bench",

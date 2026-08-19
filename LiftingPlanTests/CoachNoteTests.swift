@@ -62,14 +62,14 @@ struct CoachNoteTests {
 
     @Test("A note the coach wrote reaches the blueprint")
     func noteReachesTheBlueprint() {
-        let blueprint = PlanBlueprint(document: Self.document(notes: Self.note))
+        let blueprint = RoutineBlueprint(document: Self.document(notes: Self.note))
 
         #expect(blueprint.notes == Self.note)
     }
 
     @Test("A block the coach said nothing about has no note, not an empty one")
     func absentNoteStaysAbsent() {
-        #expect(PlanBlueprint(document: Self.document()).notes == nil)
+        #expect(RoutineBlueprint(document: Self.document()).notes == nil)
     }
 
     // MARK: - And into the store
@@ -168,7 +168,7 @@ struct CoachNoteTests {
 
     @Test("A block that did not arrive as a document says nothing about when it was written")
     func blockWithNoDocumentHasNoWrittenDate() throws {
-        let plan = PlanBlueprint(weeks: []).makeWorkoutPlan(catalogVersion: 5)
+        let plan = RoutineBlueprint(weeks: []).makeWorkoutPlan(catalogVersion: 5)
 
         #expect(plan.generatedAt == nil)
     }

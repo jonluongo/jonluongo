@@ -17,7 +17,7 @@ struct BlockCalendarTests {
 
     @Test("A training day mid-block reports its week, its weekday and its session")
     func trainingDayMidBlock() throws {
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: Self.fourWeekBlock(), on: Self.at(2026, 3, 11))
 
         let day = try #require(today.standing.session)
@@ -36,7 +36,7 @@ struct BlockCalendarTests {
 
     @Test("A rest day mid-block is a state, not an absence, and names what is next")
     func restDayMidBlock() throws {
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: Self.fourWeekBlock(), on: Self.at(2026, 3, 10))
 
         let week = try #require(today.standing.rest)
@@ -52,7 +52,7 @@ struct BlockCalendarTests {
 
     @Test("The first day of a block is week 1, not a block that has not begun")
     func firstDayOfBlock() throws {
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: Self.fourWeekBlock(), on: Self.at(2026, 3, 2))
 
         let day = try #require(today.standing.session)
@@ -63,7 +63,7 @@ struct BlockCalendarTests {
 
     @Test("The last prescribed session of a block has nothing after it")
     func lastSessionOfBlock() throws {
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: Self.fourWeekBlock(), on: Self.at(2026, 3, 27))
 
         let day = try #require(today.standing.session)
@@ -77,7 +77,7 @@ struct BlockCalendarTests {
     func lastDayOfBlockIsARestDay() throws {
         // The block runs 28 days from Monday 2 March, so Sunday 29 March is the
         // last day it covers — a rest day, not a block that has run out.
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: Self.fourWeekBlock(), on: Self.at(2026, 3, 29))
 
         let week = try #require(today.standing.rest)
@@ -92,7 +92,7 @@ struct BlockCalendarTests {
         let schedule = Self.fourWeekBlock(
             progressFor: [.init(week: 2, weekday: .wednesday): .inProgress]
         )
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: schedule, on: Self.at(2026, 3, 11))
 
         let day = try #require(today.standing.session)
@@ -106,7 +106,7 @@ struct BlockCalendarTests {
         let schedule = Self.fourWeekBlock(
             progressFor: [.init(week: 2, weekday: .wednesday): .finished(finishedAt)]
         )
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: schedule, on: Self.at(2026, 3, 11, hour: 20))
 
         let day = try #require(today.standing.session)
@@ -122,7 +122,7 @@ struct BlockCalendarTests {
                 .init(week: 2, weekday: .wednesday): .finished(Self.at(2026, 3, 9))
             ]
         )
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: schedule, on: Self.at(2026, 3, 10))
 
         #expect(today.upcoming?.date == Self.startOfDay(2026, 3, 13))
@@ -132,7 +132,7 @@ struct BlockCalendarTests {
 
     @Test("A date before the block starts counts the days until it does")
     func beforeTheBlockStarts() {
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: Self.fourWeekBlock(), on: Self.at(2026, 2, 28))
 
         #expect(today.standing == .beforeBlock(daysUntilStart: 2))
@@ -141,7 +141,7 @@ struct BlockCalendarTests {
 
     @Test("A date after the block ends reports the day it ran to")
     func afterTheBlockEnds() {
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: Self.fourWeekBlock(), on: Self.at(2026, 3, 30))
 
         #expect(today.standing == .elapsed(endedOn: Self.startOfDay(2026, 3, 29)))
@@ -152,7 +152,7 @@ struct BlockCalendarTests {
     func closedBlock() {
         let closed = Self.at(2026, 3, 20)
         let schedule = Self.fourWeekBlock(closedAt: closed)
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: schedule, on: Self.at(2026, 3, 25))
 
         // 25 March would otherwise be week 4's Wednesday session.
@@ -164,8 +164,8 @@ struct BlockCalendarTests {
 
     @Test("A plan with no start date is undated, not started today")
     func noStartDate() {
-        let schedule = BlockSchedule(startDate: nil, weeks: Self.fourWeekBlock().weeks)
-        let subject = BlockCalendar(calendar: Self.utc)
+        let schedule = RoutineSchedule(startDate: nil, weeks: Self.fourWeekBlock().weeks)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: schedule, on: Self.at(2026, 3, 11))
 
         #expect(today.standing == .undated)
@@ -174,8 +174,8 @@ struct BlockCalendarTests {
 
     @Test("A block with no weeks prescribes nothing to place today against")
     func noWeeks() {
-        let schedule = BlockSchedule(startDate: Self.at(2026, 3, 2), weeks: [])
-        let subject = BlockCalendar(calendar: Self.utc)
+        let schedule = RoutineSchedule(startDate: Self.at(2026, 3, 2), weeks: [])
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: schedule, on: Self.at(2026, 3, 11))
 
         #expect(today.standing == .unscheduled)
@@ -186,7 +186,7 @@ struct BlockCalendarTests {
 
     @Test("A gap in the week ordinals is a rest week, not a missing one")
     func weekGap() throws {
-        let schedule = BlockSchedule(
+        let schedule = RoutineSchedule(
             startDate: Self.at(2026, 3, 2),
             weeks: [
                 ScheduledWeek(
@@ -198,7 +198,7 @@ struct BlockCalendarTests {
                     days: [ScheduledDay(weekday: .monday, focus: "Full Body")]),
             ]
         )
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let today = subject.today(in: schedule, on: Self.at(2026, 3, 9))
 
         let week = try #require(today.standing.rest)
@@ -218,14 +218,14 @@ struct BlockCalendarTests {
             ScheduledDay(weekday: .saturday, focus: "Long"),
             ScheduledDay(weekday: .sunday, focus: "Easy"),
         ]
-        let schedule = BlockSchedule(
+        let schedule = RoutineSchedule(
             startDate: Self.at(2026, 3, 4),
             weeks: [
                 ScheduledWeek(ordinal: 1, days: weekend),
                 ScheduledWeek(ordinal: 2, days: weekend),
             ]
         )
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
 
         let saturday = subject.today(in: schedule, on: Self.at(2026, 3, 7))
         let first = try #require(saturday.standing.session)
@@ -245,7 +245,7 @@ struct BlockCalendarTests {
     @Test("The day rolls at the lifter's midnight, not at UTC's")
     func dayRollsAtLocalMidnight() throws {
         let newYork = Self.calendar(in: "America/New_York")
-        let subject = BlockCalendar(calendar: newYork)
+        let subject = RoutineCalendar(calendar: newYork)
         let schedule = Self.fourWeekBlock(startedIn: newYork)
 
         // 23:00 on Wednesday in New York is already Thursday in UTC. The lifter
@@ -268,7 +268,7 @@ struct BlockCalendarTests {
     @Test("One wall-clock day is one answer, from a minute past midnight to a minute to")
     func oneDayIsOneAnswer() {
         let newYork = Self.calendar(in: "America/New_York")
-        let subject = BlockCalendar(calendar: newYork)
+        let subject = RoutineCalendar(calendar: newYork)
         let schedule = Self.fourWeekBlock(startedIn: newYork)
 
         let justAfterMidnight = subject.today(
@@ -282,7 +282,7 @@ struct BlockCalendarTests {
     func daylightSavingWeekIsStillSevenDays() throws {
         // US clocks go forward on Sunday 8 March 2026, inside week 1.
         let newYork = Self.calendar(in: "America/New_York")
-        let subject = BlockCalendar(calendar: newYork)
+        let subject = RoutineCalendar(calendar: newYork)
         let schedule = Self.fourWeekBlock(startedIn: newYork)
 
         let today = subject.today(in: schedule, on: Self.at(2026, 3, 9, hour: 9, in: newYork))
@@ -296,7 +296,7 @@ struct BlockCalendarTests {
 
     @Test("A block covers its start date and seven days per week after it")
     func spanCoversEveryWeek() throws {
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let span = try #require(subject.span(of: Self.fourWeekBlock()))
 
         #expect(span.lowerBound == Self.startOfDay(2026, 3, 2))
@@ -308,7 +308,7 @@ struct BlockCalendarTests {
 
     @Test("The extent is the same day the block reports having elapsed on")
     func spanAgreesWithElapsed() throws {
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let span = try #require(subject.span(of: Self.fourWeekBlock()))
         let after = subject.today(in: Self.fourWeekBlock(), on: Self.at(2026, 4, 1))
 
@@ -321,18 +321,18 @@ struct BlockCalendarTests {
 
     @Test("A block nothing dates has no extent")
     func undatedBlockHasNoSpan() {
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
 
-        #expect(subject.span(of: BlockSchedule(startDate: nil, closedAt: nil, weeks: [])) == nil)
+        #expect(subject.span(of: RoutineSchedule(startDate: nil, closedAt: nil, weeks: [])) == nil)
         #expect(subject.span(
-            of: BlockSchedule(startDate: Self.at(2026, 3, 2), closedAt: nil, weeks: [])) == nil)
+            of: RoutineSchedule(startDate: Self.at(2026, 3, 2), closedAt: nil, weeks: [])) == nil)
     }
 
     @Test("A closed block still covered the days it covered")
     func closedBlockKeepsItsExtent() throws {
         // Closing is a fact about the record, not about the calendar. What to
         // do about it is the caller's decision.
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let closed = Self.fourWeekBlock(closedAt: Self.at(2026, 3, 10))
         let span = try #require(subject.span(of: closed))
 
@@ -347,7 +347,7 @@ struct BlockCalendarTests {
         // The same answer `today(in:on:)` gives, asked the other way round: a
         // screen holding a week ordinal and a weekday needs the date, so the
         // day can be handed to the screen that shows days.
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let block = Self.fourWeekBlock()
 
         #expect(
@@ -365,7 +365,7 @@ struct BlockCalendarTests {
     func dateAgreesWithTodaysAnswer() throws {
         // The two callers of the arithmetic cannot drift: whatever date the
         // block reports a session on is the date the lookup gives for it.
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
         let block = Self.fourWeekBlock()
 
         for ordinal in 1...4 {
@@ -382,12 +382,12 @@ struct BlockCalendarTests {
 
     @Test("A block nothing dates places no session, and neither does a week before the first")
     func undatedBlockPlacesNoSession() {
-        let subject = BlockCalendar(calendar: Self.utc)
+        let subject = RoutineCalendar(calendar: Self.utc)
 
         #expect(
             subject.date(
                 ofWeek: 1, weekday: .monday,
-                in: BlockSchedule(startDate: nil, weeks: [])) == nil)
+                in: RoutineSchedule(startDate: nil, weeks: [])) == nil)
         #expect(subject.date(ofWeek: 0, weekday: .monday, in: Self.fourWeekBlock()) == nil)
     }
 
@@ -406,7 +406,7 @@ struct BlockCalendarTests {
         startedIn calendar: Calendar? = nil,
         closedAt: Date? = nil,
         progressFor progress: [Slot: SessionProgress] = [:]
-    ) -> BlockSchedule {
+    ) -> RoutineSchedule {
         let start = at(2026, 3, 2, in: calendar ?? utc)
         let focuses: [Weekday: String] = [.monday: "Push", .wednesday: "Pull", .friday: "Legs"]
         let weeks = (1...4).map { ordinal in
@@ -423,7 +423,7 @@ struct BlockCalendarTests {
                 }
             )
         }
-        return BlockSchedule(startDate: start, closedAt: closedAt, weeks: weeks)
+        return RoutineSchedule(startDate: start, closedAt: closedAt, weeks: weeks)
     }
 
     private static func calendar(in identifier: String) -> Calendar {

@@ -67,7 +67,7 @@ final class WorkoutDay {
     /// and syncing without anything new being stored.
     ///
     /// A ticked set is the anchor because it is the earliest point at which the
-    /// lifter is demonstrably training — the same evidence `TodayInPlan` already
+    /// lifter is demonstrably training — the same evidence `RoutineToday` already
     /// uses to tell a session in progress from one merely opened. Warm-ups
     /// count: he is in the gym. Before the first tick there is no elapsed time
     /// to report, and reporting one would be timing how long he looked at a

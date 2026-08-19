@@ -5,7 +5,7 @@ import Foundation
 import LiftingKit
 
 /// The store's side of knowing what day it is: turning a stored block into the
-/// values `BlockCalendar` reads, and finding the stored session back again.
+/// values `RoutineCalendar` reads, and finding the stored session back again.
 ///
 /// The derivation itself is tested in `LiftingKit`, without a simulator. What
 /// is tested here is only what touches SwiftData — chiefly the two judgements
@@ -21,7 +21,7 @@ struct TodayInPlanTests {
     @Test("A session nobody has opened has not been started")
     func untouchedSessionIsNotStarted() {
         let day = WorkoutDay(weekday: .monday, focus: "Push")
-        #expect(TodayInPlan.progress(of: day) == .notStarted)
+        #expect(RoutineToday.progress(of: day) == .notStarted)
     }
 
     @Test("Rows the logging screen seeded are not work, so the session is still not started")
@@ -34,7 +34,7 @@ struct TodayInPlanTests {
         exercise.loggedSets = (0..<3).map { LoggedSet(setIndex: $0, isCompleted: false) }
         day.exercises = [exercise]
 
-        #expect(TodayInPlan.progress(of: day) == .notStarted)
+        #expect(RoutineToday.progress(of: day) == .notStarted)
     }
 
     @Test("One ticked set is a session in progress")
@@ -47,7 +47,7 @@ struct TodayInPlanTests {
         ]
         day.exercises = [exercise]
 
-        #expect(TodayInPlan.progress(of: day) == .inProgress)
+        #expect(RoutineToday.progress(of: day) == .inProgress)
     }
 
     @Test("A ticked warmup counts: the lifter is in the gym")
@@ -57,7 +57,7 @@ struct TodayInPlanTests {
         exercise.loggedSets = [LoggedSet(setIndex: 0, reps: 8, isCompleted: true, isWarmup: true)]
         day.exercises = [exercise]
 
-        #expect(TodayInPlan.progress(of: day) == .inProgress)
+        #expect(RoutineToday.progress(of: day) == .inProgress)
     }
 
     @Test("A finished session reports the date it was finished on")
@@ -68,7 +68,7 @@ struct TodayInPlanTests {
         exercise.loggedSets = [LoggedSet(setIndex: 0, reps: 5, isCompleted: true)]
         day.exercises = [exercise]
 
-        #expect(TodayInPlan.progress(of: day) == .finished(finished))
+        #expect(RoutineToday.progress(of: day) == .finished(finished))
     }
 
     // MARK: - The schedule a plan states
@@ -76,7 +76,7 @@ struct TodayInPlanTests {
     @Test("A block's schedule states its start, its weeks and its sessions")
     func scheduleFromPlan() throws {
         let plan = Self.fourWeekPlan()
-        let schedule = TodayInPlan.schedule(for: plan)
+        let schedule = RoutineToday.schedule(for: plan)
 
         #expect(schedule.startDate == Self.monday)
         #expect(schedule.closedAt == nil)
@@ -96,7 +96,7 @@ struct TodayInPlanTests {
         let plan = Self.fourWeekPlan()
         plan.completedAt = Self.monday.addingTimeInterval(86_400)
 
-        let today = TodayInPlan.resolve(
+        let today = RoutineToday.resolve(
             plan, on: Self.monday.addingTimeInterval(86_400 * 8), calendar: Self.utc)
         #expect(today.standing == .closed(on: plan.completedAt ?? .distantPast))
     }
@@ -112,7 +112,7 @@ struct TodayInPlanTests {
 
         let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
         // Wednesday of week 2 — nine days after Monday 2 March.
-        let today = TodayInPlan.resolve(
+        let today = RoutineToday.resolve(
             loaded, on: Self.monday.addingTimeInterval(86_400 * 9 + 3_600 * 12),
             calendar: Self.utc)
 
@@ -123,7 +123,7 @@ struct TodayInPlanTests {
         #expect(session.focus == "Pull")
 
         // And the stored row is findable again from the answer.
-        let stored = try #require(TodayInPlan.session(session, in: loaded))
+        let stored = try #require(RoutineToday.session(session, in: loaded))
         #expect(stored.weekday == .wednesday)
         #expect(stored.focus == "Pull")
         #expect(stored.week?.ordinal == 2)
@@ -136,7 +136,7 @@ struct TodayInPlanTests {
             week: WeekPlacement(ordinal: 9, totalWeeks: 4, stated: nil),
             weekday: .sunday, focus: "", date: Self.monday, progress: .notStarted)
 
-        #expect(TodayInPlan.session(absent, in: plan) == nil)
+        #expect(RoutineToday.session(absent, in: plan) == nil)
     }
 
     // MARK: - Fixtures

@@ -20,7 +20,7 @@ struct PlanWeekSelectionTests {
             week(1, days: [day(.monday, done: true), day(.wednesday, done: false)]),
             week(2, days: [day(.monday, done: false)]),
         ]
-        #expect(PlanWeekSelection.currentWeekOrdinal(in: weeks) == 1)
+        #expect(BlockSelection.currentWeekOrdinal(in: weeks) == 1)
     }
 
     @Test("Finishing week 1 moves the screen on to week 2")
@@ -32,7 +32,7 @@ struct PlanWeekSelectionTests {
             week(2, days: [day(.monday, done: false)]),
             week(3, days: [day(.monday, done: false)]),
         ]
-        #expect(PlanWeekSelection.currentWeekOrdinal(in: weeks) == 2)
+        #expect(BlockSelection.currentWeekOrdinal(in: weeks) == 2)
     }
 
     @Test("A finished block stays on its last week rather than falling back to the first")
@@ -41,7 +41,7 @@ struct PlanWeekSelectionTests {
             week(1, days: [day(.monday, done: true)]),
             week(2, days: [day(.monday, done: true)]),
         ]
-        #expect(PlanWeekSelection.currentWeekOrdinal(in: weeks) == 2)
+        #expect(BlockSelection.currentWeekOrdinal(in: weeks) == 2)
     }
 
     @Test("Weeks out of storage order are read in program order")
@@ -53,31 +53,31 @@ struct PlanWeekSelectionTests {
             week(1, days: [day(.monday, done: true)]),
             week(2, days: [day(.monday, done: false)]),
         ]
-        #expect(PlanWeekSelection.currentWeekOrdinal(in: weeks) == 2)
+        #expect(BlockSelection.currentWeekOrdinal(in: weeks) == 2)
     }
 
     @Test("A week whose sessions have not arrived is not a finished week")
     func emptyWeekIsNotFinished() {
         let empty = week(2, days: [])
-        #expect(PlanWeekSelection.isFinished(empty) == false)
+        #expect(BlockSelection.isFinished(empty) == false)
         let weeks = [week(1, days: [day(.monday, done: true)]), empty]
-        #expect(PlanWeekSelection.currentWeekOrdinal(in: weeks) == 2)
+        #expect(BlockSelection.currentWeekOrdinal(in: weeks) == 2)
     }
 
     @Test("A plan with no weeks selects nothing")
     func noWeeks() {
-        #expect(PlanWeekSelection.currentWeekOrdinal(in: []) == nil)
+        #expect(BlockSelection.currentWeekOrdinal(in: []) == nil)
     }
 
     @Test("A week is titled by its position and whatever the plan called it")
     func weekTitles() {
-        #expect(PlanWeekSelection.title(for: week(2, days: [])) == "Block 2")
-        #expect(PlanWeekSelection.title(for: week(2, days: [], label: "Accumulation"))
+        #expect(BlockSelection.title(for: week(2, days: [])) == "Block 2")
+        #expect(BlockSelection.title(for: week(2, days: [], label: "Accumulation"))
             == "Block 2 · Accumulation")
         // A deload the plan did not label is still said, not lost.
-        #expect(PlanWeekSelection.title(for: week(4, days: [], isDeload: true))
+        #expect(BlockSelection.title(for: week(4, days: [], isDeload: true))
             == "Block 4 · Deload")
-        #expect(PlanWeekSelection.title(for: week(4, days: [], label: "Taper", isDeload: true))
+        #expect(BlockSelection.title(for: week(4, days: [], label: "Taper", isDeload: true))
             == "Block 4 · Taper")
     }
 
@@ -96,8 +96,8 @@ struct PlanWeekSelectionTests {
 
         let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
         #expect(loaded.orderedWeeks.map(\.ordinal) == [1, 2, 3, 4])
-        #expect(loaded.orderedWeeks.map(PlanWeekSelection.title(for:)).last == "Block 4 · Deload")
-        #expect(PlanWeekSelection.currentWeekOrdinal(in: loaded.orderedWeeks) == 2)
+        #expect(loaded.orderedWeeks.map(BlockSelection.title(for:)).last == "Block 4 · Deload")
+        #expect(BlockSelection.currentWeekOrdinal(in: loaded.orderedWeeks) == 2)
     }
 
     // MARK: - Fixtures

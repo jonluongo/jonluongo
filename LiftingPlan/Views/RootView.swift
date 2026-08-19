@@ -139,9 +139,9 @@ struct MainTabView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            PlansView(profile: profile) { path.append($0) }
+            RoutinesView(profile: profile) { path.append($0) }
                 .navigationDestination(for: TrainingPlan.self) { plan in
-                    BlockView(plan: plan, profile: profile)
+                    RoutineView(plan: plan, profile: profile)
                 }
         }
         // Only on the first appearance, and only when nothing has been chosen:

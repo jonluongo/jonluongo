@@ -16,7 +16,7 @@ import Foundation
 /// there rather than skipping past it.
 ///
 /// Depends on: `TrainingWeek` and `WorkoutDay` from Store.
-enum PlanWeekSelection {
+enum BlockSelection {
 
     /// The `ordinal` of the week to show first, or `nil` when there are no weeks.
     static func currentWeekOrdinal(in weeks: [TrainingWeek]) -> Int? {

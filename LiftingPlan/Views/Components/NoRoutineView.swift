@@ -11,7 +11,7 @@ import SwiftUI
 /// absence differently.
 ///
 /// **What it depends on.** Nothing but SwiftUI.
-struct NoBlockView: View {
+struct NoRoutineView: View {
 
     var body: some View {
         ContentUnavailableView {
@@ -23,5 +23,5 @@ struct NoBlockView: View {
 }
 
 #Preview("No routine") {
-    NoBlockView()
+    NoRoutineView()
 }

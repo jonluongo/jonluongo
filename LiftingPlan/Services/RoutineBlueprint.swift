@@ -15,7 +15,7 @@ import LiftingKit
 /// Absences stay absent: an unnamed block has an empty `title`, a week the
 /// plan did not name has a `nil` `label`, and a block the coach wrote no note
 /// about has `nil` `notes` rather than an empty one.
-struct PlanBlueprint: Equatable {
+struct RoutineBlueprint: Equatable {
     /// Short name for the block. Empty when the plan did not name it.
     var title: String = ""
     var goal: String = ""
@@ -31,7 +31,7 @@ struct PlanBlueprint: Equatable {
     var generatedAt: Date?
     /// The block's weeks, in the order they are to be trained. A week's
     /// position here is its ordinal.
-    var weeks: [WeekBlueprint]
+    var weeks: [BlockBlueprint]
 
     /// How many weeks the block runs: the weeks it actually holds. Derived
     /// rather than carried, so a stated length and the training that arrived
@@ -43,7 +43,7 @@ struct PlanBlueprint: Equatable {
     var days: [DayBlueprint] { weeks.flatMap(\.days) }
 }
 
-extension PlanBlueprint {
+extension RoutineBlueprint {
 
     /// A block of a single week, stated as its days.
     ///
@@ -58,19 +58,19 @@ extension PlanBlueprint {
         self.init(
             title: title, goal: goal, notes: notes,
             durationMinutes: durationMinutes, generatedAt: generatedAt,
-            weeks: [WeekBlueprint(days: days)]
+            weeks: [BlockBlueprint(days: days)]
         )
     }
 }
 
-/// One week within a `PlanBlueprint`.
+/// One week within a `RoutineBlueprint`.
 ///
 /// Weeks are held one at a time because they differ — a deload prescribes
 /// genuinely less work than the week before it, not the same work at a lower
 /// load. `label` is `nil` when the plan did not name the week: "Week 3" is
 /// where a week sits, which the reader knows, not something the plan said.
 /// Depends on: `DayBlueprint`.
-struct WeekBlueprint: Equatable {
+struct BlockBlueprint: Equatable {
     var label: String?
     var isDeload: Bool
     var days: [DayBlueprint]
@@ -82,7 +82,7 @@ struct WeekBlueprint: Equatable {
     }
 }
 
-extension PlanBlueprint {
+extension RoutineBlueprint {
     /// Build the SwiftData object graph for this blueprint: a new `TrainingPlan`
     /// holding one `TrainingWeek` per week, in the order they were given.
     ///
@@ -206,7 +206,7 @@ extension PlanBlueprint {
     }
 }
 
-extension PlanBlueprint {
+extension RoutineBlueprint {
 
     /// The producer this type was shaped for: a plan Claude wrote, restated in
     /// the app's own vocabulary.
@@ -232,7 +232,7 @@ extension PlanBlueprint {
             durationMinutes: document.durationMinutes,
             generatedAt: document.generatedAt,
             weeks: document.weeks.map { week in
-                WeekBlueprint(
+                BlockBlueprint(
                     label: week.label,
                     isDeload: week.isDeload,
                     days: week.days.map(Self.dayBlueprint)

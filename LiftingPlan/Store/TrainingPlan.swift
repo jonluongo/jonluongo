@@ -61,7 +61,7 @@ final class TrainingPlan {
     /// `nil` when nobody stamped it. It used to default to `1`, which said this
     /// block's exercises were chosen against the first catalog this app ever
     /// shipped — a claim nothing had made, and the one claim the stamp exists to
-    /// prevent. `PlanBlueprint.makeWorkoutPlan` requires the version for exactly
+    /// prevent. `RoutineBlueprint.makeWorkoutPlan` requires the version for exactly
     /// that reason, so every block the app builds carries a real one.
     var catalogVersion: Int?
     /// Which days this block trains. Different blocks may train different days.

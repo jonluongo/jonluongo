@@ -1,7 +1,7 @@
 import Foundation
 import LiftingKit
 
-/// One training day within a `WeekBlueprint`.
+/// One training day within a `BlockBlueprint`.
 ///
 /// **Its work is a list of entries, not a flat list of exercises**, because an
 /// entry may be a group — a superset, a tri-set, a giant set — performed as

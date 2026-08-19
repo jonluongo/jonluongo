@@ -9,14 +9,14 @@ import Foundation
 /// calendar and a stored plan, and what the lifter should do about it is not
 /// this type's business.
 ///
-/// **How it is used.** `BlockCalendar` produces one; the front door switches on
+/// **How it is used.** `RoutineCalendar` produces one; the front door switches on
 /// `standing` to choose its screen and reads `upcoming` to say what follows.
 /// Both are answered together because a rest day and a session already finished
 /// ask the same question — what is next — and neither should have to ask twice.
 ///
 /// **What it depends on.** `BlockDay` and `WeekPlacement`, which are values;
 /// nothing persistent, and no view.
-public struct TodayInBlock: Hashable, Sendable {
+public struct TodayInRoutine: Hashable, Sendable {
 
     /// Where today falls in relation to the block.
     public let standing: Standing
@@ -33,7 +33,7 @@ public struct TodayInBlock: Hashable, Sendable {
     }
 }
 
-extension TodayInBlock {
+extension TodayInRoutine {
 
     /// The states today can be in, one per screen the front door draws.
     public enum Standing: Hashable, Sendable {

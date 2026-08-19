@@ -20,9 +20,9 @@ import LiftingKit
 ///
 /// **What it depends on.** `InfoSheet` for the chrome it shares with the
 /// exercise sheet, `FactRow` for the stated facts, `CoachNoteView` for his
-/// prose, and `PlansListing` for the counts. It reads the block and writes
+/// prose, and `RoutineListing` for the counts. It reads the block and writes
 /// nothing.
-struct BlockInfoSheet: View {
+struct RoutineInfoSheet: View {
 
     let plan: TrainingPlan
 
@@ -56,7 +56,7 @@ struct BlockInfoSheet: View {
     }
 
     var body: some View {
-        InfoSheet(PlansListing.title(of: plan)) {
+        InfoSheet(RoutineListing.title(of: plan)) {
             if !plan.goal.isEmpty || note != nil {
                 Section {
                     if !plan.goal.isEmpty {

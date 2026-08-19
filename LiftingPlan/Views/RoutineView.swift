@@ -24,13 +24,13 @@ import LiftingKit
 /// The goal and the coach's note opened this screen, where they were read once
 /// and scrolled past on every visit after that. They are what the block *is*,
 /// which is worth having and is not worth the first screenful every time —
-/// `BlockInfoSheet` holds them, and the exercise sheet is reached by the same
+/// `RoutineInfoSheet` holds them, and the exercise sheet is reached by the same
 /// mark for the same reason.
 ///
 /// **What it depends on.** `TrainingPlan` and `WorkoutDay` from Store,
-/// `ActiveWorkoutView` for the session, `BlockInfoSheet` for what it is for, and
-/// `PlansListing` for the title.
-struct BlockView: View {
+/// `ActiveWorkoutView` for the session, `RoutineInfoSheet` for what it is for, and
+/// `RoutineListing` for the title.
+struct RoutineView: View {
 
     let plan: TrainingPlan
     let profile: UserProfile
@@ -48,7 +48,7 @@ struct BlockView: View {
                 if !days.isEmpty {
                     Section {
                         SectionHeading(
-                            PlanWeekSelection.title(for: week), recessed: later)
+                            BlockSelection.title(for: week), recessed: later)
                         ForEach(days) { day in
                             Button {
                                 openSession = day
@@ -73,7 +73,7 @@ struct BlockView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
-        .navigationTitle(PlansListing.title(of: plan))
+        .navigationTitle(RoutineListing.title(of: plan))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             // What the block is for lives behind this, not above the weeks.
@@ -92,7 +92,7 @@ struct BlockView: View {
             }
         }
         .sheet(isPresented: $showingInfo) {
-            NavigationStack { BlockInfoSheet(plan: plan) }
+            NavigationStack { RoutineInfoSheet(plan: plan) }
                 .presentationDragIndicator(.visible)
         }
         .fullScreenCover(item: $openSession) { session in
@@ -120,7 +120,7 @@ struct BlockView: View {
     /// a session he actually trained, which is the one thing this app may not
     /// do — the same reason Finish greys and asks but is never disabled.
     private func isLater(_ week: TrainingWeek) -> Bool {
-        guard let current = PlanWeekSelection.currentWeekOrdinal(in: plan.orderedWeeks)
+        guard let current = BlockSelection.currentWeekOrdinal(in: plan.orderedWeeks)
         else { return false }
         return week.ordinal > current
     }

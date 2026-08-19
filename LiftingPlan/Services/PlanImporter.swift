@@ -62,7 +62,7 @@ enum PlanImportError: Error, LocalizedError, Equatable {
 /// `DocumentRefusal`.
 ///
 /// Depends on: `PlanDocument` and `ExerciseCatalogProviding` from LiftingKit,
-/// `PlanBlueprint`, and the `Store/` models.
+/// `RoutineBlueprint`, and the `Store/` models.
 enum PlanImporter {
 
     /// Imports `document`, supersedes whatever block was current, and saves.
@@ -94,7 +94,7 @@ enum PlanImporter {
         try confirmEveryExerciseExists(in: document, using: catalog)
         try confirmEveryIconExists(in: document)
 
-        let plan = PlanBlueprint(document: document).makeWorkoutPlan(
+        let plan = RoutineBlueprint(document: document).makeWorkoutPlan(
             // The document states which catalog generation its IDs were chosen
             // from, which is the honest stamp even if this build has a newer
             // one loaded.

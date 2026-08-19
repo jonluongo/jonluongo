@@ -10,20 +10,20 @@ import LiftingKit
 /// plausible ones, and a block with no sessions says so rather than reporting
 /// zero of zero logged.
 ///
-/// **How it is used.** `PlansView` calls `standing(of:)` for the glyph a row
+/// **How it is used.** `RoutinesView` calls `standing(of:)` for the glyph a row
 /// draws, `title(of:)` for a card's name and `subtitle(of:)` for the line under
 /// it. It
 /// is a plain enum of static functions, separate from the view, so the phrasing
-/// is testable without a simulator — the same reason `PlanWeekSelection` and
+/// is testable without a simulator — the same reason `BlockSelection` and
 /// `TodayPhrasing` are. Colour is deliberately not here: a standing knows the
 /// word it is said with, and the view decides what tint follows it.
 ///
-/// **What it depends on.** `TrainingPlan` from Store, `TodayInPlan` from
-/// Services for the block's schedule, and `BlockCalendar` from LiftingKit for
+/// **What it depends on.** `TrainingPlan` from Store, `RoutineToday` from
+/// Services for the block's schedule, and `RoutineCalendar` from LiftingKit for
 /// the arithmetic that turns a start date and a week count into a span. The
 /// span rule is not restated here — a block runs seven days per week from its
 /// start date, and that sentence lives in exactly one place.
-enum PlansListing {
+enum RoutineListing {
 
     /// Where a block stands: the one being trained, or one behind him.
     ///
@@ -83,7 +83,7 @@ enum PlansListing {
     /// earlier block still covered the days it covered, and a list of past
     /// blocks that refused to date them would be a list of anonymous rows.
     static func span(of plan: TrainingPlan, calendar: Calendar = .current) -> ClosedRange<Date>? {
-        BlockCalendar(calendar: calendar).span(of: TodayInPlan.schedule(for: plan))
+        RoutineCalendar(calendar: calendar).span(of: RoutineToday.schedule(for: plan))
     }
 
     /// The block's timeframe, or the fact that it has none.
@@ -158,7 +158,7 @@ enum PlansListing {
     static func progress(of plan: TrainingPlan) -> String {
         var parts: [String] = []
         let weeks = plan.orderedWeeks
-        if let ordinal = PlanWeekSelection.currentWeekOrdinal(in: weeks) {
+        if let ordinal = BlockSelection.currentWeekOrdinal(in: weeks) {
             parts.append("Block \(ordinal) of \(weeks.count)")
         }
         let days = weeks.flatMap(\.orderedDays)

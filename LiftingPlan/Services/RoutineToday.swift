@@ -4,7 +4,7 @@ import LiftingKit
 /// The store's side of knowing what day it is.
 ///
 /// **What it does.** Reads a stored `TrainingPlan` into the plain values
-/// `BlockCalendar` places on a calendar, asks it where today falls, and finds
+/// `RoutineCalendar` places on a calendar, asks it where today falls, and finds
 /// the stored session back again from the answer. The arithmetic — which week,
 /// which day, what is next — is not here; it lives in `LiftingKit`, where it is
 /// tested without a simulator or a database. What is here is the one thing that
@@ -16,8 +16,8 @@ import LiftingKit
 /// written; this only answers.
 ///
 /// **What it depends on.** `TrainingPlan`, `TrainingWeek`, `WorkoutDay` and
-/// `LoggedSet` from Store, and `BlockCalendar` from LiftingKit.
-enum TodayInPlan {
+/// `LoggedSet` from Store, and `RoutineCalendar` from LiftingKit.
+enum RoutineToday {
 
     /// Where `now` falls in this block, and what it prescribes next.
     ///
@@ -25,8 +25,8 @@ enum TodayInPlan {
     /// rolls at the lifter's own midnight rather than at UTC's.
     static func resolve(
         _ plan: TrainingPlan, on now: Date, calendar: Calendar = .current
-    ) -> TodayInBlock {
-        BlockCalendar(calendar: calendar).today(in: schedule(for: plan), on: now)
+    ) -> TodayInRoutine {
+        RoutineCalendar(calendar: calendar).today(in: schedule(for: plan), on: now)
     }
 
     /// This block reduced to the values a calendar question needs.
@@ -36,8 +36,8 @@ enum TodayInPlan {
     /// "a later block superseded it", because `PlanImporter` writes it in the
     /// second case too. The record never separated the two, so nothing here
     /// invents the difference.
-    static func schedule(for plan: TrainingPlan) -> BlockSchedule {
-        BlockSchedule(
+    static func schedule(for plan: TrainingPlan) -> RoutineSchedule {
+        RoutineSchedule(
             startDate: plan.startDate,
             closedAt: plan.completedAt,
             weeks: plan.orderedWeeks.map { week in

@@ -7,7 +7,7 @@ import LiftingKit
 /// a stored string: what to put at the top of it. It states a fact and never
 /// advises — what the lifter should do about a session is not decided here.
 ///
-/// **How it is used.** `BlockView` names each day of a block with it, and
+/// **How it is used.** `RoutineView` names each day of a block with it, and
 /// `ActiveWorkoutView` the session being logged, so a row and the screen it
 /// opens cannot disagree about what the workout is called.
 ///
