@@ -164,88 +164,85 @@ struct ActiveWorkoutView: View {
 
     // MARK: - One card per entry
 
-    /// An exercise performed on its own — exactly the card it has always been.
-    @ViewBuilder
+    /// An exercise performed on its own.
     private func section(for exercise: PlannedExercise) -> some View {
-        // The name sits on the panel rather than above it, so an exercise is
-        // one object — its title, its prescription and its sets — instead of a
-        // label floating over a table that happens to be beneath it.
-        Section {
-            ExerciseHeaderView(
-                exercise: exercise,
-                unit: profile.displayUnit,
-                onShowInfo: { infoExercise = exercise },
-                onEditRest: { restEditing = RestTarget(exercise: exercise) },
-                onAddSet: { write { try log.addSet(to: exercise, warmup: false) } },
-                onAddWarmup: { write { try log.addSet(to: exercise, warmup: true) } }
-            )
-            .panelRow(.first, isRecorded: exercise.isFullyLogged)
-            .listRowSeparator(.hidden)
+        Section { card(for: exercise, in: nil) }
+    }
 
-            ExerciseLogSection(
-                exercise: exercise,
-                profile: profile,
-                plans: plans,
-                onDeleteSet: { set, exercise in
-                    write { try log.delete(set, from: exercise) }
-                },
-                onCompletionChanged: { exercise, set, completed in
-                    // No scrolling here: an exercise on its own has its next
-                    // set on the row below, already on screen and already under
-                    // his thumb.
-                    _ = set
-                    write { try log.completionChanged(for: exercise, isCompleted: completed) }
-                }
-            )
+    /// A group, drawn as its movements are drawn — each with the header and the
+    /// set table an ungrouped exercise gets, and each on its own panel, which is
+    /// what Jon asked for. What says they are one thing is the rule down their
+    /// edge and the word above their names; an earlier version instead had them
+    /// share a panel with no gap, on the reasoning that two things without the
+    /// gap everything else has must be one, and rendered that read as three
+    /// separate exercises rather than as a pair. A signal has to be present, not
+    /// withheld.
+    ///
+    /// That is the whole of the notation: no "Superset A", no A1/A2, no legend
+    /// decoding symbols the layout had invented, and no round labels restating a
+    /// set number. Rest still runs when the round closes, which is what a
+    /// superset actually is.
+    private func section(for group: ExerciseGroup) -> some View {
+        Section {
+            ForEach(group.members) { member in card(for: member, in: group) }
         }
     }
 
-    /// A group, as one card: the card is the group because the group is the unit
-    /// of work.
+    /// One movement's card: its name, its prescription and its sets.
+    ///
+    /// **One function, because a grouped movement and an ungrouped one are the
+    /// same card.** They were two, differing in a `paired` flag, which rest the
+    /// menu edits and what a tick means — and they drifted: a completed-row
+    /// background was deleted from the exercise table and left on the group's,
+    /// which is a defect that cannot happen to a card there is only one of.
+    ///
+    /// `group` is what the movement is performed inside, or `nil` when it is
+    /// performed on its own. Everything that differs between the two reads off
+    /// it and nothing else.
     @ViewBuilder
-    private func section(for group: ExerciseGroup) -> some View {
-        // A group is drawn as its movements are drawn — each with the header
-        // and the set table an ungrouped exercise gets, and each on its own
-        // panel, which is what Jon asked for. What says they are one thing is
-        // the rule down their edge and the word above their names; an earlier
-        // version instead had them share a panel with no gap, on the reasoning
-        // that two things without the gap everything else has must be one, and
-        // rendered that read as three separate exercises rather than as a pair.
-        // A signal has to be present, not withheld.
-        //
-        // That is the whole of the notation: no "Superset A", no A1/A2, no
-        // legend decoding symbols the layout had invented, and no round labels
-        // restating a set number. Rest still runs when the round closes, which
-        // is what a superset actually is.
-        Section {
-            ForEach(Array(group.members.enumerated()), id: \.element.id) { index, member in
-                ExerciseHeaderView(
-                    exercise: member,
-                    unit: profile.displayUnit,
-                    onShowInfo: { infoExercise = member },
-                    onEditRest: { restEditing = RestTarget(group: group) },
-                    onAddSet: { write { try log.addSet(to: member, warmup: false) } },
-                    onAddWarmup: { write { try log.addSet(to: member, warmup: true) } },
-                    paired: true
-                )
-                .panelRow(.first, paired: true, isRecorded: member.isFullyLogged)
-                .listRowSeparator(.hidden)
+    private func card(for exercise: PlannedExercise, in group: ExerciseGroup?) -> some View {
+        let paired = group != nil
+        // The name sits on the panel rather than above it, so an exercise is one
+        // object — its title, its prescription and its sets — instead of a label
+        // floating over a table that happens to be beneath it.
+        ExerciseHeaderView(
+            exercise: exercise,
+            unit: profile.displayUnit,
+            onShowInfo: { infoExercise = exercise },
+            // Rest is prescribed per exercise and per group, so the menu edits
+            // whichever this movement is trained under.
+            onEditRest: {
+                restEditing = group.map(RestTarget.init(group:))
+                    ?? RestTarget(exercise: exercise)
+            },
+            onAddSet: { write { try log.addSet(to: exercise, warmup: false) } },
+            onAddWarmup: { write { try log.addSet(to: exercise, warmup: true) } },
+            paired: paired
+        )
+        .panelRow(.first, paired: paired, isRecorded: exercise.isFullyLogged)
+        .listRowSeparator(.hidden)
 
-                ExerciseLogSection(
-                    exercise: member,
-                    profile: profile,
-                    plans: plans,
-                    onDeleteSet: { set, exercise in
-                        write { try log.delete(set, from: exercise) }
-                    },
-                    onCompletionChanged: { member, set, completed in
-                        write { try log.roundCompletionChanged(group, completed: completed) }
-                        showNext(after: set, of: member, in: group, ticked: completed)
-                    },
-                    paired: true
-                )
-            }
-        }
+        ExerciseLogSection(
+            exercise: exercise,
+            profile: profile,
+            plans: plans,
+            onDeleteSet: { set, exercise in
+                write { try log.delete(set, from: exercise) }
+            },
+            onCompletionChanged: { exercise, set, completed in
+                // A tick inside a group closes the round; on its own it closes
+                // only the exercise. And only a group scrolls: an ungrouped
+                // exercise has its next set on the row below, already on screen
+                // and already under his thumb.
+                if let group {
+                    write { try log.roundCompletionChanged(group, completed: completed) }
+                    showNext(after: set, of: exercise, in: group, ticked: completed)
+                } else {
+                    write { try log.completionChanged(for: exercise, isCompleted: completed) }
+                }
+            },
+            paired: paired
+        )
     }
 
     /// Brings the next set of a group into view when one is ticked.
