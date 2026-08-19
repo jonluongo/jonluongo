@@ -20,13 +20,18 @@ import LiftingKit
 /// reports when it ran.
 ///
 /// **How it is used.** The root of the stack, with the block pushed on top of
-/// it. It reads the store directly and hands each block to `BlockView`.
+/// it. It reads the store directly and reports a tap to `onOpen`, which is what
+/// pushes — rather than holding a `NavigationLink`, which would draw a
+/// disclosure chevron on every row.
 ///
 /// **What it depends on.** `TrainingPlan` from Store, `PlansListing` for every
 /// string it prints, and `NoBlockView`. It writes nothing.
 struct PlansView: View {
 
     let profile: UserProfile
+    /// What to do when a block is chosen. The stack's path lives above this
+    /// screen, so opening one is reported rather than performed here.
+    let onOpen: (TrainingPlan) -> Void
 
     @Environment(\.calendar) private var calendar
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
@@ -41,7 +46,7 @@ struct PlansView: View {
                         BlockCard(
                             plan: plan,
                             subtitle: PlansListing.subtitle(of: plan, calendar: calendar),
-                            profile: profile
+                            onOpen: { onOpen(plan) }
                         )
                         // Each block its own panel, as each session is on the
                         // block screen. One panel holding every block made the
@@ -70,20 +75,25 @@ struct PlansView: View {
 /// The card states what the block is and stops. Nothing here is a badge or a
 /// score: the app decides nothing about a block, including whether it went well,
 /// and the record cannot tell a block he finished from one a new plan replaced.
+///
+/// **A `Button`, not a `NavigationLink`.** A link in a list draws a disclosure
+/// chevron, so a block row carried one and a day row — a button that presents
+/// the session — did not, which made the same act read two ways one screen
+/// apart. Every panel in this app is tapped to open what it names; a mark on all
+/// of them says nothing, and the day row's trailing slot already belongs to the
+/// mark that says whether it is in the record.
 private struct BlockCard: View {
 
     let plan: TrainingPlan
     /// The line under the name, already phrased. Passed in rather than computed
     /// here so the whole line comes from the one place that phrases it.
     let subtitle: String
-    let profile: UserProfile
+    let onOpen: () -> Void
 
     private var title: String { PlansListing.title(of: plan) }
 
     var body: some View {
-        NavigationLink {
-            BlockView(plan: plan, profile: profile)
-        } label: {
+        Button(action: onOpen) {
             VStack(alignment: .leading, spacing: Spacing.tight) {
                 Text(title)
                     .font(.supersetTitle)
@@ -99,5 +109,6 @@ private struct BlockCard: View {
             .accessibilityLabel(
                 "\(title), \(PlansListing.standing(of: plan).spoken), \(subtitle)")
         }
+        .buttonStyle(.plain)
     }
 }
