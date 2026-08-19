@@ -32,6 +32,18 @@ struct BlockView: View {
 
     var body: some View {
         List {
+            // What Claude said about the block, above the weeks it describes.
+            // The restructure dropped it silently — nobody decided the app
+            // should stop showing what the coach wrote, and an app that quietly
+            // discards his prose is not the interface he works through.
+            if let note = plan.notes, !note.isEmpty {
+                Section {
+                    CoachNoteView(note: note)
+                        .panelRow(.only)
+                        .listRowSeparator(.hidden)
+                }
+            }
+
             ForEach(plan.orderedWeeks) { week in
                 let days = Self.trainingDays(of: week)
                 if !days.isEmpty {

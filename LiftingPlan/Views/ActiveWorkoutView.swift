@@ -87,6 +87,15 @@ struct ActiveWorkoutView: View {
                     Button { dismiss() } label: { Image(systemName: "xmark") }
                         .accessibilityLabel("Close workout")
                 }
+                // How long he has been training, counting from the first ticked
+                // set. It lived in the header of a screen that no longer exists,
+                // and went with it — another thing the restructure dropped
+                // rather than decided.
+                ToolbarItem(placement: .topBarLeading) {
+                    if let startedAt = day.startedAt {
+                        SessionClock(startedAt: startedAt, finishedAt: day.completedAt)
+                    }
+                }
             }
             .safeAreaInset(edge: .bottom) {
                 if restTimer.isRunning {
