@@ -92,9 +92,33 @@ enum Palette {
     /// that cannot be drawn from a `let`.
     static let hairline: CGFloat = 1.0 / 3.0
 
+    /// What a panel casts on the surface behind it.
+    ///
+    /// **Light only, and barely.** A panel is already lighter than the ground it
+    /// sits on, and in light appearance a shadow is what says it sits *on* it
+    /// rather than being a lighter rectangle painted into it — the current
+    /// platform convention, and the reason a card reads as an object at all.
+    /// In dark it is the opposite: a black shadow on a near-black surface is
+    /// invisible at any opacity worth drawing, so the panel's own lighter fill
+    /// does the separating and the shadow is switched off rather than drawn to
+    /// no effect.
+    static let panelShadow = dynamicAlpha(
+        light: 0x0A0C10, lightAlpha: 0.07, dark: 0x000000, darkAlpha: 0)
+
     private static func dynamic(light: Int, dark: Int) -> Color {
         Color(uiColor: UIColor { traits in
             traits.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light)
+        })
+    }
+
+    /// The same, for the one colour whose opacity differs between appearances.
+    private static func dynamicAlpha(
+        light: Int, lightAlpha: CGFloat, dark: Int, darkAlpha: CGFloat
+    ) -> Color {
+        Color(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hex: dark).withAlphaComponent(darkAlpha)
+                : UIColor(hex: light).withAlphaComponent(lightAlpha)
         })
     }
 }
@@ -396,6 +420,15 @@ enum PanelMetrics {
     /// at the very bottom of it, so without this the last rule in a table lands
     /// against the panel's edge while the title above breathes.
     static let closing: CGFloat = Spacing.standard
+
+    /// How far a panel's shadow spreads, and how far it falls.
+    ///
+    /// A wide, soft, almost-invisible shadow with a short drop — the shape the
+    /// platform's own layered surfaces cast. A tight dark one reads as a
+    /// drop-shadow effect from a decade ago; this is only meant to lift the
+    /// panel off the ground, not to be seen.
+    static let shadowRadius: CGFloat = 10
+    static let shadowY: CGFloat = 2
 
     /// What a row that *is* a button pads itself by, having been given the
     /// panel's whole area to be tappable in.

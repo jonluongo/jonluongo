@@ -121,6 +121,18 @@ extension View {
             // bounding box, and a superset's panel had two sharp corners that no
             // other panel had.
             .clipShape(shape)
+            // **Only a panel that is one row casts one.** A `List` gives every
+            // row its own background layer, so a blur cast by an interior row
+            // spreads over its neighbours instead of behind them — rendered,
+            // that banded every set table with a soft line between each row.
+            // The panels this lifts are the ones being chosen from, which are
+            // one row each; a table of sets is already one object because its
+            // rows share a fill, and it stays flat rather than being banded to
+            // look raised.
+            .shadow(
+                color: position == .only ? Palette.panelShadow : .clear,
+                radius: PanelMetrics.shadowRadius,
+                y: PanelMetrics.shadowY)
             .padding(.horizontal, PanelMetrics.inset)
             // The gap between one panel and the next, taken off the background
             // rather than added to the row. Adding it to the row's insets — the
