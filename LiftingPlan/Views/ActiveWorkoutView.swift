@@ -91,7 +91,10 @@ struct ActiveWorkoutView: View {
                 // set. It lived in the header of a screen that no longer exists,
                 // and went with it — another thing the restructure dropped
                 // rather than decided.
-                ToolbarItem(placement: .topBarLeading) {
+                // The title's place, because it is the bar's own line. As a
+                // leading item it was given a small fixed capsule and truncated
+                // to "1…", which is a clock saying nothing.
+                ToolbarItem(placement: .principal) {
                     if let startedAt = day.startedAt {
                         SessionClock(startedAt: startedAt, finishedAt: day.completedAt)
                     }

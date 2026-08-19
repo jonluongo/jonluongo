@@ -36,8 +36,12 @@ struct SessionClock: View {
 
     private func label(_ text: String) -> some View {
         Text(text)
-            .font(.barbellSupport)
-            .foregroundStyle(Palette.muted)
+            // The same type a navigation title is set in, because that is what
+            // it sits beside: a small figure in support grey read as a caption
+            // hung off the bar rather than as the bar's own line. Monospaced
+            // digits stay, so a counting number never reflows under a thumb.
+            .font(.barbellTitle)
+            .foregroundStyle(Palette.ink)
             .monospacedDigit()
     }
 
