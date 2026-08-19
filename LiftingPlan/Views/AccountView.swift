@@ -72,7 +72,11 @@ struct AccountView: View {
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
         .navigationTitle("Account")
-        .navigationBarTitleDisplayMode(.large)
+        // Inline, as both information sheets are. A large title here and a small
+        // centred one on the two sheets beside it is the app changing what a
+        // header looks like depending on which sheet you opened — the same
+        // fault the root and the block page were corrected for.
+        .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("Delete all blocks?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
             Button("Delete Blocks", role: .destructive) { deleteAllPlans() }
             Button("Cancel", role: .cancel) {}
