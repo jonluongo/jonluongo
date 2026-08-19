@@ -118,13 +118,16 @@ enum Palette {
 
     /// What a panel casts on the surface behind it.
     ///
-    /// **Light only, and sharp.** Twelve points of blur at a four-point drop
-    /// spread far enough that the panel had no edge; six at two puts the darkest
-    /// part right against its underside. In dark the panel's own lighter fill
-    /// and the edge do the separating, and a black blur on a near-black ground
+    /// **Light only, and barely there.** Twelve points of blur at a four-point
+    /// drop spread far enough that the panel had no edge at all; six at two and
+    /// ten per cent still read as a halo under a panel the height of a whole
+    /// exercise. Three at one, at six per cent, is a contact shadow — the panel
+    /// touching the surface rather than floating over it — and the hairline is
+    /// what actually draws the edge. In dark the panel's own lighter fill and
+    /// that hairline do the separating, and a black blur on a near-black ground
     /// would be drawn to no effect.
     static let panelShadow = dynamicAlpha(
-        light: 0x0A0C10, lightAlpha: 0.10, dark: 0x000000, darkAlpha: 0)
+        light: 0x0A0C10, lightAlpha: 0.06, dark: 0x000000, darkAlpha: 0)
 
     /// The width of a hairline.
     ///
@@ -463,10 +466,11 @@ enum PanelMetrics {
     /// against the panel's edge while the title above breathes.
     static let closing: CGFloat = Spacing.standard
 
-    /// How far a panel's shadow spreads, and how far it falls. Sharp and close:
-    /// the darkest part of the blur belongs against the panel's underside.
-    static let shadowRadius: CGFloat = 6
-    static let shadowY: CGFloat = 2
+    /// How far a panel's shadow spreads, and how far it falls. Small and crisp:
+    /// the whole of the blur belongs against the panel's underside, and
+    /// anything wider reads as a halo rather than as contact.
+    static let shadowRadius: CGFloat = 3
+    static let shadowY: CGFloat = 1
 
     /// What surrounds Claude's note about an exercise, which closes the panel.
     ///
