@@ -32,15 +32,28 @@ struct BlockView: View {
 
     var body: some View {
         List {
-            // What Claude said about the block, above the weeks it describes.
-            // The restructure dropped it silently — nobody decided the app
-            // should stop showing what the coach wrote, and an app that quietly
-            // discards his prose is not the interface he works through.
-            if let note = plan.notes, !note.isEmpty {
+            // What the block is for, and what Claude said about it.
+            //
+            // The goal anchors the note. Without it the paragraph opened the
+            // screen with nothing to attach to — a instruction about reps and
+            // failure, floating above a list of days, with no statement of what
+            // any of it is meant to achieve. The goal is the block's subject and
+            // the note is his commentary on it, so they are one panel.
+            if !plan.goal.isEmpty || (plan.notes.map { !$0.isEmpty } ?? false) {
+                let hasNote = plan.notes.map { !$0.isEmpty } ?? false
                 Section {
-                    CoachNoteView(note: note)
-                        .panelRow(.only)
-                        .listRowSeparator(.hidden)
+                    if !plan.goal.isEmpty {
+                        Text(plan.goal)
+                            .font(.barbellTitle)
+                            .foregroundStyle(Palette.ink)
+                            .panelRow(hasNote ? .first : .only)
+                            .listRowSeparator(.hidden)
+                    }
+                    if let note = plan.notes, !note.isEmpty {
+                        CoachNoteView(note: note)
+                            .panelRow(plan.goal.isEmpty ? .only : .last)
+                            .listRowSeparator(.hidden)
+                    }
                 }
             }
 
@@ -107,14 +120,26 @@ private struct DayRow: View {
         TodayPhrasing.sessionTitle(focus: day.focus, weekday: day.weekday)
     }
 
+    /// What the session amounts to, before it is opened.
+    ///
+    /// The row was a name and a length, which is most of a panel saying very
+    /// little. How many movements it holds is the fact a lifter wants deciding
+    /// whether to start — and unlike on a screen that lists them, here they are
+    /// behind a tap, so the count is the only way to know.
+    private var shape: String? {
+        TodayPhrasing.sessionShape(
+            exercises: day.orderedExercises.count,
+            durationMinutes: day.durationMinutes)
+    }
+
     var body: some View {
         HStack(spacing: Spacing.standard) {
             VStack(alignment: .leading, spacing: Spacing.tight) {
                 Text(title)
                     .font(.barbellTitle)
                     .foregroundStyle(Palette.ink)
-                if let minutes = day.durationMinutes {
-                    Text("\(minutes) min")
+                if let shape {
+                    Text(shape)
                         .font(.barbellSupport)
                         .foregroundStyle(Palette.muted)
                 }
