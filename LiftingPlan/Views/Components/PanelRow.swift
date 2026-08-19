@@ -59,9 +59,13 @@ extension View {
     /// nothing, and the panel looked like a button that sometimes ignored you.
     /// With it, the content is handed the panel's whole area and pads itself by
     /// `PanelMetrics.buttonInsets`, which is the same room by a different owner.
+    /// **`isRecorded` colours the panel rather than adding to it.** What a row
+    /// holds being in the record is a state that varies down a list, which is
+    /// exactly what a panel's own ground can say without spending a line or a
+    /// slot on it.
     func panelRow(
         _ position: PanelPosition, insets: EdgeInsets = PanelMetrics.rowInsets,
-        paired: Bool = false, fillsPanel: Bool = false
+        paired: Bool = false, fillsPanel: Bool = false, isRecorded: Bool = false
     ) -> some View {
         // A panel's outer edges get more room than its inner rows, which is what
         // separates one panel from the next. Without it two panels sat flush and
@@ -91,7 +95,7 @@ extension View {
         return listRowInsets(spaced)
         .listRowBackground(
             shape
-            .fill(Palette.panel)
+            .fill(isRecorded ? Palette.recordedPanel : Palette.panel)
             .overlay(alignment: .leading) {
                 // The mark that two movements are one superset.
                 //

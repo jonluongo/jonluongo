@@ -73,7 +73,9 @@ struct BlockView: View {
                             // a week a single object with three names in it;
                             // a session is the thing being chosen, and the
                             // week is what it sits under.
-                            .panelRow(.only, fillsPanel: true)
+                            .panelRow(
+                                .only, fillsPanel: true,
+                                isRecorded: day.completedAt != nil)
                             .listRowSeparator(.hidden)
                         }
                     }
@@ -105,12 +107,18 @@ struct BlockView: View {
     }
 }
 
-/// One training day: what Claude called it, how long it runs, and whether it is
-/// in the record.
+/// One training day: what Claude called it, and whether it is in the record.
 ///
-/// The mark is the only thing distinguishing a logged day from one still to
-/// come, and it is a mark rather than a colour on the title — a session already
-/// trained is still worth opening to correct.
+/// **The name, and nothing under it.** The row listed the session's movements —
+/// `Barbell Bench Press · Dumbbell Seated Overhea…` — which crowded the two
+/// marks at the other end and truncated before it finished naming the second
+/// one. What the session is called is what a lifter is choosing between here;
+/// what is in it is one tap away, in full.
+///
+/// **There is no icon and cannot be one.** The day's name is whatever Claude
+/// called it — `Push`, `Upper A`, `Chest & Back` — so a glyph per session would
+/// mean the app deciding what a session trains from words it does not control,
+/// and one glyph for all of them is a mark identical everywhere it appears.
 private struct DayRow: View {
 
     let day: WorkoutDay
@@ -119,57 +127,19 @@ private struct DayRow: View {
         TodayPhrasing.sessionTitle(focus: day.focus, weekday: day.weekday)
     }
 
-    /// The movements themselves, which is what the session actually is.
-    ///
-    /// **There is no icon here and cannot be one.** The day's name is whatever
-    /// Claude called it — `Push`, `Upper A`, `Chest & Back` — so a glyph per
-    /// session would mean the app deciding what a session trains from words it
-    /// does not control, and one glyph for all of them is a mark identical
-    /// everywhere it appears, which is decoration. The movements say it without
-    /// guessing.
-    ///
-    /// The movements, in order, on one line.
-    ///
-    /// **In full, because shortening them lied.** Keeping the last two words of
-    /// each turned "Barbell Bench Press" and "Dumbbell Incline Bench Press" into
-    /// the same string, so a session listed one movement twice and hid another —
-    /// the row claiming a session the block does not prescribe. The line runs to
-    /// the edge and truncates there instead, which says *and more* without
-    /// naming anything wrongly.
-    ///
-    /// It used to be two names plus `+4`, over a line counting the exercises and
-    /// the minutes — three lines of grey wrapping unevenly under the name, with
-    /// the mark floating against the middle of them. The count said in a figure
-    /// what the names say concretely; the names stayed.
-    private var movements: String? {
-        let names = day.orderedExercises.map(\.displayName)
-        guard !names.isEmpty else { return nil }
-        return names.joined(separator: " · ")
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.tight) {
-            HStack(spacing: Spacing.standard) {
-                Text(title)
-                    .font(.supersetTitle)
-                    .foregroundStyle(Palette.ink)
-                Spacer()
-                // Two marks doing two jobs. The check appears only where it is
-                // true — a column of empty boxes beside every unlogged day
-                // would say nothing — and the chevron appears on every row,
-                // because every row opens something. The blocks list draws the
-                // same chevron, so a session and a block are chosen the same
-                // way.
-                RecordedMark(isRecorded: day.completedAt != nil, showsEmpty: false)
-                DisclosureChevron()
-            }
-            if let movements {
-                Text(movements)
-                    .font(.supersetSupport)
-                    .foregroundStyle(Palette.muted)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
+        HStack(spacing: Spacing.standard) {
+            Text(title)
+                .font(.supersetTitle)
+                .foregroundStyle(Palette.ink)
+            Spacer()
+            // Two marks doing two jobs. The check appears only where it is true
+            // — a column of empty boxes beside every unlogged day would say
+            // nothing — and the chevron on every row, because every row opens
+            // something. The panel's own ground carries it a third time, which
+            // is the one that reads without looking at the row.
+            RecordedMark(isRecorded: day.completedAt != nil, showsEmpty: false)
+            DisclosureChevron()
         }
         .padding(PanelMetrics.buttonInsets)
         // The panel's whole area, not the text's.

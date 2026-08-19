@@ -70,6 +70,19 @@ enum Palette {
     /// system green made.
     static let recorded = dynamic(light: 0x1F7A4D, dark: 0x35C57F)
 
+    /// The ground a panel is written on once what it holds is in the record.
+    ///
+    /// `recorded` carried the whole job as a 24pt mark, which is a lot of work
+    /// for a glyph: a list of sessions read as a list of identical panels with a
+    /// small green square somewhere on the right. The panel itself carries it
+    /// now, so a logged session is legible before anything on it is read.
+    ///
+    /// It is `panel` with a wash of `recorded` in it rather than a slab of
+    /// green: the saturated version was tried and it shouted beside the accent,
+    /// and a session already trained is still an ordinary thing to open and
+    /// correct — not a prize.
+    static let recordedPanel = dynamic(light: 0xE7F3EC, dark: 0x13231B)
+
     /// The width of a hairline.
     ///
     /// A third of a point, which is one device pixel on the 3× screens this
