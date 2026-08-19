@@ -209,6 +209,25 @@ one *whole*, naming both versions, before holding any key against it — an
 unknown key is exactly what a later format is made of. Bump the version when a
 reader would have to behave differently, never for an additive field.
 
+**An icon does one of two jobs, or it does not exist.** Either it *names an
+action* where a word will not fit — a toolbar control, a menu item, a swipe —
+or it *marks a state that varies* within a list, where the variation is the
+information: a logged day beside an unlogged one, a superset beside a plain
+exercise. Anything else is decoration.
+
+The test is the one the owner set: **an icon identical everywhere it appears
+distinguishes nothing.** That is why every exercise header lost its dumbbell and
+every group its rotate arrows, and why a day row has none — the day's name is
+whatever Claude called it, so a glyph per session would mean the app deciding
+what a session trains from words it does not control.
+
+**SF Symbols only, and no third-party set.** They already match the system's
+optical weight, scale with Dynamic Type, and follow the appearance. A bundled
+pack costs assets, a licence and hand-matched weights, and buys no information —
+and there is no icon set that meaningfully covers 412 movements, so per-exercise
+glyphs would be guesswork about what a lift *is*. One symbol per job, drawn from
+the system.
+
 **Extensible taxonomies, not closed enums.** Muscle groups, equipment,
 movement patterns, and categories are raw-value-backed structs with static
 constants. Unknown values from data must round-trip intact rather than crash or

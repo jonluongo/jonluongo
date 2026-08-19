@@ -43,7 +43,7 @@ struct ActiveWorkoutView: View {
             List {
                 if exercises.isEmpty {
                     ContentUnavailableView {
-                        Label("No exercises", systemImage: "dumbbell")
+                        Label("No exercises", systemImage: "dumbbell.fill")
                     }
                 } else {
                     ForEach(entries) { entry in
