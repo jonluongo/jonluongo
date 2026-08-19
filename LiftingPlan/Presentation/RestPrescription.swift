@@ -2,7 +2,7 @@ import Foundation
 
 /// How a prescribed rest is written out for the lifter.
 ///
-/// Used by `PrescribedExerciseRow`, `ExerciseLogSection` and `ExerciseRestSheet`
+/// Used by `ExerciseLogSection` and `ExerciseRestSheet`
 /// so one rest length reads the same everywhere. It is display only, and it
 /// offers nothing: there is no list of suggested rest lengths here or anywhere
 /// else in the app, because how long to rest is a training decision and the app

@@ -31,9 +31,9 @@ import LiftingKit
 /// the table; the sentence about set four was off the top of the screen by the
 /// time he reached set four. Each row now carries its own: its load and its reps
 /// as the placeholders in its two fields, and its note — and the effort asked of
-/// it where no load was — in the line underneath. The numbered block still earns
-/// its place in `PrescribedExerciseRow`, which states a session that has no rows
-/// yet.
+/// it where no load was — in the line underneath. The numbered block that used
+/// to state a session before it had rows went with the browsing screens that
+/// drew it.
 struct ExerciseLogSection: View {
     let exercise: PlannedExercise
     let profile: UserProfile

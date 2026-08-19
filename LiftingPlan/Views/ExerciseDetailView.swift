@@ -168,37 +168,6 @@ struct ExerciseDetailView: View {
     }
 }
 
-/// A prescribed exercise, and the way into everything about it.
-///
-/// **What it does.** Draws `PrescribedExerciseRow` and pushes
-/// `ExerciseDetailView` when it is tapped. It exists so the two screens that
-/// list prescribed exercises — Today's session and a week inside Plan — open the
-/// exercise the same way and say the same thing about it to VoiceOver.
-///
-/// **What it depends on.** `PrescribedExerciseRow`, `PlannedExercise` from
-/// Store, `MassUnit` from Domain. It must be inside a `NavigationStack`.
-struct ExerciseDetailLink: View {
-
-    let exercise: PlannedExercise
-    let unit: MassUnit
-    /// How the movement is written within its group, or `nil` when it is
-    /// performed on its own.
-    var notation: String? = nil
-
-    var body: some View {
-        NavigationLink {
-            ExerciseDetailView(
-                exerciseID: exercise.exerciseID,
-                displayName: exercise.displayName,
-                unit: unit
-            )
-        } label: {
-            PrescribedExerciseRow(exercise: exercise, unit: unit, notation: notation)
-        }
-        .accessibilityHint("Shows this exercise and what you have lifted on it")
-    }
-}
-
 /// One plottable session: the heaviest load it was logged with, in the display
 /// unit, and which unbroken run of loaded sessions it belongs to.
 private struct ChartPoint: Identifiable {
