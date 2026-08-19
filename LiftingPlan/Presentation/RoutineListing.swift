@@ -18,9 +18,9 @@ import LiftingKit
 /// `TodayPhrasing` are. Colour is deliberately not here: a standing knows the
 /// word it is said with, and the view decides what tint follows it.
 ///
-/// **What it depends on.** `TrainingPlan` from Store, `RoutineToday` from
-/// Services for the block's schedule, and `RoutineCalendar` from LiftingKit for
-/// the arithmetic that turns a start date and a week count into a span. The
+/// **What it depends on.** `TrainingPlan` from Store, and `RoutineSchedule` and
+/// `RoutineCalendar` from LiftingKit for the arithmetic that turns a start date
+/// and a set of week ordinals into a span. The
 /// span rule is not restated here — a block runs seven days per week from its
 /// start date, and that sentence lives in exactly one place.
 enum RoutineListing {
@@ -83,7 +83,8 @@ enum RoutineListing {
     /// earlier block still covered the days it covered, and a list of past
     /// blocks that refused to date them would be a list of anonymous rows.
     static func span(of plan: TrainingPlan, calendar: Calendar = .current) -> ClosedRange<Date>? {
-        RoutineCalendar(calendar: calendar).span(of: RoutineToday.schedule(for: plan))
+        RoutineCalendar(calendar: calendar).span(of: RoutineSchedule(
+            startDate: plan.startDate, weekOrdinals: plan.orderedWeeks.map(\.ordinal)))
     }
 
     /// The block's timeframe, or the fact that it has none.
