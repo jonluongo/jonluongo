@@ -69,10 +69,11 @@ struct SessionFinishSection: View {
             PrimaryActionButton(
                 title: isLogged ? "Mark as Unfinished" : "Finish Workout",
                 systemImage: isLogged ? "arrow.uturn.backward" : "checkmark",
-                // Muted when it is not the thing to do next: taking a session
-                // back is a correction, and finishing one with sets unticked is
-                // a question rather than a refusal.
-                isMuted: isLogged || unloggedSetCount > 0,
+                // Taking a session back is a correction, not an action the
+                // screen is for, so it carries no fill at all. Finishing one
+                // with sets unticked is a question rather than a refusal, so it
+                // keeps the shape and loses the colour.
+                prominence: isLogged ? .quiet : (unloggedSetCount > 0 ? .tentative : .primary),
                 action: {
                     if isLogged { return onUnfinish() }
                     if unloggedSetCount > 0 { asking = true } else { onFinish() }

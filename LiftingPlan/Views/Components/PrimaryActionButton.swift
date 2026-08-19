@@ -8,8 +8,8 @@ import SwiftUI
 /// height and a different colour from the other two. This is that button, once,
 /// at one height that clears the 44pt minimum.
 ///
-/// **How it is used.** Give it a title and, when it has one, a symbol. There is
-/// no tint to pass: this button is the accent, always.
+/// **How it is used.** Give it a title, a symbol when it has one, and how much
+/// of the screen it is entitled to — see `Prominence`. There is no tint to pass.
 ///
 /// **Green was tried and was wrong.** Finishing a workout was tinted green on
 /// the grounds that green means done elsewhere in the app — and that is exactly
@@ -22,20 +22,35 @@ import SwiftUI
 /// The rule that replaced it is shorter: **the accent is what you can do, green
 /// is what the record says.**
 ///
-/// **What it depends on.** `Spacing`, `TapTarget`, and SwiftUI's prominent
-/// button style. It performs no action of its own and knows nothing about what
-/// it starts or finishes.
+/// **What it depends on.** `Spacing`, `TapTarget`, and SwiftUI's button styles.
+/// It performs no action of its own and knows nothing about what it starts or
+/// finishes.
 struct PrimaryActionButton: View {
+
+    /// How much of the screen this action is entitled to.
+    ///
+    /// **None of them is ever disabled.** Whether he is finished is his to say
+    /// and not the app's, and a correction has to stay available or the record
+    /// cannot be corrected. What changes is how loudly the button asks to be
+    /// pressed.
+    enum Prominence {
+        /// The thing to do: the highlighter at full strength, with ink on it.
+        /// A screen gets one.
+        case primary
+        /// Available, but not what the screen is for yet — finishing a session
+        /// with sets still unticked. A grey fill, the same shape.
+        case tentative
+        /// A correction rather than an action: taking a finished session back.
+        /// No fill at all, just the word. It is the least a button can be while
+        /// still being one, which is what a thing you press by mistake should
+        /// be.
+        case quiet
+    }
 
     let title: String
     /// The symbol beside the title, or `nil` for a title on its own.
     var systemImage: String?
-    /// Whether this action is available but not the expected one yet — a
-    /// session finished with sets still unticked, say. It draws grey rather
-    /// than accent, and it is **not** disabled: the lifter may always press it,
-    /// because whether he is finished is his to say and not the app's. The
-    /// colour is the only thing that changes.
-    var isMuted: Bool = false
+    var prominence: Prominence = .primary
     let action: () -> Void
 
     var body: some View {
@@ -45,20 +60,41 @@ struct PrimaryActionButton: View {
                 // Stated rather than inherited. A prominent button draws its
                 // title against the tint but leaves the symbol beside it to the
                 // accent, so a button whose fill was not the accent came out
-                // with a title and a symbol in two different colours. The fill
-                // is the highlighter at full strength, which is lighter than
-                // anything behind it, so what sits on it is ink — see
-                // `Palette.onAccent`.
-                .foregroundStyle(isMuted ? Color.white : Palette.onAccent)
+                // with a title and a symbol in two different colours.
+                .foregroundStyle(foreground)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.tight)
         }
         .buttonStyle(.borderedProminent)
-        .tint(isMuted ? Palette.muted : Palette.accent)
+        // A quiet button is the same button with nothing behind it. Drawn as a
+        // bare `Button` instead it would lose the height and the full width,
+        // and the foot of the screen would move depending on which state it was
+        // in — which is the fault this control was made one thing to fix.
+        .tint(fill)
         // The floor, not the height: the style's own padding already clears
         // 44pt at ordinary text sizes, and this catches the case where it
         // would not.
         .frame(minHeight: TapTarget.minimum)
+    }
+
+    /// The fill behind the word. `clear` is not an absence of a decision here —
+    /// it is the decision.
+    private var fill: Color {
+        switch prominence {
+        case .primary: Palette.accent
+        case .tentative: Palette.muted
+        case .quiet: .clear
+        }
+    }
+
+    /// What the word is written in: ink on the highlighter, white on grey, and
+    /// ink again on nothing at all.
+    private var foreground: Color {
+        switch prominence {
+        case .primary: Palette.onAccent
+        case .tentative: .white
+        case .quiet: Palette.ink
+        }
     }
 
     @ViewBuilder
@@ -75,6 +111,11 @@ struct PrimaryActionButton: View {
     VStack(spacing: Spacing.section) {
         PrimaryActionButton(title: "Start Workout", systemImage: "play.fill") {}
         PrimaryActionButton(title: "Finish Workout", systemImage: "checkmark") {}
+        PrimaryActionButton(
+            title: "Finish Workout", systemImage: "checkmark", prominence: .tentative) {}
+        PrimaryActionButton(
+            title: "Mark as Unfinished", systemImage: "arrow.uturn.backward",
+            prominence: .quiet) {}
     }
     .padding()
 }
