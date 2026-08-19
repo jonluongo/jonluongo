@@ -29,7 +29,6 @@ struct ExerciseRestSheet: View {
     let rest: LifterRest
     var onChange: (LifterRest) -> Void
 
-    @Environment(\.dismiss) private var dismiss
     @State private var minutes: Int
     @State private var seconds: Int
     @State private var isOn: Bool
@@ -65,6 +64,9 @@ struct ExerciseRestSheet: View {
             List {
                 Section {
                     Toggle("Rest timer", isOn: switchBinding)
+                        .font(.supersetBody)
+                        .panelRow(isOn ? .first : .only)
+                        .listRowSeparator(.hidden)
                     if isOn {
                         HStack(spacing: 0) {
                             wheel(selection: $minutes, unit: "min")
@@ -72,24 +74,33 @@ struct ExerciseRestSheet: View {
                         }
                         .frame(maxHeight: 160)
                         .onChange(of: total) { _, newTotal in choose(newTotal) }
+                        .panelRow(.last)
+                        .listRowSeparator(.hidden)
                     }
-                } footer: {
-                    Text(prescriptionSentence)
+                    // What Claude asked for, under the control rather than
+                    // wrapped in a panel of its own: it is a note about the
+                    // thing above it, not a fact in its own right.
+                    Text(prescriptionSentence).note()
                 }
 
                 if isOverridden {
                     Section {
                         Button("Use Prescribed Rest") { usePrescribed() }
+                            .font(.supersetBody)
+                            .panelRow(.only)
+                            .listRowSeparator(.hidden)
                     }
                 }
             }
+            // The app's own list, not the system's grouped one. This was the
+            // last screen still made of stock grey panels with stock corners,
+            // which is what happens to a sheet nobody has looked at since the
+            // rest of the app was redrawn.
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Palette.surface)
             .navigationTitle(exerciseName)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }.fontWeight(.semibold)
-                }
-            }
         }
         .presentationDetents([.medium])
     }

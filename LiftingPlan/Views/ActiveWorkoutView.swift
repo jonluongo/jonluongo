@@ -124,6 +124,10 @@ struct ActiveWorkoutView: View {
                 ) { rest in
                     restPreferences.setRest(rest, for: target.key)
                 }
+                // The grabber, as on every other sheet. This one had a Done
+                // button instead — the same chrome that was taken off the other
+                // three, left on the one nobody had opened since.
+                .presentationDragIndicator(.visible)
             }
             // The same screen the exercise row pushes elsewhere in the app —
             // what the movement is and what has been lifted on it are one
