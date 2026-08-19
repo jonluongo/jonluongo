@@ -67,16 +67,14 @@ struct SetRowView: View {
     /// happen, and the rest it started has nothing left to be resting from.
     var onCompletionChanged: (Bool) -> Void
 
+    // Every binding here is plumbing: the reading and the writing are
+    // `SetEntry`'s, which is a pure function over a string and therefore
+    // something a test can type into. What a field means was the least covered
+    // code in the app while it lived in these closures.
     private var weightText: Binding<String> {
         Binding(
-            get: { set.load.map { $0.converted(to: unit).value.compactString } ?? "" },
-            set: { text in
-                guard let value = Double(text.replacingOccurrences(of: ",", with: ".")) else {
-                    set.load = nil
-                    return
-                }
-                set.load = Mass(value: value, unit: unit)
-            }
+            get: { SetEntry.text(for: set.load, in: unit) },
+            set: { set.load = SetEntry.load(from: $0, in: unit) }
         )
     }
 
@@ -93,8 +91,8 @@ struct SetRowView: View {
 
     private var repsText: Binding<String> {
         Binding(
-            get: { set.reps > 0 ? String(set.reps) : "" },
-            set: { set.reps = Int($0.filter(\.isNumber)) ?? 0 }
+            get: { SetEntry.text(forReps: set.reps) },
+            set: { set.reps = SetEntry.reps(from: $0) }
         )
     }
 
@@ -102,8 +100,8 @@ struct SetRowView: View {
     /// is emptied — a set that was not timed did not last no time.
     private var durationText: Binding<String> {
         Binding(
-            get: { set.durationSeconds.map(String.init) ?? "" },
-            set: { set.durationSeconds = Int($0.filter(\.isNumber)) }
+            get: { SetEntry.text(forSeconds: set.durationSeconds) },
+            set: { set.durationSeconds = SetEntry.seconds(from: $0) }
         )
     }
 
@@ -115,14 +113,8 @@ struct SetRowView: View {
     /// yards is recorded in yards.
     private func distanceText(in unit: DistanceUnit) -> Binding<String> {
         Binding(
-            get: { set.distance.map { $0.value.compactString } ?? "" },
-            set: { text in
-                guard let value = Double(text.replacingOccurrences(of: ",", with: ".")) else {
-                    set.distance = nil
-                    return
-                }
-                set.distance = Distance(value: value, unit: unit)
-            }
+            get: { SetEntry.text(for: set.distance) },
+            set: { set.distance = SetEntry.distance(from: $0, in: unit) }
         )
     }
 
