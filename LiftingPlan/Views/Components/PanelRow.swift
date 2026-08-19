@@ -63,9 +63,14 @@ extension View {
     /// holds being in the record is a state that varies down a list, which is
     /// exactly what a panel's own ground can say without spending a line or a
     /// slot on it.
+    /// **`recessed` puts a panel further back without closing it.** What is not
+    /// due yet still opens — the record has to take a session he actually
+    /// trained, whenever he trained it — so a later week is drawn flat and
+    /// quiet rather than greyed out or gated.
     func panelRow(
         _ position: PanelPosition, insets: EdgeInsets = PanelMetrics.rowInsets,
-        paired: Bool = false, fillsPanel: Bool = false, isRecorded: Bool = false
+        paired: Bool = false, fillsPanel: Bool = false, isRecorded: Bool = false,
+        recessed: Bool = false
     ) -> some View {
         // A panel's outer edges get more room than its inner rows, which is what
         // separates one panel from the next. Without it two panels sat flush and
@@ -130,7 +135,7 @@ extension View {
             // rows share a fill, and it stays flat rather than being banded to
             // look raised.
             .shadow(
-                color: position == .only ? Palette.panelShadow : .clear,
+                color: position == .only && !recessed ? Palette.panelShadow : .clear,
                 radius: PanelMetrics.shadowRadius,
                 y: PanelMetrics.shadowY)
             .padding(.horizontal, PanelMetrics.inset)

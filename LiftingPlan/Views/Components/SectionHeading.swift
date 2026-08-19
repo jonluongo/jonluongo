@@ -19,15 +19,19 @@ import SwiftUI
 struct SectionHeading: View {
 
     let text: String
+    /// Whether what it heads is not yet due. Drawn quieter, never differently:
+    /// it is the same heading, further back.
+    var recessed: Bool = false
 
-    init(_ text: String) {
+    init(_ text: String, recessed: Bool = false) {
         self.text = text
+        self.recessed = recessed
     }
 
     var body: some View {
         Text(text)
             .font(.supersetHeading)
-            .foregroundStyle(Palette.ink)
+            .foregroundStyle(recessed ? Palette.muted : Palette.ink)
             .textCase(nil)
             .padding(.top, Spacing.standard)
             .padding(.bottom, Spacing.snug)
