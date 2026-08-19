@@ -32,7 +32,8 @@ import LiftingKit
 /// different acts and one of them was a permanent fixture competing with the
 /// rows it sat among. The ability itself is not in question: the app records
 /// what happened, so a fifth set actually performed must be recordable even
-/// though four were prescribed.
+/// though four were prescribed — which is why it is called *Add Extra Set*, at
+/// the foot of the menu: it adds work the plan did not ask for.
 ///
 /// **There is no icon.** Every exercise drew the same dumbbell in the same
 /// circle, so the glyph told a lifter nothing about which exercise he was
@@ -91,11 +92,16 @@ struct ExerciseHeaderView: View {
                 Button { onEditRest() } label: {
                     Label("Rest Timer", systemImage: "timer")
                 }
-                Button { onAddSet() } label: {
-                    Label("Add Set", systemImage: "plus")
-                }
+                // Warm-up first, extra set last, and the extra set says
+                // *extra*: "Add Set" beside "Add Warmup Set" read as though one
+                // of them were the ordinary way to add a set, when both are
+                // additions past what was prescribed. The one at the foot is the
+                // one that adds work the plan did not ask for.
                 Button { onAddWarmup() } label: {
                     Label("Add Warmup Set", systemImage: "flame")
+                }
+                Button { onAddSet() } label: {
+                    Label("Add Extra Set", systemImage: "plus")
                 }
             } label: {
                 // No frame of its own. It had one, 44pt wide and aligned

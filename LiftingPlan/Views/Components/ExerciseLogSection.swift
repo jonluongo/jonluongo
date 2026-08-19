@@ -97,10 +97,15 @@ struct ExerciseLogSection: View {
                 // view. A row is identified by the set it logs, which is the
                 // only thing about it that is stable.
                 .id(set.persistentModelID)
+                // **The word alone, not a `Label`.** A swipe action carrying
+                // both an icon and a title is drawn two ways by the system: a
+                // capsule reading "🗑 Delete" at a partial swipe, and a circular
+                // glyph with "Delete" captioned underneath once the swipe goes
+                // far enough. Same action, same row, two shapes — and the app's
+                // own rule says an icon earns its place only where a word will
+                // not fit. Here one fits.
                 .swipeActions(edge: .trailing) {
-                    Button(role: .destructive) { onDeleteSet(set, exercise) } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
+                    Button("Delete", role: .destructive) { onDeleteSet(set, exercise) }
                 }
             }
 
