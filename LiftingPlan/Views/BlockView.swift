@@ -20,8 +20,16 @@ import LiftingKit
 /// this, with the week's remaining workouts swiped between; that could show what
 /// was left but never what was coming, so looking ahead or back was impossible.
 ///
+/// **What the block is for is behind the `info.circle`, not above the weeks.**
+/// The goal and the coach's note opened this screen, where they were read once
+/// and scrolled past on every visit after that. They are what the block *is*,
+/// which is worth having and is not worth the first screenful every time —
+/// `BlockInfoSheet` holds them, and the exercise sheet is reached by the same
+/// mark for the same reason.
+///
 /// **What it depends on.** `TrainingPlan` and `WorkoutDay` from Store,
-/// `ActiveWorkoutView` for the session, and `PlansListing` for the title.
+/// `ActiveWorkoutView` for the session, `BlockInfoSheet` for what it is for, and
+/// `PlansListing` for the title.
 struct BlockView: View {
 
     let plan: TrainingPlan
@@ -29,34 +37,11 @@ struct BlockView: View {
 
     /// The session being logged, or `nil`.
     @State private var openSession: WorkoutDay?
+    /// Whether what the block is for is being read.
+    @State private var showingInfo = false
 
     var body: some View {
         List {
-            // What the block is for, and what Claude said about it.
-            //
-            // The goal anchors the note. Without it the paragraph opened the
-            // screen with nothing to attach to — a instruction about reps and
-            // failure, floating above a list of days, with no statement of what
-            // any of it is meant to achieve. The goal is the block's subject and
-            // the note is his commentary on it, so they are one panel.
-            if !plan.goal.isEmpty || (plan.notes.map { !$0.isEmpty } ?? false) {
-                let hasNote = plan.notes.map { !$0.isEmpty } ?? false
-                Section {
-                    if !plan.goal.isEmpty {
-                        Text(plan.goal)
-                            .font(.supersetTitle)
-                            .foregroundStyle(Palette.ink)
-                            .panelRow(hasNote ? .first : .only)
-                            .listRowSeparator(.hidden)
-                    }
-                    if let note = plan.notes, !note.isEmpty {
-                        CoachNoteView(note: note)
-                            .panelRow(plan.goal.isEmpty ? .only : .last)
-                            .listRowSeparator(.hidden)
-                    }
-                }
-            }
-
             ForEach(plan.orderedWeeks) { week in
                 let days = Self.trainingDays(of: week)
                 if !days.isEmpty {
@@ -87,7 +72,21 @@ struct BlockView: View {
         .background(Palette.surface)
         .navigationTitle(PlansListing.title(of: plan))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { AccountToolbarItem(profile: profile) }
+        .toolbar {
+            // What the block is for lives behind this, not above the weeks.
+            // Account is on the blocks list, which is the screen it belongs to:
+            // it is about the lifter, not about the block he is reading.
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { showingInfo = true } label: {
+                    Image(systemName: "info.circle")
+                }
+                .accessibilityLabel("About this block")
+            }
+        }
+        .sheet(isPresented: $showingInfo) {
+            NavigationStack { BlockInfoSheet(plan: plan) }
+                .presentationDragIndicator(.visible)
+        }
         .fullScreenCover(item: $openSession) { session in
             // The session carries a toolbar — the way out, and the elapsed
             // clock — and a toolbar draws nothing without a navigation

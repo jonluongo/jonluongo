@@ -24,7 +24,13 @@ import LiftingKit
 /// week inside the Plan tab, and presented as a sheet from an exercise's menu on
 /// the logging screen.
 ///
-/// **What it depends on.** `ExerciseAboutSections` for the catalog half,
+/// **It shares its chrome with the block's information sheet.** Both are an
+/// `InfoSheet`: the same surface, the same inline title, the same grabber, and
+/// both reached by the same `info.circle`. A block and a movement are the same
+/// kind of question — *tell me about this* — and were two designs answering it.
+///
+/// **What it depends on.** `InfoSheet` for that chrome, `ExerciseAboutSections`
+/// for the catalog half,
 /// `ExerciseTrend` from Services, `TrainingPlan` from Store, `ExerciseID` and
 /// `Mass` from Domain, and the injected catalog. It reads and writes nothing.
 ///
@@ -53,7 +59,7 @@ struct ExerciseDetailView: View {
     }
 
     var body: some View {
-        List {
+        InfoSheet(displayName) {
             ExerciseAboutSections(entry: catalog.exercise(id: exerciseID))
             if let trend {
                 chart(trend)
@@ -72,11 +78,6 @@ struct ExerciseDetailView: View {
                 }
             }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Palette.surface)
-        .navigationTitle(displayName)
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     /// The line, drawn only where there is a line to draw.
