@@ -204,50 +204,62 @@ struct ActiveWorkoutView: View {
     /// `group` is what the movement is performed inside, or `nil` when it is
     /// performed on its own. Everything that differs between the two reads off
     /// it and nothing else.
-    @ViewBuilder
     private func card(for exercise: PlannedExercise, in group: ExerciseGroup?) -> some View {
         let paired = group != nil
-        // The name sits on the panel rather than above it, so an exercise is one
-        // object — its title, its prescription and its sets — instead of a label
-        // floating over a table that happens to be beneath it.
-        ExerciseHeaderView(
-            exercise: exercise,
-            unit: profile.displayUnit,
-            onShowInfo: { infoExercise = exercise },
-            // Rest is prescribed per exercise and per group, so the menu edits
-            // whichever this movement is trained under.
-            onEditRest: {
-                restEditing = group.map(RestTarget.init(group:))
-                    ?? RestTarget(exercise: exercise)
-            },
-            onAddSet: { write { try log.addSet(to: exercise, warmup: false) } },
-            onAddWarmup: { write { try log.addSet(to: exercise, warmup: true) } },
-            paired: paired
-        )
-        .panelRow(.first, paired: paired, isRecorded: exercise.isFullyLogged)
-        .listRowSeparator(.hidden)
+        // **One panel, one row.** The header and every set are stacked inside a
+        // single list row, so the panel is one object the way a session card on
+        // the block page is: one fill, one hairline, one radius, one shadow.
+        // Drawn as a row each they could not be lifted at all — a `List` gives
+        // every row its own layer, and a blur cast by an interior one lands on
+        // its neighbours rather than behind them.
+        return VStack(spacing: 0) {
+            // The name sits on the panel rather than above it, so an exercise is
+            // one object — its title, its prescription and its sets — instead of
+            // a label floating over a table that happens to be beneath it.
+            ExerciseHeaderView(
+                exercise: exercise,
+                unit: profile.displayUnit,
+                onShowInfo: { infoExercise = exercise },
+                // Rest is prescribed per exercise and per group, so the menu
+                // edits whichever this movement is trained under.
+                onEditRest: {
+                    restEditing = group.map(RestTarget.init(group:))
+                        ?? RestTarget(exercise: exercise)
+                },
+                onAddSet: { write { try log.addSet(to: exercise, warmup: false) } },
+                onAddWarmup: { write { try log.addSet(to: exercise, warmup: true) } },
+                paired: paired
+            )
+            .padding(.horizontal, PanelMetrics.edge)
 
-        ExerciseLogSection(
-            exercise: exercise,
-            profile: profile,
-            plans: plans,
-            onDeleteSet: { set, exercise in
-                write { try log.delete(set, from: exercise) }
-            },
-            onCompletionChanged: { exercise, set, completed in
-                // A tick inside a group closes the round; on its own it closes
-                // only the exercise. And only a group scrolls: an ungrouped
-                // exercise has its next set on the row below, already on screen
-                // and already under his thumb.
-                if let group {
-                    write { try log.roundCompletionChanged(group, completed: completed) }
-                    showNext(after: set, of: exercise, in: group, ticked: completed)
-                } else {
-                    write { try log.completionChanged(for: exercise, isCompleted: completed) }
-                }
-            },
-            paired: paired
-        )
+            ExerciseLogSection(
+                exercise: exercise,
+                profile: profile,
+                plans: plans,
+                onCompletionChanged: { exercise, set, completed in
+                    // A tick inside a group closes the round; on its own it
+                    // closes only the exercise. And only a group scrolls: an
+                    // ungrouped exercise has its next set on the row below,
+                    // already on screen and already under his thumb.
+                    if let group {
+                        write { try log.roundCompletionChanged(group, completed: completed) }
+                        showNext(after: set, of: exercise, in: group, ticked: completed)
+                    } else {
+                        write { try log.completionChanged(for: exercise, isCompleted: completed) }
+                    }
+                },
+                paired: paired
+            )
+        }
+        // The row is inset to the panel's own edges; everything inside it is
+        // padded from there. Handing the row no insets at all put the content
+        // outside the painted panel entirely.
+        .panelRow(
+            .only,
+            insets: EdgeInsets(
+                top: 0, leading: PanelMetrics.inset, bottom: 0, trailing: PanelMetrics.inset),
+            paired: paired, isRecorded: exercise.isFullyLogged)
+        .listRowSeparator(.hidden)
     }
 
     /// Brings the next set of a group into view when one is ticked.

@@ -39,7 +39,6 @@ struct ExerciseLogSection: View {
     let exercise: PlannedExercise
     let profile: UserProfile
     let plans: [TrainingPlan]
-    var onDeleteSet: (LoggedSet, PlannedExercise) -> Void
     /// Told which exercise, which set, and whether it was ticked or taken back.
     var onCompletionChanged: (PlannedExercise, LoggedSet, Bool) -> Void
     /// Whether these sets belong to a movement performed as part of a superset,
@@ -63,7 +62,14 @@ struct ExerciseLogSection: View {
     }
 
     var body: some View {
-        Group {
+        // **A stack, not a row each.** Every set used to be its own list row,
+        // which is what made a panel a run of rows rather than an object: a
+        // shadow cast by one of them landed on its neighbours, so a table of
+        // sets could not be lifted the way a panel being chosen from is. The
+        // whole exercise is one row now — the caller gives it one `panelRow`,
+        // and every panel in the app carries the same fill, hairline, radius and
+        // shadow.
+        VStack(spacing: 0) {
             ForEach(Array(orderedSets.enumerated()), id: \.element.persistentModelID) { index, set in
                 let number = workingNumber(at: index)
                 let prescribed = reading.prescription(
@@ -79,35 +85,12 @@ struct ExerciseLogSection: View {
                     unit: profile.displayUnit,
                     onCompletionChanged: { onCompletionChanged(exercise, set, $0) }
                 )
-                // The ground is the *panel's*, not the row's. A wash behind each
-                // finished row was tried and killed — it striped the table as
-                // sets were ticked, two statements of one fact with the louder
-                // of them a second colour across every row. What the panel says
-                // is whether the exercise is done, which is one fact and changes
-                // once.
-                .panelRow(
-                    index == orderedSets.count - 1 && !hasNote ? .last : .middle,
-                    insets: SetTableMetrics.rowInsets, paired: paired,
-                    isRecorded: exercise.isFullyLogged)
-                // No rules between rows. Each row already carries a ruled cell
-                // under the two fields it is typed into, and a full-width line
-                // on top of that was the table drawn twice — the gap and the
-                // figures say where one set ends and the next begins.
-                .listRowSeparator(.hidden)
+                .padding(.horizontal, PanelMetrics.edge)
+                .padding(.vertical, SetTableMetrics.rowInsets.top)
                 // Named so the screen can bring the next set of a group into
                 // view. A row is identified by the set it logs, which is the
                 // only thing about it that is stable.
                 .id(set.persistentModelID)
-                // **The word alone, not a `Label`.** A swipe action carrying
-                // both an icon and a title is drawn two ways by the system: a
-                // capsule reading "🗑 Delete" at a partial swipe, and a circular
-                // glyph with "Delete" captioned underneath once the swipe goes
-                // far enough. Same action, same row, two shapes — and the app's
-                // own rule says an icon earns its place only where a word will
-                // not fit. Here one fits.
-                .swipeActions(edge: .trailing) {
-                    Button("Delete", role: .destructive) { onDeleteSet(set, exercise) }
-                }
             }
 
             // **Last, so the panel's shape does not depend on it.** The note is
@@ -120,10 +103,9 @@ struct ExerciseLogSection: View {
                 Text(notes)
                     .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)
-                    .panelRow(
-                        .last, insets: PanelMetrics.noteInsets,
-                        paired: paired, isRecorded: exercise.isFullyLogged)
-                    .listRowSeparator(.hidden)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, PanelMetrics.edge)
+                    .padding(.top, Spacing.standard)
             }
         }
     }

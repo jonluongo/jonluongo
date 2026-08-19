@@ -50,15 +50,6 @@ struct SessionLog {
         try context.saveOrThrow()
     }
 
-    func delete(_ set: LoggedSet, from exercise: PlannedExercise) throws {
-        exercise.loggedSets?.removeAll { $0 === set }
-        context.delete(set)
-        let remaining = (exercise.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }
-        for (index, set) in remaining.enumerated() {
-            set.setIndex = index
-        }
-        try context.saveOrThrow()
-    }
 
     /// Marks the session trained. The first finish stamps the time and a later
     /// one leaves it: when he trained is a fact, and re-finishing a corrected
