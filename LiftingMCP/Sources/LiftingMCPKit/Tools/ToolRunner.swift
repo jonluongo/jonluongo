@@ -112,8 +112,8 @@ public struct ToolRunner: Sendable {
         No training snapshot yet, so there is nothing to report on. This is not \
         a lifter with no history — it is a file that has not been written.
 
-        Barbell writes snapshot.json when the app moves to the background. \
-        On your iPhone: open Barbell, then swipe up to the Home Screen and \
+        Superset writes snapshot.json when the app moves to the background. \
+        On your iPhone: open Superset, then swipe up to the Home Screen and \
         wait a few seconds for iCloud to sync. Then try again.
 
         Looked for: \(location)

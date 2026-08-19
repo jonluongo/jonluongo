@@ -32,7 +32,7 @@ struct LiftingMCPTool {
             let catalog = try ExerciseCatalog.bundled()
 
             log(
-                "Barbell MCP server ready. Catalog version \(catalog.version), "
+                "Superset MCP server ready. Catalog version \(catalog.version), "
                     + "\(catalog.all.count) exercises. Documents: "
                     + "\(configuration.documentsDirectory.path(percentEncoded: false))"
                     + (configuration.isDefaultLocation ? " (default iCloud location)" : ""))
@@ -43,7 +43,7 @@ struct LiftingMCPTool {
                     catalog: catalog))
             try pump(server)
         } catch {
-            log("Barbell MCP server could not start: \(error.localizedDescription)")
+            log("Superset MCP server could not start: \(error.localizedDescription)")
             exit(EXIT_FAILURE)
         }
     }
