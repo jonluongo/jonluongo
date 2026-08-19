@@ -21,6 +21,8 @@ struct ActiveWorkoutView: View {
     /// being read about.
     @State private var restEditing: RestTarget?
     @State private var infoExercise: PlannedExercise?
+    /// The set to bring into view, set when a group's round moves on.
+    @State private var scrollTarget: PersistentIdentifier?
     @State private var errorMessage: String?
 
     private var exercises: [PlannedExercise] { day.orderedExercises }
@@ -40,6 +42,7 @@ struct ActiveWorkoutView: View {
     }
 
     var body: some View {
+        ScrollViewReader { scroller in
             List {
                 if exercises.isEmpty {
                     ContentUnavailableView {
@@ -77,6 +80,14 @@ struct ActiveWorkoutView: View {
             // which is tighter than the large title was and tighter than the
             // empty band before it.
             .navigationBarTitleDisplayMode(.inline)
+            // The one place the screen moves itself: a group's next set, when
+            // the last one was ticked. `scrollTarget` is cleared as soon as it
+            // is used, so nothing is held that would scroll again on a redraw.
+            .onChange(of: scrollTarget) { _, target in
+                guard let target else { return }
+                withAnimation(.snappy) { scroller.scrollTo(target, anchor: .center) }
+                scrollTarget = nil
+            }
             .toolbar {
                 ActiveWorkoutToolbar()
                 // The way out, back where it belongs. Top right means dismiss
@@ -148,6 +159,7 @@ struct ActiveWorkoutView: View {
                 .presentationDragIndicator(.visible)
             }
         .onAppear { write(log.seedIfNeeded) }
+        }
     }
 
     // MARK: - One card per entry
@@ -177,7 +189,11 @@ struct ActiveWorkoutView: View {
                 onDeleteSet: { set, exercise in
                     write { try log.delete(set, from: exercise) }
                 },
-                onCompletionChanged: { exercise, completed in
+                onCompletionChanged: { exercise, set, completed in
+                    // No scrolling here: an exercise on its own has its next
+                    // set on the row below, already on screen and already under
+                    // his thumb.
+                    _ = set
                     write { try log.completionChanged(for: exercise, isCompleted: completed) }
                 }
             )
@@ -222,13 +238,36 @@ struct ActiveWorkoutView: View {
                     onDeleteSet: { set, exercise in
                         write { try log.delete(set, from: exercise) }
                     },
-                    onCompletionChanged: { _, completed in
+                    onCompletionChanged: { member, set, completed in
                         write { try log.roundCompletionChanged(group, completed: completed) }
+                        showNext(after: set, of: member, in: group, ticked: completed)
                     },
                     paired: true
                 )
             }
         }
+    }
+
+    /// Brings the next set of a group into view when one is ticked.
+    ///
+    /// **Only inside a group, and only on the way in.** A superset is trained
+    /// across its movements and drawn down them — each has its own panel — so
+    /// the next thing to do is on a panel the lifter cannot see, two rows past
+    /// the bottom of the one he just tapped. Ticking is the moment he is about
+    /// to move, so it is the moment worth answering.
+    ///
+    /// Taking a set back scrolls nowhere: he is correcting the record, not
+    /// asking what is next.
+    ///
+    /// **It decides nothing.** The order comes from the grouping the plan
+    /// prescribed — `ExerciseGroup.setAfter` — and a group with nothing waiting
+    /// leaves him where he is.
+    private func showNext(
+        after set: LoggedSet, of member: PlannedExercise,
+        in group: ExerciseGroup, ticked: Bool
+    ) {
+        guard ticked, let next = group.setAfter(set, of: member) else { return }
+        withAnimation(.snappy) { scrollTarget = next.persistentModelID }
     }
 
     // MARK: - Doing

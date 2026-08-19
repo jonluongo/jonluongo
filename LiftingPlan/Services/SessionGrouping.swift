@@ -62,6 +62,55 @@ struct ExerciseGroup: Identifiable {
     /// actually taken; nothing is rested after the others.
     var restSeconds: Int? { members.last?.restSeconds }
 
+    /// The set to do next after ticking `set` of `member`, or `nil` when the
+    /// group has nothing waiting.
+    ///
+    /// **A superset is trained across its movements, and drawn down them.** Each
+    /// movement gets its own panel, which is what the lifter asked for and what
+    /// reads — but it means the order the work is done in runs *across* the
+    /// panels while the order it is drawn in runs down them. Ticking the first
+    /// fly and then looking for the first pushdown means scrolling past two more
+    /// fly rows to reach it.
+    ///
+    /// This answers only "what is next", from the grouping the plan already
+    /// prescribed. It decides nothing: a group states that its movements are
+    /// performed back to back, and the next thing to do is the next movement's
+    /// set at the same position. When the round is finished it is the first
+    /// movement's next set, which is where the next round starts.
+    ///
+    /// `nil` when every set of the group is ticked, or when the position has no
+    /// answer — a movement prescribed fewer sets than its partner simply has
+    /// none to offer, and the lifter is left where he is rather than sent
+    /// somewhere arbitrary.
+    func setAfter(_ set: LoggedSet, of member: PlannedExercise) -> LoggedSet? {
+        guard let memberIndex = members.firstIndex(where: { $0 === member }) else { return nil }
+        let working = members.map { Self.workingSets(of: $0) }
+        guard let position = working[memberIndex].firstIndex(where: { $0 === set })
+        else { return nil }
+
+        // The rest of this round, then the next round from the top.
+        let laterInRound = (memberIndex + 1)..<members.count
+        for index in laterInRound where position < working[index].count {
+            let candidate = working[index][position]
+            if !candidate.isCompleted { return candidate }
+        }
+        let nextPosition = position + 1
+        for index in members.indices where nextPosition < working[index].count {
+            let candidate = working[index][nextPosition]
+            if !candidate.isCompleted { return candidate }
+        }
+        return nil
+    }
+
+    /// One movement's working sets in order. Warm-ups are not part of a round —
+    /// they belong to the movement they warm up — so they are not offered as
+    /// the next thing to do.
+    private static func workingSets(of member: PlannedExercise) -> [LoggedSet] {
+        (member.loggedSets ?? [])
+            .filter { !$0.isWarmup }
+            .sorted { $0.setIndex < $1.setIndex }
+    }
+
     /// The exercise whose clock the group follows. The lifter's own rest is kept
     /// per exercise, and the group's rest is the one after its last movement, so
     /// that is the exercise a choice about this group is recorded against.

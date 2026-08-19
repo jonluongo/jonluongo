@@ -40,7 +40,8 @@ struct ExerciseLogSection: View {
     let plans: [TrainingPlan]
     var onDeleteSet: (LoggedSet, PlannedExercise) -> Void
     /// Told which exercise, and whether the set was ticked or taken back.
-    var onCompletionChanged: (PlannedExercise, Bool) -> Void
+    /// Told which exercise, which set, and whether it was ticked or taken back.
+    var onCompletionChanged: (PlannedExercise, LoggedSet, Bool) -> Void
     /// Whether these sets belong to a movement performed as part of a superset,
     /// which draws the rule down the panel's edge.
     var paired: Bool = false
@@ -75,7 +76,7 @@ struct ExerciseLogSection: View {
                     prescriptionDetail: PrescriptionSummary.detail(for: prescribed, in: exercise),
                     measure: reading.measure,
                     unit: profile.displayUnit,
-                    onCompletionChanged: { onCompletionChanged(exercise, $0) }
+                    onCompletionChanged: { onCompletionChanged(exercise, set, $0) }
                 )
                 // The ground is the *panel's*, not the row's. A wash behind each
                 // finished row was tried and killed — it striped the table as
@@ -92,6 +93,10 @@ struct ExerciseLogSection: View {
                 // on top of that was the table drawn twice — the gap and the
                 // figures say where one set ends and the next begins.
                 .listRowSeparator(.hidden)
+                // Named so the screen can bring the next set of a group into
+                // view. A row is identified by the set it logs, which is the
+                // only thing about it that is stable.
+                .id(set.persistentModelID)
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) { onDeleteSet(set, exercise) } label: {
                         Label("Delete", systemImage: "trash")
