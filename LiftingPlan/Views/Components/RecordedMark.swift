@@ -30,8 +30,8 @@ struct RecordedMark: View {
     var body: some View {
         if isRecorded || showsEmpty {
             RoundedRectangle(cornerRadius: Radius.mark, style: .continuous)
-                .fill(isRecorded ? Palette.recorded : .clear)
-                .stroke(isRecorded ? Palette.recorded : Palette.rule, lineWidth: 1.5)
+                .fill(isRecorded ? Palette.accent : .clear)
+                .stroke(isRecorded ? Palette.accent : Palette.rule, lineWidth: 1.5)
                 .frame(width: Self.side, height: Self.side)
                 .overlay {
                     if isRecorded {

@@ -59,43 +59,39 @@ struct SessionFinishSection: View {
 
     var body: some View {
         Section {
-            if isLogged {
-                // A panel like every other, rather than two things adrift on the
-                // surface: a green disc and a word at one edge and a bare link
-                // at the other, which is what a row looks like when nobody
-                // decided where it lives.
-                HStack(spacing: Spacing.standard) {
-                    RecordedMark(isRecorded: true)
-                    Text("Logged")
-                        .font(.supersetBody)
-                        .foregroundStyle(Palette.recorded)
-                    Spacer()
-                    Button("Mark as unfinished", action: onUnfinish)
-                        .font(.supersetSupport)
-                        .foregroundStyle(Palette.accent)
-                }
-                .panelRow(.only)
-                .listRowSeparator(.hidden)
-            } else {
-                PrimaryActionButton(
-                    title: "Finish Workout", systemImage: "checkmark",
-                    isMuted: unloggedSetCount > 0,
-                    action: { if unloggedSetCount > 0 { asking = true } else { onFinish() } })
-                .accessibilityHint("Marks this session as logged")
-                .confirmationDialog(
-                    Self.question(unloggedSetCount), isPresented: $asking,
-                    titleVisibility: .visible
-                ) {
-                    Button("Finish Workout") { onFinish() }
-                    Button("Keep Going", role: .cancel) {}
-                }
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(
-                    top: Spacing.major, leading: Spacing.section,
-                    bottom: Spacing.snug, trailing: Spacing.section))
-
+            // **One control, in one place, in both states.** The finished
+            // state used to be a different object entirely — a mark, a word and
+            // a text link sharing a panel — so the bottom of the screen changed
+            // shape depending on what had happened there. It is the same button
+            // in the same place now, saying what pressing it does; that a
+            // session is logged is said by the record and by the panels above,
+            // which are already on the recorded ground.
+            PrimaryActionButton(
+                title: isLogged ? "Mark as Unfinished" : "Finish Workout",
+                systemImage: isLogged ? "arrow.uturn.backward" : "checkmark",
+                // Muted when it is not the thing to do next: taking a session
+                // back is a correction, and finishing one with sets unticked is
+                // a question rather than a refusal.
+                isMuted: isLogged || unloggedSetCount > 0,
+                action: {
+                    if isLogged { return onUnfinish() }
+                    if unloggedSetCount > 0 { asking = true } else { onFinish() }
+                })
+            .accessibilityHint(
+                isLogged ? "Takes this session back to unfinished"
+                    : "Marks this session as logged")
+            .confirmationDialog(
+                Self.question(unloggedSetCount), isPresented: $asking,
+                titleVisibility: .visible
+            ) {
+                Button("Finish Workout") { onFinish() }
+                Button("Keep Going", role: .cancel) {}
             }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(
+                top: Spacing.major, leading: Spacing.section,
+                bottom: Spacing.snug, trailing: Spacing.section))
         }
     }
 }

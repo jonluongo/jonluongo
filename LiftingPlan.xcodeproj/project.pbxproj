@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		67F06908302FD5FB002D0698 /* Barbell.icon in Resources */ = {isa = PBXBuildFile; fileRef = 67F06907302FD5FB002D0698 /* Barbell.icon */; };
+		677C295B3036650B0001F444 /* Superset.icon in Resources */ = {isa = PBXBuildFile; fileRef = 677C295A3036650B0001F444 /* Superset.icon */; };
 		AA0000000000000000000062 /* LiftingKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000061 /* LiftingKit */; };
 /* End PBXBuildFile section */
 
@@ -22,7 +22,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		67F06907302FD5FB002D0698 /* Barbell.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Barbell.icon; sourceTree = "<group>"; };
+		677C295A3036650B0001F444 /* Superset.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Superset.icon; sourceTree = "<group>"; };
 		AA0000000000000000000050 /* LiftingPlan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LiftingPlan.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000000000000000051 /* LiftingPlanTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LiftingPlanTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -57,7 +57,7 @@
 				AA000000000000000000A001 /* LiftingPlan */,
 				AA000000000000000000A002 /* LiftingPlanTests */,
 				AA0000000000000000000003 /* Products */,
-				67F06907302FD5FB002D0698 /* Barbell.icon */,
+				677C295A3036650B0001F444 /* Superset.icon */,
 			);
 			sourceTree = "<group>";
 		};
@@ -166,7 +166,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				67F06908302FD5FB002D0698 /* Barbell.icon in Resources */,
+				677C295B3036650B0001F444 /* Superset.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

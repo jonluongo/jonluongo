@@ -111,10 +111,27 @@ struct SessionLog {
     /// nothing to be resting from.
     private func restChanged(for exercise: PlannedExercise, isCompleted: Bool) {
         guard isCompleted else { return restTimer.stop() }
+        guard hasWorkLeft else { return restTimer.stop() }
         guard let seconds = restPreferences.runningSeconds(
             prescribed: exercise.restSeconds, for: exercise.exerciseID
         ) else { return }
         restTimer.start(seconds: seconds, context: exercise.displayName)
+    }
+
+    /// Whether anything in this session is still waiting to be done.
+    ///
+    /// **Rest is the gap between two pieces of work, so the last set has no
+    /// rest after it.** Ticking the last box started a countdown for nothing —
+    /// a bar across the bottom of the screen telling a lifter who has finished
+    /// to wait three minutes before the set that does not exist. What it is
+    /// asking about is the whole session and not the exercise: rest between
+    /// movements is real, so the clock still runs on the last set of the bench
+    /// press when the rows are next.
+    ///
+    /// Warm-ups count as work left, because they are: a warm-up still waiting
+    /// is a set he is about to do.
+    private var hasWorkLeft: Bool {
+        day.unloggedSetCount > 0
     }
 
     /// Runs a group's rest when a *round* closes, which is the one behavioural
@@ -123,6 +140,8 @@ struct SessionLog {
     /// follows immediately.
     private func roundChanged(_ group: ExerciseGroup, completed: Bool) {
         guard completed, group.hasCompleteRound else { return restTimer.stop() }
+        // The round that closes the session has nothing after it either.
+        guard hasWorkLeft else { return restTimer.stop() }
         guard let key = group.restKey,
             let seconds = restPreferences.runningSeconds(
                 prescribed: group.restSeconds, for: key)

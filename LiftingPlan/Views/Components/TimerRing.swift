@@ -41,11 +41,14 @@ struct TimerRing: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(Color(.systemGray5), lineWidth: lineWidth * textScale)
+                .stroke(Palette.rule, lineWidth: lineWidth * textScale)
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    isRunning ? Color.accentColor : Color.green,
+                    // Running is the app pointing at something; ready is not,
+                    // and a second hue for it would be the only other colour on
+                    // the screen saying nothing the word beneath it does not.
+                    isRunning ? Palette.accent : Palette.muted,
                     style: StrokeStyle(lineWidth: lineWidth * textScale, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))

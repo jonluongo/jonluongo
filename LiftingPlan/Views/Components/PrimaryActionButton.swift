@@ -43,15 +43,18 @@ struct PrimaryActionButton: View {
             label
                 .fontWeight(.semibold)
                 // Stated rather than inherited. A prominent button draws its
-                // title white against the tint but leaves the symbol beside it
-                // to the accent, so a button whose fill was not the accent came
-                // out with a title and a symbol in two different colours.
-                .foregroundStyle(.white)
+                // title against the tint but leaves the symbol beside it to the
+                // accent, so a button whose fill was not the accent came out
+                // with a title and a symbol in two different colours. The fill
+                // is the highlighter at full strength, which is lighter than
+                // anything behind it, so what sits on it is ink — see
+                // `Palette.onAccent`.
+                .foregroundStyle(isMuted ? Color.white : Palette.onAccent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.tight)
         }
         .buttonStyle(.borderedProminent)
-        .tint(isMuted ? Palette.muted : Palette.accent)
+        .tint(isMuted ? Palette.muted : Palette.accentFill)
         // The floor, not the height: the style's own padding already clears
         // 44pt at ordinary text sizes, and this catches the case where it
         // would not.

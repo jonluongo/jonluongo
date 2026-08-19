@@ -1,0 +1,57 @@
+{
+  "fill-specializations" : [
+    {
+      "value" : {
+        "solid" : "display-p3:0.86275,1.00000,0.36078,1.00000"
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : "automatic"
+    }
+  ],
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "glass" : false,
+          "image-name" : "Vector 22.png",
+          "name" : "Vector 22",
+          "position" : {
+            "scale" : 0.37,
+            "translation-in-points" : [
+              -184.55491068988732,
+              -133.37231846337806
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "image-name" : "Vector 23.png",
+          "name" : "Vector 23",
+          "position" : {
+            "scale" : 0.37,
+            "translation-in-points" : [
+              184.92491068988738,
+              133.37231846337806
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
