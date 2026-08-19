@@ -76,13 +76,13 @@ struct CardHeaderRow<Trailing: View>: View {
                 }
             }
         }
-        // Even, because the header sits *inside* the panel now. It used to sit
-        // above one, where extra room on top separated it from the panel it had
-        // finished with — and carrying that inside made the panel's top airy
-        // while its last set row closed almost against the edge. The gap between
-        // panels does the separating; this only spaces the title from its own
-        // table.
-        .padding(.vertical, Spacing.snug)
+        // **No padding of its own.** Three were stacking at the top of every
+        // exercise panel — the panel's `closing`, the header row's own inset,
+        // and this — which put thirty points above the name against twelve
+        // below the last set row. The panel and the row own the spacing; a
+        // header that adds a third makes only the top heavier, since nothing
+        // below it is padded twice.
+        .padding(.bottom, Spacing.tight)
     }
 }
 
