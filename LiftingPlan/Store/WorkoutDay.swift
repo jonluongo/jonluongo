@@ -68,12 +68,11 @@ final class WorkoutDay {
     /// When the last set of this session was ticked, or `nil` while none has
     /// been.
     ///
-    /// The other end of `startedAt`, and the reason the clock does not run
-    /// overnight. A session left open — the lifter ticked a set, went home, came
-    /// back the next evening — was reporting the hours since he started rather
-    /// than the hour he trained; it read `1429:59`. Between the first tick and
-    /// the last is the span the record can actually vouch for. It advances as
-    /// sets are ticked and stops when he stops.
+    /// The other end of `startedAt` for a session that has been finished: the
+    /// clock freezes at whichever came later, this or the moment Finish was
+    /// pressed. While a session is still open the clock runs live instead, since
+    /// a figure that only moves when a set is ticked is one nobody can train
+    /// against.
     var lastLoggedAt: Date? {
         (exercises ?? [])
             .flatMap { $0.loggedSets ?? [] }

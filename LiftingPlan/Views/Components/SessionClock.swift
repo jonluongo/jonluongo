@@ -2,17 +2,18 @@ import SwiftUI
 
 /// How long the lifter trained.
 ///
-/// **What it does.** Draws how long a session took: the span from its first
-/// ticked set to its last. Both ends are facts the record already holds, so it
-/// survives closing the app, backgrounding and syncing without anything new
-/// being stored, and it advances as sets are ticked rather than by the clock on
-/// the wall.
+/// **What it does.** Counts from the first ticked set, second by second, and
+/// stops when the session is finished — at the moment Finish was pressed, or at
+/// the last ticked set if that came later. The start is a fact the record
+/// already holds, so the count survives closing the app, backgrounding and
+/// syncing without anything new being stored.
 ///
-/// **It does not run while nothing is happening.** Counting live to now meant a
-/// session left open overnight reported the hours since it began — `1429:59` on
-/// a workout that took an hour — which is the screen stating something nobody
-/// did. Between the first tick and the last is the only span the record can
-/// vouch for.
+/// **It ticks, rather than advancing a set at a time.** Anchoring both ends to
+/// logged sets made it stop dead between them: it only moved when a set was
+/// ticked, which is a clock that reports the past rather than one you can train
+/// against. Finishing is what stops it — which is also the answer to a session
+/// left open overnight reading `23:49:59`: the session was never finished, and
+/// the number is the honest elapsed time until it is.
 ///
 /// **How it is used.** In the header beside the session's name, and only where
 /// there is something to count: a session nobody has started has no elapsed
@@ -21,25 +22,33 @@ import SwiftUI
 /// toolbar draws its items in a capsule, which is the right shape for something
 /// that can be pressed and a lie about a clock.
 ///
-/// **What it depends on.** The type ramp. It holds no state and reads no
-/// model — the two dates are handed to it.
+/// **What it depends on.** SwiftUI's `TimelineView` and the type ramp. It holds
+/// no state and reads no model — the dates are handed to it.
 struct SessionClock: View {
 
     /// When training began — the earliest ticked set.
     let startedAt: Date
-    /// The latest ticked set. The count reaches here and stops.
+    /// The latest ticked set. Where a finished session's count ends, when Finish
+    /// was pressed before it.
     let lastLoggedAt: Date
-    /// When the session was marked done. It ends the count at the moment it was
-    /// finished rather than at the last tick, since a lifter can finish a
-    /// session some minutes after his last set.
+    /// When the session was marked done. `nil` while it is still being trained,
+    /// which is when the count runs.
     var finishedAt: Date?
 
     var body: some View {
-        label(Self.elapsed(from: startedAt, to: Self.end(finishedAt, lastLoggedAt)))
+        if let finishedAt {
+            label(Self.elapsed(from: startedAt, to: Self.end(finishedAt, lastLoggedAt)))
+        } else {
+            // A second is the whole resolution here: the figure states seconds,
+            // so anything finer would redraw the bar without changing it.
+            TimelineView(.periodic(from: startedAt, by: 1)) { timeline in
+                label(Self.elapsed(from: startedAt, to: max(timeline.date, lastLoggedAt)))
+            }
+        }
     }
 
-    /// Where the count stops: when the session was marked done, or the last tick
-    /// — whichever is later.
+    /// Where a finished session's count stops: when it was marked done, or the
+    /// last tick — whichever is later.
     ///
     /// Never the earlier of the two. A session marked finished before its last
     /// set was ticked — an out-of-order write, or a set corrected after the fact
