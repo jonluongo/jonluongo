@@ -225,20 +225,12 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
 
     /// The encoder both clients use. ISO 8601 dates and sorted keys, so a plan
     /// is diffable and a Mac and a phone cannot disagree about an instant.
-    public static func makeEncoder() -> JSONEncoder {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        return encoder
-    }
+    public static func makeEncoder() -> JSONEncoder { DocumentCoding.makeEncoder() }
 
     /// The matching decoder. Use it rather than a bare `JSONDecoder`, whose
     /// default date strategy would reject everything `makeEncoder()` writes.
-    public static func makeDecoder() -> JSONDecoder {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return decoder
-    }
+    /// Both are `DocumentCoding`'s, so the three formats cannot drift apart.
+    public static func makeDecoder() -> JSONDecoder { DocumentCoding.makeDecoder() }
 }
 
 /// One week of a `PlanDocument`.
