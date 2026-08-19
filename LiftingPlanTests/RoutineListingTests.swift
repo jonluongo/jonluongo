@@ -12,8 +12,8 @@ import LiftingKit
 /// three things that made the list possible: dating a block from its own weeks,
 /// saying what it is without filling in what it does not have, and separating
 /// the block being trained from the ones behind it without judging either.
-@Suite("Blocks listing")
-struct PlansListingTests {
+@Suite("Routine listing")
+struct RoutineListingTests {
 
     /// A fixed calendar, so a date range is the same sentence on every machine.
     private static let utc: Calendar = {

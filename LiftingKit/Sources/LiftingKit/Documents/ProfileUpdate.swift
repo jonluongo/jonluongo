@@ -66,8 +66,9 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
     /// belongs to.
     public let generatedAt: Date
 
-    /// How the app renders weights. Not a training fact — it is the one thing
-    /// the lifter can still set for himself in Settings.
+    /// How the app renders weights. Not a training fact, and not a question the
+    /// app asks: pounds or kilos is a fact about how the lifter thinks, and he
+    /// states it in conversation like any other.
     public let displayUnit: StatedValue<MassUnit>
     /// How much training he has behind him, in the words he used. An open
     /// vocabulary: "returning after two years off" is recorded as he said it

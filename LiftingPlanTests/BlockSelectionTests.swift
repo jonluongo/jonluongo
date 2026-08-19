@@ -11,8 +11,8 @@ import LiftingKit
 /// a heading of "This Week": a four-week block lost weeks 2–4 entirely,
 /// including its deload, and `completedAt` on week 1 pinned the header at
 /// "3 of 3 sessions done" for the rest of the block.
-@Suite("Plan week selection")
-struct PlanWeekSelectionTests {
+@Suite("Block selection")
+struct BlockSelectionTests {
 
     @Test("A block opens on week 1 while week 1 is unfinished")
     func opensOnFirstUnfinishedWeek() {

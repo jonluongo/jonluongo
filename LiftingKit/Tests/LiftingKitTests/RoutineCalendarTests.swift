@@ -10,8 +10,8 @@ import Foundation
 ///
 /// The fixtures force-unwrap known-good date components and time zone
 /// identifiers, which the standard permits inside tests and nowhere else.
-@Suite("Block calendar")
-struct BlockCalendarTests {
+@Suite("Routine calendar")
+struct RoutineCalendarTests {
 
     // MARK: - Inside the block
 

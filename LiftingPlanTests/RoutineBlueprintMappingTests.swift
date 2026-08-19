@@ -2,8 +2,8 @@ import Testing
 @testable import LiftingPlan
 import LiftingKit
 
-@Suite("Plan blueprint mapping")
-struct PlanMappingTests {
+@Suite("Routine blueprint mapping")
+struct RoutineBlueprintMappingTests {
 
     @Test("Maps a blueprint into an ordered SwiftData plan")
     func mapsOrdered() {

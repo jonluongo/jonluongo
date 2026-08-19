@@ -11,8 +11,8 @@ import LiftingKit
 /// is tested here is only what touches SwiftData — chiefly the two judgements
 /// the store makes about a session: whether it is finished, and whether it has
 /// been started.
-@Suite("Today in plan")
-struct TodayInPlanTests {
+@Suite("Today in a routine")
+struct RoutineTodayTests {
 
     private static let monday = Date(timeIntervalSince1970: 1_772_409_600)  // 2026-03-02 UTC
 

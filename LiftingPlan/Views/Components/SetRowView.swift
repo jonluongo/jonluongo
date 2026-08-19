@@ -8,8 +8,8 @@ import LiftingKit
 ///
 /// Weight is entered and displayed in `unit` (the lifter's `profile.displayUnit`)
 /// regardless of what unit `set.load` was originally logged in — the field
-/// always shows/writes a value converted to `unit`, so switching units in
-/// Settings doesn't strand a row showing the wrong number.
+/// always shows and writes a value converted to `unit`, so the day Claude is
+/// told the lifter thinks in kilos, no row is stranded showing the old number.
 ///
 /// **The second field records what the plan prescribed, in the unit it
 /// prescribed it in.** For counted work it writes `set.reps`; for a hold it
@@ -44,14 +44,17 @@ struct SetRowView: View {
     /// A number on an exercise of its own, `A1` inside a group.
     var identity: SetIdentity
     /// The target the plan prescribed *for this set*, shown in the second field
-    /// while it is empty — `"8-12"`, `"AMRAP"`, `"30 seconds"`, or `"—"` when
+    /// while it is empty — `"8-12"`, `"AMRAP"`, `"30"` — and nothing at all when
     /// the plan named none. It is a placeholder rather than a value so the
     /// prescription reaches the lifter without the app claiming he lifted it.
+    /// A hold and a carry arrive as the figure alone, because the row draws
+    /// their unit beside the field; see `WorkPrescription.targetFigure`.
     /// Sets of one exercise may carry different targets: a ramp and a drop set
     /// are exactly that.
     var repTargetText: String
     /// The load the plan prescribed for this set, shown the same way and for
-    /// the same reason. `"—"` when it prescribed none.
+    /// the same reason. Empty when it prescribed none — a dash in a field whose
+    /// job is to invite a number hints at nothing.
     var loadTargetText: String
     /// What this set asks that the exercise's header has not already said — its
     /// own note, and the effort asked of it where no load was — or `nil` when it

@@ -10,10 +10,11 @@ import LiftingKit
 /// per set rather than per exercise, so a ramp shows the load of the set being
 /// logged rather than one figure standing in for all of them.
 ///
-/// **How it is used.** `ExerciseLogSection` builds one per exercise and
-/// `SupersetLogSection` one per member of a group, then asks it for each row.
-/// One type rather than two copies of these rules, so a row inside a group and a
-/// row on its own cannot come to read a prescription differently.
+/// **How it is used.** `ExerciseLogSection` builds one per exercise — including
+/// each member of a group, which is drawn by the same section — then asks it for
+/// each row. One type rather than a copy of these rules per caller, so a row
+/// inside a group and a row on its own cannot come to read a prescription
+/// differently.
 ///
 /// **What it depends on.** `WorkPrescription` and `PerformanceHistory` for the
 /// readings, `PlannedExercise` and `TrainingPlan` from Store, and `MassUnit`

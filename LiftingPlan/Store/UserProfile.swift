@@ -24,8 +24,9 @@ import LiftingKit
 /// Exactly one instance is expected. CloudKit forbids unique constraints, so
 /// that invariant is enforced in application code rather than by the schema.
 /// `displayUnit` controls what new entries default to and how weights are
-/// shown; it never rewrites what was already logged, and it is the one thing
-/// here the lifter can still set for himself, in Settings. `avoidedPatterns`
+/// shown; it never rewrites what was already logged. It is not a form the app
+/// puts in front of him either — pounds or kilos is a fact about how he thinks,
+/// he says it in conversation, and `ProfileUpdate.displayUnit` carries it. `avoidedPatterns`
 /// and `avoidedExercises` make the free-text `constraints` field enforceable
 /// rather than merely advisory: `constraints` still carries nuance ("my left
 /// shoulder hurts overhead") that a list cannot express, but the structured

@@ -2,14 +2,13 @@ import SwiftUI
 import SwiftData
 import LiftingKit
 
-/// Everything on record about the lifter — the Account tab.
+/// Everything on record about the lifter.
 ///
 /// **What it does.** Shows what Claude has been told: his goal, his experience,
 /// his constraints, what he avoids, what he weighs, what he trains with, when
 /// he trains, and what he can already lift. It then names, in one sentence, the
-/// facts nobody has stated yet. Below that sit the things that are about the
-/// app rather than about training: the unit weights are drawn in, whether the
-/// rest clock runs at all, and the delete.
+/// facts nobody has stated yet. Below that sits the one thing that is about the
+/// app rather than about training: the delete.
 ///
 /// **The record is read-only, and shows no affordance suggesting otherwise.**
 /// Claude writes these facts through the shared folder and the app displays
@@ -17,21 +16,22 @@ import LiftingKit
 /// preference any more: how long to rest on a given exercise is prescribed per
 /// exercise and edited on the exercise.
 ///
-/// **How it is used.** The third tab. It was Settings, which asked no training
-/// question and answered none either — the record was invisible in the app, so
-/// the lifter could tell Claude he weighs 185 and never see it again.
+/// **How it is used.** Behind the person icon on the routines list — the screen
+/// it belongs to, since it is about the lifter. It was Settings, which asked no
+/// training question and answered none either: the record was invisible in the
+/// app, so the lifter could tell Claude he weighs 185 and never see it again.
 ///
 /// **Two groups, because the page holds two contracts.** The record, which is
 /// his and cannot be edited here, and *Data*, which is the one destructive
-/// thing. There was a third — a rest-timer switch — and it is gone: a single
-/// toggle silencing every countdown was the coarse version of a choice that
-/// already exists per exercise, on the exercise it is about, and it was the last
-/// thing on a page whose whole premise is that the app asks nothing.
+/// thing. There were more — a rest-timer switch, a lb/kg picker — and they are
+/// gone: a single toggle silencing every countdown was the coarse version of a
+/// choice that already exists per exercise, and which units he thinks in is
+/// something he says to Claude like anything else. Nothing is left on a page
+/// whose whole premise is that the app asks nothing.
 ///
 /// **What it depends on.** `AccountRecord` for every string it prints, the
 /// `Store/` models it queries, `panelRow` for the panels and `note()` for the
-/// one sentence left. It writes only the display unit and the delete, exactly as
-/// before.
+/// one sentence left. The delete is the only thing it writes.
 struct AccountView: View {
     let profile: UserProfile
 
@@ -75,7 +75,7 @@ struct AccountView: View {
         // Inline, as both information sheets are. A large title here and a small
         // centred one on the two sheets beside it is the app changing what a
         // header looks like depending on which sheet you opened — the same
-        // fault the root and the block page were corrected for.
+        // fault the root and the routine page were corrected for.
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("Delete all routines?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
             Button("Delete Routines", role: .destructive) { deleteAllPlans() }
@@ -150,7 +150,7 @@ struct AccountView: View {
         }
     }
 
-    /// Deletes the blocks and, by cascade, every set logged against them.
+    /// Deletes the routines and, by cascade, every set logged against them.
     ///
     /// Deliberately nothing else. `StrengthBaseline` and `BodyMetric` are what
     /// the lifter is, not what he was asked to train — Claude records them and
