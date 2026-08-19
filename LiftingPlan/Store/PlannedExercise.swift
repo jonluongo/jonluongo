@@ -91,6 +91,19 @@ final class PlannedExercise {
         self.notes = notes
     }
 
+    /// Whether every set drawn for this exercise has been ticked.
+    ///
+    /// The question the panel asks to decide whether it is written on the
+    /// recorded ground: an exercise finished reads as finished from across the
+    /// screen, the way a logged session does on the block. An exercise with no
+    /// rows at all is *not* finished — there is nothing to have done — which is
+    /// why the emptiness is checked rather than `allSatisfy` answering `true`
+    /// for it.
+    var isFullyLogged: Bool {
+        let sets = loggedSets ?? []
+        return !sets.isEmpty && sets.allSatisfy(\.isCompleted)
+    }
+
     /// Sets that count toward progression, in logging order.
     var completedWorkingSets: [LoggedSet] {
         (loggedSets ?? []).filter(\.countsForProgression).sorted { $0.setIndex < $1.setIndex }

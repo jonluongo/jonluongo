@@ -163,7 +163,7 @@ struct ActiveWorkoutView: View {
                 onAddSet: { write { try log.addSet(to: exercise, warmup: false) } },
                 onAddWarmup: { write { try log.addSet(to: exercise, warmup: true) } }
             )
-            .panelRow(.first)
+            .panelRow(.first, isRecorded: exercise.isFullyLogged)
             .listRowSeparator(.hidden)
 
             ExerciseLogSection(
@@ -203,7 +203,7 @@ struct ActiveWorkoutView: View {
                     onAddWarmup: { write { try log.addSet(to: member, warmup: true) } },
                     paired: true
                 )
-                .panelRow(.first, paired: true)
+                .panelRow(.first, paired: true, isRecorded: member.isFullyLogged)
                 .listRowSeparator(.hidden)
 
                 ExerciseLogSection(

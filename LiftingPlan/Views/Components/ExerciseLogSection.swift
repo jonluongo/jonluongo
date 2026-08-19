@@ -67,7 +67,7 @@ struct ExerciseLogSection: View {
                 Text(notes)
                     .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)
-                    .panelRow(.middle, paired: paired)
+                    .panelRow(.middle, paired: paired, isRecorded: exercise.isFullyLogged)
                     .listRowSeparator(.hidden)
             }
 
@@ -85,14 +85,16 @@ struct ExerciseLogSection: View {
                     unit: profile.displayUnit,
                     onCompletionChanged: { onCompletionChanged(exercise, $0) }
                 )
-                // No wash behind a finished row. The filled square is the mark
-                // that it happened, and a pale green band the width of the
-                // screen said the same thing far louder — two statements of one
-                // fact, and the louder of them a second colour across the whole
-                // table. Chanel's rule: take one thing off.
+                // The ground is the *panel's*, not the row's. A wash behind each
+                // finished row was tried and killed — it striped the table as
+                // sets were ticked, two statements of one fact with the louder
+                // of them a second colour across every row. What the panel says
+                // is whether the exercise is done, which is one fact and changes
+                // once.
                 .panelRow(
                     index == orderedSets.count - 1 ? .last : .middle,
-                    insets: SetTableMetrics.rowInsets, paired: paired)
+                    insets: SetTableMetrics.rowInsets, paired: paired,
+                    isRecorded: exercise.isFullyLogged)
                 // No rules between rows. Each row already carries a ruled cell
                 // under the two fields it is typed into, and a full-width line
                 // on top of that was the table drawn twice — the gap and the
