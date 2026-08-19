@@ -64,10 +64,15 @@ struct ExerciseLogSection: View {
     var body: some View {
         Group {
             if let notes = exercise.notes, !notes.isEmpty {
+                // Hugging the name, and separated from the table. On even insets
+                // it sat midway between the two and read as the table's first
+                // row — a line of grey prose where a set should be.
                 Text(notes)
                     .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)
-                    .panelRow(.middle, paired: paired, isRecorded: exercise.isFullyLogged)
+                    .panelRow(
+                        .middle, insets: PanelMetrics.noteInsets,
+                        paired: paired, isRecorded: exercise.isFullyLogged)
                     .listRowSeparator(.hidden)
             }
 

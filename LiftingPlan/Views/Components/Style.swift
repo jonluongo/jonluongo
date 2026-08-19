@@ -439,6 +439,16 @@ enum PanelMetrics {
     static let shadowRadius: CGFloat = 12
     static let shadowY: CGFloat = 4
 
+    /// What surrounds Claude's note about an exercise.
+    ///
+    /// Tight above and open below, because the note belongs to the *name* above
+    /// it and not to the table under it. Even insets put it midway between the
+    /// two, where it read as a first row of the table — a line of grey prose
+    /// where a set should be.
+    static let noteInsets = EdgeInsets(
+        top: Spacing.tight, leading: contentInset,
+        bottom: Spacing.standard, trailing: contentInset)
+
     /// What a row that *is* a button pads itself by, having been given the
     /// panel's whole area to be tappable in.
     ///
