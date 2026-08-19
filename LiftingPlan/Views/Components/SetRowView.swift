@@ -202,21 +202,7 @@ struct SetRowView: View {
             Button {
                 complete()
             } label: {
-                // A filled square, not a tick in a box. The row is a line of a
-                // record and the mark is what puts it there — square because
-                // every other edge in this table is square, and filled because
-                // a set either happened or it did not.
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(set.isCompleted ? Palette.recorded : .clear)
-                    .stroke(set.isCompleted ? Palette.recorded : Palette.rule, lineWidth: 1.5)
-                    .frame(width: 22, height: 22)
-                    .overlay {
-                        if set.isCompleted {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(Palette.panel)
-                        }
-                    }
+                RecordedMark(isRecorded: set.isCompleted)
                     .frame(
                         width: SetTableMetrics.checkColumnWidth,
                         height: SetTableMetrics.controlHeight

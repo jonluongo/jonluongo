@@ -229,6 +229,9 @@ enum Radius {
     /// Inline controls that sit in a row: entry fields, badges.
     static let small: CGFloat = 8
 
+    /// The mark that says a thing is in the record — see `RecordedMark`.
+    static let mark: CGFloat = 6
+
     /// The panel a table of figures is written on.
     ///
     /// Drawn `.continuous` everywhere, which is the part that matters: a
@@ -248,7 +251,7 @@ enum Radius {
     /// surface and takes a larger one, and the bar floating over content takes
     /// the largest. A panel tighter than the field inside it was the mistake
     /// that made the panels read as hard.
-    static let all: [CGFloat] = [small, panel, large]
+    static let all: [CGFloat] = [mark, small, panel, large]
 }
 
 /// The smallest a control may be.

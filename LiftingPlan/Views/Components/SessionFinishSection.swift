@@ -60,16 +60,21 @@ struct SessionFinishSection: View {
     var body: some View {
         Section {
             if isLogged {
+                // A panel like every other, rather than two things adrift on the
+                // surface: a green disc and a word at one edge and a bare link
+                // at the other, which is what a row looks like when nobody
+                // decided where it lives.
                 HStack(spacing: Spacing.standard) {
-                    Label("Logged", systemImage: "checkmark.circle.fill")
+                    RecordedMark(isRecorded: true)
+                    Text("Logged")
                         .font(.barbellBody)
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Palette.recorded)
                     Spacer()
                     Button("Mark as unfinished", action: onUnfinish)
                         .font(.barbellSupport)
+                        .foregroundStyle(Palette.accent)
                 }
-                .padding(.vertical, Spacing.tight)
-                .listRowBackground(Color.clear)
+                .panelRow(.only)
                 .listRowSeparator(.hidden)
             } else {
                 PrimaryActionButton(

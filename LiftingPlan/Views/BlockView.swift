@@ -120,6 +120,30 @@ private struct DayRow: View {
         TodayPhrasing.sessionTitle(focus: day.focus, weekday: day.weekday)
     }
 
+    /// The movements themselves, which is what the session actually is.
+    ///
+    /// **There is no icon here and cannot be one.** The day's name is whatever
+    /// Claude called it — `Push`, `Upper A`, `Chest & Back` — so a glyph per
+    /// session would mean the app deciding what a session trains from words it
+    /// does not control, and one glyph for all of them is a mark identical
+    /// everywhere it appears, which is decoration. The movements say it without
+    /// guessing.
+    ///
+    /// Two names in full, then a count of what is left.
+    ///
+    /// **In full, because shortening them lied.** Keeping the last two words of
+    /// each turned "Barbell Bench Press" and "Dumbbell Incline Bench Press" into
+    /// the same string, so a session listed one movement twice and hid another —
+    /// the row claiming a session the block does not prescribe. Two whole names
+    /// fit where three abbreviated ones did, and neither of them is wrong.
+    private var movements: String? {
+        let names = day.orderedExercises.map(\.displayName)
+        guard !names.isEmpty else { return nil }
+        let shown = names.prefix(2)
+        let rest = names.count - shown.count
+        return shown.joined(separator: " · ") + (rest > 0 ? " · +\(rest)" : "")
+    }
+
     /// What the session amounts to, before it is opened.
     ///
     /// The row was a name and a length, which is most of a panel saying very
@@ -143,13 +167,18 @@ private struct DayRow: View {
                         .font(.barbellSupport)
                         .foregroundStyle(Palette.muted)
                 }
+                if let movements {
+                    Text(movements)
+                        .font(.barbellSupport)
+                        .foregroundStyle(Palette.muted)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             Spacer()
-            if day.completedAt != nil {
-                Image(systemName: "checkmark")
-                    .font(.barbellSupport)
-                    .foregroundStyle(Palette.recorded)
-            }
+            // Only where it is true: a list of days marking every unlogged one
+            // with an empty box would be a column of boxes saying nothing.
+            RecordedMark(isRecorded: day.completedAt != nil, showsEmpty: false)
         }
         .padding(.vertical, Spacing.tight)
         .contentShape(.rect)
