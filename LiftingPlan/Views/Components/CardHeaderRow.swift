@@ -31,37 +31,51 @@ struct CardHeaderRow<Trailing: View>: View {
     @ViewBuilder let trailing: () -> Trailing
 
     var body: some View {
-        HStack(spacing: Spacing.standard) {
-            VStack(alignment: .leading, spacing: Spacing.tight) {
-                if let eyebrow {
-                    Label(eyebrow, systemImage: "bolt.fill")
-                        .font(.barbellLabel)
+        // The eyebrow sits above the row rather than inside it. Kept in the
+        // same stack as the title, it made the title one of two lines the
+        // control centred between, so the `⋯` on a paired exercise floated
+        // between the label and the name while the same control on every other
+        // card sat squarely on the title. The control's position must not
+        // depend on whether the movement happens to be in a group.
+        VStack(alignment: .leading, spacing: Spacing.snug) {
+            if let eyebrow {
+                // An `HStack`, not a `Label`: `tracking` letter-spaces the gap
+                // between a label's glyph and its text as well as the text
+                // itself, which pushed the bolt away from the word it marks.
+                HStack(spacing: Spacing.tight) {
+                    Image(systemName: "bolt.fill")
+                    Text(eyebrow)
                         .tracking(Font.labelTracking)
                         .textCase(.uppercase)
-                        .foregroundStyle(Palette.accent)
                 }
-                Text(title)
-                    .font(.barbellHeading)
-                    .foregroundStyle(Palette.ink)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(.barbellSupport)
-                        .foregroundStyle(Palette.muted)
-                }
+                .font(.barbellLabel)
+                .foregroundStyle(Palette.accent)
             }
-            Spacer()
-            // A row with no control claims no room for one: an empty trailing
-            // view given a 44pt frame would indent every row that has nothing
-            // on its right.
-            if Trailing.self != EmptyView.self {
-                // The same width as the column of marks below it, so the two
-                // share a centre. Sizing itself, the control sat a few points
-                // outboard of every check in the table — close enough to look
-                // like a mistake and not close enough to look deliberate.
-                trailing()
-                    .frame(
-                        width: SetTableMetrics.checkColumnWidth,
-                        height: TapTarget.minimum)
+            HStack(spacing: Spacing.standard) {
+                VStack(alignment: .leading, spacing: Spacing.tight) {
+                    Text(title)
+                        .font(.barbellHeading)
+                        .foregroundStyle(Palette.ink)
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.barbellSupport)
+                            .foregroundStyle(Palette.muted)
+                    }
+                }
+                Spacer()
+                // A row with no control claims no room for one: an empty
+                // trailing view given a 44pt frame would indent every row that
+                // has nothing on its right.
+                if Trailing.self != EmptyView.self {
+                    // The same width as the column of marks below it, so the two
+                    // share a centre. Sizing itself, the control sat a few points
+                    // outboard of every check in the table — close enough to look
+                    // like a mistake and not close enough to look deliberate.
+                    trailing()
+                        .frame(
+                            width: SetTableMetrics.checkColumnWidth,
+                            height: TapTarget.minimum)
+                }
             }
         }
         // Even, because the header sits *inside* the panel now. It used to sit

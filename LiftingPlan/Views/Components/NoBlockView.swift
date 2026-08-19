@@ -15,7 +15,7 @@ struct NoBlockView: View {
 
     var body: some View {
         ContentUnavailableView {
-            Label("No block yet", systemImage: "dumbbell")
+            Label("No block yet", systemImage: "dumbbell.fill")
         } description: {
             Text("Ask Claude for one.")
         }
