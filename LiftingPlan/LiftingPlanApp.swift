@@ -1,10 +1,33 @@
 import SwiftUI
 import SwiftData
 import UIKit
+import UserNotifications
 import LiftingKit
+
+/// Lets a notification be seen and heard while the app is open.
+///
+/// iOS delivers a notification that fires in the foreground to the delegate and
+/// nowhere else; with no delegate it is filed silently. The rest timer's whole
+/// job is to interrupt a lifter who is looking at the screen, so this says to
+/// present it as a banner, with its sound, exactly as it would on the lock
+/// screen. It decides nothing else and holds no state.
+private final class ForegroundAlerts: NSObject, UNUserNotificationCenterDelegate {
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .list]
+    }
+}
 
 @main
 struct LiftingPlanApp: App {
+
+    /// Held for the life of the app: `UNUserNotificationCenter.delegate` is a
+    /// weak reference, and a delegate that is deallocated is a notification
+    /// nobody hears.
+    private static let foregroundAlerts = ForegroundAlerts()
     @Environment(\.scenePhase) private var scenePhase
     /// One shared exercise catalog and one shared rest timer for the whole app.
     ///
@@ -63,7 +86,13 @@ struct LiftingPlanApp: App {
                 .environment(restPreferences)
                 .environment(documentInbox)
                 .environment(snapshotOutbox)
-                .task { await restTimer.requestNotificationAuthorization() }
+                .task {
+                    // Presented in the foreground too. Without a delegate iOS
+                    // silently swallows a notification that fires while the app
+                    // is open — which, during a workout, is every one of them.
+                    UNUserNotificationCenter.current().delegate = Self.foregroundAlerts
+                    await restTimer.requestNotificationAuthorization()
+                }
                 // Started once, for the life of the app: anything arriving
                 // from the Mac is taken in wherever the lifter happens to be.
                 // The snapshot goes back out the moment something lands, so the

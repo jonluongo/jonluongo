@@ -28,9 +28,6 @@ enum LifterRest: Equatable, Sendable {
     /// A length of the lifter's own, in seconds.
     case seconds(Int)
 
-    /// No countdown on this exercise.
-    case off
-
     /// What the clock actually runs, given what the plan prescribed for this
     /// exercise, or `nil` when nothing runs.
     ///
@@ -42,7 +39,6 @@ enum LifterRest: Equatable, Sendable {
         switch self {
         case .asPrescribed: return prescribed
         case .seconds(let seconds): return seconds > 0 ? seconds : nil
-        case .off: return nil
         }
     }
 
@@ -52,7 +48,6 @@ enum LifterRest: Equatable, Sendable {
     var storedValue: String? {
         switch self {
         case .asPrescribed: nil
-        case .off: "off"
         case .seconds(let seconds): String(seconds)
         }
     }
@@ -61,9 +56,7 @@ enum LifterRest: Equatable, Sendable {
     /// which is the one answer that cannot be wrong: the exercise goes back to
     /// following the plan.
     init(storedValue: String) {
-        if storedValue == "off" {
-            self = .off
-        } else if let seconds = Int(storedValue) {
+        if let seconds = Int(storedValue) {
             self = .seconds(seconds)
         } else {
             self = .asPrescribed
@@ -86,6 +79,13 @@ enum LifterRest: Equatable, Sendable {
 protocol RestPreferenceStoring {
     func loadRests() -> [ExerciseID: LifterRest]
     func save(_ rest: LifterRest, for id: ExerciseID)
+    /// Whether the clock runs at all, or `nil` when nobody has said. Absent
+    /// means on: a lifter who has never touched the switch has a working timer.
+    func loadClockIsOn() -> Bool?
+    func saveClockIsOn(_ isOn: Bool)
+    /// Every exercise the retired per-exercise *off* was stored against, so the
+    /// switch it becomes can start where he left it. Read once, at launch.
+    func exercisesSilencedByAnOlderBuild() -> [ExerciseID]
 }
 
 /// The real store: `UserDefaults`, on this device only.
@@ -107,6 +107,9 @@ struct UserDefaultsRestStore: RestPreferenceStoring {
 
     private let defaults: UserDefaults
     private static let restPrefix = "rest.exercise."
+    private static let clockKey = "rest.clockIsOn"
+    /// What an older build wrote against an exercise to silence just that one.
+    private static let retiredOffValue = "off"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -117,10 +120,25 @@ struct UserDefaultsRestStore: RestPreferenceStoring {
         for (key, value) in defaults.dictionaryRepresentation()
         where key.hasPrefix(Self.restPrefix) {
             guard let stored = value as? String else { continue }
+            guard stored != Self.retiredOffValue else { continue }
             let slug = String(key.dropFirst(Self.restPrefix.count))
             rests[ExerciseID(rawValue: slug)] = LifterRest(storedValue: stored)
         }
         return rests
+    }
+
+    func loadClockIsOn() -> Bool? {
+        defaults.object(forKey: Self.clockKey) as? Bool
+    }
+
+    func saveClockIsOn(_ isOn: Bool) {
+        defaults.set(isOn, forKey: Self.clockKey)
+    }
+
+    func exercisesSilencedByAnOlderBuild() -> [ExerciseID] {
+        defaults.dictionaryRepresentation()
+            .filter { $0.key.hasPrefix(Self.restPrefix) && $0.value as? String == Self.retiredOffValue }
+            .map { ExerciseID(rawValue: String($0.key.dropFirst(Self.restPrefix.count))) }
     }
 
     func save(_ rest: LifterRest, for id: ExerciseID) {
@@ -143,11 +161,13 @@ struct UserDefaultsRestStore: RestPreferenceStoring {
 /// Tuesday as well; making him dial it again every session is the annoyance
 /// that produced this screen's redesign.
 ///
-/// **There is no master switch.** A single toggle turning every countdown off
-/// was the coarse version of a choice the lifter already has per exercise, and
-/// the only preference left on a page whose whole premise is that the app asks
-/// nothing. Silencing an exercise is `LifterRest.off`, on the exercise it is
-/// about.
+/// **The switch is one switch, and it is the only preference in the app.**
+/// Silencing was per exercise once, on the reasoning that rest is prescribed per
+/// exercise — but a lifter reaching for the switch is not saying *not on the
+/// bench press*, he is saying *not today*, and having to say it again on the
+/// next movement is the app making him repeat himself. `isClockOn` is app-wide;
+/// what stays per exercise is the *length*, which is the thing that genuinely
+/// differs between movements.
 ///
 /// **How it is used.** One instance, made at launch and put in the environment.
 /// `ActiveWorkoutView` asks `runningSeconds(prescribed:for:)` when a set is
@@ -164,11 +184,25 @@ final class RestPreferences {
     /// `.asPrescribed`.
     private(set) var rests: [ExerciseID: LifterRest]
 
+    /// Whether the countdown runs at all. On until he says otherwise.
+    private(set) var isClockOn: Bool
+
     private let store: any RestPreferenceStoring
 
     init(store: any RestPreferenceStoring = UserDefaultsRestStore()) {
         self.store = store
         rests = store.loadRests()
+        // A lifter who silenced any exercise under the older build was saying
+        // the clock should not run; the switch starts where he left it rather
+        // than coming back on and going off in his pocket.
+        isClockOn = store.loadClockIsOn()
+            ?? store.exercisesSilencedByAnOlderBuild().isEmpty
+    }
+
+    /// Turns the countdown on or off everywhere.
+    func setClockIsOn(_ isOn: Bool) {
+        isClockOn = isOn
+        store.saveClockIsOn(isOn)
     }
 
     /// What this exercise's clock has been told to do — `.asPrescribed` when
@@ -191,6 +225,7 @@ final class RestPreferences {
     /// The seconds the countdown should run after a set of this exercise, or
     /// `nil` when none should.
     func runningSeconds(prescribed: Int?, for id: ExerciseID) -> Int? {
-        rest(for: id).runningSeconds(prescribed: prescribed)
+        guard isClockOn else { return nil }
+        return rest(for: id).runningSeconds(prescribed: prescribed)
     }
 }

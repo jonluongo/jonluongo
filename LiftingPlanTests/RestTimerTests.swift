@@ -145,6 +145,23 @@ struct RestTimerNotificationTests {
         timer.stop()
 
         #expect(timer.errorMessage == nil)
-        #expect(center.scheduled.count == 1)
+        // Three, a few seconds apart: one short sound is one a phone
+        // face-down on a bench is as likely to miss as to hear.
+        #expect(center.scheduled.count == 3)
+    }
+
+    @Test("A restarted timer cancels every alert of the one before it")
+    func restartingCancelsAllThree() async throws {
+        // Each alert is filed under its own identifier, so cancelling only the
+        // first would leave two of them to fire against a countdown that no
+        // longer exists.
+        let center = FakeNotificationCenter()
+        let timer = RestTimerModel(center: center)
+
+        timer.start(seconds: 90, context: "Squat")
+        try await Task.sleep(for: .milliseconds(50))
+        timer.stop()
+
+        #expect(Set(center.removed).count == 3)
     }
 }

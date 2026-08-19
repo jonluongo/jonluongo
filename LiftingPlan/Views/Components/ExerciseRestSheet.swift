@@ -27,7 +27,11 @@ struct ExerciseRestSheet: View {
     let prescribedSeconds: Int?
     /// What the lifter has chosen for this exercise up to now.
     let rest: LifterRest
+    /// Whether the clock runs at all — one answer for the whole app, not for
+    /// this exercise. See `RestPreferences.isClockOn`.
+    let isClockOn: Bool
     var onChange: (LifterRest) -> Void
+    var onClockSwitched: (Bool) -> Void
 
     @State private var minutes: Int
     @State private var seconds: Int
@@ -35,12 +39,16 @@ struct ExerciseRestSheet: View {
 
     init(
         exerciseName: String, prescribedSeconds: Int?,
-        rest: LifterRest, onChange: @escaping (LifterRest) -> Void
+        rest: LifterRest, isClockOn: Bool,
+        onChange: @escaping (LifterRest) -> Void,
+        onClockSwitched: @escaping (Bool) -> Void
     ) {
         self.exerciseName = exerciseName
         self.prescribedSeconds = prescribedSeconds
         self.rest = rest
+        self.isClockOn = isClockOn
         self.onChange = onChange
+        self.onClockSwitched = onClockSwitched
         // The wheels open on whatever the clock would run right now — the
         // lifter's length if he set one, otherwise the prescribed one, and zero
         // when neither exists. Nothing is suggested: an app that opened this on
@@ -50,7 +58,7 @@ struct ExerciseRestSheet: View {
             ?? prescribedSeconds ?? 0
         _minutes = State(initialValue: opening / 60)
         _seconds = State(initialValue: opening % 60)
-        _isOn = State(initialValue: rest != .off)
+        _isOn = State(initialValue: isClockOn)
     }
 
     private var total: Int { minutes * 60 + seconds }
@@ -64,6 +72,7 @@ struct ExerciseRestSheet: View {
             List {
                 Section {
                     Toggle("Rest timer", isOn: switchBinding)
+                        .accessibilityHint("Turns the countdown on or off everywhere")
                         .font(.supersetBody)
                         .panelRow(isOn ? .first : .only)
                         .listRowSeparator(.hidden)
@@ -120,19 +129,17 @@ struct ExerciseRestSheet: View {
             """
     }
 
-    /// The per-exercise switch. Off is a choice about this exercise; on gives
-    /// the plan back when there is one to give back, and otherwise leaves the
-    /// wheels where they stand.
+    /// **The switch is the app's, not this exercise's.** A lifter reaching for
+    /// it is not saying *not on the bench press*, he is saying *not today* —
+    /// and having to say it again on the next movement is the app making him
+    /// repeat himself. The wheels below it stay per exercise, because a length
+    /// is the thing that genuinely differs between movements.
     private var switchBinding: Binding<Bool> {
         Binding(
             get: { isOn },
             set: { on in
                 isOn = on
-                guard on else {
-                    onChange(.off)
-                    return
-                }
-                choose(total)
+                onClockSwitched(on)
             }
         )
     }

@@ -19,6 +19,14 @@ private final class InMemoryRestStore: RestPreferenceStoring {
             rests[id] = rest
         }
     }
+
+    var clockIsOn: Bool?
+    /// What an older build silenced one exercise at a time with.
+    var silencedByAnOlderBuild: [ExerciseID] = []
+
+    func loadClockIsOn() -> Bool? { clockIsOn }
+    func saveClockIsOn(_ isOn: Bool) { clockIsOn = isOn }
+    func exercisesSilencedByAnOlderBuild() -> [ExerciseID] { silencedByAnOlderBuild }
 }
 
 private let bench = ExerciseID(rawValue: "barbell-bench-press")
@@ -40,11 +48,6 @@ struct LifterRestTests {
     func ownLengthRuns() {
         #expect(LifterRest.seconds(120).runningSeconds(prescribed: 180) == 120)
         #expect(LifterRest.seconds(120).runningSeconds(prescribed: nil) == 120)
-    }
-
-    @Test("Off on this exercise runs nothing, whatever the plan prescribed")
-    func offRunsNothing() {
-        #expect(LifterRest.off.runningSeconds(prescribed: 180) == nil)
     }
 
     @Test("A clock dialled to zero runs nothing, and a prescribed zero is passed through")
@@ -87,20 +90,52 @@ struct RestPreferenceTests {
         #expect(preferences.runningSeconds(prescribed: 240, for: bench) == 240)
     }
 
-    @Test("Silencing an exercise silences that exercise and no other")
-    func offIsPerExercise() {
-        // There is no master switch: the coarse version of this choice was a
-        // toggle in Account, and it went. `off` is said on the exercise it is
-        // about, and says nothing about any other.
-        let store = InMemoryRestStore()
-        let preferences = RestPreferences(store: store)
-        preferences.setRest(.off, for: bench)
+    @Test("The switch is one switch: turning it off stops every countdown")
+    func theSwitchIsUniversal() {
+        // Jon: turning it off on one exercise should do it universally. A
+        // lifter reaching for it is not saying *not on the bench press*, he is
+        // saying *not today*.
+        let preferences = RestPreferences(store: InMemoryRestStore())
+        preferences.setRest(.seconds(120), for: bench)
+
+        preferences.setClockIsOn(false)
 
         #expect(preferences.runningSeconds(prescribed: 180, for: bench) == nil)
+        #expect(preferences.runningSeconds(prescribed: 180, for: squat) == nil)
+    }
+
+    @Test("Switching it back on gives every exercise its own length again")
+    func lengthsSurviveTheSwitch() {
+        // The switch silences; it does not forget. A lifter who turns the clock
+        // off for a session and back on the next one should not have to dial
+        // two minutes on the bench press again.
+        let preferences = RestPreferences(store: InMemoryRestStore())
+        preferences.setRest(.seconds(120), for: bench)
+        preferences.setClockIsOn(false)
+
+        preferences.setClockIsOn(true)
+
+        #expect(preferences.runningSeconds(prescribed: 180, for: bench) == 120)
         #expect(preferences.runningSeconds(prescribed: 180, for: squat) == 180)
     }
 
-    @Test("Choices survive a relaunch, off included")
+    @Test("A lifter who has never touched the switch has a working clock")
+    func theClockStartsOn() {
+        #expect(RestPreferences(store: InMemoryRestStore()).isClockOn)
+    }
+
+    @Test("A lifter who silenced an exercise under the older build opens with it off")
+    func silenceCarriesAcross() {
+        // The old build said *off* one exercise at a time. He meant the clock
+        // should not run; the switch starts where he left it rather than coming
+        // back on in his pocket.
+        let store = InMemoryRestStore()
+        store.silencedByAnOlderBuild = [bench]
+
+        #expect(!RestPreferences(store: store).isClockOn)
+    }
+
+    @Test("Choices and the switch both survive a relaunch")
     func choicesSurviveRelaunch() throws {
         let name = "rest-preferences-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: name))
@@ -108,19 +143,21 @@ struct RestPreferenceTests {
 
         let first = RestPreferences(store: UserDefaultsRestStore(defaults: defaults))
         first.setRest(.seconds(150), for: bench)
-        first.setRest(.off, for: squat)
+        first.setClockIsOn(false)
 
         let second = RestPreferences(store: UserDefaultsRestStore(defaults: defaults))
         #expect(second.rest(for: bench) == .seconds(150))
-        #expect(second.rest(for: squat) == .off)
+        #expect(!second.isClockOn)
     }
 
     @Test("A stored value this build cannot read means following the plan")
     func unreadableValueFollowsThePlan() {
         // The one answer that cannot be wrong: the exercise goes back to
-        // whatever Claude prescribed rather than to a number nobody chose.
+        // whatever Claude prescribed rather than to a number nobody chose. An
+        // `off` written by the older build reads the same way — it has become
+        // the switch, and is not a length.
         #expect(LifterRest(storedValue: "forever") == .asPrescribed)
-        #expect(LifterRest(storedValue: "off") == .off)
+        #expect(LifterRest(storedValue: "off") == .asPrescribed)
         #expect(LifterRest(storedValue: "90") == .seconds(90))
     }
 }

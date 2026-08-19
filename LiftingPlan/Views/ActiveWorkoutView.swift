@@ -135,10 +135,11 @@ struct ActiveWorkoutView: View {
                 ExerciseRestSheet(
                     exerciseName: target.name,
                     prescribedSeconds: target.prescribedSeconds,
-                    rest: restPreferences.rest(for: target.key)
-                ) { rest in
-                    restPreferences.setRest(rest, for: target.key)
-                }
+                    rest: restPreferences.rest(for: target.key),
+                    isClockOn: restPreferences.isClockOn,
+                    onChange: { restPreferences.setRest($0, for: target.key) },
+                    onClockSwitched: { restPreferences.setClockIsOn($0) }
+                )
                 // The grabber, as on every other sheet. This one had a Done
                 // button instead — the same chrome that was taken off the other
                 // three, left on the one nobody had opened since.

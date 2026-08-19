@@ -39,7 +39,11 @@ final class RestTimerModel {
 
     private var endDate: Date?
     private var ticker: Timer?
-    private let notificationID = "rest-timer-finished"
+    /// What each of the finish alerts is filed under, so a restarted timer
+    /// cancels every one of them and not just the first.
+    private static func notificationID(_ index: Int) -> String {
+        "rest-timer-finished-\(index)"
+    }
     private let center: any RestNotificationScheduling
 
     /// The real notification centre by default; a fake in tests, which cannot
@@ -189,11 +193,22 @@ final class RestTimerModel {
         content.body = context.isEmpty ? "Time for your next set." : "Next up: \(context)"
         content.sound = .default
         content.interruptionLevel = .timeSensitive
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(seconds), repeats: false)
-        let request = UNNotificationRequest(identifier: notificationID, content: content, trigger: trigger)
         Task {
             do {
-                try await center.add(request)
+                // **It insists rather than pings.** One notification is a single
+                // short sound, which a phone face-down on a bench between sets
+                // is exactly as likely to miss as to hear. Three of them, a few
+                // seconds apart, is the loudest a build without Apple's
+                // critical-alert entitlement can be — that entitlement is what a
+                // real alarm sound and overriding the ringer switch require, and
+                // it is granted per app by Apple rather than switched on here.
+                for (index, delay) in Self.alertDelays.enumerated() {
+                    let trigger = UNTimeIntervalNotificationTrigger(
+                        timeInterval: TimeInterval(seconds + delay), repeats: false)
+                    try await center.add(UNNotificationRequest(
+                        identifier: Self.notificationID(index), content: content,
+                        trigger: trigger))
+                }
                 errorMessage = nil
             } catch {
                 errorMessage = Self.describe(error)
@@ -201,8 +216,13 @@ final class RestTimerModel {
         }
     }
 
+    /// When each of the finish alerts fires, in seconds past the end of the
+    /// rest. Three, because the first is the one he misses.
+    private static let alertDelays = [0, 4, 8]
+
     private func cancelFinishNotification() {
-        center.removePendingRequests(withIdentifiers: [notificationID])
+        center.removePendingRequests(
+            withIdentifiers: Self.alertDelays.indices.map(Self.notificationID))
     }
 }
 

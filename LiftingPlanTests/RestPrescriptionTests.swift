@@ -76,7 +76,7 @@ struct RestPrescriptionTests {
         // Everything the sheet can do to an exercise's clock, in one go.
         let preferences = RestPreferences(store: UserDefaultsRestStore(defaults: isolatedDefaults()))
         preferences.setRest(.seconds(45), for: id)
-        preferences.setRest(.off, for: id)
+        preferences.setClockIsOn(false)
 
         try context.saveOrThrow()
         let loaded = try #require(try context.fetch(FetchDescriptor<PlannedExercise>()).first)
