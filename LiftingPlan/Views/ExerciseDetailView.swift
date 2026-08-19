@@ -63,13 +63,12 @@ struct ExerciseDetailView: View {
                 // it is still worth reading on the day nothing has been logged,
                 // which is exactly the day someone looks it up.
                 Section {
+                    SectionHeading("Sessions")
                     Text("Nothing logged yet. Sets you log against this exercise show up here.")
                         .font(.barbellBody)
                         .foregroundStyle(Palette.muted)
                         .panelRow(.only)
                         .listRowSeparator(.hidden)
-                } header: {
-                    SectionHeading("Sessions")
                 }
             }
         }
@@ -90,6 +89,7 @@ struct ExerciseDetailView: View {
         let points = loads(trend)
         if points.count >= 2 {
             Section {
+                SectionHeading("Heaviest set")
                 Chart(points) { point in
                     // `run` breaks the line wherever a session carried no load
                     // at all: each unbroken stretch is its own series, so
@@ -110,8 +110,6 @@ struct ExerciseDetailView: View {
                 .panelRow(.only)
                 .listRowSeparator(.hidden)
                 .padding(.vertical, Spacing.snug)
-            } header: {
-                SectionHeading("Heaviest set")
             }
         }
     }
@@ -119,6 +117,7 @@ struct ExerciseDetailView: View {
     private func sessions(_ trend: ExerciseTrend) -> some View {
         let points = Array(trend.points.reversed())
         return Section {
+            SectionHeading("Sessions")
             ForEach(Array(points.enumerated()), id: \.element.id) { index, point in
                 HStack {
                     Text(point.date, format: .dateTime.month().day())
@@ -137,8 +136,6 @@ struct ExerciseDetailView: View {
                 .panelRow(.at(index, of: points.count))
                 .listRowSeparator(.hidden)
             }
-        } header: {
-            SectionHeading("Sessions")
         }
     }
 

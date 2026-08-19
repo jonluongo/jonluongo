@@ -36,9 +36,7 @@ struct ExerciseAboutSections: View {
             Section {
                 let facts = ExerciseAbout.facts(for: entry)
                 ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
-                    LabeledContent(fact.label, value: fact.value)
-                        .font(.barbellSupport)
-                        .foregroundStyle(Palette.ink)
+                    FactRow(label: fact.label, value: fact.value)
                         .panelRow(.at(index, of: facts.count))
                         .listRowSeparator(.hidden)
                 }
@@ -46,6 +44,7 @@ struct ExerciseAboutSections: View {
 
             if !entry.instructions.isEmpty {
                 Section {
+                    SectionHeading("How to perform it")
                     ForEach(Array(entry.instructions.enumerated()), id: \.offset) { index, step in
                         HStack(alignment: .firstTextBaseline, spacing: Spacing.standard) {
                             Text("\(index + 1)")
@@ -60,8 +59,6 @@ struct ExerciseAboutSections: View {
                         .panelRow(.at(index, of: entry.instructions.count))
                         .listRowSeparator(.hidden)
                     }
-                } header: {
-                    SectionHeading("How to perform it")
                 }
             }
         }

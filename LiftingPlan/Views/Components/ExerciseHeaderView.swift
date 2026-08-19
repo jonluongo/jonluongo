@@ -98,10 +98,16 @@ struct ExerciseHeaderView: View {
                     Label("Add Warmup Set", systemImage: "flame")
                 }
             } label: {
+                // No frame of its own. It had one, 44pt wide and aligned
+                // trailing, which pinned the glyph to the right edge of its own
+                // column while every check below it sat centred in a column of
+                // the same width — so the two were half a column apart. The
+                // header row gives the control the check column's width and
+                // centres it, which is the whole reason that width is stated
+                // there.
                 Image(systemName: "ellipsis")
                     .font(.barbellBody)
                     .foregroundStyle(.secondary)
-                    .frame(width: TapTarget.minimum, height: TapTarget.minimum, alignment: .trailing)
                     .contentShape(.rect)
             }
             .accessibilityLabel("\(exercise.displayName) options")

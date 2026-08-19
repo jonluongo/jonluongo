@@ -1,21 +1,23 @@
 import Foundation
 import LiftingKit
 
-/// The words the front door says about a day.
+/// What a session is called.
 ///
-/// **What it does.** Turns what a stored session holds — what it is for, how
-/// much of it there is, how far it has got — into the short strings the Home
-/// screen prints. It states facts and never advises: what the lifter should do
-/// about any of them is not decided here.
+/// **What it does.** Answers the one question about a stored session that is not
+/// a stored string: what to put at the top of it. It states a fact and never
+/// advises — what the lifter should do about a session is not decided here.
 ///
-/// **How it is used.** `TodayView` and `TodaySections` call it for every line
-/// that is not a stored string. It lives apart from the views because a sentence
-/// with a plural and an off-by-one in it is worth testing, and testing it
-/// through a `List` would need a simulator to assert what a `String` already
-/// answers.
+/// **How it is used.** `BlockView` names each day of a block with it, and
+/// `ActiveWorkoutView` the session being logged, so a row and the screen it
+/// opens cannot disagree about what the workout is called.
 ///
-/// **What it depends on.** `SessionProgress` and `Weekday` from LiftingKit. No
-/// store, no view, no state, and — since the week strip went — no calendar.
+/// **What it depends on.** `Weekday` from LiftingKit. No store, no view, no
+/// state and no calendar.
+///
+/// It held three more phrasings, each printed by a screen that no longer exists:
+/// a progress note for a card that was replaced by a mark, a count of exercises
+/// and minutes that the day row now says by naming the movements, and a record
+/// line for a block summary nothing draws. They went with what printed them.
 enum TodayPhrasing {
 
     /// What to call this workout: what the plan said it is for, or the day
@@ -23,39 +25,5 @@ enum TodayPhrasing {
     /// wrote; neither is invented here.
     static func sessionTitle(focus: String, weekday: Weekday) -> String {
         focus.isEmpty ? weekday.fullName : focus
-    }
-
-    /// What the card says about how far a session has got, or `nil` when it has
-    /// not been touched — which is the ordinary case and says nothing.
-    ///
-    /// This was the word on a button: "Start Workout", "Continue Workout". The
-    /// card is the button now, so there is no word to put on one — but whether
-    /// he already started this session is still worth a glance, and a card that
-    /// looked identical either way would lose it. It reports, and never
-    /// instructs: a finished session is still open to correction, so nothing
-    /// here says he is done with it.
-    static func progressNote(for progress: SessionProgress) -> String? {
-        switch progress {
-        case .notStarted: nil
-        case .inProgress: "In progress"
-        case .finished: "Logged"
-        }
-    }
-
-    /// `"5 exercises"`, and the session's length beside it when the plan stated
-    /// one. Nothing is said about a session that prescribes nothing.
-    static func sessionShape(exercises: Int, durationMinutes: Int?) -> String? {
-        guard exercises > 0 else { return nil }
-        let count = "\(exercises) exercise\(exercises == 1 ? "" : "s")"
-        guard let durationMinutes else { return count }
-        return "\(count) · \(durationMinutes) min"
-    }
-
-    /// `"12 of 14 sessions logged"` — what the record holds for a block that is
-    /// over. A count of what happened, not a score: nothing here decides
-    /// whether it was enough.
-    static func recordLine(finished: Int, prescribed: Int) -> String? {
-        guard prescribed > 0 else { return nil }
-        return "\(finished) of \(prescribed) session\(prescribed == 1 ? "" : "s") logged"
     }
 }

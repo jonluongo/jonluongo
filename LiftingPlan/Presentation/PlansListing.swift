@@ -10,8 +10,9 @@ import LiftingKit
 /// plausible ones, and a block with no sessions says so rather than reporting
 /// zero of zero logged.
 ///
-/// **How it is used.** `PlansView` calls `standing(of:)` to group the list,
-/// `title(of:)` for a card's name and `subtitle(of:)` for the line under it. It
+/// **How it is used.** `PlansView` calls `standing(of:)` for the glyph a row
+/// draws, `title(of:)` for a card's name and `subtitle(of:)` for the line under
+/// it. It
 /// is a plain enum of static functions, separate from the view, so the phrasing
 /// is testable without a simulator — the same reason `PlanWeekSelection` and
 /// `TodayPhrasing` are. Colour is deliberately not here: a standing knows the
@@ -40,18 +41,13 @@ enum PlansListing {
         /// A block the record has closed. Everything before the current one.
         case earlier
 
-        /// The heading the list groups under. The word carries the difference;
-        /// the tint only follows it.
-        var heading: String {
-            switch self {
-            case .current: "Current"
-            case .earlier: "Earlier"
-            }
-        }
-
-        /// The same fact said into a row's own label. A section heading is a
-        /// separate element to a screen reader, so a card read on its own would
-        /// otherwise be a name and a date with no standing at all.
+        /// The standing, said into a row's own label.
+        ///
+        /// The list used to group under `Current` and `Earlier` headings, which
+        /// stated a category and no data — the order already puts the open block
+        /// first and the glyph already changes with it. The word survives here
+        /// because a screen reader hears one row at a time and would otherwise
+        /// hear a name and a date with no standing at all.
         var spoken: String {
             switch self {
             case .current: "Current block"
@@ -135,17 +131,52 @@ enum PlansListing {
         return parts.joined(separator: " · ")
     }
 
-    /// The whole line under a card's name: `"Aug 17 – Sep 13, 2026 · 12
-    /// sessions · 6 logged"`.
+    /// Where the lifter has got to in a block he is training:
+    /// `"Week 2 of 4 · 3 of 12 logged"`.
     ///
-    /// The dates were the heading of a section per block, back when every block
-    /// was its own section. The list now groups by standing instead, so the
-    /// dates belong to the card they describe.
+    /// The week comes from what has been logged rather than from a calendar —
+    /// the earliest week still holding an unfinished session — so a block picked
+    /// up after a fortnight away reports the week he is on, not the week the
+    /// date would have him on.
+    ///
+    /// A block nobody has trained yet states its size and stops. `0 of 12
+    /// logged` is a number about the lifter rather than about the block, and the
+    /// list says nothing about him.
+    static func progress(of plan: TrainingPlan) -> String {
+        var parts: [String] = []
+        let weeks = plan.orderedWeeks
+        if let ordinal = PlanWeekSelection.currentWeekOrdinal(in: weeks) {
+            parts.append("Week \(ordinal) of \(weeks.count)")
+        }
+        let days = weeks.flatMap(\.orderedDays)
+        let logged = days.count { $0.completedAt != nil }
+        if days.isEmpty {
+            parts.append("No sessions yet")
+        } else if logged > 0 {
+            parts.append("\(logged) of \(days.count) logged")
+        } else {
+            parts.append("\(days.count) session\(days.count == 1 ? "" : "s")")
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    /// The line under a card's name, which is a different fact for the block
+    /// being trained than for one behind him.
+    ///
+    /// The block he is on is answered by *where he is in it*; its dates are on
+    /// every screen inside it and tell him nothing he is deciding here. A block
+    /// he has finished is answered by when it ran and how big it was — there is
+    /// no "where he is" in a block he is not training.
     static func subtitle(
         of plan: TrainingPlan,
         calendar: Calendar = .current,
         locale: Locale = .autoupdatingCurrent
     ) -> String {
-        "\(dates(of: plan, calendar: calendar, locale: locale)) · \(summary(of: plan))"
+        switch standing(of: plan) {
+        case .current:
+            progress(of: plan)
+        case .earlier:
+            "\(dates(of: plan, calendar: calendar, locale: locale)) · \(summary(of: plan))"
+        }
     }
 }

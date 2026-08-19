@@ -7,7 +7,13 @@ import SwiftUI
 /// spacing every other heading in the app uses, so a section on the Blocks tab
 /// and an exercise on the logging screen read as the same kind of thing.
 ///
-/// **How it is used.** `Section { ... } header: { SectionHeading("Weeks") }`.
+/// **How it is used.** As the *first row* of a section, not as its header:
+/// `Section { SectionHeading("Weeks"); ... }`. A plain `List` pins a header to
+/// the top of the screen and scrolls the rows under it, so a week's name sat
+/// frozen over the days of another week — the heading claiming to describe what
+/// was passing beneath it. A row scrolls with what it names. Everything a row
+/// needs to sit flush with the panels below it is applied here, so no caller
+/// restates it.
 ///
 /// **What it depends on.** `Spacing`, `Palette` and the type ramp.
 struct SectionHeading: View {
@@ -25,5 +31,12 @@ struct SectionHeading: View {
             .textCase(nil)
             .padding(.top, Spacing.standard)
             .padding(.bottom, Spacing.snug)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // The same inset as a panel, so a name and the edge of what it names
+            // share a line.
+            .padding(.horizontal, PanelMetrics.inset)
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
     }
 }

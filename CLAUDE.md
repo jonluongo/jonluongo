@@ -216,7 +216,10 @@ information: a logged day beside an unlogged one, a superset beside a plain
 exercise. Anything else is decoration.
 
 The test is the one the owner set: **an icon identical everywhere it appears
-distinguishes nothing.** That is why every exercise header lost its dumbbell and
+distinguishes nothing** — and its pair, **an icon that varies must vary along
+one axis.** A dumbbell for the block being trained against a calendar for one
+behind him was two different subjects in one slot, so the change from one to the
+other read as noise; both went, and the rows say it in words instead. That is why every exercise header lost its dumbbell and
 every group its rotate arrows, and why a day row has none — the day's name is
 whatever Claude called it, so a glyph per session would mean the app deciding
 what a session trains from words it does not control.

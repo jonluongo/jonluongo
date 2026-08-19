@@ -2,34 +2,28 @@ import SwiftUI
 import SwiftData
 import LiftingKit
 
-/// Every block the lifter has been given, the one he is on first — the Blocks
-/// tab.
+/// Every block the lifter has been given, the one he is on first.
 ///
-/// **What it does.** Groups the blocks under two headings, `Current` and
-/// `Earlier`, and draws one card each: the name, the dates, and how much of it
-/// has been logged. Tapping a card opens it in full. It exists because the tab
-/// used to show one block — the newest — and every block before it became
-/// unreachable the moment a new one arrived, even though every set logged
-/// against it is still in the record and still goes to Claude. The record was
-/// navigable in the export and nowhere on the phone.
+/// **What it does.** Lists the blocks newest first and opens one when it is
+/// tapped. It exists because the screen used to show one block — the newest —
+/// and every block before it became unreachable the moment a new one arrived,
+/// even though every set logged against it is still in the record and still goes
+/// to Claude. The record was navigable in the export and nowhere on the phone.
 ///
-/// **The grouping is the point.** Every block was its own section, headed by its
-/// dates, which made four blocks read as four equal things with one word of
-/// difference buried in a subtitle. One block is being trained and the rest are
-/// history; that is a difference in standing, not in quality, and a heading says
-/// it in a word without ranking anything. The glyph and the tint follow the
-/// heading — neither carries it alone, and a block behind him is drawn quietly
-/// rather than struck out, because the record cannot tell a block he finished
-/// from one a new plan replaced and must not imply it can.
+/// **Nothing here labels a category.** The list was grouped under `Current` and
+/// `Earlier` headings and each row carried a glyph — a dumbbell for the open
+/// block, a calendar for a closed one. Neither said anything: the headings named
+/// a standing the order already gives, and the two glyphs were not two values of
+/// one thing but two different subjects, so the change from one to the other was
+/// unreadable. What actually distinguishes the blocks is what the rows say —
+/// the block he is training reports where he is in it, and a block behind him
+/// reports when it ran.
 ///
-/// **How it is used.** The second tab. It reads the store directly, as a tab
-/// addressed by nothing must, and hands each block to `BlockView` — the screen
-/// that already drew a whole block, now reached by name instead of by being the
-/// only one.
+/// **How it is used.** The root of the stack, with the block pushed on top of
+/// it. It reads the store directly and hands each block to `BlockView`.
 ///
 /// **What it depends on.** `TrainingPlan` from Store, `PlansListing` for every
-/// string it prints and for the standing it groups by, and the shared
-/// `IconCircleRow` and `NoBlockView`. It writes nothing.
+/// string it prints, and `NoBlockView`. It writes nothing.
 struct PlansView: View {
 
     let profile: UserProfile
@@ -38,19 +32,27 @@ struct PlansView: View {
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
 
     var body: some View {
-        // The navigation bar draws the title now: this is the root of a stack
-        // rather than a tab, so the bar is where a title belongs and where the
-        // account icon sits beside it.
         Group {
-                if plans.isEmpty {
-                    NoBlockView()
-                } else {
-                    List {
-                        section(.current)
-                        section(.earlier)
+            if plans.isEmpty {
+                NoBlockView()
+            } else {
+                List {
+                    ForEach(plans) { plan in
+                        BlockCard(
+                            plan: plan,
+                            subtitle: PlansListing.subtitle(of: plan, calendar: calendar),
+                            profile: profile
+                        )
+                        // Each block its own panel, as each session is on the
+                        // block screen. One panel holding every block made the
+                        // one he is training and the ones behind him a single
+                        // object with several names in it.
+                        .panelRow(.only)
+                        .listRowSeparator(.hidden)
                     }
                 }
             }
+        }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
@@ -61,51 +63,17 @@ struct PlansView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { AccountToolbarItem(profile: profile) }
     }
-
-    /// One group, or nothing at all when it holds no blocks — an empty
-    /// `Current` heading would announce a block that does not exist, which is
-    /// exactly the day after the last one ended.
-    @ViewBuilder
-    private func section(_ standing: PlansListing.Standing) -> some View {
-        let blocks = plans.filter { PlansListing.standing(of: $0) == standing }
-        if !blocks.isEmpty {
-            Section {
-                ForEach(Array(blocks.enumerated()), id: \.element.id) { index, plan in
-                    BlockCard(
-                        plan: plan,
-                        standing: standing,
-                        subtitle: PlansListing.subtitle(of: plan, calendar: calendar),
-                        profile: profile
-                    )
-                    .panelRow(.at(index, of: blocks.count))
-                    .listRowSeparator(.hidden)
-                }
-            } header: {
-                SectionHeading(standing.heading)
-            }
-        }
-    }
 }
 
-/// One block, as a card in its group.
+/// One block: what it is called, and the one line that says where it stands.
 ///
-/// **The standing is said three ways and coloured fourth.** The heading above
-/// the card says it in a word, the glyph changes shape with it — the dumbbell
-/// the app draws training with, against a calendar for a block that is now a
-/// date — the row's own VoiceOver label repeats the word, since a heading is a
-/// separate element to a screen reader, and only then does the tint follow.
-/// Nothing here is a badge or a score: the app decides nothing about a block,
-/// including whether it went well.
-///
-/// The card states what the block is, when it ran, and how much of it has been
-/// logged, and stops. A block that prescribes nothing yet says so rather than
-/// counting to zero, and one nobody has trained yet omits the logged count
-/// entirely.
+/// The card states what the block is and stops. Nothing here is a badge or a
+/// score: the app decides nothing about a block, including whether it went well,
+/// and the record cannot tell a block he finished from one a new plan replaced.
 private struct BlockCard: View {
 
     let plan: TrainingPlan
-    let standing: PlansListing.Standing
-    /// The dates and counts, already phrased. Passed in rather than computed
+    /// The line under the name, already phrased. Passed in rather than computed
     /// here so the whole line comes from the one place that phrases it.
     let subtitle: String
     let profile: UserProfile
@@ -116,14 +84,20 @@ private struct BlockCard: View {
         NavigationLink {
             BlockView(plan: plan, profile: profile)
         } label: {
-            IconCircleRow(
-                systemImage: standing == .current ? "dumbbell.fill" : "calendar",
-                tint: standing == .current ? .accentColor : .secondary,
-                title: title,
-                subtitle: subtitle
-            )
+            VStack(alignment: .leading, spacing: Spacing.tight) {
+                Text(title)
+                    .font(.barbellTitle)
+                    .foregroundStyle(Palette.ink)
+                Text(subtitle)
+                    .font(.barbellSupport)
+                    .foregroundStyle(Palette.muted)
+            }
+            .padding(.vertical, Spacing.tight)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(title), \(standing.spoken), \(subtitle)")
+            // A screen reader hears one row at a time, with no order to read the
+            // standing from, so the row says it in a word.
+            .accessibilityLabel(
+                "\(title), \(PlansListing.standing(of: plan).spoken), \(subtitle)")
         }
     }
 }

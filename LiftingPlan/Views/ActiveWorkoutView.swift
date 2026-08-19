@@ -95,8 +95,10 @@ struct ActiveWorkoutView: View {
                 // leading item it was given a small fixed capsule and truncated
                 // to "1…", which is a clock saying nothing.
                 ToolbarItem(placement: .principal) {
-                    if let startedAt = day.startedAt {
-                        SessionClock(startedAt: startedAt, finishedAt: day.completedAt)
+                    if let startedAt = day.startedAt, let lastLoggedAt = day.lastLoggedAt {
+                        SessionClock(
+                            startedAt: startedAt, lastLoggedAt: lastLoggedAt,
+                            finishedAt: day.completedAt)
                     }
                 }
             }

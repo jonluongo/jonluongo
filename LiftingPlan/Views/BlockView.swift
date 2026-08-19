@@ -61,6 +61,7 @@ struct BlockView: View {
                 let days = Self.trainingDays(of: week)
                 if !days.isEmpty {
                     Section {
+                        SectionHeading(PlanWeekSelection.title(for: week))
                         ForEach(days) { day in
                             Button {
                                 openSession = day
@@ -75,8 +76,6 @@ struct BlockView: View {
                             .panelRow(.only)
                             .listRowSeparator(.hidden)
                         }
-                    } header: {
-                        SectionHeading(PlanWeekSelection.title(for: week))
                     }
                 }
             }
@@ -129,56 +128,45 @@ private struct DayRow: View {
     /// everywhere it appears, which is decoration. The movements say it without
     /// guessing.
     ///
-    /// Two names in full, then a count of what is left.
+    /// The movements, in order, on one line.
     ///
     /// **In full, because shortening them lied.** Keeping the last two words of
     /// each turned "Barbell Bench Press" and "Dumbbell Incline Bench Press" into
     /// the same string, so a session listed one movement twice and hid another —
-    /// the row claiming a session the block does not prescribe. Two whole names
-    /// fit where three abbreviated ones did, and neither of them is wrong.
+    /// the row claiming a session the block does not prescribe. The line runs to
+    /// the edge and truncates there instead, which says *and more* without
+    /// naming anything wrongly.
+    ///
+    /// It used to be two names plus `+4`, over a line counting the exercises and
+    /// the minutes — three lines of grey wrapping unevenly under the name, with
+    /// the mark floating against the middle of them. The count said in a figure
+    /// what the names say concretely; the names stayed.
     private var movements: String? {
         let names = day.orderedExercises.map(\.displayName)
         guard !names.isEmpty else { return nil }
-        let shown = names.prefix(2)
-        let rest = names.count - shown.count
-        return shown.joined(separator: " · ") + (rest > 0 ? " · +\(rest)" : "")
-    }
-
-    /// What the session amounts to, before it is opened.
-    ///
-    /// The row was a name and a length, which is most of a panel saying very
-    /// little. How many movements it holds is the fact a lifter wants deciding
-    /// whether to start — and unlike on a screen that lists them, here they are
-    /// behind a tap, so the count is the only way to know.
-    private var shape: String? {
-        TodayPhrasing.sessionShape(
-            exercises: day.orderedExercises.count,
-            durationMinutes: day.durationMinutes)
+        return names.joined(separator: " · ")
     }
 
     var body: some View {
-        HStack(spacing: Spacing.standard) {
-            VStack(alignment: .leading, spacing: Spacing.tight) {
+        VStack(alignment: .leading, spacing: Spacing.tight) {
+            HStack(spacing: Spacing.standard) {
                 Text(title)
                     .font(.barbellTitle)
                     .foregroundStyle(Palette.ink)
-                if let shape {
-                    Text(shape)
-                        .font(.barbellSupport)
-                        .foregroundStyle(Palette.muted)
-                }
-                if let movements {
-                    Text(movements)
-                        .font(.barbellSupport)
-                        .foregroundStyle(Palette.muted)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                Spacer()
+                // Only where it is true: a list of days marking every unlogged
+                // one with an empty box would be a column of boxes saying
+                // nothing. Beside the name, because that is the line it is
+                // about.
+                RecordedMark(isRecorded: day.completedAt != nil, showsEmpty: false)
             }
-            Spacer()
-            // Only where it is true: a list of days marking every unlogged one
-            // with an empty box would be a column of boxes saying nothing.
-            RecordedMark(isRecorded: day.completedAt != nil, showsEmpty: false)
+            if let movements {
+                Text(movements)
+                    .font(.barbellSupport)
+                    .foregroundStyle(Palette.muted)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
         }
         .padding(.vertical, Spacing.tight)
         .contentShape(.rect)

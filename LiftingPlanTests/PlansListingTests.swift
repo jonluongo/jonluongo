@@ -94,20 +94,18 @@ struct PlansListingTests {
         #expect(PlansListing.standing(of: plan) == .earlier)
         // The record does not separate "finished" from "abandoned", so neither
         // does the list: it says where the block stands and stops.
-        let said = PlansListing.Standing.earlier.heading
-            + PlansListing.Standing.earlier.spoken
+        let said = PlansListing.Standing.earlier.spoken
             + PlansListing.subtitle(of: plan, calendar: Self.utc, locale: Self.english)
         for verdict in ["Complete", "Finished", "Abandoned", "Failed", "Missed"] {
             #expect(said.localizedCaseInsensitiveContains(verdict) == false)
         }
     }
 
-    @Test("Each standing is said in a word, so no meaning rests on colour alone")
+    @Test("Each standing is said in a word, so no meaning rests on order alone")
     func standingsAreWords() {
-        #expect(PlansListing.Standing.current.heading == "Current")
-        #expect(PlansListing.Standing.earlier.heading == "Earlier")
-        // A heading is a separate element to a screen reader, so the row has to
-        // carry the same word itself.
+        // The list has no headings and no glyph: a sighted lifter reads the
+        // standing off the order and off what the row says. A screen reader
+        // hears one row at a time, so the row carries the word itself.
         #expect(PlansListing.Standing.current.spoken.contains("Current"))
         #expect(PlansListing.Standing.earlier.spoken.contains("Earlier"))
     }
@@ -140,19 +138,52 @@ struct PlansListingTests {
         #expect(summary.contains("0") == false)
     }
 
-    @Test("The line under the name is when the block ran and how much of it was logged")
-    func subtitleStatesDatesThenCounts() {
+    @Test("A block behind him is when it ran and how much of it was logged")
+    func earlierSubtitleStatesDatesThenCounts() {
         let plan = plan(startingOn: date(2026, 8, 17), weeks: 2, daysPerWeek: 3, logged: 2)
+        plan.completedAt = date(2026, 9, 1)
         let subtitle = PlansListing.subtitle(of: plan, calendar: Self.utc, locale: Self.english)
         #expect(subtitle.contains("Aug 17"))
         #expect(subtitle.hasSuffix("6 sessions · 2 logged"))
     }
 
-    @Test("A block that cannot be dated still says what it prescribes")
-    func subtitleSurvivesMissingDates() {
+    @Test("A block behind him that cannot be dated still says what it prescribed")
+    func earlierSubtitleSurvivesMissingDates() {
         let plan = TrainingPlan(title: "Just arrived", startDate: date(2026, 8, 17))
+        plan.completedAt = date(2026, 9, 1)
         #expect(PlansListing.subtitle(of: plan, calendar: Self.utc, locale: Self.english)
             == "No dates yet · No sessions yet")
+    }
+
+    // MARK: - Where he is in the block he is training
+
+    @Test("The block being trained says which week he is on and what is logged")
+    func currentSubtitleStatesProgress() {
+        let plan = plan(startingOn: date(2026, 8, 17), weeks: 3, daysPerWeek: 3, logged: 4)
+        #expect(PlansListing.subtitle(of: plan, calendar: Self.utc, locale: Self.english)
+            == "Week 2 of 3 · 4 of 9 logged")
+    }
+
+    @Test("The week is the earliest one still holding an unfinished session")
+    func progressReadsTheWeekFromTheRecord() {
+        // Not from the calendar: a block picked up a fortnight late is on the
+        // week he has reached, not the week the date would put him on.
+        let plan = plan(startingOn: date(2026, 8, 17), weeks: 3, daysPerWeek: 3, logged: 3)
+        #expect(PlansListing.progress(of: plan).hasPrefix("Week 2 of 3"))
+    }
+
+    @Test("A block nobody has trained yet states its size rather than zero logged")
+    func progressDoesNotReportZeroLogged() {
+        let plan = plan(startingOn: date(2026, 8, 17), weeks: 2, daysPerWeek: 3)
+        let progress = PlansListing.progress(of: plan)
+        #expect(progress == "Week 1 of 2 · 6 sessions")
+        #expect(progress.contains("0") == false)
+    }
+
+    @Test("A block with no weeks yet claims no week and no sessions")
+    func progressSurvivesAnEmptyBlock() {
+        let plan = TrainingPlan(title: "Just arrived", startDate: date(2026, 8, 17))
+        #expect(PlansListing.progress(of: plan) == "No sessions yet")
     }
 
     // MARK: - Fixtures

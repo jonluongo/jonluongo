@@ -108,6 +108,63 @@ struct SessionClockTests {
 
         #expect(day.startedAt == Self.eight.addingTimeInterval(300))
     }
+
+    // MARK: - Where the count stops
+
+    @Test("The count reaches the last ticked set and stops there")
+    func endsAtTheLastTickedSet() throws {
+        let day = try day(sets: [
+            set(0, completed: true, at: Self.eight),
+            set(1, completed: true, at: Self.eight.addingTimeInterval(3_600)),
+            set(2, completed: false, at: Self.eight.addingTimeInterval(86_400)),
+        ])
+
+        // The unticked row's stamp is a row that was drawn, not work that was
+        // done, so it does not extend the session by a day.
+        #expect(day.lastLoggedAt == Self.eight.addingTimeInterval(3_600))
+    }
+
+    @Test("A session nobody has trained has no end either")
+    func noTickedSetHasNoEnd() throws {
+        let day = try day(sets: [set(0, completed: false, at: Self.eight)])
+        #expect(day.lastLoggedAt == nil)
+    }
+
+    @Test("An hour is stated as an hour, not as sixty-odd minutes")
+    func elapsedRollsOverIntoHours() {
+        let start = Self.eight
+        // A session left open overnight read 1429:59 — minutes counting past
+        // sixty, which is a number in no unit anybody uses.
+        #expect(SessionClock.elapsed(from: start, to: start.addingTimeInterval(3_599))
+            == "59:59")
+        #expect(SessionClock.elapsed(from: start, to: start.addingTimeInterval(3_600))
+            == "1:00:00")
+        #expect(SessionClock.elapsed(from: start, to: start.addingTimeInterval(85_799))
+            == "23:49:59")
+    }
+
+    @Test("A session finished before its last set still reports the work it holds")
+    func finishTimeNeverShortensTheCount() {
+        // An out-of-order write, or a set corrected after the session was
+        // marked done. Reporting 0:00 for a session with sets in it is the
+        // screen contradicting the record beneath it.
+        let start = Self.eight
+        let last = start.addingTimeInterval(3_000)
+        #expect(SessionClock.end(start, last) == last)
+        #expect(SessionClock.elapsed(from: start, to: SessionClock.end(start, last)) == "50:00")
+        // The ordinary case: he pressed Finish some minutes after his last set,
+        // and that is when the session ended.
+        let finish = start.addingTimeInterval(3_300)
+        #expect(SessionClock.end(finish, last) == finish)
+        #expect(SessionClock.end(nil, last) == last)
+    }
+
+    @Test("An ordinary session is still minutes and seconds")
+    func elapsedKeepsTheShortFormBelowAnHour() {
+        let start = Self.eight
+        #expect(SessionClock.elapsed(from: start, to: start.addingTimeInterval(62)) == "1:02")
+        #expect(SessionClock.elapsed(from: start, to: start) == "0:00")
+    }
 }
 
 /// What the finish control is told about a session that is not filled in.

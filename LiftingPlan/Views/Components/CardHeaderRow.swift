@@ -3,8 +3,8 @@ import SwiftUI
 /// A title, a line under it, and an optional control on the right.
 ///
 /// **What it does.** Draws the header above a card on the logging screen — the
-/// exercise's, and the group's. It is `IconCircleRow` with the circle taken off,
-/// and it exists because the icon there was carrying no information: every
+/// exercise's, and the group's. It began as a row with a glyph in a tinted
+/// circle and lost the circle, because the icon carried no information: every
 /// exercise drew the same dumbbell and every group the same rotate arrows, so
 /// the glyph distinguished nothing from anything while indenting every title by
 /// forty-eight points. A mark that is identical everywhere it appears is
@@ -12,9 +12,7 @@ import SwiftUI
 ///
 /// **How it is used.** Give it the two lines of text, and a control as
 /// `trailing` when the header has one — it gets a 44pt target whatever glyph it
-/// draws. `IconCircleRow` is still the right shape where the glyph varies and
-/// therefore says something: an account fact, a day that is logged against one
-/// that is not.
+/// draws, centred on the column of marks below so the two share a centre.
 ///
 /// **What it depends on.** `Spacing`, `TapTarget`, and the type ramp. It reads
 /// no model — callers hand it strings.

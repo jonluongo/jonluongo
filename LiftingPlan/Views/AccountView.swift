@@ -128,17 +128,9 @@ struct AccountView: View {
                     .panelRow(.only)
             } else {
                 ForEach(Array(rows.enumerated()), id: \.element.id) { index, fact in
-                    LabeledContent {
-                        Text(fact.value)
-                            .font(.barbellSupport)
-                            .foregroundStyle(Palette.ink)
-                            .multilineTextAlignment(.trailing)
-                    } label: {
-                        Text(fact.label)
-                            .font(.barbellSupport)
-                            .foregroundStyle(Palette.muted)
-                    }
-                    .panelRow(.at(index, of: rows.count))
+                    FactRow(label: fact.label, value: fact.value)
+                        .panelRow(.at(index, of: rows.count))
+                        .listRowSeparator(.hidden)
                 }
             }
 
@@ -183,6 +175,7 @@ struct AccountView: View {
     /// that matters. Saying it twice made neither saying count.
     private var data: some View {
         Section {
+            SectionHeading("Data")
             Button(role: .destructive) {
                 showingResetConfirm = true
             } label: {
@@ -191,8 +184,6 @@ struct AccountView: View {
             }
             .panelRow(.only)
             .listRowSeparator(.hidden)
-        } header: {
-            SectionHeading("Data")
         }
     }
 

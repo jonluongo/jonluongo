@@ -14,7 +14,7 @@ import LiftingKit
 /// a row of its own.
 ///
 /// **How it is used.** `AccountRecord` builds them and `AccountView` draws each
-/// through `IconCircleRow`. A row exists only for a fact somebody has stated —
+/// through `FactRow`. A row exists only for a fact somebody has stated —
 /// there is no row that means "empty", because a page of them would say nothing
 /// at length.
 ///
