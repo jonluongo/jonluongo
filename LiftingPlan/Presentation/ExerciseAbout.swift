@@ -1,29 +1,6 @@
 import Foundation
 import LiftingKit
 
-/// One thing the catalog states about a movement, ready to draw as a row.
-///
-/// **What it does.** Carries the name of the fact and the fact itself, both
-/// already turned into words. The label leads here — the opposite of
-/// `LifterFactRow` — because on this screen the reader is scanning for a
-/// question ("what does this work?") rather than reading a record of himself.
-///
-/// **How it is used.** `ExerciseAbout` builds them and `ExerciseAboutSections`
-/// draws each as a `LabeledContent`. A row exists only for something the
-/// catalog actually states.
-///
-/// **What it depends on.** Foundation, and nothing else.
-struct ExerciseFact: Identifiable, Equatable, Sendable {
-
-    /// What the fact is called.
-    let label: String
-
-    /// What the catalog says, in the catalog's own words.
-    let value: String
-
-    var id: String { label }
-}
-
 /// What the bundled catalog knows about one movement, in words.
 ///
 /// **What it does.** Turns an `Exercise` into the rows the info screen prints
@@ -50,7 +27,7 @@ enum ExerciseAbout {
     /// Unknown taxonomy values pass straight through — the vocabularies are
     /// open, and a muscle this build has never heard of is still what the data
     /// says, so it is printed rather than dropped.
-    static func facts(for exercise: Exercise) -> [ExerciseFact] {
+    static func facts(for exercise: Exercise) -> [StatedFact] {
         [
             // One row, not two. "Primary" and "Secondary" split what a lifter
             // reads as a single answer to a single question — what does this
@@ -69,9 +46,9 @@ enum ExerciseAbout {
         ].compactMap(\.self)
     }
 
-    private static func fact(_ label: String, _ value: String?) -> ExerciseFact? {
+    private static func fact(_ label: String, _ value: String?) -> StatedFact? {
         guard let value, !value.isEmpty else { return nil }
-        return ExerciseFact(label: label, value: value)
+        return StatedFact(label: label, value: value)
     }
 
     /// Taxonomy values joined in the order the catalog lists them, or `nil`

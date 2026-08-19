@@ -48,11 +48,11 @@ struct AccountView: View {
         Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
     }
 
-    private var facts: [LifterFactRow] {
+    private var facts: [StatedFact] {
         AccountRecord.facts(profile: profile, weighIns: weighIns, catalog: catalog)
     }
 
-    private var baselines: [LifterFactRow] {
+    private var baselines: [StatedFact] {
         AccountRecord.baselines(strengthBaselines, catalog: catalog)
     }
 

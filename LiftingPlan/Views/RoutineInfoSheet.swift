@@ -20,8 +20,8 @@ import LiftingKit
 ///
 /// **What it depends on.** `InfoSheet` for the chrome it shares with the
 /// exercise sheet, `FactRow` for the stated facts, `CoachNoteView` for his
-/// prose, and `RoutineListing` for the counts. It reads the block and writes
-/// nothing.
+/// prose, `RoutineFacts` for the counts and `RoutineListing` for the title. It
+/// reads the routine and writes nothing.
 struct RoutineInfoSheet: View {
 
     let plan: TrainingPlan
@@ -31,28 +31,6 @@ struct RoutineInfoSheet: View {
     private var note: String? {
         guard let notes = plan.notes, !notes.isEmpty else { return nil }
         return notes
-    }
-
-    /// The block's shape, as stated facts. A fact the plan did not state is
-    /// absent rather than zero — a block that never said how long a session runs
-    /// has not said it runs for no time.
-    private var facts: [(String, String)] {
-        var facts: [(String, String)] = []
-        let weeks = plan.orderedWeeks
-        if !weeks.isEmpty { facts.append(("Blocks", "\(weeks.count)")) }
-        let days = weeks.flatMap(\.orderedDays)
-        if !days.isEmpty {
-            facts.append(("Sessions", "\(days.count)"))
-            facts.append(("Logged", "\(days.count { $0.completedAt != nil })"))
-        }
-        let weekdays = plan.orderedWeekdays
-        if !weekdays.isEmpty {
-            facts.append(("Training days", weekdays.map(\.shortName).joined(separator: ", ")))
-        }
-        if let minutes = plan.durationMinutes {
-            facts.append(("Session length", "\(minutes) min"))
-        }
-        return facts
     }
 
     var body: some View {
@@ -74,11 +52,12 @@ struct RoutineInfoSheet: View {
                 }
             }
 
+            let facts = RoutineFacts.facts(of: plan)
             if !facts.isEmpty {
                 Section {
                     SectionHeading("The routine")
-                    ForEach(Array(facts.enumerated()), id: \.offset) { index, fact in
-                        FactRow(label: fact.0, value: fact.1)
+                    ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
+                        FactRow(label: fact.label, value: fact.value)
                             .panelRow(.at(index, of: facts.count))
                             .listRowSeparator(.hidden)
                     }

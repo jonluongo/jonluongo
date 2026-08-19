@@ -1,36 +1,6 @@
 import Foundation
 import LiftingKit
 
-/// One fact the record holds about the lifter, ready to draw as a row.
-///
-/// **What it does.** Carries the two strings a row prints and the glyph beside
-/// them. `value` is the fact — his words, his weight, his days — and `label`
-/// names it. The label leads on screen: six values of different lengths with no
-/// shared left edge gave the page no column to scan, and a fact about the lifter
-/// should read the same way as a fact about a movement, which
-/// `ExerciseAboutSections` already draws label-first. A weigh-in's date rides on
-/// the label for the same
-/// reason, as something that qualifies the number rather than something to give
-/// a row of its own.
-///
-/// **How it is used.** `AccountRecord` builds them and `AccountView` draws each
-/// through `FactRow`. A row exists only for a fact somebody has stated —
-/// there is no row that means "empty", because a page of them would say nothing
-/// at length.
-///
-/// **What it depends on.** Foundation, and nothing else. It holds no model and
-/// no id of one: everything on it has already been resolved to text.
-struct LifterFactRow: Identifiable, Equatable {
-
-    /// The fact, in the words or the units it was stated in.
-    let value: String
-
-    /// What the fact is called, and anything qualifying it.
-    let label: String
-
-    var id: String { label }
-}
-
 /// What the record holds about the lifter, and what it does not hold yet.
 ///
 /// **What it does.** Reads the stored profile, the bodyweight series and the
@@ -62,7 +32,7 @@ enum AccountRecord {
     /// avoids, what he weighs, what he trains with, and when.
     static func facts(
         profile: UserProfile, weighIns: [BodyMetric], catalog: any ExerciseCatalogProviding
-    ) -> [LifterFactRow] {
+    ) -> [StatedFact] {
         [
             row(profile.goal, "Goal"),
             row(profile.experience.map { sentenceCased($0.rawValue) }, "Experience"),
@@ -84,13 +54,13 @@ enum AccountRecord {
     /// a zero.
     static func baselines(
         _ stored: [StrengthBaseline], catalog: any ExerciseCatalogProviding
-    ) -> [LifterFactRow] {
+    ) -> [StatedFact] {
         stored
             .map { baseline in
-                LifterFactRow(
-                    value: "\(load(baseline.load)) × \(baseline.reps)",
+                StatedFact(
                     label: catalog.exercise(id: baseline.exerciseID)?.displayName
-                        ?? baseline.exerciseID.rawValue
+                        ?? baseline.exerciseID.rawValue,
+                    value: "\(load(baseline.load)) × \(baseline.reps)"
                 )
             }
             .sorted { $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending }
@@ -145,13 +115,13 @@ enum AccountRecord {
     /// is being read for.
     private static func bodyweight(
         profile: UserProfile, weighIns: [BodyMetric]
-    ) -> LifterFactRow? {
+    ) -> StatedFact? {
         guard let mass = latestWeight(profile: profile, weighIns: weighIns) else { return nil }
         let taken = latestReading(weighIns).map {
             " · \($0.date.formatted(date: .abbreviated, time: .omitted))"
         }
-        return LifterFactRow(
-            value: text(mass), label: "Bodyweight\(taken ?? "")")
+        return StatedFact(
+            label: "Bodyweight\(taken ?? "")", value: text(mass))
     }
 
     /// The weight the record stands behind: the last dated reading, or the copy
@@ -206,9 +176,9 @@ enum AccountRecord {
 
     // MARK: - Words
 
-    private static func row(_ value: String?, _ label: String) -> LifterFactRow? {
+    private static func row(_ value: String?, _ label: String) -> StatedFact? {
         guard let value, !value.isEmpty else { return nil }
-        return LifterFactRow(value: value, label: label)
+        return StatedFact(label: label, value: value)
     }
 
     /// Taxonomy values sorted and joined, or `nil` when there are none. Sorted

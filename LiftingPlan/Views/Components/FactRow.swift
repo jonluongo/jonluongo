@@ -14,10 +14,11 @@ import SwiftUI
 /// reads as a mistake rather than as a paragraph. A short value and a sentence
 /// are different shapes and the row draws each as what it is.
 ///
-/// **How it is used.** Give it two strings. `ExerciseAboutSections` states what
-/// the catalog holds about a movement and `AccountView` what Claude has been
-/// told about the lifter; they are the same kind of statement and were two
-/// designs, so they are one now.
+/// **How it is used.** Give it a `StatedFact`'s two strings.
+/// `ExerciseAboutSections` states what the catalog holds about a movement,
+/// `AccountView` what Claude has been told about the lifter, and
+/// `RoutineInfoSheet` the shape a routine was given; they are the same kind of
+/// statement and were three designs, so they are one now.
 ///
 /// **What it depends on.** `Spacing`, `Palette` and the type ramp. It reads no
 /// model.

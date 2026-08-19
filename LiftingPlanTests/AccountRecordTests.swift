@@ -42,7 +42,7 @@ struct AccountRecordTests {
 
     private func facts(
         _ profile: UserProfile, weighIns: [BodyMetric] = []
-    ) -> [LifterFactRow] {
+    ) -> [StatedFact] {
         AccountRecord.facts(profile: profile, weighIns: weighIns, catalog: Self.catalog)
     }
 
