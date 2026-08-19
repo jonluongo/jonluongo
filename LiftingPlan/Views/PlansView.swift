@@ -46,6 +46,7 @@ struct PlansView: View {
                         BlockCard(
                             plan: plan,
                             subtitle: PlansListing.subtitle(of: plan, calendar: calendar),
+                            fraction: PlansListing.loggedFraction(of: plan),
                             onOpen: { onOpen(plan) }
                         )
                         // Each block its own panel, as each session is on the
@@ -88,6 +89,8 @@ private struct BlockCard: View {
     /// The line under the name, already phrased. Passed in rather than computed
     /// here so the whole line comes from the one place that phrases it.
     let subtitle: String
+    /// How much of the block is logged, or `nil` when it prescribes nothing yet.
+    let fraction: Double?
     let onOpen: () -> Void
 
     private var title: String { PlansListing.title(of: plan) }
@@ -95,13 +98,20 @@ private struct BlockCard: View {
     var body: some View {
         Button(action: onOpen) {
             HStack(spacing: Spacing.standard) {
-                VStack(alignment: .leading, spacing: Spacing.tight) {
-                    Text(title)
-                        .font(.supersetTitle)
-                        .foregroundStyle(Palette.ink)
-                    Text(subtitle)
-                        .font(.supersetSupport)
-                        .foregroundStyle(Palette.muted)
+                VStack(alignment: .leading, spacing: Spacing.snug) {
+                    VStack(alignment: .leading, spacing: Spacing.tight) {
+                        Text(title)
+                            .font(.supersetTitle)
+                            .foregroundStyle(Palette.ink)
+                        Text(subtitle)
+                            .font(.supersetSupport)
+                            .foregroundStyle(Palette.muted)
+                    }
+                    // Under the line it restates, and only where there is
+                    // something to be a fraction of.
+                    if let fraction {
+                        ProgressRule(fraction: fraction)
+                    }
                 }
                 Spacer(minLength: Spacing.standard)
                 DisclosureChevron()

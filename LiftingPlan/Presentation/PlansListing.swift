@@ -131,6 +131,19 @@ enum PlansListing {
         return parts.joined(separator: " · ")
     }
 
+    /// How much of the block is in the record, as a fraction of one, or `nil`
+    /// when there is nothing to be a fraction of.
+    ///
+    /// The same two counts the line already states, handed over as a number so a
+    /// bar can draw them. `nil` for a block that prescribes no sessions — a bar
+    /// at zero would claim a block he has not started, when what is true is that
+    /// there is nothing to start.
+    static func loggedFraction(of plan: TrainingPlan) -> Double? {
+        let days = plan.orderedWeeks.flatMap(\.orderedDays)
+        guard !days.isEmpty else { return nil }
+        return Double(days.count { $0.completedAt != nil }) / Double(days.count)
+    }
+
     /// Where the lifter has got to in a block he is training:
     /// `"Week 2 of 4 · 3 of 12 logged"`.
     ///
