@@ -91,9 +91,9 @@ struct RestTimerBar: View {
         .font(.supersetSupport)
         .padding(.horizontal, Self.contentInset)
         .padding(.vertical, Spacing.snug)
-        .background(.regularMaterial, in: .rect(cornerRadius: Radius.large))
+        .background(.regularMaterial, in: .rect(cornerRadius: Radius.panel))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.large)
+            RoundedRectangle(cornerRadius: Radius.panel)
                 .strokeBorder(Color.primary.opacity(0.06))
         )
         .shadow(color: .black.opacity(0.18), radius: 16, y: 6)

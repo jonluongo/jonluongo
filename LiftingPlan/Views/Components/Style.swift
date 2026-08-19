@@ -103,7 +103,7 @@ enum Palette {
     /// does the separating and the shadow is switched off rather than drawn to
     /// no effect.
     static let panelShadow = dynamicAlpha(
-        light: 0x0A0C10, lightAlpha: 0.07, dark: 0x000000, darkAlpha: 0)
+        light: 0x0A0C10, lightAlpha: 0.08, dark: 0x000000, darkAlpha: 0)
 
     private static func dynamic(light: Int, dark: Int) -> Color {
         Color(uiColor: UIColor { traits in
@@ -269,26 +269,35 @@ enum Radius {
     /// The mark that says a thing is in the record — see `RecordedMark`.
     static let mark: CGFloat = 6
 
-    /// The panel a table of figures is written on.
+    /// The panel a table of figures is written on, and anything else that sits
+    /// *on* the surface rather than in it — the rest bar included.
     ///
     /// Drawn `.continuous` everywhere, which is the part that matters: a
     /// circular arc meets the straight edge at an angle the eye catches, and a
     /// continuous curve does not. Six points of circular arc read as a hard
     /// corner however small the number is, which is why cutting the radius did
     /// not make the panel quieter — it made it sharper.
-    static let panel: CGFloat = 12
-
-    /// Surfaces that float over content: the rest bar.
-    static let large: CGFloat = 20
+    ///
+    /// It was twelve, which was right for a panel with no shadow under it: a
+    /// panel painted into the surface wants a tight corner or it reads as a
+    /// bubble. A panel that sits *on* the surface wants a rounder one, and the
+    /// two go together.
+    ///
+    /// There was a fourth radius above this one, for the rest bar, on the
+    /// reasoning that a floating surface is rounder than a panel. Once a panel
+    /// gained a shadow the two figures met, and two names for one number is the
+    /// thing this vocabulary exists to prevent. The bar takes this one.
+    static let panel: CGFloat = 20
 
     /// Every radius, smallest first. For tests, as with `Spacing.all`.
     ///
     /// The order is the size of the thing drawn, not the order they were
     /// written: an entry field is small and takes a small curve, a panel is a
-    /// surface and takes a larger one, and the bar floating over content takes
-    /// the largest. A panel tighter than the field inside it was the mistake
-    /// that made the panels read as hard.
-    static let all: [CGFloat] = [mark, small, panel, large]
+    /// surface and takes the largest — the rest bar included, since a bar
+    /// floating over content and a panel lying on it are the same kind of
+    /// object. A panel tighter than the field inside it was the mistake that
+    /// made the panels read as hard.
+    static let all: [CGFloat] = [mark, small, panel]
 }
 
 /// The smallest a control may be.
@@ -427,8 +436,8 @@ enum PanelMetrics {
     /// platform's own layered surfaces cast. A tight dark one reads as a
     /// drop-shadow effect from a decade ago; this is only meant to lift the
     /// panel off the ground, not to be seen.
-    static let shadowRadius: CGFloat = 10
-    static let shadowY: CGFloat = 2
+    static let shadowRadius: CGFloat = 12
+    static let shadowY: CGFloat = 4
 
     /// What a row that *is* a button pads itself by, having been given the
     /// panel's whole area to be tappable in.

@@ -43,17 +43,21 @@ struct DesignSystemTests {
 
     // MARK: - Radius
 
-    @Test("There are four radii, and the bigger the surface the rounder it is")
-    func fourRadii() {
+    @Test("There are three radii, and the bigger the surface the rounder it is")
+    func threeRadii() {
         // The mark that a thing is recorded is the smallest shape drawn; an
         // entry field is small and takes a small curve; a panel is a surface and
-        // takes a larger one; the bar floating over content takes the largest.
-        // The panel was briefly the tightest of them, which is what made the
-        // panels read as hard rather than as quiet.
-        #expect(Radius.all == [Radius.mark, Radius.small, Radius.panel, Radius.large])
+        // takes the largest. The panel was briefly the tightest of them, which
+        // is what made the panels read as hard rather than as quiet.
+        //
+        // There were four. The fourth was the rest bar's, on the reasoning that
+        // a surface floating over content is rounder than one lying on it —
+        // and when the panel gained a shadow the two figures met. Two names for
+        // one number is what this suite exists to catch, so the bar takes the
+        // panel's.
+        #expect(Radius.all == [Radius.mark, Radius.small, Radius.panel])
         #expect(Radius.mark < Radius.small)
         #expect(Radius.small < Radius.panel)
-        #expect(Radius.panel < Radius.large)
     }
 
     // MARK: - Tap targets
