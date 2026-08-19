@@ -4,10 +4,10 @@ import LiftingKit
 /// One entry of a session in the order it is trained: a movement performed on
 /// its own, or a group performed as rounds.
 ///
-/// **What it does.** Gives every screen one thing to iterate. A screen that
-/// draws a day walks these rather than the day's exercises, so an ungrouped
-/// exercise reaches exactly the view it always did and a group reaches the one
-/// that knows about rounds.
+/// **What it does.** Gives a reader one thing to iterate. The logging screen
+/// walks these rather than the day's exercises, so an ungrouped exercise and a
+/// group each reach the drawing that suits them — the same card either way,
+/// with the group's members drawn under the rule that says they are one thing.
 ///
 /// **How it is used.** `WorkoutDay.entries` builds them. `Identifiable` so a
 /// `ForEach` can hold them without an index, which is what keeps a row stable
@@ -24,14 +24,6 @@ enum SessionEntry: Identifiable {
         case .group(let group): "group-\(group.id)"
         }
     }
-
-    /// The movements this entry prescribes, in order.
-    var exercises: [PlannedExercise] {
-        switch self {
-        case .exercise(let exercise): [exercise]
-        case .group(let group): group.members
-        }
-    }
 }
 
 /// A superset, tri-set or giant set as the store holds it: the movements, in
@@ -41,8 +33,8 @@ enum SessionEntry: Identifiable {
 /// is called, how long to rest when a round finishes, and whether one just did.
 ///
 /// **How it is used.** Built by `SessionGrouping` and handed to the logging
-/// screen and the read-only week. It never writes and decides nothing about
-/// training: a group exists because a plan said so.
+/// screen and to the snapshot the coach reads. It never writes and decides
+/// nothing about training: a group exists because a plan said so.
 ///
 /// **What it depends on.** `PlannedExercise` from Store and `ExerciseID` from
 /// LiftingKit.
@@ -167,9 +159,9 @@ struct ExerciseGroup: Identifiable {
 /// that two exercises belong together, and an exercise with no `groupID` is on
 /// its own no matter what sits beside it.
 ///
-/// **How it is used.** Through `WorkoutDay.entries`, by every screen that draws
-/// a session. One place, so a day cannot be grouped one way on the logging
-/// screen and another on the week.
+/// **How it is used.** Through `WorkoutDay.entries`, by the logging screen and
+/// by `SnapshotExporter`. One place, so the lifter's screen and the coach's
+/// snapshot cannot disagree about what was prescribed as a group.
 ///
 /// **What it depends on.** `PlannedExercise` from Store. Neighbours are
 /// collected rather than the whole day being bucketed by identity, so a group
