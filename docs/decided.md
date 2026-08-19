@@ -96,6 +96,19 @@ not the assistant's, and re-opening them is churn.
 | What replaces the blocks list's headings | Nothing — the rows say where he is instead. |
 | What a session clock does overnight | Stops at the last ticked set. It advances as sets are ticked rather than by the clock on the wall. |
 
+**A block's `completedAt` is not renamed, because no reader sees it.** The field
+records that a later plan superseded the block — nothing in the app lets a lifter
+declare one finished — so the name overclaims. Renaming the snapshot key to
+`closedAt` was weighed and rejected on one fact: **no MCP tool emits it.**
+`currentBlock` is by definition the open block, and reports title, goal, dates
+and counts; the only `completedAt` Claude is ever shown is a *session's*, which
+`SessionLog.finish()` writes and which means exactly what it says. A format bump,
+a decoder migration and a reconnect to correct a claim no reader receives fails
+the test the standards set. `isComplete` is deleted and both doc comments now say
+what the field holds, which is where the risk actually was: the next person to
+need "did he finish it" would have found a plausible answer waiting. The real
+answer is the sessions, week by week, and they are already in the document.
+
 ## Calibration
 
 Across a long day of building this, one pattern held without exception: **the
