@@ -15,13 +15,13 @@ struct NoBlockView: View {
 
     var body: some View {
         ContentUnavailableView {
-            Label("No block yet", systemImage: "dumbbell.fill")
+            Label("No routine yet", systemImage: "dumbbell.fill")
         } description: {
             Text("Ask Claude for one.")
         }
     }
 }
 
-#Preview("No block") {
+#Preview("No routine") {
     NoBlockView()
 }

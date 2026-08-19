@@ -39,9 +39,9 @@ struct PlansListingTests {
         #expect(PlansListing.title(of: plan) == "Squat 315")
     }
 
-    @Test("A block that stated neither is just a block")
+    @Test("A routine that stated neither is just a routine")
     func titleFallsBackToBlock() {
-        #expect(PlansListing.title(of: TrainingPlan(title: "", goal: "")) == "Block")
+        #expect(PlansListing.title(of: TrainingPlan(title: "", goal: "")) == "Routine")
     }
 
     // MARK: - The dates a card states
@@ -161,7 +161,7 @@ struct PlansListingTests {
     func currentSubtitleStatesProgress() {
         let plan = plan(startingOn: date(2026, 8, 17), weeks: 3, daysPerWeek: 3, logged: 4)
         #expect(PlansListing.subtitle(of: plan, calendar: Self.utc, locale: Self.english)
-            == "Week 2 of 3 · 4 of 9 logged")
+            == "Block 2 of 3 · 4 of 9 logged")
     }
 
     @Test("The week is the earliest one still holding an unfinished session")
@@ -169,14 +169,14 @@ struct PlansListingTests {
         // Not from the calendar: a block picked up a fortnight late is on the
         // week he has reached, not the week the date would put him on.
         let plan = plan(startingOn: date(2026, 8, 17), weeks: 3, daysPerWeek: 3, logged: 3)
-        #expect(PlansListing.progress(of: plan).hasPrefix("Week 2 of 3"))
+        #expect(PlansListing.progress(of: plan).hasPrefix("Block 2 of 3"))
     }
 
     @Test("A block nobody has trained yet states its size rather than zero logged")
     func progressDoesNotReportZeroLogged() {
         let plan = plan(startingOn: date(2026, 8, 17), weeks: 2, daysPerWeek: 3)
         let progress = PlansListing.progress(of: plan)
-        #expect(progress == "Week 1 of 2 · 6 sessions")
+        #expect(progress == "Block 1 of 2 · 6 sessions")
         #expect(progress.contains("0") == false)
     }
 

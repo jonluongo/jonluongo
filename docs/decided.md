@@ -15,6 +15,32 @@ but say so, rather than quietly re-adding the thing.
 
 ---
 
+## The vocabulary
+
+Renamed on 2026-08-19, on Jon's call. **A routine is the whole thing Claude
+writes; a block is a phase within it; a session is a day's work.** What the list
+used to call a block is a routine, and what the routine's page used to call a
+week is a block — which is the vernacular a lifter already uses, since those
+phases were already named *Accumulation* and *Deload*.
+
+**The stored types keep their old names, and that is deliberate.**
+`TrainingPlan` and `TrainingWeek` are SwiftData `@Model` classes mirrored into
+CloudKit, and CloudKit derives its record types from the entity name. Renaming
+them would leave every logged set in the container under a record type the app no
+longer asks for — the store would open empty with the data still sitting there.
+It is the same hazard that keeps `com.jonluongo.LiftingPlan` as the bundle
+identifier, and it is refused for the same reason. The mapping, for anyone
+reading `Store/`:
+
+| Stored type | What it is called |
+|---|---|
+| `TrainingPlan` | a routine |
+| `TrainingWeek` | a block |
+| `WorkoutDay` | a session |
+
+The wire keys follow the store rather than the vocabulary for the same reason: a
+`weeks` key that Claude already writes is not worth a format version to rename.
+
 ## Settled
 
 | Decision | Why |

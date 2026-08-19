@@ -34,11 +34,11 @@ enum PlanWeekSelection {
         return !days.isEmpty && days.allSatisfy { $0.completedAt != nil }
     }
 
-    /// `"Week 2"`, `"Week 2 · Accumulation"`, `"Week 4 · Deload"` — the week's
+    /// `"Block 2"`, `"Block 2 · Accumulation"`, `"Block 4 · Deload"` — its
     /// position plus whatever the plan called it. When a plan marks a week as a
     /// deload without labelling it, that is said rather than lost.
     static func title(for week: TrainingWeek) -> String {
-        var parts = ["Week \(week.ordinal)"]
+        var parts = ["Block \(week.ordinal)"]
         if !week.label.isEmpty {
             parts.append(week.label)
         } else if week.isDeload {

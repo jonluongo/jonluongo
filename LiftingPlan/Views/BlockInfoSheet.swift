@@ -39,7 +39,7 @@ struct BlockInfoSheet: View {
     private var facts: [(String, String)] {
         var facts: [(String, String)] = []
         let weeks = plan.orderedWeeks
-        if !weeks.isEmpty { facts.append(("Weeks", "\(weeks.count)")) }
+        if !weeks.isEmpty { facts.append(("Blocks", "\(weeks.count)")) }
         let days = weeks.flatMap(\.orderedDays)
         if !days.isEmpty {
             facts.append(("Sessions", "\(days.count)"))
@@ -76,7 +76,7 @@ struct BlockInfoSheet: View {
 
             if !facts.isEmpty {
                 Section {
-                    SectionHeading("The block")
+                    SectionHeading("The routine")
                     ForEach(Array(facts.enumerated()), id: \.offset) { index, fact in
                         FactRow(label: fact.0, value: fact.1)
                             .panelRow(.at(index, of: facts.count))

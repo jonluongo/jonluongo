@@ -77,11 +77,11 @@ struct AccountView: View {
         // header looks like depending on which sheet you opened — the same
         // fault the root and the block page were corrected for.
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("Delete all blocks?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
-            Button("Delete Blocks", role: .destructive) { deleteAllPlans() }
+        .confirmationDialog("Delete all routines?", isPresented: $showingResetConfirm, titleVisibility: .visible) {
+            Button("Delete Routines", role: .destructive) { deleteAllPlans() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("The sets you logged go with them and don't come back. The block itself will import again the next time Claude's plan document arrives, without them.")
+            Text("The sets you logged go with them and don't come back. The routine itself will import again the next time Claude's plan document arrives, without them.")
         }
         .alert("Couldn't Save", isPresented: errorAlertBinding) {
             Button("OK", role: .cancel) {}
@@ -142,7 +142,7 @@ struct AccountView: View {
             Button(role: .destructive) {
                 showingResetConfirm = true
             } label: {
-                Text("Delete All Blocks")
+                Text("Delete All Routines")
                     .font(.supersetBody)
             }
             .panelRow(.only)

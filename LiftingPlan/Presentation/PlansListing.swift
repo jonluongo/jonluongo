@@ -50,8 +50,8 @@ enum PlansListing {
         /// hear a name and a date with no standing at all.
         var spoken: String {
             switch self {
-            case .current: "Current block"
-            case .earlier: "Earlier block"
+            case .current: "Current routine"
+            case .earlier: "Earlier routine"
             }
         }
     }
@@ -73,7 +73,7 @@ enum PlansListing {
     static func title(of plan: TrainingPlan) -> String {
         if !plan.title.isEmpty { return plan.title }
         if !plan.goal.isEmpty { return plan.goal }
-        return "Block"
+        return "Routine"
     }
 
     /// The first and last day this block covers, or `nil` when nothing places
@@ -145,7 +145,7 @@ enum PlansListing {
     }
 
     /// Where the lifter has got to in a block he is training:
-    /// `"Week 2 of 4 · 3 of 12 logged"`.
+    /// `"Block 2 of 4 · 3 of 12 logged"`.
     ///
     /// The week comes from what has been logged rather than from a calendar —
     /// the earliest week still holding an unfinished session — so a block picked
@@ -159,7 +159,7 @@ enum PlansListing {
         var parts: [String] = []
         let weeks = plan.orderedWeeks
         if let ordinal = PlanWeekSelection.currentWeekOrdinal(in: weeks) {
-            parts.append("Week \(ordinal) of \(weeks.count)")
+            parts.append("Block \(ordinal) of \(weeks.count)")
         }
         let days = weeks.flatMap(\.orderedDays)
         let logged = days.count { $0.completedAt != nil }

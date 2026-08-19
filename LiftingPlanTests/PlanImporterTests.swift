@@ -325,7 +325,7 @@ struct PlanImporterTests {
 
         #expect(PlanWeekSelection.currentWeekOrdinal(in: plan.orderedWeeks) == 2)
         #expect(plan.orderedWeeks.map(PlanWeekSelection.title(for:))
-            == ["Week 1 · Accumulation", "Week 2 · Intensification", "Week 3 · Deload"])
+            == ["Block 1 · Accumulation", "Block 2 · Intensification", "Block 3 · Deload"])
     }
 
     @Test("A single-week document in the older shape still imports")

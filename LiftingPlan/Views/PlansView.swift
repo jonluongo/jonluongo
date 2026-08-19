@@ -62,7 +62,7 @@ struct PlansView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Palette.surface)
-        .navigationTitle("Blocks")
+        .navigationTitle("Routines")
         // Inline, as the block page is. A large title on the root and a small
         // centred one a tap deeper is the app changing what a header looks like
         // as you move through it.

@@ -71,14 +71,14 @@ struct PlanWeekSelectionTests {
 
     @Test("A week is titled by its position and whatever the plan called it")
     func weekTitles() {
-        #expect(PlanWeekSelection.title(for: week(2, days: [])) == "Week 2")
+        #expect(PlanWeekSelection.title(for: week(2, days: [])) == "Block 2")
         #expect(PlanWeekSelection.title(for: week(2, days: [], label: "Accumulation"))
-            == "Week 2 · Accumulation")
+            == "Block 2 · Accumulation")
         // A deload the plan did not label is still said, not lost.
         #expect(PlanWeekSelection.title(for: week(4, days: [], isDeload: true))
-            == "Week 4 · Deload")
+            == "Block 4 · Deload")
         #expect(PlanWeekSelection.title(for: week(4, days: [], label: "Taper", isDeload: true))
-            == "Week 4 · Taper")
+            == "Block 4 · Taper")
     }
 
     @Test("Every week of a stored block is reachable, deload included")
@@ -96,7 +96,7 @@ struct PlanWeekSelectionTests {
 
         let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
         #expect(loaded.orderedWeeks.map(\.ordinal) == [1, 2, 3, 4])
-        #expect(loaded.orderedWeeks.map(PlanWeekSelection.title(for:)).last == "Week 4 · Deload")
+        #expect(loaded.orderedWeeks.map(PlanWeekSelection.title(for:)).last == "Block 4 · Deload")
         #expect(PlanWeekSelection.currentWeekOrdinal(in: loaded.orderedWeeks) == 2)
     }
 

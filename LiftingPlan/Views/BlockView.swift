@@ -88,7 +88,7 @@ struct BlockView: View {
                 Button { showingInfo = true } label: {
                     Image(systemName: "info")
                 }
-                .accessibilityLabel("About this block")
+                .accessibilityLabel("About this routine")
             }
         }
         .sheet(isPresented: $showingInfo) {
