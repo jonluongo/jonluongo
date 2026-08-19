@@ -118,6 +118,21 @@ enum Palette {
         }
     }
 
+    /// The ground a tinted block is written on: its colour, lit from the top.
+    ///
+    /// **Two stops and no motion.** An animated mesh of the same colour was
+    /// built and measured at better than ten percent of a core, sustained, for
+    /// four rows — real battery on a phone propped against a rack, spent on
+    /// decoration. A gradient with a light top and a deeper foot gives the panel
+    /// the same solidity for the cost of one draw, and a list that is not moving
+    /// is one the eye can leave alone.
+    static func blockField(_ tint: BlockTint) -> LinearGradient {
+        let base = blockTint(tint)
+        return LinearGradient(
+            colors: [base.mix(with: .white, by: 0.12), base.mix(with: .black, by: 0.10)],
+            startPoint: .top, endPoint: .bottom)
+    }
+
     /// What a panel casts on the surface behind it.
     ///
     /// **Light only, and barely.** A panel is already lighter than the ground it

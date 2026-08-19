@@ -1,4 +1,5 @@
 import SwiftUI
+import LiftingKit
 
 /// Where a row sits in the panel it belongs to.
 ///
@@ -67,10 +68,13 @@ extension View {
     /// due yet still opens — the record has to take a session he actually
     /// trained, whenever he trained it — so a later week is drawn flat and
     /// quiet rather than greyed out or gated.
+    /// **`field` writes the row on a block's own colour.** The blocks list hands
+    /// it the tint Claude chose; everything else leaves it `nil` and gets the
+    /// ordinary panel.
     func panelRow(
         _ position: PanelPosition, insets: EdgeInsets = PanelMetrics.rowInsets,
         paired: Bool = false, fillsPanel: Bool = false, isRecorded: Bool = false,
-        recessed: Bool = false
+        recessed: Bool = false, field: BlockTint? = nil
     ) -> some View {
         // A panel's outer edges get more room than its inner rows, which is what
         // separates one panel from the next. Without it two panels sat flush and
@@ -101,6 +105,11 @@ extension View {
         .listRowBackground(
             shape
             .fill(isRecorded ? Palette.recordedPanel : Palette.panel)
+            .overlay {
+                if let field {
+                    shape.fill(Palette.blockField(field))
+                }
+            }
             .overlay(alignment: .leading) {
                 // The mark that two movements are one superset.
                 //

@@ -17,10 +17,14 @@ import SwiftUI
 /// that already announces itself as a button.
 struct DisclosureChevron: View {
 
+    /// Whether it sits on a block's own coloured field, where the muted ink it
+    /// normally draws in would disappear.
+    var onField: Bool = false
+
     var body: some View {
         Image(systemName: "chevron.right")
             .font(.supersetSupport.weight(.semibold))
-            .foregroundStyle(Palette.muted)
+            .foregroundStyle(onField ? Color.white.opacity(0.75) : Palette.muted)
             .accessibilityHidden(true)
     }
 }
