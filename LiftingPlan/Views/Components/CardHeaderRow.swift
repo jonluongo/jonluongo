@@ -54,8 +54,14 @@ struct CardHeaderRow<Trailing: View>: View {
             // view given a 44pt frame would indent every row that has nothing
             // on its right.
             if Trailing.self != EmptyView.self {
+                // The same width as the column of marks below it, so the two
+                // share a centre. Sizing itself, the control sat a few points
+                // outboard of every check in the table — close enough to look
+                // like a mistake and not close enough to look deliberate.
                 trailing()
-                    .frame(minWidth: TapTarget.minimum, minHeight: TapTarget.minimum)
+                    .frame(
+                        width: SetTableMetrics.checkColumnWidth,
+                        height: TapTarget.minimum)
             }
         }
         // Even, because the header sits *inside* the panel now. It used to sit
