@@ -76,12 +76,18 @@ struct CardHeaderRow<Trailing: View>: View {
                 }
             }
         }
-        // **No padding of its own.** Three were stacking at the top of every
-        // exercise panel — the panel's `closing`, the header row's own inset,
-        // and this — which put thirty points above the name against twelve
-        // below the last set row. The panel and the row own the spacing; a
-        // header that adds a third makes only the top heavier, since nothing
-        // below it is padded twice.
+        // **Almost no padding of its own.** Three were stacking at the top of
+        // every exercise panel — the panel's `closing`, the header row's own
+        // inset, and this — which put thirty points above the name against
+        // twelve below the last set row. The panel and the row own that
+        // spacing now.
+        //
+        // The eyebrow is the exception, and rendering is what found it: a
+        // title's line box carries its own clearance and a label's, being
+        // smaller, does not, so the superset mark sat against the panel's edge
+        // where a name did not. It gets that difference back and nothing else
+        // does.
+        .padding(.top, eyebrow == nil ? 0 : Spacing.tight)
         .padding(.bottom, Spacing.tight)
     }
 }

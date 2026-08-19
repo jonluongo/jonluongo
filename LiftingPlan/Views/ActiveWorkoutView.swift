@@ -188,14 +188,19 @@ struct ActiveWorkoutView: View {
     /// of work.
     @ViewBuilder
     private func section(for group: ExerciseGroup) -> some View {
-        // A group is drawn as its movements are drawn — each with the header and
-        // the set table an ungrouped exercise gets — sharing one panel with no
-        // gap between them. Every other exercise on the screen keeps a gap from
-        // its neighbour, so two that do not are visibly one thing. That is the
-        // whole of the notation: no "Superset A", no A1/A2, no legend decoding
-        // symbols the layout had invented, and no round labels restating a set
-        // number. Rest still runs when the round closes, which is what a
-        // superset actually is.
+        // A group is drawn as its movements are drawn — each with the header
+        // and the set table an ungrouped exercise gets, and each on its own
+        // panel, which is what Jon asked for. What says they are one thing is
+        // the rule down their edge and the word above their names; an earlier
+        // version instead had them share a panel with no gap, on the reasoning
+        // that two things without the gap everything else has must be one, and
+        // rendered that read as three separate exercises rather than as a pair.
+        // A signal has to be present, not withheld.
+        //
+        // That is the whole of the notation: no "Superset A", no A1/A2, no
+        // legend decoding symbols the layout had invented, and no round labels
+        // restating a set number. Rest still runs when the round closes, which
+        // is what a superset actually is.
         Section {
             ForEach(Array(group.members.enumerated()), id: \.element.id) { index, member in
                 ExerciseHeaderView(
