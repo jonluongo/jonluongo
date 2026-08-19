@@ -58,6 +58,12 @@ struct RestTimerBar: View {
                 font: .supersetSupport
             )
 
+            // The text takes the room the controls do not, rather than a
+            // `Spacer` taking it first. With one, the movement's name truncated
+            // to `Barbell B…` while blank space sat immediately to its right:
+            // an `HStack` hands flexible width to a `Spacer` before it hands it
+            // to a `Text`, so the one thing on the bar that names what is being
+            // rested from was the one thing squeezed.
             VStack(alignment: .leading, spacing: Spacing.tight) {
                 Text("Resting")
                     .font(.supersetTitle)
@@ -68,8 +74,7 @@ struct RestTimerBar: View {
                         .lineLimit(1)
                 }
             }
-
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Button("−15") { restTimer.addTime(-15) }
                 .buttonStyle(.bordered)
