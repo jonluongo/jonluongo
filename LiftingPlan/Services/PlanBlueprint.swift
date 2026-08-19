@@ -154,7 +154,8 @@ extension PlanBlueprint {
         let workoutDay = WorkoutDay(
             weekday: day.weekday,
             focus: day.focus,
-            durationMinutes: day.durationMinutes
+            durationMinutes: day.durationMinutes,
+            icon: day.icon
         )
         var prescribed: [PlannedExercise] = []
         for entry in day.entries {
@@ -245,6 +246,7 @@ extension PlanBlueprint {
             weekday: day.weekday,
             focus: day.focus,
             durationMinutes: day.durationMinutes,
+            icon: day.icon,
             entries: day.entries.map(Self.entryBlueprint)
         )
     }

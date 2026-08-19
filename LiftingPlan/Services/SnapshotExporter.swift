@@ -146,6 +146,7 @@ enum SnapshotExporter {
         return SnapshotDay(
             weekday: day.weekday, focus: day.focus,
             durationMinutes: day.durationMinutes, completedAt: day.completedAt,
+            icon: day.icon,
             exercises: day.orderedExercises.map {
                 snapshot(of: $0, in: groups[$0.persistentModelID])
             }

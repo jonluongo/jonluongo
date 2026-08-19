@@ -14,6 +14,8 @@ struct DayBlueprint: Equatable {
     var weekday: Weekday
     var focus: String
     var durationMinutes: Int?
+    /// The mark the plan chose for this session. `nil` when it chose none.
+    var icon: SessionIcon?
     var entries: [EntryBlueprint]
 
     /// Every movement the day prescribes, in order, whatever it was grouped
@@ -22,22 +24,23 @@ struct DayBlueprint: Equatable {
 
     init(
         weekday: Weekday, focus: String = "", durationMinutes: Int? = nil,
-        entries: [EntryBlueprint] = []
+        icon: SessionIcon? = nil, entries: [EntryBlueprint] = []
     ) {
         self.weekday = weekday
         self.focus = focus
         self.durationMinutes = durationMinutes
+        self.icon = icon
         self.entries = entries
     }
 
     /// A day of ungrouped exercises, which is nearly every day.
     init(
         weekday: Weekday, focus: String = "", durationMinutes: Int? = nil,
-        exercises: [ExerciseBlueprint]
+        icon: SessionIcon? = nil, exercises: [ExerciseBlueprint]
     ) {
         self.init(
             weekday: weekday, focus: focus, durationMinutes: durationMinutes,
-            entries: exercises.map(EntryBlueprint.exercise)
+            icon: icon, entries: exercises.map(EntryBlueprint.exercise)
         )
     }
 }

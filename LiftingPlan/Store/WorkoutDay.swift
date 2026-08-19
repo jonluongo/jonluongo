@@ -13,6 +13,13 @@ final class WorkoutDay {
     var weekdayRawValue: Int = Weekday.monday.rawValue
     /// Short label such as "Push" or "Lower Body".
     var focus: String = ""
+    /// The mark the plan chose for this session, by name. Empty when it chose
+    /// none — which is most sessions, and draws nothing.
+    ///
+    /// The raw name rather than a drawn symbol: which glyph a name resolves to
+    /// is the app's business and may change, while what the coach wrote must
+    /// not.
+    private var iconRawValue: String = ""
     /// How long this session runs. `nil` when the plan did not say.
     var durationMinutes: Int?
     var completedAt: Date?
@@ -24,10 +31,12 @@ final class WorkoutDay {
 
     init(
         weekday: Weekday = .monday, focus: String = "",
-        durationMinutes: Int? = nil, completedAt: Date? = nil
+        durationMinutes: Int? = nil, completedAt: Date? = nil,
+        icon: SessionIcon? = nil
     ) {
         self.weekdayRawValue = weekday.rawValue
         self.focus = focus
+        self.iconRawValue = icon?.rawValue ?? ""
         self.durationMinutes = durationMinutes
         self.completedAt = completedAt
     }
@@ -35,6 +44,12 @@ final class WorkoutDay {
     var weekday: Weekday {
         get { Weekday(rawValue: weekdayRawValue) ?? .monday }
         set { weekdayRawValue = newValue.rawValue }
+    }
+
+    /// The mark this session carries, or `nil` when the plan chose none.
+    var icon: SessionIcon? {
+        get { iconRawValue.isEmpty ? nil : SessionIcon(rawValue: iconRawValue) }
+        set { iconRawValue = newValue?.rawValue ?? "" }
     }
 
     /// Exercises in prescribed order — compounds first.

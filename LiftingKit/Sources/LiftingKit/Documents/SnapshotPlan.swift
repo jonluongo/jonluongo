@@ -107,16 +107,22 @@ public struct SnapshotDay: Codable, Hashable, Sendable {
     public let durationMinutes: Int?
     /// When the session was finished. `nil` when it has not been.
     public let completedAt: Date?
+    /// The mark the plan chose for this session, or `nil` when it chose none.
+    /// Carried back so a later plan can keep a block's marks consistent rather
+    /// than guessing at what the last one used.
+    public let icon: SessionIcon?
     public let exercises: [SnapshotPlannedExercise]
 
     public init(
         weekday: Weekday, focus: String, durationMinutes: Int?,
-        completedAt: Date?, exercises: [SnapshotPlannedExercise]
+        completedAt: Date?, icon: SessionIcon? = nil,
+        exercises: [SnapshotPlannedExercise]
     ) {
         self.weekday = weekday
         self.focus = focus
         self.durationMinutes = durationMinutes
         self.completedAt = completedAt
+        self.icon = icon
         self.exercises = exercises
     }
 }

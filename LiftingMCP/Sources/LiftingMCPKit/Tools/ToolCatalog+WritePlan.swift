@@ -72,6 +72,14 @@ extension ToolCatalog {
                     + "1 is Sunday and 7 is Saturday."),
             "focus": string("Short label such as 'Push'."),
             "durationMinutes": integer("How long this session runs."),
+            "icon": enumerated(
+                SessionIcon.all.map(\.rawValue),
+                "The mark this session carries in the app's list of days. Choose "
+                    + "the one that fits what the session actually is; omit it "
+                    + "and the row carries no mark, which is fine. A name not on "
+                    + "this list fails the call rather than being ignored. The "
+                    + "app draws each name as a symbol of its own choosing, so "
+                    + "pick by meaning, not by picture."),
             "exercises": array(
                 of: entrySchema,
                 "The work, in the order to do it. Each entry is one exercise, or "

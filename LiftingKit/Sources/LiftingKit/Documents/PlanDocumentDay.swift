@@ -20,6 +20,9 @@ public struct PlanDocumentDay: Codable, Hashable, Sendable {
     public let focus: String
     /// How long this session runs. `nil` when the plan did not say.
     public let durationMinutes: Int?
+    /// The mark this session carries in a list. `nil` when the plan did not
+    /// choose one, which draws nothing — the app never picks one for it.
+    public let icon: SessionIcon?
     /// The day's work in order: each entry one exercise, or one group of them.
     public let entries: [PlanDocumentEntry]
 
@@ -30,27 +33,28 @@ public struct PlanDocumentDay: Codable, Hashable, Sendable {
 
     public init(
         weekday: Weekday, focus: String = "", durationMinutes: Int? = nil,
-        entries: [PlanDocumentEntry] = []
+        icon: SessionIcon? = nil, entries: [PlanDocumentEntry] = []
     ) {
         self.weekday = weekday
         self.focus = focus
         self.durationMinutes = durationMinutes
+        self.icon = icon
         self.entries = entries
     }
 
     /// A day of ungrouped exercises, which is nearly every day.
     public init(
         weekday: Weekday, focus: String = "", durationMinutes: Int? = nil,
-        exercises: [PlanDocumentExercise]
+        icon: SessionIcon? = nil, exercises: [PlanDocumentExercise]
     ) {
         self.init(
             weekday: weekday, focus: focus, durationMinutes: durationMinutes,
-            entries: exercises.map(PlanDocumentEntry.exercise)
+            icon: icon, entries: exercises.map(PlanDocumentEntry.exercise)
         )
     }
 
     private enum CodingKeys: String, CodingKey, CaseIterable {
-        case weekday, focus, durationMinutes, exercises
+        case weekday, focus, durationMinutes, icon, exercises
     }
 
     /// Only `weekday` is required: a day that cannot say when it happens is not
@@ -62,6 +66,10 @@ public struct PlanDocumentDay: Codable, Hashable, Sendable {
         weekday = try container.decode(Weekday.self, forKey: .weekday)
         focus = try container.decodeIfPresent(String.self, forKey: .focus) ?? ""
         durationMinutes = try container.decodeIfPresent(Int.self, forKey: .durationMinutes)
+        // Decoded as whatever it says, not matched against the set here: a name
+        // this build cannot draw is refused by `PlanImporter` *by name*, which
+        // it can only do if the name survived decoding.
+        icon = try container.decodeIfPresent(SessionIcon.self, forKey: .icon)
         entries = try container.decodeIfPresent([PlanDocumentEntry].self, forKey: .exercises) ?? []
     }
 
@@ -72,6 +80,7 @@ public struct PlanDocumentDay: Codable, Hashable, Sendable {
         try container.encode(weekday, forKey: .weekday)
         try container.encode(focus, forKey: .focus)
         try container.encodeIfPresent(durationMinutes, forKey: .durationMinutes)
+        try container.encodeIfPresent(icon, forKey: .icon)
         try container.encode(entries, forKey: .exercises)
     }
 }

@@ -115,10 +115,12 @@ struct BlockView: View {
 /// one. What the session is called is what a lifter is choosing between here;
 /// what is in it is one tap away, in full.
 ///
-/// **There is no icon and cannot be one.** The day's name is whatever Claude
-/// called it — `Push`, `Upper A`, `Chest & Back` — so a glyph per session would
-/// mean the app deciding what a session trains from words it does not control,
-/// and one glyph for all of them is a mark identical everywhere it appears.
+/// **The mark is the plan's, never the app's.** A glyph inferred from the day's
+/// name would be the app deciding what a session trains from words it does not
+/// control, and one glyph for all of them is a mark identical everywhere it
+/// appears. So the coach chooses from a closed set the app publishes, the same
+/// way he chooses exercises from a catalog he did not write — and a day he
+/// marked nothing carries nothing.
 private struct DayRow: View {
 
     let day: WorkoutDay
@@ -129,6 +131,12 @@ private struct DayRow: View {
 
     var body: some View {
         HStack(spacing: Spacing.standard) {
+            // Only where the plan chose one. The app never picks a mark for a
+            // session, so a day the coach left unmarked carries none and the
+            // name starts at the panel's edge as it always did.
+            if let icon = day.icon {
+                SessionIconView(icon: icon)
+            }
             Text(title)
                 .font(.supersetTitle)
                 .foregroundStyle(Palette.ink)

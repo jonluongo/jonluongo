@@ -209,11 +209,21 @@ one *whole*, naming both versions, before holding any key against it — an
 unknown key is exactly what a later format is made of. Bump the version when a
 reader would have to behave differently, never for an additive field.
 
-**An icon does one of two jobs, or it does not exist.** Either it *names an
+**An icon does one of three jobs, or it does not exist.** Either it *names an
 action* where a word will not fit — a toolbar control, a menu item, a swipe —
 or it *marks a state that varies* within a list, where the variation is the
 information: a logged day beside an unlogged one, a superset beside a plain
-exercise. Anything else is decoration.
+exercise — or it is *a mark Claude chose*, from a closed set the app publishes
+and refuses anything outside. Anything else is decoration.
+
+The third case is what a session's mark is. The app must never pick one: a
+glyph inferred from `Push` or `Upper A` is the app deciding what a session
+trains from words it does not control, and one deriving it from the exercises
+is the app deciding what they add up to. `SessionIcon.all` is the vocabulary,
+`write_plan` offers it, `PlanImporter` refuses a name this build cannot draw,
+and a day he marked nothing carries nothing. Which system symbol a name is
+drawn as lives in `SessionIconView` and nowhere else — that is the app's
+business, and changing it must not be a change to the format he writes.
 
 The test is the one the owner set: **an icon identical everywhere it appears
 distinguishes nothing** — and its pair, **an icon that varies must vary along

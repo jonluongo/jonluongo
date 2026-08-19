@@ -4,21 +4,28 @@ import LiftingKit
 
 /// Why a plan document could not be imported.
 ///
-/// There is exactly one case, and that is the point: the only thing an import
-/// can reject a plan for is naming an exercise the catalog does not have. Catch
-/// it at the UI boundary and show `errorDescription` — it names the offending
-/// ID, which is what makes the failure fixable. Depends on: `ExerciseID`.
+/// Two cases, and both are the same kind of thing: the document named something
+/// from a vocabulary the app owns, and the app does not have it. Catch it at the
+/// UI boundary and show `errorDescription` — it names the offending value, which
+/// is what makes the failure fixable. Depends on: `ExerciseID`, `SessionIcon`.
 enum PlanImportError: Error, LocalizedError, Equatable {
 
     /// The document prescribed an exercise the catalog does not contain. The
     /// associated value is the first offending ID, in document order.
     case unknownExercise(ExerciseID)
 
+    /// The document chose a session mark this build cannot draw. The associated
+    /// value is the first offending name, in document order.
+    case unknownIcon(SessionIcon)
+
     var errorDescription: String? {
         switch self {
         case .unknownExercise(let id):
             "This plan prescribes '\(id.rawValue)', which is not in the exercise "
                 + "catalog. Nothing was imported."
+        case .unknownIcon(let icon):
+            "This plan marks a session '\(icon.rawValue)', which is not one of the "
+                + "marks this app can draw. Nothing was imported."
         }
     }
 }
@@ -30,10 +37,13 @@ enum PlanImportError: Error, LocalizedError, Equatable {
 /// block. This is the app's half of the loop that `SnapshotExporter` starts,
 /// and the only path by which a plan enters the database.
 ///
-/// **It does exactly one thing beyond decoding: it confirms every `ExerciseID`
-/// exists in the catalog.** Not because the plan is distrusted, but because
-/// training history is keyed on exercise identity — an unknown key would split
-/// one lift's history into two unrelated series that can never be rejoined.
+/// **It does exactly two things beyond decoding: it confirms every `ExerciseID`
+/// exists in the catalog, and every session mark is one this build can draw.**
+/// Not because the plan is distrusted, but because training history is keyed on
+/// exercise identity — an unknown key would split one lift's history into two
+/// unrelated series that can never be rejoined — and because a mark that cannot
+/// be drawn would be taken in and shown as nothing, telling the writer his
+/// choice landed when it did not.
 /// Nothing else is checked and nothing at all is changed: a set count is not
 /// capped, an empty rep range is not filled, a rest is not clamped, a session
 /// length is not floored, and a plan is never rejected for being unbalanced.
@@ -82,6 +92,7 @@ enum PlanImporter {
         // Validated in full before anything is built, so a document with one
         // bad ID cannot leave a partially-mapped plan behind.
         try confirmEveryExerciseExists(in: document, using: catalog)
+        try confirmEveryIconExists(in: document)
 
         let plan = PlanBlueprint(document: document).makeWorkoutPlan(
             // The document states which catalog generation its IDs were chosen
@@ -98,8 +109,8 @@ enum PlanImporter {
         return plan
     }
 
-    /// The one check. Walks the document in order so the error names the first
-    /// offending ID rather than an arbitrary one.
+    /// The two checks. Both walk the document in order so the error names the
+    /// first offending value rather than an arbitrary one.
     private static func confirmEveryExerciseExists(
         in document: PlanDocument,
         using catalog: any ExerciseCatalogProviding
@@ -108,6 +119,18 @@ enum PlanImporter {
             for exercise in day.exercises where catalog.exercise(id: exercise.exerciseID) == nil {
                 throw PlanImportError.unknownExercise(exercise.exerciseID)
             }
+        }
+    }
+
+    /// A mark this build cannot draw is refused by name.
+    ///
+    /// Taking it in and drawing nothing would tell the writer his choice landed
+    /// when it did not — the same failure a silently dropped key is, and the
+    /// same answer: refuse, and say which one.
+    private static func confirmEveryIconExists(in document: PlanDocument) throws {
+        for day in document.weeks.flatMap(\.days) {
+            guard let icon = day.icon, !icon.isKnown else { continue }
+            throw PlanImportError.unknownIcon(icon)
         }
     }
 
