@@ -109,6 +109,8 @@ about it for even one build.
 | The app is called Superset; the bundle id and iCloud container are not | `com.jonluongo.LiftingPlan` and `iCloud.com.jonluongo.LiftingPlan` stay. Renaming either makes this a different app to iOS, with an empty store and no way back to what is on the phone. `AppIdentityTests` guards all three. |
 | Every number lives in `Style.swift` | A number written in a view is a number nobody chose. |
 | `Views/` holds only SwiftUI; pure model→string logic is `Presentation/` | Mechanical test, no judgement: if it does not import SwiftUI, it is not a view. |
+| A stated fact is one type, `StatedFact`, wherever it is stated | The lifter's record, a movement's catalog entry and a routine's shape all draw through `FactRow`, and each had built its own two-string struct — one of the doc comments had already drifted into calling itself the opposite of another that read identically. `AccountRecord`, `ExerciseAbout` and `RoutineFacts` return the one type. |
+| An empty work field hints the figure, not the prescription's wording | The row draws `s` or `m` after the field, so `45 seconds` said the unit twice and, in three figures of width, said it as `45 sec…`. `WorkPrescription.targetFigure` reads through `WorkDuration` and `WorkDistance` — never by trimming words — so `1:30` hints `90` and it cannot disagree with the readers that decided the row is a hold. A counted row is untouched: the `×` is its unit. |
 
 ## Tried and killed
 
