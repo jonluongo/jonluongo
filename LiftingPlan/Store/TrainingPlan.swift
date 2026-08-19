@@ -37,6 +37,20 @@ final class TrainingPlan {
     var generatedAt: Date?
     /// How many weeks the block runs. `nil` until a plan says.
     var weekCount: Int?
+    /// When this block stopped being the lifter's current one. `nil` while it is
+    /// running.
+    ///
+    /// **It does not mean he finished it.** Exactly one thing writes it —
+    /// `PlanImporter`, closing every open block when a new plan arrives — so
+    /// what it actually records is that a later block superseded this one, on
+    /// this date. There is no way in the app for a lifter to declare a block
+    /// finished, and until there is, reading this as completion is reading a
+    /// claim nobody made: a block abandoned in week two carries the same date as
+    /// one trained to the last session.
+    ///
+    /// What was actually done is in the weeks below it, session by session. That
+    /// is the answer to "did he finish it", and it is the only one the record
+    /// holds.
     var completedAt: Date?
     /// The `ExerciseCatalog.version` that produced this plan's exercise
     /// selections. A later correction to the catalog (e.g. reclassifying an
@@ -97,5 +111,4 @@ final class TrainingPlan {
         (weeks ?? []).sorted { $0.ordinal < $1.ordinal }
     }
 
-    var isComplete: Bool { completedAt != nil }
 }

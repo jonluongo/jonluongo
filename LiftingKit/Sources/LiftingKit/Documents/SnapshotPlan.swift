@@ -34,7 +34,15 @@ public struct SnapshotPlan: Codable, Hashable, Sendable {
     public let generatedAt: Date?
     /// How many weeks the block runs. `nil` when the plan did not say.
     public let weekCount: Int?
-    /// When the block was finished. `nil` while it is still running.
+    /// When the block stopped being the lifter's current one. `nil` while it is
+    /// still running.
+    ///
+    /// **Not a claim that he finished it.** The phone writes this when a later
+    /// plan arrives and supersedes the block; nothing in the app lets a lifter
+    /// declare one finished. A block abandoned in week two and a block trained
+    /// to its last session carry the same kind of date here, and telling them
+    /// apart means reading the sessions — which are in this document, week by
+    /// week, each with what was logged against it.
     public let completedAt: Date?
     /// The catalog generation this block's exercise IDs were selected from.
     /// `nil` when the block carries no stamp.
