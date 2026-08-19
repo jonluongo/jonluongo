@@ -25,9 +25,6 @@ struct ExerciseRestSheet: View {
     let exerciseName: String
     /// What the plan prescribed, in seconds. Read-only, and shown as Claude's.
     let prescribedSeconds: Int?
-    /// Whether rest timers are on at all. Off here means every exercise, and is
-    /// stated rather than silently overriding what this sheet shows.
-    let timersEnabled: Bool
     /// What the lifter has chosen for this exercise up to now.
     let rest: LifterRest
     var onChange: (LifterRest) -> Void
@@ -38,12 +35,11 @@ struct ExerciseRestSheet: View {
     @State private var isOn: Bool
 
     init(
-        exerciseName: String, prescribedSeconds: Int?, timersEnabled: Bool,
+        exerciseName: String, prescribedSeconds: Int?,
         rest: LifterRest, onChange: @escaping (LifterRest) -> Void
     ) {
         self.exerciseName = exerciseName
         self.prescribedSeconds = prescribedSeconds
-        self.timersEnabled = timersEnabled
         self.rest = rest
         self.onChange = onChange
         // The wheels open on whatever the clock would run right now — the
@@ -51,7 +47,7 @@ struct ExerciseRestSheet: View {
         // when neither exists. Nothing is suggested: an app that opened this on
         // "90s" for an exercise nobody prescribed rest for would be making a
         // training decision with a wheel.
-        let opening = rest.runningSeconds(prescribed: prescribedSeconds, timersEnabled: true)
+        let opening = rest.runningSeconds(prescribed: prescribedSeconds)
             ?? prescribedSeconds ?? 0
         _minutes = State(initialValue: opening / 60)
         _seconds = State(initialValue: opening % 60)
@@ -84,14 +80,6 @@ struct ExerciseRestSheet: View {
                 if isOverridden {
                     Section {
                         Button("Use Prescribed Rest") { usePrescribed() }
-                    }
-                }
-
-                if !timersEnabled {
-                    Section {
-                        Text("Rest timers are off for every exercise. Turn them back on in Account.")
-                            .font(.supersetBody)
-                            .foregroundStyle(.secondary)
                     }
                 }
             }

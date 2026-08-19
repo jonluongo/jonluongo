@@ -8,11 +8,8 @@ import LiftingKit
 @MainActor
 private final class InMemoryRestStore: RestPreferenceStoring {
 
-    var timersEnabled = true
     var rests: [ExerciseID: LifterRest] = [:]
 
-    func loadTimersEnabled() -> Bool { timersEnabled }
-    func save(timersEnabled: Bool) { self.timersEnabled = timersEnabled }
     func loadRests() -> [ExerciseID: LifterRest] { rests }
 
     func save(_ rest: LifterRest, for id: ExerciseID) {
@@ -35,33 +32,27 @@ struct LifterRestTests {
 
     @Test("Saying nothing runs exactly what the plan prescribed")
     func silenceFollowsThePlan() {
-        #expect(LifterRest.asPrescribed.runningSeconds(prescribed: 180, timersEnabled: true) == 180)
-        #expect(LifterRest.asPrescribed.runningSeconds(prescribed: nil, timersEnabled: true) == nil)
+        #expect(LifterRest.asPrescribed.runningSeconds(prescribed: 180) == 180)
+        #expect(LifterRest.asPrescribed.runningSeconds(prescribed: nil) == nil)
     }
 
     @Test("A length of his own runs instead of the prescribed one")
     func ownLengthRuns() {
-        #expect(LifterRest.seconds(120).runningSeconds(prescribed: 180, timersEnabled: true) == 120)
-        #expect(LifterRest.seconds(120).runningSeconds(prescribed: nil, timersEnabled: true) == 120)
+        #expect(LifterRest.seconds(120).runningSeconds(prescribed: 180) == 120)
+        #expect(LifterRest.seconds(120).runningSeconds(prescribed: nil) == 120)
     }
 
     @Test("Off on this exercise runs nothing, whatever the plan prescribed")
     func offRunsNothing() {
-        #expect(LifterRest.off.runningSeconds(prescribed: 180, timersEnabled: true) == nil)
-    }
-
-    @Test("Off everywhere runs nothing, whatever any exercise says")
-    func masterSwitchWins() {
-        #expect(LifterRest.asPrescribed.runningSeconds(prescribed: 180, timersEnabled: false) == nil)
-        #expect(LifterRest.seconds(120).runningSeconds(prescribed: 180, timersEnabled: false) == nil)
+        #expect(LifterRest.off.runningSeconds(prescribed: 180) == nil)
     }
 
     @Test("A clock dialled to zero runs nothing, and a prescribed zero is passed through")
     func zeroes() {
         // Nothing can count down from zero. A zero Claude wrote is still his to
         // write, and it is `RestTimerModel` that declines to run it.
-        #expect(LifterRest.seconds(0).runningSeconds(prescribed: 180, timersEnabled: true) == nil)
-        #expect(LifterRest.asPrescribed.runningSeconds(prescribed: 0, timersEnabled: true) == 0)
+        #expect(LifterRest.seconds(0).runningSeconds(prescribed: 180) == nil)
+        #expect(LifterRest.asPrescribed.runningSeconds(prescribed: 0) == 0)
     }
 }
 
@@ -96,15 +87,17 @@ struct RestPreferenceTests {
         #expect(preferences.runningSeconds(prescribed: 240, for: bench) == 240)
     }
 
-    @Test("The master switch is on until the lifter turns it off, and is remembered")
-    func masterSwitchPersists() {
+    @Test("Silencing an exercise silences that exercise and no other")
+    func offIsPerExercise() {
+        // There is no master switch: the coarse version of this choice was a
+        // toggle in Account, and it went. `off` is said on the exercise it is
+        // about, and says nothing about any other.
         let store = InMemoryRestStore()
         let preferences = RestPreferences(store: store)
-        #expect(preferences.timersEnabled)
-        preferences.setTimersEnabled(false)
-        #expect(store.timersEnabled == false)
-        #expect(RestPreferences(store: store).timersEnabled == false)
+        preferences.setRest(.off, for: bench)
+
         #expect(preferences.runningSeconds(prescribed: 180, for: bench) == nil)
+        #expect(preferences.runningSeconds(prescribed: 180, for: squat) == 180)
     }
 
     @Test("Choices survive a relaunch, off included")
@@ -116,12 +109,10 @@ struct RestPreferenceTests {
         let first = RestPreferences(store: UserDefaultsRestStore(defaults: defaults))
         first.setRest(.seconds(150), for: bench)
         first.setRest(.off, for: squat)
-        first.setTimersEnabled(false)
 
         let second = RestPreferences(store: UserDefaultsRestStore(defaults: defaults))
         #expect(second.rest(for: bench) == .seconds(150))
         #expect(second.rest(for: squat) == .off)
-        #expect(second.timersEnabled == false)
     }
 
     @Test("A stored value this build cannot read means following the plan")

@@ -120,7 +120,6 @@ struct ActiveWorkoutView: View {
                 ExerciseRestSheet(
                     exerciseName: target.name,
                     prescribedSeconds: target.prescribedSeconds,
-                    timersEnabled: restPreferences.timersEnabled,
                     rest: restPreferences.rest(for: target.key)
                 ) { rest in
                     restPreferences.setRest(rest, for: target.key)

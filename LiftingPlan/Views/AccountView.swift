@@ -13,22 +13,20 @@ import LiftingKit
 ///
 /// **The record is read-only, and shows no affordance suggesting otherwise.**
 /// Claude writes these facts through the shared folder and the app displays
-/// them. The two controls are the unit picker and the rest-timer switch, and
-/// neither states anything about the lifter: one is how a number is drawn, the
-/// other whether his phone counts down between sets. How long to rest on a
-/// given exercise is not here — that is prescribed per exercise and edited on
-/// the exercise.
+/// them. Nothing on this page is a training question, and nothing on it is a
+/// preference any more: how long to rest on a given exercise is prescribed per
+/// exercise and edited on the exercise.
 ///
 /// **How it is used.** The third tab. It was Settings, which asked no training
 /// question and answered none either — the record was invisible in the app, so
 /// the lifter could tell Claude he weighs 185 and never see it again.
 ///
-/// **Three groups, because the page holds three contracts.** *What Claude knows*
-/// is his record and cannot be edited here. *Preferences* are his and can.
-/// *Data* is the one destructive thing. They were one undifferentiated list
-/// where a toggle he owns ranked equally with a fact he cannot change and a
-/// button that destroys his history — and four explanatory paragraphs were
-/// threaded between them, each saying something the grouping now says for free.
+/// **Two groups, because the page holds two contracts.** The record, which is
+/// his and cannot be edited here, and *Data*, which is the one destructive
+/// thing. There was a third — a rest-timer switch — and it is gone: a single
+/// toggle silencing every countdown was the coarse version of a choice that
+/// already exists per exercise, on the exercise it is about, and it was the last
+/// thing on a page whose whole premise is that the app asks nothing.
 ///
 /// **What it depends on.** `AccountRecord` for every string it prints, the
 /// `Store/` models it queries, `panelRow` for the panels and `note()` for the
@@ -39,9 +37,6 @@ struct AccountView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.exerciseCatalog) private var catalog
-    /// The lifter's own clock. The only other control on this page, and the
-    /// only other thing here that is his to set.
-    @Environment(RestPreferences.self) private var restPreferences
     @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
     @Query(sort: \BodyMetric.date, order: .reverse) private var weighIns: [BodyMetric]
     @Query private var strengthBaselines: [StrengthBaseline]
@@ -51,17 +46,6 @@ struct AccountView: View {
 
     private var errorAlertBinding: Binding<Bool> {
         Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
-    }
-
-    /// The master switch for the between-sets countdown. It writes to
-    /// `RestPreferences`, never to the store: switching a clock off is a thing
-    /// about this phone, not a fact about the lifter that Claude should read
-    /// back as though he had been told it.
-    private var restTimerBinding: Binding<Bool> {
-        Binding(
-            get: { restPreferences.timersEnabled },
-            set: { restPreferences.setTimersEnabled($0) }
-        )
     }
 
     private var facts: [LifterFactRow] {
@@ -82,7 +66,6 @@ struct AccountView: View {
     var body: some View {
         List {
                 record
-                preferences
                 data
         }
         .listStyle(.plain)
@@ -141,30 +124,6 @@ struct AccountView: View {
                 Text("Not yet said: \(notYetSaid)")
                     .note()
             }
-        }
-    }
-
-    // MARK: - The lifter's own
-
-    /// The one thing on this page he sets himself: whether his phone counts
-    /// down between sets.
-    ///
-    /// The unit was here too, and should not have been. "Pounds or kilos" is a
-    /// fact about how the lifter thinks, which is the same kind of thing as his
-    /// goal and his injuries — he says it in conversation and Claude records it,
-    /// through `ProfileUpdate.displayUnit`. A toggle for it was the app asking a
-    /// question, which is the one thing it does not do. The note that went with
-    /// it — that already-logged sets keep their unit — went too: it existed to
-    /// reassure him about a switch he no longer has.
-    private var preferences: some View {
-        Section {
-            // No heading. It read "Rest timer" above a switch labelled "Rest
-            // timers" — the same word twice, one of them singular, neither
-            // adding anything the other had not said.
-            Toggle("Rest timers", isOn: restTimerBinding)
-                .font(.supersetBody)
-                .panelRow(.only)
-                .listRowSeparator(.hidden)
         }
     }
 

@@ -12,8 +12,8 @@ import LiftingKit
 /// rest even after Claude changes it.
 ///
 /// **How it is used.** Read out of `RestPreferences` for an exercise and asked
-/// `runningSeconds(prescribed:timersEnabled:)`, which answers the only number
-/// that matters — what the countdown counts down, or `nil` when nothing runs.
+/// `runningSeconds(prescribed:)`, which answers the only number that matters —
+/// what the countdown counts down, or `nil` when nothing runs.
 /// Nothing here writes to a prescription, and nothing here can: it never sees
 /// the store.
 ///
@@ -38,8 +38,7 @@ enum LifterRest: Equatable, Sendable {
     /// as a rest to run would put a countdown on screen that finishes before it
     /// is drawn. A zero the *plan* prescribed is passed through untouched — that
     /// is Claude's number to state, and `RestTimerModel` declines it on its own.
-    func runningSeconds(prescribed: Int?, timersEnabled: Bool) -> Int? {
-        guard timersEnabled else { return nil }
+    func runningSeconds(prescribed: Int?) -> Int? {
         switch self {
         case .asPrescribed: return prescribed
         case .seconds(let seconds): return seconds > 0 ? seconds : nil
@@ -74,9 +73,8 @@ enum LifterRest: Equatable, Sendable {
 
 /// Where a lifter's rest choices are kept between sessions.
 ///
-/// **What it does.** Loads and saves the master switch and the per-exercise
-/// choices, and nothing else — every question about what those choices *mean*
-/// belongs to `LifterRest`.
+/// **What it does.** Loads and saves the per-exercise choices, and nothing else
+/// — every question about what those choices *mean* belongs to `LifterRest`.
 ///
 /// **How it is used.** `RestPreferences` holds one. `UserDefaultsRestStore` is
 /// the real one; a dictionary-backed fake stands in for it in tests, which is
@@ -86,16 +84,13 @@ enum LifterRest: Equatable, Sendable {
 /// **What it depends on.** `ExerciseID` from LiftingKit, and `LifterRest`.
 @MainActor
 protocol RestPreferenceStoring {
-    func loadTimersEnabled() -> Bool
-    func save(timersEnabled: Bool)
     func loadRests() -> [ExerciseID: LifterRest]
     func save(_ rest: LifterRest, for id: ExerciseID)
 }
 
 /// The real store: `UserDefaults`, on this device only.
 ///
-/// **What it does.** Keeps the master switch under one key and each exercise's
-/// choice under its slug.
+/// **What it does.** Keeps each exercise's choice under its slug.
 ///
 /// **How it is used.** Constructed by `RestPreferences` with no argument in the
 /// app; a test hands it its own suite.
@@ -111,21 +106,10 @@ protocol RestPreferenceStoring {
 struct UserDefaultsRestStore: RestPreferenceStoring {
 
     private let defaults: UserDefaults
-    private static let timersEnabledKey = "rest.timersEnabled"
     private static let restPrefix = "rest.exercise."
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-    }
-
-    /// On unless the lifter has switched it off. An unset key is not `false`:
-    /// `bool(forKey:)` cannot tell those apart, so the object is asked for.
-    func loadTimersEnabled() -> Bool {
-        defaults.object(forKey: Self.timersEnabledKey) as? Bool ?? true
-    }
-
-    func save(timersEnabled: Bool) {
-        defaults.set(timersEnabled, forKey: Self.timersEnabledKey)
     }
 
     func loadRests() -> [ExerciseID: LifterRest] {
@@ -149,8 +133,7 @@ struct UserDefaultsRestStore: RestPreferenceStoring {
     }
 }
 
-/// The lifter's own rest clock: on or off everywhere, and how long on each
-/// exercise.
+/// The lifter's own rest clock: how long it runs on each exercise.
 ///
 /// **What it does.** Holds the one thing the prescription cannot hold — what
 /// the lifter wants his clock to do — and answers the logging screen's only
@@ -160,10 +143,15 @@ struct UserDefaultsRestStore: RestPreferenceStoring {
 /// Tuesday as well; making him dial it again every session is the annoyance
 /// that produced this screen's redesign.
 ///
+/// **There is no master switch.** A single toggle turning every countdown off
+/// was the coarse version of a choice the lifter already has per exercise, and
+/// the only preference left on a page whose whole premise is that the app asks
+/// nothing. Silencing an exercise is `LifterRest.off`, on the exercise it is
+/// about.
+///
 /// **How it is used.** One instance, made at launch and put in the environment.
 /// `ActiveWorkoutView` asks `runningSeconds(prescribed:for:)` when a set is
-/// ticked, `ExerciseRestSheet` writes a choice, and `AccountView` flips the
-/// master switch.
+/// ticked, and `ExerciseRestSheet` writes a choice.
 ///
 /// **What it depends on.** `RestPreferenceStoring`, and `ExerciseID` from
 /// LiftingKit. It never touches the model context, so no edit here can reach
@@ -171,11 +159,6 @@ struct UserDefaultsRestStore: RestPreferenceStoring {
 @Observable
 @MainActor
 final class RestPreferences {
-
-    /// Whether any countdown runs at all. Off is the lifter saying he does not
-    /// want a rest timer; what Claude prescribed is still shown either way,
-    /// because that is a training fact and not a feature of the app.
-    private(set) var timersEnabled: Bool
 
     /// Only the exercises he has said something about. An absent entry is
     /// `.asPrescribed`.
@@ -185,14 +168,7 @@ final class RestPreferences {
 
     init(store: any RestPreferenceStoring = UserDefaultsRestStore()) {
         self.store = store
-        timersEnabled = store.loadTimersEnabled()
         rests = store.loadRests()
-    }
-
-    func setTimersEnabled(_ enabled: Bool) {
-        guard enabled != timersEnabled else { return }
-        timersEnabled = enabled
-        store.save(timersEnabled: enabled)
     }
 
     /// What this exercise's clock has been told to do — `.asPrescribed` when
@@ -215,6 +191,6 @@ final class RestPreferences {
     /// The seconds the countdown should run after a set of this exercise, or
     /// `nil` when none should.
     func runningSeconds(prescribed: Int?, for id: ExerciseID) -> Int? {
-        rest(for: id).runningSeconds(prescribed: prescribed, timersEnabled: timersEnabled)
+        rest(for: id).runningSeconds(prescribed: prescribed)
     }
 }
