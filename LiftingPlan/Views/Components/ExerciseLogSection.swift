@@ -63,19 +63,6 @@ struct ExerciseLogSection: View {
 
     var body: some View {
         Group {
-            if let notes = exercise.notes, !notes.isEmpty {
-                // Hugging the name, and separated from the table. On even insets
-                // it sat midway between the two and read as the table's first
-                // row — a line of grey prose where a set should be.
-                Text(notes)
-                    .font(.supersetSupport)
-                    .foregroundStyle(Palette.muted)
-                    .panelRow(
-                        .middle, insets: PanelMetrics.noteInsets,
-                        paired: paired, isRecorded: exercise.isFullyLogged)
-                    .listRowSeparator(.hidden)
-            }
-
             ForEach(Array(orderedSets.enumerated()), id: \.element.persistentModelID) { index, set in
                 let number = workingNumber(at: index)
                 let prescribed = reading.prescription(
@@ -97,7 +84,7 @@ struct ExerciseLogSection: View {
                 // is whether the exercise is done, which is one fact and changes
                 // once.
                 .panelRow(
-                    index == orderedSets.count - 1 ? .last : .middle,
+                    index == orderedSets.count - 1 && !hasNote ? .last : .middle,
                     insets: SetTableMetrics.rowInsets, paired: paired,
                     isRecorded: exercise.isFullyLogged)
                 // No rules between rows. Each row already carries a ruled cell
@@ -110,6 +97,22 @@ struct ExerciseLogSection: View {
                         Label("Delete", systemImage: "trash")
                     }
                 }
+            }
+
+            // **Last, so the panel's shape does not depend on it.** The note is
+            // optional and most exercises carry none; sitting between the name
+            // and the table it moved the sets down on the ones that did, so two
+            // exercises in the same session had their first row in different
+            // places. At the foot it is additive: everything above it is where
+            // it always is, and the note is simply there or not.
+            if let notes = exercise.notes, !notes.isEmpty {
+                Text(notes)
+                    .font(.supersetSupport)
+                    .foregroundStyle(Palette.muted)
+                    .panelRow(
+                        .last, insets: PanelMetrics.noteInsets,
+                        paired: paired, isRecorded: exercise.isFullyLogged)
+                    .listRowSeparator(.hidden)
             }
         }
     }
