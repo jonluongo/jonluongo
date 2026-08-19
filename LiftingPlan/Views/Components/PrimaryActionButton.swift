@@ -38,7 +38,13 @@ struct PrimaryActionButton: View {
         /// A screen gets one.
         case primary
         /// Available, but not what the screen is for yet — finishing a session
-        /// with sets still unticked. A grey fill, the same shape.
+        /// with sets still unticked. The same shape, filled with the rule's own
+        /// weight and written in ink.
+        ///
+        /// It was `muted` — a mid-grey slab with white on it — which reads as
+        /// *disabled* rather than as *not yet*, and this button is never
+        /// disabled. A fill light enough to write ink on is a button that is
+        /// plainly there and plainly not the lit one.
         case tentative
         /// A correction rather than an action: taking a finished session back.
         /// No fill at all, just the word. It is the least a button can be while
@@ -82,18 +88,19 @@ struct PrimaryActionButton: View {
     private var fill: Color {
         switch prominence {
         case .primary: Palette.accent
-        case .tentative: Palette.muted
+        case .tentative: Palette.rule
         case .quiet: .clear
         }
     }
 
-    /// What the word is written in: ink on the highlighter, white on grey, and
-    /// ink again on nothing at all.
+    /// What the word is written in. Ink for all three: the highlighter and the
+    /// rule are both lighter than the text that sits on them, in either
+    /// appearance, and `onAccent` is ink that does not follow the appearance
+    /// because its ground does not either.
     private var foreground: Color {
         switch prominence {
         case .primary: Palette.onAccent
-        case .tentative: .white
-        case .quiet: Palette.ink
+        case .tentative, .quiet: Palette.ink
         }
     }
 
