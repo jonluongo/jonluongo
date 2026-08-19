@@ -47,16 +47,13 @@ struct PlansView: View {
                             plan: plan,
                             subtitle: PlansListing.subtitle(of: plan, calendar: calendar),
                             fraction: PlansListing.loggedFraction(of: plan),
-                            tint: plan.tint,
                             onOpen: { onOpen(plan) }
                         )
                         // Each block its own panel, as each session is on the
                         // block screen. One panel holding every block made the
                         // one he is training and the ones behind him a single
                         // object with several names in it.
-                        // A tinted block is written on its own colour; one the
-                        // plan left uncoloured keeps the ordinary panel.
-                        .panelRow(.only, fillsPanel: true, field: plan.tint)
+                        .panelRow(.only, fillsPanel: true)
                         .listRowSeparator(.hidden)
                     }
                 }
@@ -94,9 +91,6 @@ private struct BlockCard: View {
     let subtitle: String
     /// How much of the block is logged, or `nil` when it prescribes nothing yet.
     let fraction: Double?
-    /// The colour the block is known by, which decides whether its words are
-    /// written in ink or in white.
-    let tint: BlockTint?
     let onOpen: () -> Void
 
     private var title: String { PlansListing.title(of: plan) }
@@ -108,20 +102,19 @@ private struct BlockCard: View {
                     VStack(alignment: .leading, spacing: Spacing.tight) {
                         Text(title)
                             .font(.supersetTitle)
-                            .foregroundStyle(tint == nil ? Palette.ink : .white)
+                            .foregroundStyle(Palette.ink)
                         Text(subtitle)
                             .font(.supersetSupport)
-                            .foregroundStyle(
-                                tint == nil ? Palette.muted : Color.white.opacity(0.82))
+                            .foregroundStyle(Palette.muted)
                     }
                     // Under the line it restates, and only where there is
                     // something to be a fraction of.
                     if let fraction {
-                        ProgressRule(fraction: fraction, onField: tint != nil)
+                        ProgressRule(fraction: fraction)
                     }
                 }
                 Spacer(minLength: Spacing.standard)
-                DisclosureChevron(onField: tint != nil)
+                DisclosureChevron()
             }
             .padding(PanelMetrics.buttonInsets)
             // The panel's whole area, not the text's: a tap near the edge of a

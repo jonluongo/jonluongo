@@ -18,9 +18,6 @@ enum PlanImportError: Error, LocalizedError, Equatable {
     /// value is the first offending name, in document order.
     case unknownIcon(SessionIcon)
 
-    /// The document chose a block colour this build cannot draw.
-    case unknownTint(BlockTint)
-
     var errorDescription: String? {
         switch self {
         case .unknownExercise(let id):
@@ -29,9 +26,6 @@ enum PlanImportError: Error, LocalizedError, Equatable {
         case .unknownIcon(let icon):
             "This plan marks a session '\(icon.rawValue)', which is not one of the "
                 + "marks this app can draw. Nothing was imported."
-        case .unknownTint(let tint):
-            "This plan is coloured '\(tint.rawValue)', which is not one of the "
-                + "colours this app can draw. Nothing was imported."
         }
     }
 }
@@ -99,7 +93,6 @@ enum PlanImporter {
         // bad ID cannot leave a partially-mapped plan behind.
         try confirmEveryExerciseExists(in: document, using: catalog)
         try confirmEveryIconExists(in: document)
-        if let tint = document.tint, !tint.isKnown { throw PlanImportError.unknownTint(tint) }
 
         let plan = PlanBlueprint(document: document).makeWorkoutPlan(
             // The document states which catalog generation its IDs were chosen

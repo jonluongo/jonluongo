@@ -25,8 +25,6 @@ struct PlanBlueprint: Equatable {
     var notes: String?
     /// How long a session in this block runs. `nil` when the plan did not say.
     var durationMinutes: Int?
-    /// The colour the block is known by. `nil` when the plan chose none.
-    var tint: BlockTint?
     /// When the plan was written, as its document stated. `nil` when the block
     /// did not come from one. Distinct from the start date the mapping is given,
     /// which is when it arrived.
@@ -127,8 +125,7 @@ extension PlanBlueprint {
             weekCount: weekCount,
             weekdays: Set(days.map(\.weekday)),
             durationMinutes: durationMinutes,
-            catalogVersion: catalogVersion,
-            tint: tint
+            catalogVersion: catalogVersion
         )
         plan.weeks = weeks.enumerated().map { index, week in
             let trainingWeek = TrainingWeek(
@@ -233,7 +230,6 @@ extension PlanBlueprint {
             goal: document.goal,
             notes: document.notes,
             durationMinutes: document.durationMinutes,
-            tint: document.tint,
             generatedAt: document.generatedAt,
             weeks: document.weeks.map { week in
                 WeekBlueprint(

@@ -1,5 +1,4 @@
 import SwiftUI
-import LiftingKit
 import UIKit
 
 // The app's style sheet: every colour, every type role, every distance, every
@@ -92,46 +91,6 @@ enum Palette {
     /// and a rule that has to touch the actor to know its own width is a rule
     /// that cannot be drawn from a `let`.
     static let hairline: CGFloat = 1.0 / 3.0
-
-    /// The colour a block is known by, drawn.
-    ///
-    /// **Eight, and the app picks none of them** — `BlockTint` is chosen by
-    /// whoever wrote the block, and this is only where each name is given a
-    /// shade. A name is the format; a shade is this app's business, so changing
-    /// one here is not a change to anything the coach writes.
-    ///
-    /// They are muted rather than bright on purpose. The accent is the one warm
-    /// thing on a screen and marks what can be acted on; eight saturated blocks
-    /// would spend that. These read as the ink of a different pen, not as a
-    /// second accent.
-    static func blockTint(_ tint: BlockTint) -> Color {
-        switch tint {
-        case .slate: dynamic(light: 0x5A6B7C, dark: 0x8FA6BC)
-        case .rust: dynamic(light: 0xA65038, dark: 0xD98366)
-        case .moss: dynamic(light: 0x5B7A4A, dark: 0x93B87F)
-        case .plum: dynamic(light: 0x7A4A6B, dark: 0xB983A8)
-        case .ochre: dynamic(light: 0x9A7A2E, dark: 0xC7A85A)
-        case .teal: dynamic(light: 0x2E7A76, dark: 0x6FB8B2)
-        case .clay: dynamic(light: 0x8A5F4A, dark: 0xC0937C)
-        case .indigo: dynamic(light: 0x4A5490, dark: 0x8B95CC)
-        default: accent
-        }
-    }
-
-    /// The ground a tinted block is written on: its colour, lit from the top.
-    ///
-    /// **Two stops and no motion.** An animated mesh of the same colour was
-    /// built and measured at better than ten percent of a core, sustained, for
-    /// four rows — real battery on a phone propped against a rack, spent on
-    /// decoration. A gradient with a light top and a deeper foot gives the panel
-    /// the same solidity for the cost of one draw, and a list that is not moving
-    /// is one the eye can leave alone.
-    static func blockField(_ tint: BlockTint) -> LinearGradient {
-        let base = blockTint(tint)
-        return LinearGradient(
-            colors: [base.mix(with: .white, by: 0.12), base.mix(with: .black, by: 0.10)],
-            startPoint: .top, endPoint: .bottom)
-    }
 
     /// What a panel casts on the surface behind it.
     ///

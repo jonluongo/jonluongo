@@ -84,10 +84,6 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     /// Anything the coach wants the lifter to read alongside the plan. `nil`
     /// when there is none.
     public let notes: String?
-    /// The colour this block is known by in the app's list of blocks. `nil` when
-    /// the plan chose none, which draws the ordinary neutral — the app never
-    /// picks one for it.
-    public let tint: BlockTint?
     /// The block's weeks, in the order they are to be trained. A week's
     /// position in this list is its ordinal, so two weeks cannot claim to be
     /// week 3.
@@ -111,7 +107,6 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         goal: String = "",
         durationMinutes: Int? = nil,
         notes: String? = nil,
-        tint: BlockTint? = nil,
         weeks: [PlanDocumentWeek] = []
     ) {
         self.version = version
@@ -122,7 +117,6 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         self.goal = goal
         self.durationMinutes = durationMinutes
         self.notes = notes
-        self.tint = tint
         self.weeks = weeks
     }
 
@@ -140,13 +134,12 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         goal: String = "",
         durationMinutes: Int? = nil,
         notes: String? = nil,
-        tint: BlockTint? = nil,
         days: [PlanDocumentDay]
     ) {
         self.init(
             version: version, id: id, catalogVersion: catalogVersion,
             generatedAt: generatedAt, title: title, goal: goal,
-            durationMinutes: durationMinutes, notes: notes, tint: tint,
+            durationMinutes: durationMinutes, notes: notes,
             weeks: [PlanDocumentWeek(days: days)]
         )
     }
@@ -155,7 +148,7 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     /// every key this format has in order to refuse one it does not.
     private enum CodingKeys: String, CodingKey, CaseIterable {
         case version, id, catalogVersion, generatedAt
-        case title, goal, durationMinutes, notes, tint, weeks
+        case title, goal, durationMinutes, notes, weeks
     }
 
     /// The two keys a single-week block may state instead of `weeks`. Version 1
@@ -193,10 +186,6 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         goal = try container.decodeIfPresent(String.self, forKey: .goal) ?? ""
         durationMinutes = try container.decodeIfPresent(Int.self, forKey: .durationMinutes)
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
-        // Decoded as written, not matched against the set here: a name this
-        // build cannot draw is refused by `PlanImporter` *by name*, which it can
-        // only do if the name survived decoding.
-        tint = try container.decodeIfPresent(BlockTint.self, forKey: .tint)
         weeks = try Self.weeks(from: decoder, container)
     }
 

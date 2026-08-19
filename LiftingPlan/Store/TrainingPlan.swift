@@ -69,13 +69,6 @@ final class TrainingPlan {
     private var weekdayRawValues: [Int] = []
     /// How long a session in this block runs. `nil` until a plan says.
     var durationMinutes: Int?
-    /// The colour this block is known by, by name. Empty when the plan chose
-    /// none — which draws the ordinary neutral.
-    ///
-    /// The raw name rather than a drawn colour: which shade a name resolves to
-    /// is the app's business and may change, while what the coach wrote must
-    /// not.
-    private var tintRawValue: String = ""
     /// The `PlanDocument.id` this block was imported from, which is what makes
     /// importing the same plan twice a no-op instead of a duplicate. `nil` for
     /// a block that did not arrive as a document.
@@ -89,7 +82,7 @@ final class TrainingPlan {
         startDate: Date = Date(), generatedAt: Date? = nil,
         weekCount: Int? = nil, weekdays: Set<Weekday> = [],
         durationMinutes: Int? = nil, catalogVersion: Int? = nil,
-        tint: BlockTint? = nil, sourceDocumentID: UUID? = nil
+        sourceDocumentID: UUID? = nil
     ) {
         self.title = title
         self.goal = goal
@@ -100,14 +93,7 @@ final class TrainingPlan {
         self.weekdayRawValues = weekdays.map(\.rawValue).sorted()
         self.durationMinutes = durationMinutes
         self.catalogVersion = catalogVersion
-        self.tintRawValue = tint?.rawValue ?? ""
         self.sourceDocumentID = sourceDocumentID
-    }
-
-    /// The colour this block is known by, or `nil` when the plan chose none.
-    var tint: BlockTint? {
-        get { tintRawValue.isEmpty ? nil : BlockTint(rawValue: tintRawValue) }
-        set { tintRawValue = newValue?.rawValue ?? "" }
     }
 
     var weekdays: Set<Weekday> {

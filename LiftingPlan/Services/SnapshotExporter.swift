@@ -114,7 +114,7 @@ enum SnapshotExporter {
             startDate: plan.startDate, generatedAt: plan.generatedAt,
             weekCount: plan.weekCount, completedAt: plan.completedAt,
             catalogVersion: plan.catalogVersion, weekdays: plan.orderedWeekdays,
-            durationMinutes: plan.durationMinutes, tint: plan.tint,
+            durationMinutes: plan.durationMinutes,
             weeks: plan.orderedWeeks.map(snapshot(of:))
         )
     }

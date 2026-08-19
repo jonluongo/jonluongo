@@ -1,5 +1,4 @@
 import SwiftUI
-import LiftingKit
 
 /// How much of a block is in the record, drawn as a rule.
 ///
@@ -22,16 +21,13 @@ struct ProgressRule: View {
     /// How much is logged, from 0 to 1. Values outside that are clamped, since a
     /// bar wider than its track is a drawing bug rather than a fact.
     let fraction: Double
-    /// Whether the rule is drawn on a block's own coloured field, where ink and
-    /// the accent both disappear and white is the only thing that reads.
-    var onField: Bool = false
 
     var body: some View {
         GeometryReader { proxy in
             let filled = proxy.size.width * min(max(fraction, 0), 1)
             ZStack(alignment: .leading) {
-                Capsule().fill(onField ? Color.white.opacity(0.28) : Palette.rule)
-                Capsule().fill(onField ? Color.white : Palette.accent).frame(width: filled)
+                Capsule().fill(Palette.rule)
+                Capsule().fill(Palette.accent).frame(width: filled)
             }
         }
         .frame(height: ProgressMetrics.height)
