@@ -43,21 +43,21 @@ struct DesignSystemTests {
 
     // MARK: - Radius
 
-    @Test("There are three radii, and the bigger the surface the rounder it is")
-    func threeRadii() {
-        // The mark that a thing is recorded is the smallest shape drawn; an
-        // entry field is small and takes a small curve; a panel is a surface and
-        // takes the largest. The panel was briefly the tightest of them, which
-        // is what made the panels read as hard rather than as quiet.
+    @Test("There are two radii, and the bigger the surface the rounder it is")
+    func twoRadii() {
+        // The mark that a thing is recorded is the smaller shape drawn; a panel
+        // is a surface and takes the larger. The panel was briefly the tighter
+        // of them, which is what made the panels read as hard rather than as
+        // quiet.
         //
-        // There were four. The fourth was the rest bar's, on the reasoning that
-        // a surface floating over content is rounder than one lying on it —
-        // and when the panel gained a shadow the two figures met. Two names for
-        // one number is what this suite exists to catch, so the bar takes the
-        // panel's.
-        #expect(Radius.all == [Radius.mark, Radius.small, Radius.panel])
-        #expect(Radius.mark < Radius.small)
-        #expect(Radius.small < Radius.panel)
+        // There were four. One was the rest bar's, on the reasoning that a
+        // surface floating over content is rounder than one lying on it — and
+        // when the panel gained a shadow the two figures met, so the bar takes
+        // the panel's. One was an eight for entry fields and badges, which
+        // nothing ever drew. Two names for one number is what this suite exists
+        // to catch, and so is a name for no number at all.
+        #expect(Radius.all == [Radius.mark, Radius.panel])
+        #expect(Radius.mark < Radius.panel)
     }
 
     // MARK: - Tap targets

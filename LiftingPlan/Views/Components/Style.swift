@@ -255,16 +255,13 @@ enum Spacing {
 /// **What it does.** Names the roundness of a rectangle by what the rectangle
 /// is, so the same shape cannot be 8 in one file and 20 in another.
 ///
-/// **How it is used.** `.rect(cornerRadius: Radius.small)` and friends. Where a
+/// **How it is used.** `.rect(cornerRadius: Radius.panel)` and friends. Where a
 /// shape is drawn twice — a background and the stroke over it — both read the
 /// same constant, which is what stops a one-line edit producing a hairline
 /// mismatch.
 ///
 /// **What it depends on.** `CoreGraphics`. Nothing else.
 enum Radius {
-
-    /// Inline controls that sit in a row: entry fields, badges.
-    static let small: CGFloat = 8
 
     /// The mark that says a thing is in the record — see `RecordedMark`.
     static let mark: CGFloat = 6
@@ -283,21 +280,23 @@ enum Radius {
     /// bubble. A panel that sits *on* the surface wants a rounder one, and the
     /// two go together.
     ///
-    /// There was a fourth radius above this one, for the rest bar, on the
-    /// reasoning that a floating surface is rounder than a panel. Once a panel
-    /// gained a shadow the two figures met, and two names for one number is the
-    /// thing this vocabulary exists to prevent. The bar takes this one.
+    /// There were two more. One above this, for the rest bar, on the reasoning
+    /// that a floating surface is rounder than a panel — once a panel gained a
+    /// shadow the two figures met, and two names for one number is the thing
+    /// this vocabulary exists to prevent, so the bar takes this one. And one
+    /// below, an eight for entry fields and badges, which nothing drew: the
+    /// fields are ruled with a hairline rather than boxed, and the set badge is
+    /// a label. A radius nothing rounds is a number nobody chose.
     static let panel: CGFloat = 20
 
     /// Every radius, smallest first. For tests, as with `Spacing.all`.
     ///
     /// The order is the size of the thing drawn, not the order they were
-    /// written: an entry field is small and takes a small curve, a panel is a
-    /// surface and takes the largest — the rest bar included, since a bar
+    /// written: a mark inside a row takes the tighter curve, and a panel is a
+    /// surface and takes the larger — the rest bar included, since a bar
     /// floating over content and a panel lying on it are the same kind of
-    /// object. A panel tighter than the field inside it was the mistake that
-    /// made the panels read as hard.
-    static let all: [CGFloat] = [mark, small, panel]
+    /// object.
+    static let all: [CGFloat] = [mark, panel]
 }
 
 /// The smallest a control may be.
