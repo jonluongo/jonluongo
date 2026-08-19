@@ -2,10 +2,11 @@ import SwiftUI
 import SwiftData
 import LiftingKit
 
-/// The editable body of one exercise's section inside `ActiveWorkoutView`:
-/// notes, the prescribed rest, and the set table. Split out to keep
+/// The editable body of one exercise's section inside `ActiveWorkoutView`: the
+/// set table, and Claude's note under it when he wrote one. Split out to keep
 /// `ActiveWorkoutView` focused on the workout's overall flow rather than
-/// per-row mechanics.
+/// per-row mechanics. It draws a movement performed on its own and one
+/// performed inside a group; `paired` is the only difference.
 ///
 /// **The table is rows and nothing else.** Adding a set was a full-width button
 /// under the last row, which made an occasional act a permanent fixture of the
@@ -39,7 +40,6 @@ struct ExerciseLogSection: View {
     let profile: UserProfile
     let plans: [TrainingPlan]
     var onDeleteSet: (LoggedSet, PlannedExercise) -> Void
-    /// Told which exercise, and whether the set was ticked or taken back.
     /// Told which exercise, which set, and whether it was ticked or taken back.
     var onCompletionChanged: (PlannedExercise, LoggedSet, Bool) -> Void
     /// Whether these sets belong to a movement performed as part of a superset,
@@ -137,13 +137,6 @@ struct ExerciseLogSection: View {
         let target = reading.loadTarget(prescribed)
         guard target.isEmpty else { return target }
         return reading.previousLoad(workingIndex: number - 1, isWarmup: set.isWarmup)
-    }
-
-    /// Where a row sits in the panel. The note, when Claude wrote one, is the
-    /// top of it; without one the first set is.
-    private static func position(_ index: Int, of count: Int, hasNote: Bool) -> PanelPosition {
-        if index == count - 1 { return index == 0 && !hasNote ? .only : .last }
-        return index == 0 && !hasNote ? .first : .middle
     }
 
     /// 1-based working-set number for the row at `index` (warmups don't count).
