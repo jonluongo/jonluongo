@@ -45,6 +45,14 @@ extension ToolCatalog {
                 "title": string("Short name for the block, e.g. 'Autumn strength'."),
                 "goal": string("What the block is for, in your words."),
                 "durationMinutes": integer("How long a session in this block runs."),
+                "tint": enumerated(
+                    BlockTint.all.map(\.rawValue),
+                    "The colour this block is known by in the app's list of blocks. "
+                        + "Give each block its own so they are told apart at a "
+                        + "glance; the snapshot reports what the last one used. "
+                        + "Omit it and the block draws the ordinary neutral. A "
+                        + "name not on this list fails the call rather than being "
+                        + "ignored."),
                 "notes": string("Anything the lifter should read alongside the plan."),
                 "weeks": array(
                     of: weekSchema,

@@ -52,6 +52,10 @@ public struct SnapshotPlan: Codable, Hashable, Sendable {
     public let weekdays: [Weekday]
     /// How long a session in this block runs. `nil` when the plan did not say.
     public let durationMinutes: Int?
+    /// The colour this block is known by, or `nil` when the plan chose none.
+    /// Carried back so a plan written next month can avoid repeating the colour
+    /// of the one before it.
+    public let tint: BlockTint?
     /// The block's weeks in program order.
     public let weeks: [SnapshotWeek]
 
@@ -59,7 +63,7 @@ public struct SnapshotPlan: Codable, Hashable, Sendable {
         title: String, goal: String, notes: String? = nil, startDate: Date,
         generatedAt: Date? = nil, weekCount: Int?,
         completedAt: Date?, catalogVersion: Int?, weekdays: [Weekday],
-        durationMinutes: Int?, weeks: [SnapshotWeek]
+        durationMinutes: Int?, tint: BlockTint? = nil, weeks: [SnapshotWeek]
     ) {
         self.title = title
         self.goal = goal
@@ -71,6 +75,7 @@ public struct SnapshotPlan: Codable, Hashable, Sendable {
         self.catalogVersion = catalogVersion
         self.weekdays = weekdays
         self.durationMinutes = durationMinutes
+        self.tint = tint
         self.weeks = weeks
     }
 }

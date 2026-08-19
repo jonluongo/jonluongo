@@ -110,7 +110,7 @@ private struct BlockCard: View {
                     // Under the line it restates, and only where there is
                     // something to be a fraction of.
                     if let fraction {
-                        ProgressRule(fraction: fraction)
+                        ProgressRule(fraction: fraction, tint: plan.tint)
                     }
                 }
                 Spacer(minLength: Spacing.standard)

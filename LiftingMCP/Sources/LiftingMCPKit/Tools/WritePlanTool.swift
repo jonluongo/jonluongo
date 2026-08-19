@@ -72,6 +72,14 @@ extension ToolRunner {
                     + "history irreparably.")
         }
 
+        if let tint = document.tint, !tint.isKnown {
+            return .failure(
+                "This plan is coloured '\(tint.rawValue)', which is not one of the "
+                    + "colours the app can draw. Nothing was written. Choose one of: "
+                    + BlockTint.all.map(\.rawValue).joined(separator: ", ")
+                    + " — or omit `tint`, which leaves the block uncoloured.")
+        }
+
         if let unknown = Self.firstUnknownIcon(in: document) {
             return .failure(
                 "This plan marks a session '\(unknown.rawValue)', which is not one of the "
