@@ -72,6 +72,14 @@ extension ToolRunner {
                     + "history irreparably.")
         }
 
+        if let unknown = Self.firstUnknownIcon(in: document) {
+            return .failure(
+                "This plan marks a session '\(unknown.rawValue)', which is not one of the "
+                    + "marks the app can draw. Nothing was written. Choose one of: "
+                    + SessionIcon.all.map(\.rawValue).joined(separator: ", ")
+                    + " — or omit `icon`, which leaves the session unmarked.")
+        }
+
         do {
             try documents.writePlan(document)
         } catch {
@@ -91,6 +99,21 @@ extension ToolRunner {
             "plan": Self.reported(document),
             "unstatedWhenWritten": unstatedWhenWritten(),
         ])
+    }
+
+    /// The first mark this build cannot draw, in document order.
+    ///
+    /// Refused here rather than left to the phone for the same reason an unknown
+    /// exercise is: the writer is told now, while he is still writing, instead of
+    /// having a whole plan refused at import for a value he could have corrected
+    /// in the call. The set is `SessionIcon.all`, which is also what the schema
+    /// offers, so the two cannot disagree about what is allowed.
+    private static func firstUnknownIcon(in document: PlanDocument) -> SessionIcon? {
+        for day in document.weeks.flatMap(\.days) {
+            guard let icon = day.icon, !icon.isKnown else { continue }
+            return icon
+        }
+        return nil
     }
 
     /// The first ID the catalog does not have, in document order, so the error
