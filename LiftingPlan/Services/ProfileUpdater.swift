@@ -108,8 +108,6 @@ enum ProfileUpdater {
             update.avoidedPatterns.resolved(from: Array(profile.avoidedPatterns)) ?? [])
         profile.avoidedExercises = Set(
             update.avoidedExercises.resolved(from: Array(profile.avoidedExercises)) ?? [])
-        profile.preferredWeekdays = Set(
-            update.preferredWeekdays.resolved(from: Array(profile.preferredWeekdays)) ?? [])
         profile.preferredDurationMinutes = update.preferredDurationMinutes
             .resolved(from: profile.preferredDurationMinutes)
 

@@ -180,8 +180,6 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
     public let bodyweight: Mass?
     public let avoidedPatterns: [MovementPattern]
     public let avoidedExercises: [ExerciseID]
-    /// The days he said he wants to train. Empty means he has not said.
-    public let preferredWeekdays: [Weekday]
     /// How long he wants a session to run. `nil` means he has not said.
     public let preferredDurationMinutes: Int?
     /// The last `ProfileUpdate` this profile took in. A writer reads it to tell
@@ -211,8 +209,7 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
         displayUnit: MassUnit, experience: ExperienceLevel?,
         availableEquipment: [EquipmentType]?, goal: String, constraints: String,
         bodyweight: Mass?, avoidedPatterns: [MovementPattern],
-        avoidedExercises: [ExerciseID], preferredWeekdays: [Weekday],
-        preferredDurationMinutes: Int?, appliedProfileUpdateID: UUID? = nil,
+        avoidedExercises: [ExerciseID], preferredDurationMinutes: Int?, appliedProfileUpdateID: UUID? = nil,
         statedAt: [String: Date] = [:]
     ) {
         self.displayUnit = displayUnit
@@ -223,7 +220,6 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
         self.bodyweight = bodyweight
         self.avoidedPatterns = avoidedPatterns
         self.avoidedExercises = avoidedExercises
-        self.preferredWeekdays = preferredWeekdays
         self.preferredDurationMinutes = preferredDurationMinutes
         self.appliedProfileUpdateID = appliedProfileUpdateID
         self.statedAt = statedAt
@@ -231,7 +227,7 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case displayUnit, experience, availableEquipment, goal, constraints, bodyweight
-        case avoidedPatterns, avoidedExercises, preferredWeekdays, preferredDurationMinutes
+        case avoidedPatterns, avoidedExercises, preferredDurationMinutes
         case appliedProfileUpdateID, statedAt
     }
 
@@ -252,7 +248,6 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
         bodyweight = try container.decodeIfPresent(Mass.self, forKey: .bodyweight)
         avoidedPatterns = try container.decode([MovementPattern].self, forKey: .avoidedPatterns)
         avoidedExercises = try container.decode([ExerciseID].self, forKey: .avoidedExercises)
-        preferredWeekdays = try container.decode([Weekday].self, forKey: .preferredWeekdays)
         preferredDurationMinutes = try container.decodeIfPresent(
             Int.self, forKey: .preferredDurationMinutes)
         appliedProfileUpdateID = try container.decodeIfPresent(

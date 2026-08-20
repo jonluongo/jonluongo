@@ -32,7 +32,6 @@ extension ToolRunner {
                 arguments, "constraints", { try Self.text($0, "constraints") }),
             avoidedPatterns: try Self.stated(arguments, "avoidedPatterns", patterns),
             avoidedExercises: try Self.stated(arguments, "avoidedExercises", exercises),
-            preferredWeekdays: try Self.stated(arguments, "preferredWeekdays", Self.weekdays),
             preferredDurationMinutes: try Self.stated(
                 arguments, "preferredDurationMinutes",
                 { try Self.wholeNumber($0, "preferredDurationMinutes") }),
@@ -118,20 +117,6 @@ extension ToolRunner {
         ExperienceLevel(rawValue: try text(value, "experience"))
     }
 
-    private static func weekdays(_ value: JSONValue) throws -> [Weekday] {
-        try Self.list(value, "preferredWeekdays").map { entry in
-            if let number = entry.intValue, let weekday = Weekday(rawValue: number) {
-                return weekday
-            }
-            guard let weekday = entry.stringValue.flatMap(Weekday.named) else {
-                throw ProfileArgumentError(
-                    "'\(entry.stringValue ?? "that value")' is not a weekday. Write a name such "
-                        + "as 'monday', or Calendar's numbering where 1 is Sunday and 7 is "
-                        + "Saturday. Nothing was written.")
-            }
-            return weekday
-        }
-    }
 
     /// Avoided patterns, checked against the patterns the catalog actually
     /// uses. An invented one would be stored as a filter that excludes nothing.

@@ -94,7 +94,6 @@ func fixtureProfile(
         bodyweight: Mass(value: 182, unit: .pounds),
         avoidedPatterns: avoidedPatterns,
         avoidedExercises: avoidedExercises,
-        preferredWeekdays: [.monday, .thursday],
         preferredDurationMinutes: 60,
         appliedProfileUpdateID: appliedProfileUpdateID,
         statedAt: statedAt

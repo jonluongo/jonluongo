@@ -89,7 +89,6 @@ enum SnapshotExporter {
             bodyweight: profile.bodyweight,
             avoidedPatterns: profile.avoidedPatterns.sorted { $0.rawValue < $1.rawValue },
             avoidedExercises: profile.avoidedExercises.sorted { $0.rawValue < $1.rawValue },
-            preferredWeekdays: profile.orderedPreferredWeekdays,
             preferredDurationMinutes: profile.preferredDurationMinutes,
             // Carried so the writer of the next update can tell one still
             // waiting in the folder from one already taken in.

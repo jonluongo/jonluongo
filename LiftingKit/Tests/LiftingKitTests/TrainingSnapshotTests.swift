@@ -133,7 +133,7 @@ struct TrainingSnapshotTests {
             bodyweight: Mass(value: 182, unit: .pounds),
             avoidedPatterns: avoidedPatterns,
             avoidedExercises: [ExerciseID(rawValue: "barbell-upright-row")],
-            preferredWeekdays: [.monday, .thursday], preferredDurationMinutes: 60,
+            preferredDurationMinutes: 60,
             statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
         )
         return TrainingSnapshot(
@@ -256,7 +256,6 @@ struct TrainingSnapshotTests {
             "constraints": "",
             "avoidedPatterns": ["anti-rotation"],
             "avoidedExercises": [],
-            "preferredWeekdays": [],
             "updatedAt": "2023-11-14T22:13:20Z"
           }
         }
@@ -306,7 +305,7 @@ struct TrainingSnapshotTests {
         let blank = SnapshotProfile(
             displayUnit: .pounds, experience: nil,
             availableEquipment: nil, goal: "", constraints: "", bodyweight: nil,
-            avoidedPatterns: [], avoidedExercises: [], preferredWeekdays: [],
+            avoidedPatterns: [], avoidedExercises: [],
             preferredDurationMinutes: nil, statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
         )
         let decoded = try roundTrip(
@@ -326,7 +325,7 @@ struct TrainingSnapshotTests {
         let blank = SnapshotProfile(
             displayUnit: .pounds, experience: nil,
             availableEquipment: nil, goal: "", constraints: "", bodyweight: nil,
-            avoidedPatterns: [], avoidedExercises: [], preferredWeekdays: [],
+            avoidedPatterns: [], avoidedExercises: [],
             preferredDurationMinutes: nil, statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
         )
         let data = try TrainingSnapshot.makeEncoder().encode(
@@ -348,7 +347,7 @@ struct TrainingSnapshotTests {
           "version": 5, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
           "profile": {
             "displayUnit": "lb", "goal": "Bench 225", "constraints": "",
-            "avoidedPatterns": [], "avoidedExercises": [], "preferredWeekdays": []
+            "avoidedPatterns": [], "avoidedExercises": []
           }
         }
         """
@@ -374,7 +373,6 @@ struct TrainingSnapshotTests {
             "constraints": "",
             "avoidedPatterns": [],
             "avoidedExercises": [],
-            "preferredWeekdays": [],
             "updatedAt": "2023-11-14T22:13:20Z"
           }
         }

@@ -74,7 +74,6 @@ struct ContextReport {
             "availableEquipment": profile.availableEquipment.map { .taxonomy($0) } ?? .null,
             "avoidedPatterns": .taxonomy(profile.avoidedPatterns),
             "avoidedExercises": .array(profile.avoidedExercises.map { .string($0.rawValue) }),
-            "preferredWeekdays": .array(profile.preferredWeekdays.map { .string($0.fullName) }),
             "preferredDurationMinutes": .integer(profile.preferredDurationMinutes),
             "displayUnit": .string(profile.displayUnit.rawValue),
             "bodyweight": .mass(LifterFacts.latestBodyweight(in: snapshot)),

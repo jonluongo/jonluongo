@@ -173,9 +173,6 @@ extension ToolRunner {
             "avoidedExercises": described(update.avoidedExercises) {
                 .array($0.map { .string($0.rawValue) })
             },
-            "preferredWeekdays": described(update.preferredWeekdays) {
-                .array($0.map { .string($0.fullName) })
-            },
             "preferredDurationMinutes": described(update.preferredDurationMinutes) {
                 .integer($0)
             },

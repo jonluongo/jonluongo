@@ -59,7 +59,7 @@ struct AccountRecordTests {
             profile: try emptyProfile(), weighIns: [], baselineCount: 0)
         #expect(unstated == [
             "goal", "experience", "constraints", "bodyweight",
-            "equipment", "training days", "session length", "strength baselines",
+            "equipment", "session length", "strength baselines",
         ])
     }
 
@@ -84,17 +84,16 @@ struct AccountRecordTests {
         profile.constraints = "Left shoulder hurts overhead"
         profile.bodyweight = Mass(value: 185, unit: .pounds)
         profile.ownedEquipment = [.barbell, .band]
-        profile.preferredWeekdays = [.monday, .wednesday, .friday]
         profile.preferredDurationMinutes = 60
 
         let rows = facts(profile)
         #expect(rows.map(\.label) == [
             "Goal", "Experience", "Constraints", "Bodyweight",
-            "Equipment", "Training days", "Session length",
+            "Equipment", "Session length",
         ])
         #expect(rows.map(\.value) == [
             "Add 20 lb to my squat", "Intermediate", "Left shoulder hurts overhead",
-            "185 lb", "Band, Barbell", "Mon, Wed, Fri", "60 min",
+            "185 lb", "Band, Barbell", "60 min",
         ])
     }
 
@@ -107,7 +106,7 @@ struct AccountRecordTests {
         let unstated = AccountRecord.notYetSaid(profile: profile, weighIns: [], baselineCount: 0)
         #expect(!unstated.contains("goal"))
         #expect(!unstated.contains("session length"))
-        #expect(unstated.count == 6)
+        #expect(unstated.count == 5)
     }
 
     @Test("A lifter who owns nothing is not a lifter nobody asked")

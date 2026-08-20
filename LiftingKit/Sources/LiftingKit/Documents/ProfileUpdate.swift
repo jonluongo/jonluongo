@@ -91,7 +91,6 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
     /// the same reason.
     public let avoidedExercises: StatedValue<[ExerciseID]>
     /// The days he says he wants to train. Replaces wholesale.
-    public let preferredWeekdays: StatedValue<[Weekday]>
     /// How long he wants a session to run.
     public let preferredDurationMinutes: StatedValue<Int>
     /// Bodyweight readings to record, each on its own day. Empty when this
@@ -112,7 +111,6 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
         constraints: StatedValue<String> = .unchanged,
         avoidedPatterns: StatedValue<[MovementPattern]> = .unchanged,
         avoidedExercises: StatedValue<[ExerciseID]> = .unchanged,
-        preferredWeekdays: StatedValue<[Weekday]> = .unchanged,
         preferredDurationMinutes: StatedValue<Int> = .unchanged,
         bodyweight: [BodyweightReading] = [],
         baselines: [BaselineStatement] = []
@@ -127,7 +125,6 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
         self.constraints = constraints
         self.avoidedPatterns = avoidedPatterns
         self.avoidedExercises = avoidedExercises
-        self.preferredWeekdays = preferredWeekdays
         self.preferredDurationMinutes = preferredDurationMinutes
         self.bodyweight = bodyweight
         self.baselines = baselines
@@ -139,8 +136,7 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
     public var statesNothing: Bool {
         displayUnit.isUnchanged && experience.isUnchanged && equipment.isUnchanged
             && goal.isUnchanged && constraints.isUnchanged && avoidedPatterns.isUnchanged
-            && avoidedExercises.isUnchanged && preferredWeekdays.isUnchanged
-            && preferredDurationMinutes.isUnchanged && bodyweight.isEmpty && baselines.isEmpty
+            && avoidedExercises.isUnchanged && preferredDurationMinutes.isUnchanged && bodyweight.isEmpty && baselines.isEmpty
     }
 
     /// The facts this update actually said something about, as the wire names
@@ -171,7 +167,6 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
         note("constraints", constraints.isUnchanged)
         note("avoidedPatterns", avoidedPatterns.isUnchanged)
         note("avoidedExercises", avoidedExercises.isUnchanged)
-        note("preferredWeekdays", preferredWeekdays.isUnchanged)
         note("preferredDurationMinutes", preferredDurationMinutes.isUnchanged)
         return keys
     }
@@ -205,7 +200,6 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
             constraints: constraints.superseding(earlier.constraints),
             avoidedPatterns: avoidedPatterns.superseding(earlier.avoidedPatterns),
             avoidedExercises: avoidedExercises.superseding(earlier.avoidedExercises),
-            preferredWeekdays: preferredWeekdays.superseding(earlier.preferredWeekdays),
             preferredDurationMinutes: preferredDurationMinutes.superseding(
                 earlier.preferredDurationMinutes),
             bodyweight: Self.folded(bodyweight, over: earlier.bodyweight, keyedBy: \.date),

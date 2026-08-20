@@ -27,7 +27,7 @@ struct UpdateProfileTests {
         let (outcome, documents) = try update([
             "equipment": "Full gym", "experience": "Advanced",
             "goal": "Add 20 lb to the bench", "constraints": "Left shoulder hurts overhead",
-            "preferredWeekdays": ["monday", "thursday"], "preferredDurationMinutes": 60,
+            "preferredDurationMinutes": 60,
             "displayUnit": "kg",
         ])
         let report = try #require(outcome.report)
@@ -37,7 +37,6 @@ struct UpdateProfileTests {
         #expect(written.experience == .stated(.advanced))
         #expect(written.goal == .stated("Add 20 lb to the bench"))
         #expect(written.constraints == .stated("Left shoulder hurts overhead"))
-        #expect(written.preferredWeekdays == .stated([.monday, .thursday]))
         #expect(written.preferredDurationMinutes == .stated(60))
         #expect(written.displayUnit == .stated(.kilograms))
         #expect(report["writtenTo"]?.stringValue == documents.profileUpdateLocation)
@@ -80,7 +79,6 @@ struct UpdateProfileTests {
 
         #expect(written.experience == .unchanged)
         #expect(written.goal == .unchanged)
-        #expect(written.preferredWeekdays == .unchanged)
         #expect(written.bodyweight.isEmpty)
     }
 
@@ -129,18 +127,11 @@ struct UpdateProfileTests {
                 == EquipmentAccess.permitted(for: .dumbbellsOnly))
     }
 
-    @Test("A weekday is understood as a name or as Calendar's numbering, as write_plan does")
-    func weekdaysAreReadEitherWay() throws {
-        #expect(
-            try update(["preferredWeekdays": ["Tue", 6]]).1
-                .lastWrittenProfileUpdate?.preferredWeekdays == .stated([.tuesday, .friday]))
-    }
-
     @Test("A single value stands in for a one-element list")
     func bareValueIsAList() throws {
         #expect(
-            try update(["preferredWeekdays": "monday"]).1
-                .lastWrittenProfileUpdate?.preferredWeekdays == .stated([.monday]))
+            try update(["avoidedPatterns": "hinge"]).1
+                .lastWrittenProfileUpdate?.avoidedPatterns == .stated([.hinge]))
     }
 
     @Test("A display unit written as a word is understood")

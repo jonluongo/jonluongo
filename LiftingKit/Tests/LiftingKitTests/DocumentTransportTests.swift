@@ -89,7 +89,6 @@ private func makeSnapshot(catalogVersion: Int = 5) -> TrainingSnapshot {
             goal: "Bigger bench", constraints: "Left shoulder is touchy",
             bodyweight: Mass(value: 182, unit: .pounds),
             avoidedPatterns: [], avoidedExercises: [],
-            preferredWeekdays: [.monday, .thursday],
             preferredDurationMinutes: 60, statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
         ),
         baselines: [
@@ -126,7 +125,7 @@ private func makeProfileUpdate(id: UUID = UUID()) -> ProfileUpdate {
     ProfileUpdate(
         id: id, generatedAt: instant, experience: .stated(.advanced),
         equipment: .stated([.dumbbell, .plate]), goal: .stated("Bigger bench"),
-        constraints: .unstated, preferredWeekdays: .stated([.monday, .thursday]),
+        constraints: .unstated,
         preferredDurationMinutes: .stated(45)
     )
 }
@@ -358,5 +357,21 @@ struct InMemoryDocumentTransportTests {
         try transport.writeSnapshot(makeSnapshot())
 
         #expect(try transport.readPlan()?.title == "Strength block")
+    }
+
+    /// A key that has been retired reads rather than refusing the document
+    /// whole. An update written before the fact went is not a broken update,
+    /// and refusing it would lose everything else it said.
+    @Test("An update naming a retired fact still reads, and the fact is ignored")
+    func aRetiredKeyDoesNotRefuseTheDocument() throws {
+        let data = Data("""
+            {"version": 3, "id": "3E7F7E2E-2B47-4C51-9E58-52C1D1F0A0B1",
+             "generatedAt": "2023-11-14T22:13:20Z",
+             "goal": "Bench 225", "preferredWeekdays": ["monday", "thursday"]}
+            """.utf8)
+
+        let update = try ProfileUpdate.makeDecoder().decode(ProfileUpdate.self, from: data)
+
+        #expect(update.goal == .stated("Bench 225"), "everything else it said survives")
     }
 }

@@ -73,7 +73,6 @@ final class UserProfile {
     private var avoidedPatternRawValues: [String] = []
     private var avoidedExerciseRawValues: [String] = []
     /// The days the lifter said he wants to train. Empty means he has not said.
-    private var preferredWeekdayRawValues: [Int] = []
     /// How long he wants a session to run. `nil` means he has not said.
     var preferredDurationMinutes: Int?
     /// The last `ProfileUpdate` applied to this profile, so an update sitting
@@ -88,7 +87,7 @@ final class UserProfile {
         ownedEquipment: [EquipmentType]? = nil,
         goal: String = "", constraints: String = "", bodyweight: Mass? = nil,
         avoidedPatterns: Set<MovementPattern> = [], avoidedExercises: Set<ExerciseID> = [],
-        preferredWeekdays: Set<Weekday> = [], preferredDurationMinutes: Int? = nil,
+        preferredDurationMinutes: Int? = nil,
         appliedProfileUpdateID: UUID? = nil
     ) {
         self.displayUnitRaw = displayUnit.rawValue
@@ -99,7 +98,6 @@ final class UserProfile {
         self.bodyweight = bodyweight
         self.avoidedPatternRawValues = avoidedPatterns.map(\.rawValue).sorted()
         self.avoidedExerciseRawValues = avoidedExercises.map(\.rawValue).sorted()
-        self.preferredWeekdayRawValues = preferredWeekdays.map(\.rawValue).sorted()
         self.preferredDurationMinutes = preferredDurationMinutes
         self.appliedProfileUpdateID = appliedProfileUpdateID
         self.updatedAt = Date()
@@ -158,20 +156,6 @@ final class UserProfile {
     var avoidedExercises: Set<ExerciseID> {
         get { Set(avoidedExerciseRawValues.map(ExerciseID.init(rawValue:))) }
         set { avoidedExerciseRawValues = newValue.map(\.rawValue).sorted() }
-    }
-
-    /// The days the lifter wants to train, as last stated. This is his
-    /// availability, not a schedule the app chose; an empty set means he has
-    /// not said yet. A `TrainingPlan` records the days it actually trains,
-    /// which need not match.
-    var preferredWeekdays: Set<Weekday> {
-        get { Set(preferredWeekdayRawValues.compactMap(Weekday.init(rawValue:))) }
-        set { preferredWeekdayRawValues = newValue.map(\.rawValue).sorted() }
-    }
-
-    /// Training days in Monday-first display order.
-    var orderedPreferredWeekdays: [Weekday] {
-        Weekday.displayOrder.filter { preferredWeekdays.contains($0) }
     }
 
     // MARK: - Reading what an earlier build recorded

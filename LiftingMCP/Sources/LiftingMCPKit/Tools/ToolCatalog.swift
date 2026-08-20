@@ -262,15 +262,6 @@ public enum ToolCatalog {
                     + "list_exercises and the app both filter on it."),
             "avoidedExercises": stringOrList(
                 "Specific exercise IDs to keep out, taken verbatim from list_exercises."),
-            "preferredWeekdays": [
-                "description": .string(
-                    "The days he says he wants to train, as names ('monday') or as "
-                        + "Calendar's numbering where 1 is Sunday and 7 is Saturday."),
-                "anyOf": [
-                    ["type": "array", "items": ["anyOf": [["type": "string"], ["type": "integer"]]]],
-                    ["type": "string"], ["type": "integer"],
-                ],
-            ],
             "preferredDurationMinutes": integer("How long he wants a session to run."),
             "displayUnit": enumerated(
                 MassUnit.allCases.map(\.rawValue),

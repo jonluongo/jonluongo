@@ -14,13 +14,19 @@ extension ProfileUpdate {
     enum CodingKeys: String, CodingKey, CaseIterable {
         case version, id, generatedAt
         case displayUnit, experience, equipment, goal, constraints
-        case avoidedPatterns, avoidedExercises, preferredWeekdays, preferredDurationMinutes
+        case avoidedPatterns, avoidedExercises, preferredDurationMinutes
         case bodyweight, baselines
     }
 
     /// The key a version 1 document stated its gym in. Read, never written.
     private enum LegacyCodingKeys: String, CodingKey {
         case equipmentAccess
+        /// Retired on 2026-08-20. Which days he trains was carried for a reader
+        /// and computed with by nothing: the app hands him the session and when
+        /// he does it is his business. A document still naming it reads — an
+        /// update written before it went is not a broken update — and the value
+        /// is ignored, because there is nowhere left for it to mean anything.
+        case preferredWeekdays
     }
 
     /// The facts an update may state, as they are written on the wire.
@@ -59,7 +65,8 @@ extension ProfileUpdate {
     /// make it a document, and the one key an older format used.
     private static var acceptedKeys: Set<String> {
         Set(CodingKeys.allCases.map(\.stringValue)).union([
-            LegacyCodingKeys.equipmentAccess.stringValue
+            LegacyCodingKeys.equipmentAccess.stringValue,
+            LegacyCodingKeys.preferredWeekdays.stringValue,
         ])
     }
 
@@ -92,8 +99,6 @@ extension ProfileUpdate {
                 [MovementPattern].self, forKey: .avoidedPatterns),
             avoidedExercises: try container.decodeStated(
                 [ExerciseID].self, forKey: .avoidedExercises),
-            preferredWeekdays: try container.decodeStated(
-                [Weekday].self, forKey: .preferredWeekdays),
             preferredDurationMinutes: try container.decodeStated(
                 Int.self, forKey: .preferredDurationMinutes),
             bodyweight: try container.decodeSeries(
@@ -153,7 +158,6 @@ extension ProfileUpdate {
         try container.encodeStated(constraints, forKey: .constraints)
         try container.encodeStated(avoidedPatterns, forKey: .avoidedPatterns)
         try container.encodeStated(avoidedExercises, forKey: .avoidedExercises)
-        try container.encodeStated(preferredWeekdays, forKey: .preferredWeekdays)
         try container.encodeStated(preferredDurationMinutes, forKey: .preferredDurationMinutes)
         if !bodyweight.isEmpty { try container.encode(bodyweight, forKey: .bodyweight) }
         if !baselines.isEmpty { try container.encode(baselines, forKey: .baselines) }

@@ -94,11 +94,6 @@ public enum LifterFacts {
         "What he can already do on a lift, before any of it is logged.",
         stated: { !$0.baselines.isEmpty })
 
-    public static let preferredWeekdays = LifterFact(
-        "preferredWeekdays",
-        "The days he says he can train.",
-        stated: { $0.profile.map { !$0.preferredWeekdays.isEmpty } ?? false })
-
     public static let preferredDurationMinutes = LifterFact(
         "preferredDurationMinutes",
         "How long he says a session can run.",
@@ -109,7 +104,7 @@ public enum LifterFacts {
     /// nothing else — it is not a sequence to ask them in.
     public static let known: [LifterFact] = [
         equipment, experience, goal, constraints,
-        bodyweight, baselines, preferredWeekdays, preferredDurationMinutes,
+        bodyweight, baselines, preferredDurationMinutes,
     ]
 
     /// The facts this record holds no value for.

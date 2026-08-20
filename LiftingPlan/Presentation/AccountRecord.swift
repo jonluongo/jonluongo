@@ -41,7 +41,6 @@ enum AccountRecord {
             row(exercises(profile, catalog: catalog), "Avoided exercises"),
             bodyweight(profile: profile, weighIns: weighIns),
             row(equipment(profile), "Equipment"),
-            row(weekdays(profile), "Training days"),
             row(profile.preferredDurationMinutes.map { "\($0) min" }, "Session length"),
         ].compactMap { $0 }
     }
@@ -113,9 +112,6 @@ enum AccountRecord {
         },
         AccountFact(key: "equipment", name: "equipment") { profile, _, _ in
             profile.ownedEquipment != nil
-        },
-        AccountFact(key: "preferredWeekdays", name: "training days") { profile, _, _ in
-            !profile.preferredWeekdays.isEmpty
         },
         AccountFact(key: "preferredDurationMinutes", name: "session length") { profile, _, _ in
             profile.preferredDurationMinutes != nil
@@ -194,11 +190,6 @@ enum AccountRecord {
         list(profile.avoidedExercises.map {
             catalog.exercise(id: $0)?.displayName ?? $0.rawValue
         })
-    }
-
-    private static func weekdays(_ profile: UserProfile) -> String? {
-        let days = profile.orderedPreferredWeekdays.map(\.shortName)
-        return days.isEmpty ? nil : days.joined(separator: ", ")
     }
 
     private static func load(_ mass: Mass?) -> String {

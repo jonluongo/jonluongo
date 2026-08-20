@@ -142,7 +142,7 @@ struct SnapshotExporterTests {
             bodyweight: Mass(value: 82, unit: .kilograms),
             avoidedPatterns: [.verticalPress],
             avoidedExercises: [ExerciseID(rawValue: "barbell-upright-row")],
-            preferredWeekdays: [.monday, .thursday], preferredDurationMinutes: 45
+            preferredDurationMinutes: 45
         ))
         try context.saveOrThrow()
 
@@ -155,7 +155,6 @@ struct SnapshotExporterTests {
         #expect(profile.constraints == "Left shoulder hurts overhead")
         #expect(profile.avoidedPatterns == [.verticalPress])
         #expect(profile.avoidedExercises == [ExerciseID(rawValue: "barbell-upright-row")])
-        #expect(profile.preferredWeekdays == [.monday, .thursday])
         #expect(profile.preferredDurationMinutes == 45)
         // What he owns, and bodyweight besides — a push-up needs none of it.
         #expect(profile.availableEquipment.map(Set.init) == [.dumbbell, .plate, .bodyweight])
@@ -193,7 +192,6 @@ struct SnapshotExporterTests {
         // Not an empty list: that would say he can perform nothing.
         #expect(profile.availableEquipment == nil)
         #expect(profile.goal.isEmpty)
-        #expect(profile.preferredWeekdays.isEmpty)
         #expect(profile.preferredDurationMinutes == nil)
     }
 

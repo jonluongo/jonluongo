@@ -23,7 +23,6 @@ struct ContextResourceTests {
         #expect(lifter["constraints"]?.stringValue == "Left shoulder is touchy overhead")
         #expect(lifter["bodyweight"] == ["value": 182.0, "unit": "lb"])
         #expect(lifter["displayUnit"]?.stringValue == "lb")
-        #expect(lifter["preferredWeekdays"] == ["Monday", "Thursday"])
         #expect(lifter["preferredDurationMinutes"] == 60)
     }
 

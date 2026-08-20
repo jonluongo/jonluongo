@@ -35,14 +35,13 @@ struct ProfileUpdaterTests {
         constraints: StatedValue<String> = .unchanged,
         avoidedPatterns: StatedValue<[MovementPattern]> = .unchanged,
         avoidedExercises: StatedValue<[ExerciseID]> = .unchanged,
-        preferredWeekdays: StatedValue<[Weekday]> = .unchanged,
         preferredDurationMinutes: StatedValue<Int> = .unchanged
     ) -> ProfileUpdate {
         ProfileUpdate(
             id: id, generatedAt: Self.instant, displayUnit: displayUnit,
             experience: experience, equipment: equipment, goal: goal,
             constraints: constraints, avoidedPatterns: avoidedPatterns,
-            avoidedExercises: avoidedExercises, preferredWeekdays: preferredWeekdays,
+            avoidedExercises: avoidedExercises,
             preferredDurationMinutes: preferredDurationMinutes
         )
     }
@@ -66,7 +65,6 @@ struct ProfileUpdaterTests {
                 constraints: .stated("Left shoulder hurts overhead"),
                 avoidedPatterns: .stated([.verticalPress]),
                 avoidedExercises: .stated([ExerciseID(rawValue: "barbell-upright-row")]),
-                preferredWeekdays: .stated([.monday, .thursday]),
                 preferredDurationMinutes: .stated(45)),
             to: context, catalog: try catalog())
 
@@ -77,7 +75,6 @@ struct ProfileUpdaterTests {
         #expect(profile.constraints == "Left shoulder hurts overhead")
         #expect(profile.avoidedPatterns == [.verticalPress])
         #expect(profile.avoidedExercises == [ExerciseID(rawValue: "barbell-upright-row")])
-        #expect(profile.preferredWeekdays == [.monday, .thursday])
         #expect(profile.preferredDurationMinutes == 45)
     }
 
@@ -110,7 +107,7 @@ struct ProfileUpdaterTests {
         let context = try context()
         context.insert(UserProfile(
             experience: .advanced, ownedEquipment: [.barbell, .cable], goal: "Get stronger",
-            preferredWeekdays: [.monday]))
+))
         try context.saveOrThrow()
 
         let profile = try ProfileUpdater.apply(
@@ -119,7 +116,6 @@ struct ProfileUpdaterTests {
         #expect(profile.ownedEquipment.map(Set.init) == [.dumbbell])
         #expect(profile.experience == .advanced)
         #expect(profile.goal == "Get stronger")
-        #expect(profile.preferredWeekdays == [.monday])
     }
 
     @Test("A fact the update takes back returns to not-known, not to a default")

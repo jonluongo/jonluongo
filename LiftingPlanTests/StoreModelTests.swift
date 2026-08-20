@@ -187,13 +187,11 @@ struct StoreModelTests {
     func profileRoundTripsStatedSchedule() throws {
         let context = try context()
         context.insert(UserProfile(
-            preferredWeekdays: [.friday, .tuesday], preferredDurationMinutes: 75
+            preferredDurationMinutes: 75
         ))
         try context.saveOrThrow()
 
         let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
-        #expect(loaded.preferredWeekdays == [.tuesday, .friday])
-        #expect(loaded.orderedPreferredWeekdays == [.tuesday, .friday])
         #expect(loaded.preferredDurationMinutes == 75)
     }
 
@@ -204,7 +202,6 @@ struct StoreModelTests {
         try context.saveOrThrow()
 
         let loaded = try #require(try context.fetch(FetchDescriptor<UserProfile>()).first)
-        #expect(loaded.preferredWeekdays.isEmpty)
         #expect(loaded.preferredDurationMinutes == nil)
     }
 
