@@ -243,6 +243,7 @@ struct ActiveWorkoutView: View {
                 onAddSet: { write { try log.addSet(to: exercise, warmup: false) } },
                 onAddWarmup: { write { try log.addSet(to: exercise, warmup: true) } },
                 onWriteNote: { noteExercise = exercise },
+                isLocked: isLogged,
                 paired: paired
             )
             .padding(.horizontal, PanelMetrics.edge)
@@ -263,7 +264,8 @@ struct ActiveWorkoutView: View {
                         write { try log.completionChanged(for: exercise, isCompleted: completed) }
                     }
                 },
-                paired: paired
+                paired: paired,
+                isLocked: isLogged
             )
         }
         // The row is inset to the panel's own edges; everything inside it is

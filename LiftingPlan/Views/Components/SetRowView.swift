@@ -65,6 +65,15 @@ struct SetRowView: View {
     /// never by what is typed.
     var measure: WorkMeasure
     var unit: MassUnit
+    /// Whether the session this row belongs to has been marked finished.
+    ///
+    /// **A finished session is a statement, not a draft.** It is what the coach
+    /// has already read, so the figures stop being editable until the lifter
+    /// says otherwise — which he does with the button at the foot of the screen,
+    /// never by being refused here. Nothing is greyed: the record reads exactly
+    /// as it did, and what goes is the rule under each field, which is the mark
+    /// that says *write here*.
+    var isLocked: Bool = false
     /// Called when the check changes, with what it changed to. Unchecking is
     /// reported as well as checking: a set taken back is a set that did not
     /// happen, and the rest it started has nothing left to be resting from.
@@ -146,23 +155,20 @@ struct SetRowView: View {
             // points from a number field silently took a set out of the
             // lifter's working volume and out of everything the coach reads,
             // with nothing on screen to say it had happened.
-            Menu {
-                Picker("Kind of set", selection: kind) {
-                    Text("Working set").tag(false)
-                    Text("Warm-up").tag(true)
+            if isLocked {
+                badge
+            } else {
+                Menu {
+                    Picker("Kind of set", selection: kind) {
+                        Text("Working set").tag(false)
+                        Text("Warm-up").tag(true)
+                    }
+                } label: {
+                    badge.contentShape(.rect)
                 }
-            } label: {
-                Text(identity.badge)
-                    .font(.supersetSupport)
-                    .foregroundStyle(set.isWarmup ? Palette.muted : Palette.ink)
-                    .frame(
-                        width: SetTableMetrics.setColumnWidth,
-                        height: SetTableMetrics.controlHeight
-                    )
-                    .contentShape(.rect)
+                .accessibilityLabel(identity.spoken)
+                .accessibilityHint("Changes whether this set counts as working volume")
             }
-            .accessibilityLabel(identity.spoken)
-            .accessibilityHint("Changes whether this set counts as working volume")
 
             Spacer(minLength: 0)
 
@@ -178,7 +184,7 @@ struct SetRowView: View {
             // keeps a push-up honest: an exercise carrying no load has an empty
             // field on purpose, and `lb` beside it would be the app asking for
             // a number nobody prescribed.
-            if joinsTwoFigures {
+            if namesALoad {
                 Text(unit.rawValue)
                     .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)
@@ -210,20 +216,37 @@ struct SetRowView: View {
 
             Spacer(minLength: 0)
 
-            Button {
-                complete()
-            } label: {
-                RecordedMark(isRecorded: set.isCompleted)
-                    .frame(
-                        width: SetTableMetrics.checkColumnWidth,
-                        height: SetTableMetrics.controlHeight
-                    )
-                    .contentShape(.rect)
+            if isLocked {
+                mark
+            } else {
+                Button {
+                    complete()
+                } label: {
+                    mark.contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(completionLabel)
+                .accessibilityAddTraits(set.isCompleted ? [.isSelected] : [])
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(completionLabel)
-            .accessibilityAddTraits(set.isCompleted ? [.isSelected] : [])
         }
+    }
+
+    /// What the row is called, drawn the same whether or not it can be changed.
+    private var badge: some View {
+        Text(identity.badge)
+            .font(.supersetSupport)
+            .foregroundStyle(set.isWarmup ? Palette.muted : Palette.ink)
+            .frame(
+                width: SetTableMetrics.setColumnWidth,
+                height: SetTableMetrics.controlHeight)
+    }
+
+    /// Whether the set is in the record, drawn the same either way.
+    private var mark: some View {
+        RecordedMark(isRecorded: set.isCompleted)
+            .frame(
+                width: SetTableMetrics.checkColumnWidth,
+                height: SetTableMetrics.controlHeight)
     }
 
     /// Whether this row counts as working volume. Written through a picker so
@@ -250,6 +273,20 @@ struct SetRowView: View {
     /// `self` is written out for the same reason `completionLabel` writes it: a
     /// property body opening with `set` reads as the start of a setter.
     private var joinsTwoFigures: Bool {
+        // A locked row draws only what was recorded, and a set he never filled
+        // in has one figure — so the sign would be a multiplication with nothing
+        // after it. While the row is editable the placeholder stands in for the
+        // second figure, which is what the sign is joining.
+        guard isLocked else { return namesALoad }
+        return namesALoad && !workText.wrappedValue.isEmpty
+    }
+
+    /// Whether there is a weight on this row at all — prescribed or entered.
+    ///
+    /// The unit hangs on this and not on the sign: a set recorded at 185 and
+    /// never finished still says what the 185 is, and it was only ever the `×`
+    /// that needed two figures.
+    private var namesALoad: Bool {
         self.set.load != nil || !loadTargetText.isEmpty
     }
 
@@ -275,7 +312,30 @@ struct SetRowView: View {
         return false
     }
 
+    @ViewBuilder
     private func field(text: Binding<String>, placeholder: String, isDecimal: Bool) -> some View {
+        if isLocked {
+            // The figure as the record holds it, in the same type and the same
+            // column — and nothing underneath it. A blank one stays blank: a
+            // set nobody filled in is a set nobody filled in, and inventing a
+            // dash for it now would put a mark in the record after the fact.
+            Text(text.wrappedValue)
+                .font(.supersetMetric)
+                .foregroundStyle(Palette.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .padding(.horizontal, SetTableMetrics.entryInset)
+                .frame(
+                    width: SetTableMetrics.entryColumnWidth,
+                    height: SetTableMetrics.entryHeight)
+        } else {
+            editableField(text: text, placeholder: placeholder, isDecimal: isDecimal)
+        }
+    }
+
+    private func editableField(
+        text: Binding<String>, placeholder: String, isDecimal: Bool
+    ) -> some View {
         TextField(placeholder, text: text)
             .keyboardType(isDecimal ? .decimalPad : .numberPad)
             // **The caret is ink, and stated rather than inherited.** It takes

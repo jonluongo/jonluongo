@@ -44,6 +44,9 @@ struct ExerciseLogSection: View {
     /// Whether these sets belong to a movement performed as part of a superset,
     /// which draws the rule down the panel's edge.
     var paired: Bool = false
+    /// Whether the session has been marked finished, which closes the record
+    /// until the lifter reopens it.
+    var isLocked: Bool = false
     /// Whether Claude wrote anything about this exercise, which decides which
     /// row is the top of the panel.
     private var hasNote: Bool {
@@ -83,6 +86,7 @@ struct ExerciseLogSection: View {
                     prescriptionDetail: PrescriptionSummary.detail(for: prescribed, in: exercise),
                     measure: reading.measure,
                     unit: profile.displayUnit,
+                    isLocked: isLocked,
                     onCompletionChanged: { onCompletionChanged(exercise, set, $0) }
                 )
                 .padding(.horizontal, PanelMetrics.edge)

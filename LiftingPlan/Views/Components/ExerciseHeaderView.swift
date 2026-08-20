@@ -56,6 +56,11 @@ struct ExerciseHeaderView: View {
     var onAddWarmup: () -> Void
     /// Opens the lifter's own note about performing this movement today.
     var onWriteNote: () -> Void
+    /// Whether the session has been marked finished. Adding work to a session
+    /// that is over is an edit to the record, so those two items go; reading
+    /// about the movement, setting the clock and writing what happened are not,
+    /// and stay.
+    var isLocked: Bool = false
     /// Whether this movement is performed as part of a superset, which names it
     /// above the prescription and draws the rule down the panel's edge.
     var paired: Bool = false
@@ -108,11 +113,13 @@ struct ExerciseHeaderView: View {
                 // of them were the ordinary way to add a set, when both are
                 // additions past what was prescribed. The one at the foot is the
                 // one that adds work the plan did not ask for.
-                Button { onAddWarmup() } label: {
-                    Label("Add Warmup Set", systemImage: "flame")
-                }
-                Button { onAddSet() } label: {
-                    Label("Add Extra Set", systemImage: "plus")
+                if !isLocked {
+                    Button { onAddWarmup() } label: {
+                        Label("Add Warmup Set", systemImage: "flame")
+                    }
+                    Button { onAddSet() } label: {
+                        Label("Add Extra Set", systemImage: "plus")
+                    }
                 }
             } label: {
                 // No frame of its own. It had one, 44pt wide and aligned
