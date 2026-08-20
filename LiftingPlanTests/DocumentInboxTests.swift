@@ -329,6 +329,72 @@ struct DocumentInboxTests {
         #expect(try storedPlans(in: context).isEmpty)
     }
 
+    @Test("A refusal he has closed does not come back on the next announcement")
+    func aDismissedRefusalStaysDismissed() async throws {
+        // The document stays in the folder on purpose, so every announcement
+        // re-reads and re-refuses it — and the folder is announced whenever
+        // anything in it changes, including the snapshot this app writes into
+        // it. Closing the alert and finishing a set brought it straight back.
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        try Data("{ this is not a plan".utf8)
+            .write(to: folder.url.appending(path: DocumentFolder.planFilename))
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: try context())
+
+        inbox.start()
+        await watcher.announceArrival()
+        #expect(inbox.errorMessage != nil, "the first one has to reach him")
+        inbox.dismissError()
+        await watcher.announceArrival()
+
+        #expect(inbox.errorMessage == nil, "the same refusal, already read and closed")
+    }
+
+    @Test("A different refusal after that one is still heard")
+    func aNewRefusalIsRaised() async throws {
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        try Data("{ this is not a plan".utf8)
+            .write(to: folder.url.appending(path: DocumentFolder.planFilename))
+        let watcher = ManualArrivalWatcher()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: try context())
+
+        inbox.start()
+        await watcher.announceArrival()
+        inbox.dismissError()
+        // The coach fixed the JSON and left an exercise the catalog lacks.
+        try folder.writePlan(document(exerciseID: ExerciseID(rawValue: "moon-press")))
+        await watcher.announceArrival()
+
+        let message = try #require(inbox.errorMessage)
+        #expect(message.contains("moon-press"), "a different problem is a new thing to say")
+    }
+
+    @Test("A plan that lands clears what was dismissed, so the next problem is heard")
+    func aGoodPassForgetsTheDismissal() async throws {
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        try Data("{ this is not a plan".utf8)
+            .write(to: folder.url.appending(path: DocumentFolder.planFilename))
+        let watcher = ManualArrivalWatcher()
+        let context = try context()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: context)
+
+        inbox.start()
+        await watcher.announceArrival()
+        inbox.dismissError()
+        try folder.writePlan(document())
+        await watcher.announceArrival()
+        #expect(inbox.errorMessage == nil)
+        // The same malformed file again, after a clean pass.
+        try Data("{ this is not a plan".utf8)
+            .write(to: folder.url.appending(path: DocumentFolder.planFilename))
+        await watcher.announceArrival()
+
+        #expect(inbox.errorMessage != nil, "nothing is being suppressed forever")
+    }
+
     @Test("A plan naming an exercise the catalog lacks reports which one, and imports nothing")
     func unknownExerciseSurfacesTheOffendingID() async throws {
         let folder = try temporaryFolder()

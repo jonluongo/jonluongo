@@ -127,7 +127,12 @@ final class DocumentInbox {
     }
 
     /// Clears a reported failure, after the lifter has been shown it.
+    /// What the lifter has already been shown and closed, so the same refusal
+    /// does not chase him around the app.
+    private var dismissed: String?
+
     func dismissError() {
+        dismissed = errorMessage
         errorMessage = nil
     }
 
@@ -172,7 +177,17 @@ final class DocumentInbox {
         }
         // A transport that cannot be reached at all fails both reads with the
         // same sentence; saying it twice would read as two separate problems.
-        errorMessage = Self.deduplicated(failures).joined(separator: "\n\n").nilWhenEmpty
+        // **A refusal he has already closed is not raised again.** The
+        // document stays in the folder on purpose — a fixed one applies on its
+        // next announcement — but that means every announcement re-reads it and
+        // re-refuses it, and the folder is announced whenever anything changes
+        // in it, including the snapshot this app writes. Dismissing the alert
+        // and finishing a set brought it straight back. A failure that differs
+        // from the one he closed is new and is shown; a pass with nothing wrong
+        // clears what was closed, so the next problem is heard.
+        let failure = Self.deduplicated(failures).joined(separator: "\n\n").nilWhenEmpty
+        errorMessage = failure == dismissed ? nil : failure
+        if failure == nil { dismissed = nil }
         // After the failures are recorded, so a partial pass — a profile update
         // that landed beside a plan that was refused — still tells the coach
         // what did change. A refusal changes nothing, and reports nothing here.
