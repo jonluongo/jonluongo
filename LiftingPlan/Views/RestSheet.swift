@@ -58,8 +58,10 @@ struct RestSheet: View {
             }
         }
         // Clear of the grabber: the ring's twelve o'clock is exactly where the
-        // sheet draws it, and the two touching read as one broken shape.
-        .padding(.top, Spacing.major * 2)
+        // sheet draws it, and the two nearly touching read as one broken shape.
+        // The ring gives the room back — a sheet of a fixed height has only so
+        // much, and the row at the foot is not what should pay for it.
+        .padding(.top, Spacing.major * 2 + Spacing.section)
         .padding(.bottom, Spacing.section)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Palette.surface)
@@ -152,6 +154,6 @@ struct RestSheet: View {
 
     /// Read at arm's length with a phone on the floor, which is what makes this
     /// worth a sheet of its own.
-    private static let ringSize: CGFloat = 200
+    private static let ringSize: CGFloat = 172
     private static let ringWidth: CGFloat = 8
 }
