@@ -80,6 +80,15 @@ struct RoutineView: View {
                     }
                 }
             }
+            // The end of the loop, said once. A routine whose last block is
+            // filled in looks exactly like one mid-flight — every session
+            // ticked, nothing to open — and the lifter has no way to tell
+            // whether more is coming. The coach writes the next block having
+            // read this one; this is the sentence that says it is his turn.
+            if isSpent {
+                Text("Every session is logged. Ask your coach for the next block.")
+                    .note()
+            }
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
@@ -117,6 +126,17 @@ struct RoutineView: View {
                 ActiveWorkoutView(day: session, profile: profile)
             }
         }
+    }
+
+    /// Whether every session of every block is finished, so there is nothing
+    /// left to train until a plan arrives.
+    ///
+    /// The same fact the server reports as `nothingPrescribedBeyond`, read from
+    /// the same place: the sessions themselves. Nothing here decides what should
+    /// come next — only that nothing has.
+    private var isSpent: Bool {
+        let sessions = plan.orderedWeeks.flatMap(Self.trainingDays(of:))
+        return !sessions.isEmpty && sessions.allSatisfy { $0.completedAt != nil }
     }
 
     /// Whether this week comes after the one he is on.
