@@ -155,6 +155,9 @@ struct MainTabView: View {
     /// What is on the stack. Seeded with the current block so the app opens on
     /// it, and emptied by the back arrow to reveal the list underneath.
     @State private var path: [TrainingPlan] = []
+    /// The block the app put on the stack itself, as opposed to one he chose.
+    /// `OpenRoutine` may replace this one and nothing else.
+    @State private var opened: PersistentIdentifier?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -163,12 +166,24 @@ struct MainTabView: View {
                     RoutineView(plan: plan, profile: profile)
                 }
         }
-        // Only on the first appearance, and only when nothing has been chosen:
-        // pushing again on every return would trap a lifter who had just pressed
-        // back to look at an earlier block.
-        .onAppear {
-            guard path.isEmpty, let current else { return }
-            path = [current]
-        }
+        .onAppear { follow() }
+        // **A plan usually lands after the first screen has appeared.** The
+        // inbox reads the shared folder just after launch, so seeding the stack
+        // once on appearance opened the routine that plan then closed — every
+        // session in it logged, and the new block behind the back arrow with
+        // nothing saying so. `OpenRoutine` says when the app may put that right
+        // and when the stack is the lifter's to keep.
+        .onChange(of: current?.persistentModelID) { _, _ in follow() }
+    }
+
+    private func follow() {
+        let decision = OpenRoutine.decision(
+            stacked: path.map(\.persistentModelID),
+            current: current?.persistentModelID, opened: opened)
+        guard case .open(let identifier) = decision,
+            let plan = plans.first(where: { $0.persistentModelID == identifier })
+        else { return }
+        opened = identifier
+        path = [plan]
     }
 }
