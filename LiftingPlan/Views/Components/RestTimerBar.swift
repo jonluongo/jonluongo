@@ -76,7 +76,6 @@ struct RestTimerBar: View {
                 isRunning: restTimer.isRunning,
                 size: 52,
                 lineWidth: 5,
-                showsLabel: false,
                 // Support rather than Metric: the countdown has to fit inside a
                 // 52pt ring, and "59:59" at Metric does not. Raising it is the
                 // logging screen's own work, which is where the bar's shape is

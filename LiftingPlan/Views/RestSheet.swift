@@ -124,7 +124,6 @@ struct RestSheet: View {
             isRunning: restTimer.isRunning,
             size: Self.ringSize,
             lineWidth: Self.ringWidth,
-            showsLabel: false,
             font: .supersetClock)
     }
 

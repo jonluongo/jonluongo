@@ -6,7 +6,9 @@ import SwiftUI
 /// the middle of it.
 ///
 /// **How it is used.** Give it a fraction, the text to show, and the size the
-/// ring should be at ordinary text size. The countdown's type is the caller's
+/// ring should be at ordinary text size. It draws the figure and the arc; what
+/// the rest *is* — *Resting*, the movement, the controls — belongs to the
+/// caller, which is why nothing but the time is inside the circle. The countdown's type is the caller's
 /// (`font`), because the same ring is a 52pt badge in the rest bar and a
 /// full-size ring on its own, and those are not the same piece of type.
 ///
@@ -27,7 +29,6 @@ struct TimerRing: View {
     /// lifter's text scale, so the ring and the time inside it grow together.
     var size: CGFloat = 200
     var lineWidth: CGFloat = 14
-    var showsLabel: Bool = true
     /// The countdown's type role. Metric by default, which is what a ring drawn
     /// at full size shows.
     var font: Font = .supersetMetric
@@ -57,19 +58,17 @@ struct TimerRing: View {
                 )
                 .rotationEffect(.degrees(-90))
                 .animation(.linear(duration: 0.25), value: progress)
-            VStack(spacing: Spacing.tight) {
-                Text(timeText)
-                    .font(font)
-                    .contentTransition(.numericText())
-                if showsLabel {
-                    Text(isRunning ? "REST" : "READY")
-                        .font(.supersetLabel)
-                        // The ring is drawn inside tinted controls in both of
-                        // its callers, so this word inherited the same leak.
-                        .foregroundStyle(Palette.muted)
-                }
-            }
-            .lineLimit(1)
+            // The time, and nothing else. It carried a `REST`/`READY` word
+            // under the figure behind a `showsLabel` flag that all three call
+            // sites passed `false` — the bar says *Resting* in its own words
+            // beside the ring, and the sheet has the session behind it. A
+            // parameter with one possible value is not a choice, and the word
+            // it guarded had not been drawn on a screen in this app for as long
+            // as every caller has been passing `false`.
+            Text(timeText)
+                .font(font)
+                .contentTransition(.numericText())
+                .lineLimit(1)
             // The ring is a circle: text that outgrows its chord shrinks rather
             // than spilling over the stroke.
             .minimumScaleFactor(0.6)
@@ -84,7 +83,7 @@ struct TimerRing: View {
         TimerRing(progress: 0.4, timeText: "2:30", isRunning: true)
         TimerRing(
             progress: 0.4, timeText: "59:59", isRunning: true,
-            size: 52, lineWidth: 5, showsLabel: false, font: .supersetSupport
+            size: 52, lineWidth: 5, font: .supersetSupport
         )
     }
     .padding()
