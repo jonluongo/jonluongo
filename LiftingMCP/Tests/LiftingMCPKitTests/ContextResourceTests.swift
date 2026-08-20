@@ -53,6 +53,43 @@ struct ContextResourceTests {
         #expect(block["weeksLogged"] == 1)
     }
 
+    @Test("The days it lists are the current block's, not every block's at once")
+    func daysAreOneBlocksOwn() throws {
+        let block = try #require(try context()["currentBlock"])
+        let days = try #require(block["days"]?.arrayValue)
+
+        // The fixture is two blocks: the first trained through, the second
+        // holding one unfinished Push day. Flattened, this reported three days
+        // under a key that names one block, with nothing saying where the
+        // boundary was.
+        #expect(block["currentWeekOrdinal"] == 2)
+        #expect(block["currentWeekLabel"]?.stringValue == "Accumulation")
+        #expect(block["currentWeekIsDeload"] == false)
+        #expect(days.count == 1)
+        #expect(days.first?["focus"]?.stringValue == "Push")
+        #expect(days.first?["weekday"]?.stringValue == "Monday")
+    }
+
+    @Test("It says plainly when nothing is prescribed past the block he is on")
+    func nothingPrescribedBeyond() throws {
+        // Every session of every block finished, and the last block is the one
+        // he is on: there is nothing left to train until a plan arrives.
+        let spent = fixtureRoutine(
+            title: "Autumn strength", startDate: daysAgo(14),
+            weeks: [
+                (label: "Accumulation", isDeload: false, days: [
+                    fixtureDay(weekday: .monday, focus: "Push", completedAt: daysAgo(2),
+                               exercises: [])
+                ])
+            ])
+        let documents = InMemoryDocuments(snapshot: fixtureSnapshot(blocks: [spent]))
+        let report = try #require(try makeRunner(documents: documents).contextResource().report)
+        let block = try #require(report["currentBlock"])
+
+        #expect(block["nothingPrescribedBeyond"] == true)
+        #expect(try context()["currentBlock"]?["nothingPrescribedBeyond"] == false)
+    }
+
     @Test("It says what he did lately, compactly")
     func recentSessions() throws {
         let sessions = try #require(try context()["recentSessions"]?.arrayValue)

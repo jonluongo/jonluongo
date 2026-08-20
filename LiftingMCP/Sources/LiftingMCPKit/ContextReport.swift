@@ -83,6 +83,19 @@ struct ContextReport {
 
     // MARK: - What he is on
 
+    /// The block he is on, and only that block.
+    ///
+    /// **`days` used to be every day of every block, flattened.** A routine of
+    /// three blocks of Monday, Wednesday and Friday reported nine days named
+    /// Monday, Wednesday, Friday, Monday, … under a key called *currentBlock*,
+    /// with nothing saying where one block ended and the next began. A coach
+    /// reading it could not tell which block was current, which is the first
+    /// thing he needs in order to write the next one.
+    ///
+    /// **Which block is current is read the way the app reads it**: the earliest
+    /// one still holding a session nobody has finished, and the last block when
+    /// every session is finished. The record decides it, never the calendar — a
+    /// fortnight away does not move him on.
     private var currentBlock: JSONValue {
         guard let routine = TrainingLog.currentRoutine(in: snapshot) else { return .null }
         let plan = routine.document
@@ -91,6 +104,8 @@ struct ContextReport {
         // what happened, and they are two different documents now.
         let loggedWeeks = Set(
             snapshot.log.filter { $0.routineID == plan.id }.map(\.weekOrdinal))
+        let ordinal = Self.currentOrdinal(of: routine)
+        let week = plan.weeks.indices.contains(ordinal - 1) ? plan.weeks[ordinal - 1] : nil
         return [
             "title": .string(plan.title),
             "goal": .string(plan.goal),
@@ -103,8 +118,16 @@ struct ContextReport {
             "durationMinutes": .integer(plan.durationMinutes),
             "weeksPrescribed": .integer(plan.weeks.count),
             "weeksLogged": .integer(loggedWeeks.count),
+            "currentWeekOrdinal": .integer(ordinal),
+            "currentWeekLabel": .string(week?.label ?? ""),
+            "currentWeekIsDeload": .bool(week?.isDeload ?? false),
+            // The fact a weekly loop turns on: he is on the last block that was
+            // written and every session in it is finished, so there is nothing
+            // prescribed for him to train next. It states the position and
+            // nothing about what should follow.
+            "nothingPrescribedBeyond": .bool(Self.isSpent(routine, at: ordinal)),
             "days": .array(
-                plan.weeks.flatMap(\.days).map {
+                (week?.days ?? []).map {
                     [
                         "weekday": .string($0.weekday.fullName),
                         "focus": .string($0.focus),
@@ -113,6 +136,22 @@ struct ContextReport {
                     ]
                 }),
         ]
+    }
+
+    /// The earliest block still holding an unfinished session, or the last block
+    /// when every one of them is finished.
+    static func currentOrdinal(of routine: SnapshotRoutine) -> Int {
+        let unfinished = routine.sessions.filter { $0.completedAt == nil }.map(\.weekOrdinal)
+        return unfinished.min() ?? max(1, routine.document.weeks.count)
+    }
+
+    /// Whether the routine has nothing left to train: the block he is on is the
+    /// last one written, and every session in it is finished.
+    static func isSpent(_ routine: SnapshotRoutine, at ordinal: Int) -> Bool {
+        guard ordinal == routine.document.weeks.count else { return false }
+        return routine.sessions
+            .filter { $0.weekOrdinal == ordinal }
+            .allSatisfy { $0.completedAt != nil }
     }
 
     // MARK: - What he did lately
