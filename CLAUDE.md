@@ -149,11 +149,13 @@ It is reference material for Claude — sensible splits, typical rest by role �
 not rules the app applies. It is data about training, not a decision the app
 makes.
 
-**Two renames are held open, and `docs/decided.md` opens with them.** The store's
-`@Model` names and the `weeks` key on the wire still use the old vocabulary, each
-for a stated reason and each with the work it needs written down. They are held,
-not forgotten — read that section before concluding the rename is done or that
-the old names are an oversight.
+**One rename is held open, and `docs/decided.md` opens with it.** The store's
+`@Model` names — `TrainingPlan`, `TrainingWeek` — still use the old vocabulary,
+because SwiftData derives the CloudKit record type from the entity name and a
+rename without a tested migration opens the store empty with the data still in
+the container. It is held, not forgotten, and the work it needs is written down.
+The wire is done: `plan.json` states `blocks` from version 5 and the snapshot
+`blockOrdinal` from version 4, both reading the older spelling.
 
 `docs/decided.md` records what is settled and what was tried and killed, with the
 reason for each. **Read it before proposing anything on it.** A long session gets

@@ -89,7 +89,7 @@ struct VolumeByMuscleTests {
             exercises: try fixtureCatalog().all.filter { $0.id.rawValue != "barbell-bench-press" },
             version: 5)
         let outcome = try makeRunner(documents: documents, catalog: thin)
-            .call(ToolCatalog.volumeByMuscle, arguments: ["weeks": 4])
+            .call(ToolCatalog.volumeByMuscle, arguments: ["blocks": 4])
         let report = try #require(outcome.report)
 
         #expect(report["unattributed"]?["sets"] == 3)

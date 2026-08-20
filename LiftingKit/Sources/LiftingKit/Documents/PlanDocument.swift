@@ -47,6 +47,13 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     /// The format version this build writes. Bump it when a reader would need
     /// to behave differently, not for an additive field.
     ///
+    /// Version 5 renamed the routine's list of blocks from `weeks` to `blocks`,
+    /// which is the word the app, the coach and the lifter all use for a phase
+    /// of a routine — they were already labelled *Accumulation* and *Deload*
+    /// rather than numbered. A version 4 document says `weeks` and still
+    /// imports; this build writes `blocks`. Stating both is refused, since
+    /// there is no telling which the writer meant.
+    ///
     /// Version 4 let a day group exercises: an entry of `exercises` may now be
     /// `{ "group": [ … ], "restSeconds": 90 }` rather than an exercise, which is
     /// how a superset, a tri-set or a giant set is written. A version 3 reader
@@ -62,7 +69,7 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     /// as a bare `days` array, which is still read — that shape is now the way a
     /// single-week block is written, so there is one rule rather than two.
     /// Every one of those documents still imports.
-    public static let currentVersion = 4
+    public static let currentVersion = 5
 
     /// The format version of this document, as written.
     public let version: Int
@@ -84,19 +91,19 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     /// Anything the coach wants the lifter to read alongside the plan. `nil`
     /// when there is none.
     public let notes: String?
-    /// The block's weeks, in the order they are to be trained. A week's
-    /// position in this list is its ordinal, so two weeks cannot claim to be
-    /// week 3.
-    public let weeks: [PlanDocumentWeek]
+    /// The routine's blocks, in the order they are to be trained. A block's
+    /// position in this list is its ordinal, so two blocks cannot claim to be
+    /// block 3.
+    public let blocks: [PlanDocumentBlock]
 
-    /// How many weeks the block runs: the number of weeks it states.
+    /// How many blocks the routine runs: the number of blocks it states.
     ///
     /// Derived rather than stored, because a separately stated count is a
     /// number that can disagree with the document holding it — and the reader
     /// that believed the count over the content is how seven weeks of a
     /// declared eight-week block used to vanish. A document may still *state*
     /// `weekCount`, and it is checked against this rather than ignored.
-    public var weekCount: Int { weeks.count }
+    public var blockCount: Int { blocks.count }
 
     public init(
         version: Int = PlanDocument.currentVersion,
@@ -107,7 +114,7 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         goal: String = "",
         durationMinutes: Int? = nil,
         notes: String? = nil,
-        weeks: [PlanDocumentWeek] = []
+        blocks: [PlanDocumentBlock] = []
     ) {
         self.version = version
         self.id = id
@@ -117,7 +124,7 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         self.goal = goal
         self.durationMinutes = durationMinutes
         self.notes = notes
-        self.weeks = weeks
+        self.blocks = blocks
     }
 
     /// A block of one week, stated as its days.
@@ -140,7 +147,7 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
             version: version, id: id, catalogVersion: catalogVersion,
             generatedAt: generatedAt, title: title, goal: goal,
             durationMinutes: durationMinutes, notes: notes,
-            weeks: [PlanDocumentWeek(days: days)]
+            blocks: [PlanDocumentBlock(days: days)]
         )
     }
 
@@ -148,7 +155,14 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     /// every key this format has in order to refuse one it does not.
     private enum CodingKeys: String, CodingKey, CaseIterable {
         case version, id, catalogVersion, generatedAt
-        case title, goal, durationMinutes, notes, weeks
+        case title, goal, durationMinutes, notes, blocks
+    }
+
+    /// What a routine's blocks were called before version 5. Read, never
+    /// written: a document from an earlier build says `weeks` and has to keep
+    /// importing, and one written now says `blocks`.
+    private enum LegacyBlockKey: String, CodingKey {
+        case weeks
     }
 
     /// The two keys a single-week block may state instead of `weeks`. Version 1
@@ -159,7 +173,7 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     }
 
     private static let acceptedKeys: Set<String> =
-        Set(CodingKeys.allCases.map(\.stringValue)).union(["days", "weekCount"])
+        Set(CodingKeys.allCases.map(\.stringValue)).union(["days", "weeks", "weekCount"])
 
     /// Decoding requires only what makes a document a document: its format
     /// version, the catalog generation it was written against, its identity,
@@ -186,41 +200,46 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         goal = try container.decodeIfPresent(String.self, forKey: .goal) ?? ""
         durationMinutes = try container.decodeIfPresent(Int.self, forKey: .durationMinutes)
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
-        weeks = try Self.weeks(from: decoder, container)
+        blocks = try Self.blocks(from: decoder, container)
     }
 
-    /// The block's weeks, however the block stated them.
+    /// The routine's blocks, however the document stated them.
     ///
-    /// A bare `days` array is one week — the shape version 1 wrote, and the
-    /// short way to say a single-week block. Stating both is refused rather
-    /// than resolved: a reader that picked one would drop the other, and there
-    /// is no telling which the writer meant.
-    private static func weeks(
+    /// Three spellings are read and one is written. `blocks` is this format's;
+    /// `weeks` is what every document before version 5 called the same list;
+    /// and a bare `days` array is a routine of one block — the shape version 1
+    /// wrote, and still the short way to say it. Stating more than one of them
+    /// is refused rather than resolved: a reader that picked one would drop the
+    /// other, and there is no telling which the writer meant.
+    private static func blocks(
         from decoder: any Decoder, _ container: KeyedDecodingContainer<CodingKeys>
-    ) throws -> [PlanDocumentWeek] {
+    ) throws -> [PlanDocumentBlock] {
         let single = try decoder.container(keyedBy: SingleWeekCodingKeys.self)
-        let stated = try container.decodeIfPresent([PlanDocumentWeek].self, forKey: .weeks)
+        let legacy = try decoder.container(keyedBy: LegacyBlockKey.self)
+        let stated = try container.decodeIfPresent([PlanDocumentBlock].self, forKey: .blocks)
+        let asWeeks = try legacy.decodeIfPresent([PlanDocumentBlock].self, forKey: .weeks)
         let days = try single.decodeIfPresent([PlanDocumentDay].self, forKey: .days)
 
-        if stated != nil, days != nil {
+        if [stated, asWeeks, days.map { _ in [] }].compactMap({ $0 }).count > 1 {
             throw DocumentRefusal.contradiction(
-                "This plan states both 'weeks' and 'days', and only one of them can be the "
-                    + "block. Nothing was taken in. Send 'weeks' — a single-week block is one "
-                    + "entry in it — or send 'days' alone.")
+                "This plan states more than one of 'blocks', 'weeks' and 'days', and only one "
+                    + "of them can be the routine. Nothing was taken in. Send 'blocks' — a "
+                    + "routine of one block is one entry in it — and nothing else.")
         }
-        let weeks = stated ?? days.map { [PlanDocumentWeek(days: $0)] } ?? []
+        let blocks = stated ?? asWeeks ?? days.map { [PlanDocumentBlock(days: $0)] } ?? []
 
         if let claimed = try single.decodeIfPresent(Int.self, forKey: .weekCount),
-            claimed != weeks.count {
+            claimed != blocks.count {
             throw DocumentRefusal.contradiction(
-                "This plan says it runs \(claimed) weeks but states \(weeks.count). Nothing was "
-                    + "taken in, because the weeks it does not state would simply be missing. "
-                    + "Send one entry in 'weeks' for every week of the block, each with its own "
-                    + "days; 'weekCount' is then whatever you sent and need not be stated. A plan "
-                    + "left over from an earlier build says this — it stated a length beside a "
-                    + "single week of 'days' — and writing it again is the whole of the fix.")
+                "This plan says it runs \(claimed) blocks but states \(blocks.count). Nothing "
+                    + "was taken in, because the blocks it does not state would simply be "
+                    + "missing. Send one entry in 'blocks' for every block of the routine, each "
+                    + "with its own days; 'weekCount' is then whatever you sent and need not be "
+                    + "stated. A plan left over from an earlier build says this — it stated a "
+                    + "length beside a single week of 'days' — and writing it again is the whole "
+                    + "of the fix.")
         }
-        return weeks
+        return blocks
     }
 
     /// The encoder both clients use. ISO 8601 dates and sorted keys, so a plan
@@ -243,7 +262,7 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
 /// where the week actually sits.
 ///
 /// Depends on: `PlanDocumentDay`, `DocumentRefusal`.
-public struct PlanDocumentWeek: Codable, Hashable, Sendable {
+public struct PlanDocumentBlock: Codable, Hashable, Sendable {
 
     /// What the plan calls this week, such as "Accumulation". `nil` when the
     /// plan did not name it — a week with no name has no name, and "Week 1" is

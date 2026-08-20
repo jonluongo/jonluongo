@@ -16,20 +16,20 @@ extension ToolCatalog {
         description: """
             Writes plan.json into the shared folder, replacing any plan waiting \
             there, and returns the plan as it was written. Send one entry in \
-            'weeks' for every week of the block — weeks may differ, which is \
-            how a ramp, a wave, or a deload is written; nothing here repeats or \
-            fills in a week you did not send. Prefer writing one week at a \
-            time: send 'routineID' — the id the context resource reports for \
-            the routine he is on — together with every week already in it plus \
-            the new one, and the routine grows rather than being replaced. \
-            Weeks he has not trained yet are yours to rewrite freely; a week \
-            with a set ticked against it is the record of what he did, and a \
-            plan that changes one is refused by the app naming that week. Leave \
-            'routineID' out to start a new routine, which closes the one he is \
-            on — that is a change of programme, not the next week of this one. \
-            The context resource says 'nothingPrescribedBeyond' when he has \
-            finished everything written so far, which is when the next week is \
-            due. Every exerciseID is checked \
+            'blocks' for every block of the routine — a block is a week of \
+            training and they may differ, which is how a ramp, a wave, or a \
+            deload is written; nothing here repeats or fills in a block you did \
+            not send. Prefer writing one block at a time: send 'routineID' — \
+            the id the context resource reports for the routine he is on — \
+            together with every block already in it plus the new one, and the \
+            routine grows rather than being replaced. Blocks he has not trained \
+            yet are yours to rewrite freely; a block with a set ticked against \
+            it is the record of what he did, and a plan that changes one is \
+            refused by the app naming that block. Leave 'routineID' out to \
+            start a new routine, which closes the one he is on — that is a \
+            change of programme, not the next block of this one. The context \
+            resource says 'nothingPrescribedBeyond' when he has finished \
+            everything written so far, which is when the next block is due. Every exerciseID is checked \
             against the catalog first; one bad ID fails the whole call with \
             that ID named and writes nothing. A key this format does not have \
             also fails the call, with the key named, rather than being dropped. \
@@ -54,25 +54,25 @@ extension ToolCatalog {
         inputSchema: object(
             [
                 "routineID": string(
-                    "The routine to add these weeks to, as the context resource "
-                        + "reports it. Send every week the routine already holds "
+                    "The routine to add these blocks to, as the context resource "
+                        + "reports it. Send every block the routine already holds "
                         + "along with the new one. Leave it out to start a new "
                         + "routine, which closes the one he is on."),
                 "title": string("Short name for the block, e.g. 'Autumn strength'."),
                 "goal": string("What the block is for, in your words."),
                 "durationMinutes": integer("How long a session in this block runs."),
                 "notes": string("Anything the lifter should read alongside the plan."),
-                "weeks": array(
-                    of: weekSchema,
-                    "The block's weeks, in the order they are to be trained. A "
-                        + "block of a single week is one entry. How many weeks the "
-                        + "block runs is how many you send."),
+                "blocks": array(
+                    of: blockSchema,
+                    "The routine's blocks, in the order they are to be trained. A "
+                        + "routine of a single block is one entry. How long the "
+                        + "routine runs is how many you send."),
             ],
-            required: ["weeks"]
+            required: ["blocks"]
         )
     )
 
-    private static let weekSchema = object([
+    private static let blockSchema = object([
         "label": string(
             "What you call this week, e.g. 'Accumulation'. Omit if the week has no name."),
         "isDeload": boolean("Whether this week is a deload. Omit if it is not."),

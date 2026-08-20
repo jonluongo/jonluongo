@@ -50,12 +50,12 @@ extension PlanDocument {
             goal: plan.goal,
             durationMinutes: plan.durationMinutes,
             notes: plan.notes,
-            weeks: plan.orderedWeeks.map(PlanDocumentWeek.init(reconstructing:))
+            blocks: plan.orderedWeeks.map(PlanDocumentBlock.init(reconstructing:))
         )
     }
 }
 
-extension PlanDocumentWeek {
+extension PlanDocumentBlock {
 
     /// A week's label is `nil` in the document and empty in the store, because
     /// SwiftData has nowhere to put an absent string. They mean the same thing:

@@ -239,8 +239,8 @@ struct SnapshotExporterTests {
         #expect(plan.title == "Strength block")
         // Derived from the weeks it states rather than stored beside them, so
         // there is no second number to disagree with the document.
-        #expect(plan.weekCount == 1)
-        #expect(plan.weeks.first?.days.map(\.weekday) == [.monday])
+        #expect(plan.blockCount == 1)
+        #expect(plan.blocks.first?.days.map(\.weekday) == [.monday])
         // The plan keeps the catalog version it was built against, which need
         // not be the one the snapshot was produced under.
         #expect(plan.catalogVersion == 5)
@@ -260,7 +260,7 @@ struct SnapshotExporterTests {
         #expect(set.isCompleted)
         // The row names where it sits, which is how the prescription above is
         // found again.
-        #expect(set.weekOrdinal == 1)
+        #expect(set.blockOrdinal == 1)
         #expect(set.weekday == .monday)
         #expect(set.exerciseOrder == 0)
         #expect(set.routineID == plan.id)
@@ -333,9 +333,9 @@ struct SnapshotExporterTests {
         let exportedPlan = try #require(snapshot.firstDocument)
         // A week's ordinal is its position in the list now, so the order *is*
         // the ordinal: the deload week stated second comes second.
-        #expect(exportedPlan.weeks.count == 2)
-        #expect(exportedPlan.weeks.map(\.isDeload) == [false, true])
-        #expect(exportedPlan.weeks.first?.days.map(\.weekday) == [.monday, .thursday])
+        #expect(exportedPlan.blocks.count == 2)
+        #expect(exportedPlan.blocks.map(\.isDeload) == [false, true])
+        #expect(exportedPlan.blocks.first?.days.map(\.weekday) == [.monday, .thursday])
         #expect(try firstExercise(in: snapshot).displayName == "Barbell Bench Press")
         #expect(snapshot.log.map(\.setIndex) == [0, 1], "oldest first")
     }

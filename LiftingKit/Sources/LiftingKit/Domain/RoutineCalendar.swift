@@ -62,7 +62,7 @@ public struct RoutineCalendar: Sendable {
     public func span(of schedule: RoutineSchedule) -> ClosedRange<Date>? {
         guard
             let startDate = schedule.startDate,
-            let totalWeeks = schedule.weekOrdinals.max(),
+            let totalWeeks = schedule.blockOrdinals.max(),
             totalWeeks > 0
         else { return nil }
         let start = calendar.startOfDay(for: startDate)

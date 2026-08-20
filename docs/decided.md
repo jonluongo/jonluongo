@@ -38,8 +38,9 @@ reading `Store/`:
 | `TrainingWeek` | a block |
 | `WorkoutDay` | a session |
 
-The wire keys follow the store rather than the vocabulary for the same reason: a
-`weeks` key that Claude already writes is not worth a format version to rename.
+The wire no longer follows the store: `plan.json` says `blocks` as of version 5
+and the snapshot says `blockOrdinal` as of version 4. The store's own names are
+the exception, and the reason is CloudKit rather than taste.
 
 ## The loop
 
@@ -85,23 +86,16 @@ and a test that opens a store written under the old schema and finds the logged
 sets intact. **Verify against the real phone, not a fixture** — the failure mode
 is CloudKit's, and an in-memory container cannot show it.
 
-**2. The `weeks` key in `plan.json`.** Under the vocabulary it should be
-`blocks`. The format is versioned, so the mechanism exists: bump
-`PlanDocument.currentVersion`, accept `weeks` from any earlier version and
-`blocks` from the new one, and refuse a newer version whole as the reader
-already does.
+**2. The `weeks` key. Done on 2026-08-19.** `PlanDocument` version 5 writes
+`blocks` and reads `weeks` from anything earlier; `TrainingSnapshot` version 4
+renamed `weekOrdinal` to `blockOrdinal` with it, since the snapshot carries the
+document and half a vocabulary on one wire is worse than either. `write_plan`
+advertises `blocks`, still accepts `weeks`, and the context resource reports
+`blocksPrescribed`, `blocksLogged` and `currentBlockOrdinal`. What is left is
+item 1 — the two `@Model` names, which are CloudKit record types and stay where
+they are until there is a tested migration.
 
-*This got smaller.* It was two files. The snapshot carries the plan document
-itself since version 3, so there is one `weeks` key on the wire rather than two
-spellings of the same word in two formats — and renaming it is now a change to
-one reader.
-
-*What it needs:* the version bump, the reader's two-key path, wire tests for
-both spellings, and the MCP schema and tool description updated in the same
-commit — Claude writes that key, so the server and the phone must not disagree
-about it for even one build.
-
-*Do them in that order.* The store rename is the one with data behind it.
+*Do the store rename in its own sitting.* It is the one with data behind it.
 
 ## Settled
 

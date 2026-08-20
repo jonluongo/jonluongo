@@ -53,9 +53,9 @@ struct SnapshotCompletenessTests {
         let plan = try #require(snapshot.firstDocument)
 
         #expect(snapshot.routines.count == 1)
-        #expect(plan.weeks.count == 3, "three weeks were prescribed")
-        #expect(plan.weeks.allSatisfy { $0.days.count == 3 }, "three days in every week")
-        #expect(plan.weeks.flatMap(\.days).count == 9, "nine sessions in all")
+        #expect(plan.blocks.count == 3, "three weeks were prescribed")
+        #expect(plan.blocks.allSatisfy { $0.days.count == 3 }, "three days in every block")
+        #expect(plan.blocks.flatMap(\.days).count == 9, "nine sessions in all")
     }
 
     @Test("Every session keeps its name and its exercises")
@@ -64,7 +64,7 @@ struct SnapshotCompletenessTests {
         try block(in: context)
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 4)
-        let days = try #require(snapshot.firstDocument).weeks.flatMap(\.days)
+        let days = try #require(snapshot.firstDocument).blocks.flatMap(\.days)
 
         // Not just the count: a day that crossed with no exercises would read as
         // a rest day to Claude, which is a different block from the one written.
@@ -91,6 +91,6 @@ struct SnapshotCompletenessTests {
         try context.saveOrThrow()
 
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 4)
-        #expect(try #require(snapshot.firstDocument).weeks.count == 2)
+        #expect(try #require(snapshot.firstDocument).blocks.count == 2)
     }
 }

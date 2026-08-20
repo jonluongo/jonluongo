@@ -65,7 +65,7 @@ struct PlanDocumentTests {
     }
 
     private func days(of document: PlanDocument) throws -> [PlanDocumentDay] {
-        try #require(document.weeks.first).days
+        try #require(document.blocks.first).days
     }
 
     private func firstExercise(in document: PlanDocument) throws -> PlanDocumentExercise {
@@ -74,6 +74,45 @@ struct PlanDocumentTests {
     }
 
     // MARK: - Round trip
+
+    @Test("A version 4 plan says 'weeks' and still imports whole")
+    func theOlderSpellingStillReads() throws {
+        // Everything written before version 5 calls the routine's blocks
+        // `weeks`. Refusing them would strand every plan the coach wrote up to
+        // today, and reading around the key would drop the training silently —
+        // so it is read, and `blocks` is what gets written back.
+        let decoded = try PlanDocument.makeDecoder().decode(
+            PlanDocument.self,
+            from: Data("""
+                {"version": 4, "id": "8B39C4E2-3B22-4E7E-9C7F-9C8E0E2B0A11",
+                 "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
+                 "weeks": [{"label": "Accumulation", "days": [{"weekday": 2, "exercises": [
+                   {"exerciseID": "barbell-bench-press", "displayName": "Barbell Bench Press",
+                    "sets": 3, "repRange": "5"}]}]}]}
+                """.utf8))
+
+        #expect(decoded.blocks.count == 1)
+        #expect(decoded.blocks.first?.label == "Accumulation")
+        #expect(decoded.blocks.first?.days.first?.entries.count == 1)
+
+        let rewritten = try JSONSerialization.jsonObject(
+            with: PlanDocument.makeEncoder().encode(decoded)) as? [String: Any]
+        #expect(rewritten?["blocks"] != nil, "what is written back is this format's word")
+        #expect(rewritten?["weeks"] == nil)
+    }
+
+    @Test("A plan stating both spellings is refused rather than half read")
+    func bothSpellingsAreRefused() {
+        #expect(throws: DocumentRefusal.self) {
+            try PlanDocument.makeDecoder().decode(
+                PlanDocument.self,
+                from: Data("""
+                    {"version": 5, "id": "8B39C4E2-3B22-4E7E-9C7F-9C8E0E2B0A11",
+                     "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
+                     "blocks": [], "weeks": [{"days": []}]}
+                    """.utf8))
+        }
+    }
 
     @Test("A full plan document survives encoding and decoding unchanged")
     func fullDocumentRoundTrips() throws {
@@ -106,8 +145,8 @@ struct PlanDocumentTests {
     /// One week at a stated load, so eight of them are eight different weeks
     /// rather than the same week eight times.
     private func week(_ label: String?, load: Double, isDeload: Bool = false)
-        -> PlanDocumentWeek {
-        PlanDocumentWeek(
+        -> PlanDocumentBlock {
+        PlanDocumentBlock(
             label: label, isDeload: isDeload,
             days: [PlanDocumentDay(
                 weekday: .monday, focus: "Lower",
@@ -116,10 +155,10 @@ struct PlanDocumentTests {
         )
     }
 
-    private func block(_ weeks: [PlanDocumentWeek]) -> PlanDocument {
+    private func block(_ blocks: [PlanDocumentBlock]) -> PlanDocument {
         PlanDocument(
             id: documentID, catalogVersion: 5, generatedAt: Self.instant,
-            title: "Eight-week block", weeks: weeks
+            title: "Eight-week block", blocks: blocks
         )
     }
 
@@ -128,10 +167,10 @@ struct PlanDocumentTests {
         let weeks = (0..<8).map { week("Week \($0 + 1)", load: 275 + Double($0) * 10) }
         let decoded = try roundTrip(block(weeks))
 
-        #expect(decoded.weeks.count == 8, "seven weeks must not vanish")
-        #expect(decoded.weeks == weeks)
+        #expect(decoded.blocks.count == 8, "seven weeks must not vanish")
+        #expect(decoded.blocks == weeks)
 
-        let loads: [Double?] = decoded.weeks.map {
+        let loads: [Double?] = decoded.blocks.map {
             $0.days.first?.exercises.first?.suggestedLoad?.value
         }
         let expected: [Double?] = (0..<8).map { 275 + Double($0) * 10 }
@@ -140,9 +179,9 @@ struct PlanDocumentTests {
 
     @Test("weekCount is the weeks the block states, never a number that can disagree")
     func weekCountIsDerived() throws {
-        #expect(try roundTrip(block((0..<8).map { week("W\($0)", load: 275) })).weekCount == 8)
-        #expect(try roundTrip(block([])).weekCount == 0)
-        #expect(try roundTrip(document()).weekCount == 1)
+        #expect(try roundTrip(block((0..<8).map { week("W\($0)", load: 275) })).blockCount == 8)
+        #expect(try roundTrip(block([])).blockCount == 0)
+        #expect(try roundTrip(document()).blockCount == 1)
     }
 
     @Test("A deload week arrives with its flag intact")
@@ -151,16 +190,16 @@ struct PlanDocumentTests {
             week("Accumulation", load: 315), week("Back off", load: 225, isDeload: true),
         ]))
 
-        #expect(decoded.weeks.map(\.isDeload) == [false, true])
-        #expect(decoded.weeks.map(\.label) == ["Accumulation", "Back off"])
+        #expect(decoded.blocks.map(\.isDeload) == [false, true])
+        #expect(decoded.blocks.map(\.label) == ["Accumulation", "Back off"])
     }
 
     @Test("A week the plan did not name has no label rather than an invented one")
     func unnamedWeekHasNoLabel() throws {
         let decoded = try roundTrip(block([week(nil, load: 275)]))
 
-        #expect(decoded.weeks.first?.label == nil)
-        #expect(decoded.weeks.first?.isDeload == false)
+        #expect(decoded.blocks.first?.label == nil)
+        #expect(decoded.blocks.first?.isDeload == false)
     }
 
     // MARK: - Older documents still read
@@ -189,9 +228,9 @@ struct PlanDocumentTests {
         let decoded = try decoded(json)
 
         #expect(decoded.version == 1)
-        #expect(decoded.weeks.count == 1)
-        #expect(decoded.weeks.first?.label == nil)
-        #expect(decoded.weeks.first?.isDeload == false)
+        #expect(decoded.blocks.count == 1)
+        #expect(decoded.blocks.first?.label == nil)
+        #expect(decoded.blocks.first?.isDeload == false)
         #expect(try days(of: decoded).map(\.focus) == ["Push"])
         #expect(try firstExercise(in: decoded).sets == 5)
     }
@@ -451,8 +490,8 @@ struct PlanDocumentTests {
         }
         """
         let decoded = try decoded(json)
-        #expect(decoded.weeks.isEmpty)
-        #expect(decoded.weekCount == 0)
+        #expect(decoded.blocks.isEmpty)
+        #expect(decoded.blockCount == 0)
         #expect(decoded.generatedAt == Self.instant)
     }
 

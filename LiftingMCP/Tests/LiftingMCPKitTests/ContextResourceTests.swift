@@ -47,10 +47,10 @@ struct ContextResourceTests {
         #expect(block["title"]?.stringValue == "Autumn strength")
         // The count of weeks the plan states, rather than a separately stored
         // number that could disagree with it.
-        #expect(block["weeksPrescribed"] == 2)
+        #expect(block["blocksPrescribed"] == 2)
         #expect(block["weekdays"] == ["Monday", "Thursday"])
         #expect(block["durationMinutes"] == 60)
-        #expect(block["weeksLogged"] == 1)
+        #expect(block["blocksLogged"] == 1)
     }
 
     @Test("The days it lists are the current block's, not every block's at once")
@@ -62,9 +62,9 @@ struct ContextResourceTests {
         // holding one unfinished Push day. Flattened, this reported three days
         // under a key that names one block, with nothing saying where the
         // boundary was.
-        #expect(block["currentWeekOrdinal"] == 2)
-        #expect(block["currentWeekLabel"]?.stringValue == "Accumulation")
-        #expect(block["currentWeekIsDeload"] == false)
+        #expect(block["currentBlockOrdinal"] == 2)
+        #expect(block["currentBlockLabel"]?.stringValue == "Accumulation")
+        #expect(block["currentBlockIsDeload"] == false)
         #expect(days.count == 1)
         #expect(days.first?["focus"]?.stringValue == "Push")
         #expect(days.first?["weekday"]?.stringValue == "Monday")
@@ -76,7 +76,7 @@ struct ContextResourceTests {
         // he is on: there is nothing left to train until a plan arrives.
         let spent = fixtureRoutine(
             title: "Autumn strength", startDate: daysAgo(14),
-            weeks: [
+            blocks: [
                 (label: "Accumulation", isDeload: false, days: [
                     fixtureDay(weekday: .monday, focus: "Push", completedAt: daysAgo(2),
                                exercises: [])

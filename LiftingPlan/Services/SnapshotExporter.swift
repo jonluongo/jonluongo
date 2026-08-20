@@ -127,7 +127,7 @@ enum SnapshotExporter {
             sessions: plan.orderedWeeks.flatMap { week in
                 week.orderedDays.map { day in
                     SnapshotSession(
-                        weekOrdinal: week.ordinal, weekday: day.weekday,
+                        blockOrdinal: week.ordinal, weekday: day.weekday,
                         completedAt: day.completedAt)
                 }
             }
@@ -150,7 +150,7 @@ enum SnapshotExporter {
                     for exercise in day.orderedExercises {
                         guard let text = exercise.lifterNote, !text.isEmpty else { continue }
                         notes.append(LifterNote(
-                            routineID: routineID, weekOrdinal: week.ordinal,
+                            routineID: routineID, blockOrdinal: week.ordinal,
                             weekday: day.weekday, exerciseOrder: exercise.order,
                             exerciseID: exercise.exerciseID, text: text))
                     }
@@ -185,7 +185,7 @@ enum SnapshotExporter {
                         for set in (exercise.loggedSets ?? []).sorted(by: { $0.setIndex < $1.setIndex }) {
                             records.append(LoggedSetRecord(
                                 routineID: routineID,
-                                weekOrdinal: week.ordinal,
+                                blockOrdinal: week.ordinal,
                                 weekday: day.weekday,
                                 exerciseOrder: exercise.order,
                                 exerciseID: exercise.exerciseID,
@@ -209,8 +209,8 @@ enum SnapshotExporter {
         // order to chance would report a different history each time the
         // snapshot was written.
         return records.sorted {
-            ($0.completedAt, $0.weekOrdinal, $0.exerciseOrder, $0.setIndex)
-                < ($1.completedAt, $1.weekOrdinal, $1.exerciseOrder, $1.setIndex)
+            ($0.completedAt, $0.blockOrdinal, $0.exerciseOrder, $0.setIndex)
+                < ($1.completedAt, $1.blockOrdinal, $1.exerciseOrder, $1.setIndex)
         }
     }
 }

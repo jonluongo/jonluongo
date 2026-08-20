@@ -176,20 +176,20 @@ func fixtureDay(
 func fixtureRoutine(
     id: UUID = UUID(), title: String, goal: String = "", startDate: Date,
     completedAt: Date? = nil, durationMinutes: Int? = nil, catalogVersion: Int = 5,
-    weeks: [(label: String?, isDeload: Bool, days: [FixtureDay])]
+    blocks: [(label: String?, isDeload: Bool, days: [FixtureDay])]
 ) -> (routine: SnapshotRoutine, log: [LoggedSetRecord]) {
     var sessions: [SnapshotSession] = []
     var log: [LoggedSetRecord] = []
-    for (index, week) in weeks.enumerated() {
+    for (index, block) in blocks.enumerated() {
         let ordinal = index + 1
-        for day in week.days {
+        for day in block.days {
             sessions.append(SnapshotSession(
-                weekOrdinal: ordinal, weekday: day.day.weekday, completedAt: day.completedAt))
+                blockOrdinal: ordinal, weekday: day.day.weekday, completedAt: day.completedAt))
             let byOrder = day.day.entries.flatMap(\.exercises)
             for (order, set) in day.logged {
                 guard byOrder.indices.contains(order) else { continue }
                 log.append(LoggedSetRecord(
-                    routineID: id, weekOrdinal: ordinal, weekday: day.day.weekday,
+                    routineID: id, blockOrdinal: ordinal, weekday: day.day.weekday,
                     exerciseOrder: order, exerciseID: byOrder[order].exerciseID,
                     setIndex: set.index, isWarmup: set.warmup, isCompleted: set.completed,
                     completedAt: set.date,
@@ -203,8 +203,8 @@ func fixtureRoutine(
         document: PlanDocument(
             id: id, catalogVersion: catalogVersion, generatedAt: startDate,
             title: title, goal: goal, durationMinutes: durationMinutes,
-            weeks: weeks.map {
-                PlanDocumentWeek(label: $0.label, isDeload: $0.isDeload, days: $0.days.map(\.day))
+            blocks: blocks.map {
+                PlanDocumentBlock(label: $0.label, isDeload: $0.isDeload, days: $0.days.map(\.day))
             }),
         startDate: startDate, completedAt: completedAt, sessions: sessions)
     return (routine, log)
@@ -216,7 +216,7 @@ private func basePlan() -> (routine: SnapshotRoutine, log: [LoggedSetRecord]) {
     return fixtureRoutine(
         title: "Base block", goal: "Get the lifts moving", startDate: daysAgo(60),
         completedAt: daysAgo(14), durationMinutes: 50,
-        weeks: [(
+        blocks: [(
             label: "Introduction", isDeload: false,
             days: [
                 fixtureDay(
@@ -252,7 +252,7 @@ private func currentPlan() -> (routine: SnapshotRoutine, log: [LoggedSetRecord])
     return fixtureRoutine(
         title: "Autumn strength", goal: "Add 20 lb to the bench", startDate: daysAgo(14),
         durationMinutes: 60,
-        weeks: [
+        blocks: [
             (label: "Accumulation", isDeload: false, days: [
                 fixtureDay(
                     weekday: .thursday, focus: "Pull", durationMinutes: 60,
@@ -406,7 +406,7 @@ extension PlanDocument {
 
     /// Every training day of the block, in order, for an assertion that does
     /// not care which week a day sits in.
-    var everyDay: [PlanDocumentDay] { weeks.flatMap(\.days) }
+    var everyDay: [PlanDocumentDay] { blocks.flatMap(\.days) }
 }
 
 // MARK: - Calling a tool in a test

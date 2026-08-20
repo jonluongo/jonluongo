@@ -165,8 +165,8 @@ struct DocumentInboxTests {
     private func routine(id: UUID, blocks: Int) -> PlanDocument {
         PlanDocument(
             id: id, catalogVersion: 5, generatedAt: Self.instant, title: "Strength block",
-            weeks: (1...blocks).map { ordinal in
-                PlanDocumentWeek(label: "Block \(ordinal)", days: [
+            blocks: (1...blocks).map { ordinal in
+                PlanDocumentBlock(label: "Block \(ordinal)", days: [
                     PlanDocumentDay(
                         weekday: .monday, focus: "Push",
                         exercises: [

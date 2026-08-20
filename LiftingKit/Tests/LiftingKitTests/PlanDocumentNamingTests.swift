@@ -28,7 +28,7 @@ struct PlanDocumentNamingTests {
 
     private func named(_ document: PlanDocument) throws -> [PlanDocumentExercise] {
         document.named(using: try catalog())
-            .weeks.flatMap(\.days).flatMap(\.entries).flatMap(\.exercises)
+            .blocks.flatMap(\.days).flatMap(\.entries).flatMap(\.exercises)
     }
 
     @Test("A movement with no name is given the catalog's")
@@ -100,7 +100,7 @@ struct PlanDocumentNamingTests {
             """.utf8)
 
         let decoded = try PlanDocument.makeDecoder().decode(PlanDocument.self, from: data)
-        #expect(decoded.weeks.first?.days.first?.entries.first?
+        #expect(decoded.blocks.first?.days.first?.entries.first?
             .exercises.first?.displayName == "")
         #expect(try named(decoded).first?.displayName == "Barbell Bench Press")
     }

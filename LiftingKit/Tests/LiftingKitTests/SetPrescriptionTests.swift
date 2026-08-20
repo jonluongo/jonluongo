@@ -26,7 +26,7 @@ struct SetPrescriptionTests {
     }
 
     private func firstExercise(in document: PlanDocument) throws -> PlanDocumentExercise {
-        let day = try #require(document.weeks.first?.days.first)
+        let day = try #require(document.blocks.first?.days.first)
         return try #require(day.exercises.first)
     }
 
@@ -406,8 +406,8 @@ struct SetPrescriptionTests {
         let exercise = try firstExercise(in: document)
 
         #expect(document.version == 2)
-        #expect(document.weekCount == 2)
-        #expect(document.weeks.last?.isDeload == true)
+        #expect(document.blockCount == 2)
+        #expect(document.blocks.last?.isDeload == true)
         #expect(exercise.sets == 5)
         #expect(exercise.repRange == "5")
         #expect(exercise.suggestedLoad == Mass(value: 275, unit: .pounds))
@@ -419,14 +419,14 @@ struct SetPrescriptionTests {
     func laterVersionStillRefusedFirst() throws {
         let json = """
         {
-          "version": 5, "catalogVersion": 5,
+          "version": 6, "catalogVersion": 5,
           "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
           "generatedAt": "2023-11-14T22:13:20Z",
           "weeks": [], "clusterSets": true
         }
         """
         let error = #expect(throws: DocumentRefusal.self) { try decoded(json) }
-        #expect(error == .laterVersion(5, understood: PlanDocument.currentVersion))
+        #expect(error == .laterVersion(6, understood: PlanDocument.currentVersion))
     }
 
     @Test("The per-set shape arrived in version 3, and every version since still reads it")

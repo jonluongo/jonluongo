@@ -67,7 +67,7 @@ struct ExerciseHistoryTests {
         let last = try #require(sets.last)
 
         #expect(last["plan"]?.stringValue == "Autumn strength")
-        #expect(last["week"] == 1)
+        #expect(last["block"] == 1)
         #expect(last["focus"]?.stringValue == "Push")
         #expect(last["prescribed"]?["repRange"]?.stringValue == "5")
         #expect(last["prescribed"]?["restSeconds"] == 180)
@@ -148,7 +148,7 @@ struct RecentSessionsTests {
         let newest = try #require(try sessions().first)
 
         #expect(newest["plan"]?.stringValue == "Autumn strength")
-        #expect(newest["week"] == 1)
+        #expect(newest["block"] == 1)
         #expect(newest["weekday"]?.stringValue == "Monday")
     }
 

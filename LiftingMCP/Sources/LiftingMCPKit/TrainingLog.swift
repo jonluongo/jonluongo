@@ -11,7 +11,7 @@ import LiftingKit
 /// Depends on: the snapshot value types in `LiftingKit`.
 struct SessionRecord: Sendable {
     let routine: SnapshotRoutine
-    let weekOrdinal: Int
+    let blockOrdinal: Int
     let weekday: Weekday
     let completedAt: Date?
     let lastLoggedAt: Date?
@@ -21,22 +21,22 @@ struct SessionRecord: Sendable {
     let notes: [LifterNote]
 
     var planTitle: String { routine.document.title }
-    /// What the plan calls this week, or empty when it named it nothing.
-    var weekLabel: String { week?.label ?? "" }
-    var isDeload: Bool { week?.isDeload ?? false }
+    /// What the plan calls this block, or empty when it named it nothing.
+    var blockLabel: String { block?.label ?? "" }
+    var isDeload: Bool { block?.isDeload ?? false }
     var focus: String { day?.focus ?? "" }
     var durationMinutes: Int? { day?.durationMinutes }
 
-    /// The week this session sits in, as the document states it.
-    var week: PlanDocumentWeek? {
-        routine.document.weeks.indices.contains(weekOrdinal - 1)
-            ? routine.document.weeks[weekOrdinal - 1] : nil
+    /// The block this session sits in, as the document states it.
+    var block: PlanDocumentBlock? {
+        routine.document.blocks.indices.contains(blockOrdinal - 1)
+            ? routine.document.blocks[blockOrdinal - 1] : nil
     }
 
     /// The day as it was prescribed. `nil` when the record holds a day the
     /// document does not — a plan reimported over a logged block, say — which is
     /// reported as an absence rather than papered over.
-    var day: PlanDocumentDay? { week?.days.first { $0.weekday == weekday } }
+    var day: PlanDocumentDay? { block?.days.first { $0.weekday == weekday } }
 
     /// The movements prescribed for this day, in order, groups flattened into
     /// the sequence they are performed in.
@@ -57,7 +57,7 @@ struct SessionRecord: Sendable {
 /// Reads a `TrainingSnapshot` the way a question wants it.
 ///
 /// **The flattening is gone.** The snapshot used to nest logged sets five deep —
-/// plan, week, day, exercise, set — so every tool began by walking the tree into
+/// routine, block, day, exercise, set — so every tool began by walking the tree into
 /// a flat list. The wire carries the flat list now and the plans travel as the
 /// documents the coach wrote, so what is left here is grouping, sorting and the
 /// one lookup that joins a logged set back to its prescription.
@@ -92,7 +92,7 @@ enum TrainingLog {
         var notesByDay: [DayKey: [LifterNote]] = [:]
         for note in snapshot.lifterNotes {
             let key = DayKey(
-                routineID: note.routineID, weekOrdinal: note.weekOrdinal,
+                routineID: note.routineID, blockOrdinal: note.blockOrdinal,
                 weekday: note.weekday)
             notesByDay[key, default: []].append(note)
         }
@@ -102,11 +102,11 @@ enum TrainingLog {
             for session in routine.sessions {
                 let key = DayKey(
                     routineID: routine.document.id,
-                    weekOrdinal: session.weekOrdinal, weekday: session.weekday)
+                    blockOrdinal: session.blockOrdinal, weekday: session.weekday)
                 let sets = setsByDay.removeValue(forKey: key) ?? []
                 guard !sets.isEmpty || session.completedAt != nil else { continue }
                 sessions.append(SessionRecord(
-                    routine: routine, weekOrdinal: session.weekOrdinal,
+                    routine: routine, blockOrdinal: session.blockOrdinal,
                     weekday: session.weekday, completedAt: session.completedAt,
                     lastLoggedAt: sets.map(\.completedAt).max(), sets: sets,
                     notes: notesByDay[key] ?? []))
@@ -118,7 +118,7 @@ enum TrainingLog {
         for (key, sets) in setsByDay {
             guard let routine = routines[key.routineID] else { continue }
             sessions.append(SessionRecord(
-                routine: routine, weekOrdinal: key.weekOrdinal, weekday: key.weekday,
+                routine: routine, blockOrdinal: key.blockOrdinal, weekday: key.weekday,
                 completedAt: nil, lastLoggedAt: sets.map(\.completedAt).max(), sets: sets,
                 notes: notesByDay[key] ?? []))
         }
@@ -159,18 +159,18 @@ enum TrainingLog {
     /// Which day a logged set belongs to.
     private struct DayKey: Hashable {
         let routineID: UUID
-        let weekOrdinal: Int
+        let blockOrdinal: Int
         let weekday: Weekday
 
-        init(routineID: UUID, weekOrdinal: Int, weekday: Weekday) {
+        init(routineID: UUID, blockOrdinal: Int, weekday: Weekday) {
             self.routineID = routineID
-            self.weekOrdinal = weekOrdinal
+            self.blockOrdinal = blockOrdinal
             self.weekday = weekday
         }
 
         init(_ record: LoggedSetRecord) {
             self.init(
-                routineID: record.routineID, weekOrdinal: record.weekOrdinal,
+                routineID: record.routineID, blockOrdinal: record.blockOrdinal,
                 weekday: record.weekday)
         }
     }
@@ -180,7 +180,7 @@ enum TrainingLog {
 ///
 /// **Why this exists.** A logged set used to carry a copy of its exercise's
 /// prescription beside it, which is how the same prescription came to be written
-/// in two shapes. The log names its position instead — block, week, day, the
+/// in two shapes. The log names its position instead — routine, block, day, the
 /// movement's place in that day — and this walks that position into the document
 /// the coach wrote. One description of a prescription, looked up rather than
 /// duplicated.
@@ -207,8 +207,8 @@ struct Prescriptions {
     func exercise(for record: LoggedSetRecord) -> PlanDocumentExercise? {
         guard
             let routine = routines[record.routineID],
-            routine.document.weeks.indices.contains(record.weekOrdinal - 1),
-            let day = routine.document.weeks[record.weekOrdinal - 1]
+            routine.document.blocks.indices.contains(record.blockOrdinal - 1),
+            let day = routine.document.blocks[record.blockOrdinal - 1]
                 .days.first(where: { $0.weekday == record.weekday })
         else { return nil }
         let exercises = day.entries.flatMap(\.exercises)
@@ -231,8 +231,8 @@ struct Prescriptions {
     func group(for record: LoggedSetRecord) -> PlanDocumentGroup? {
         guard
             let routine = routines[record.routineID],
-            routine.document.weeks.indices.contains(record.weekOrdinal - 1),
-            let day = routine.document.weeks[record.weekOrdinal - 1]
+            routine.document.blocks.indices.contains(record.blockOrdinal - 1),
+            let day = routine.document.blocks[record.blockOrdinal - 1]
                 .days.first(where: { $0.weekday == record.weekday })
         else { return nil }
         var position = 0

@@ -64,7 +64,7 @@ struct PlanDocumentGroupTests {
     }
 
     private func day(of document: PlanDocument) throws -> PlanDocumentDay {
-        let week = try #require(document.weeks.first)
+        let week = try #require(document.blocks.first)
         return try #require(week.days.first)
     }
 
@@ -163,12 +163,12 @@ struct PlanDocumentGroupTests {
         #expect(day.exercises.first?.restSeconds == 180)
     }
 
-    @Test("The format states version 4, and a later one is still refused whole")
-    func versionIsFourAndSkewIsRefused() {
-        #expect(PlanDocument.currentVersion == 4)
-        #expect(throws: DocumentRefusal.laterVersion(5, understood: 4)) {
+    @Test("The format states version 5, and a later one is still refused whole")
+    func versionIsFiveAndSkewIsRefused() {
+        #expect(PlanDocument.currentVersion == 5)
+        #expect(throws: DocumentRefusal.laterVersion(6, understood: 5)) {
             try decoded("""
-            {"version": 5, "catalogVersion": 5,
+            {"version": 6, "catalogVersion": 5,
              "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
              "generatedAt": "2023-11-14T22:13:20Z"}
             """)

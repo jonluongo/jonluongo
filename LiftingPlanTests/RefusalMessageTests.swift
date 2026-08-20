@@ -92,7 +92,7 @@ struct RefusalMessageTests {
     func authorsSentenceSurvives() async throws {
         let message = try await messageAfterReading(Self.planFromAnEarlierBuild)
 
-        #expect(message.contains("says it runs 8 weeks but states 1"))
+        #expect(message.contains("says it runs 8 blocks but states 1"))
         #expect(message.contains("writing it again is the whole of the fix"))
     }
 

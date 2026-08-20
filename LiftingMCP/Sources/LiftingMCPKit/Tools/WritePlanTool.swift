@@ -19,7 +19,7 @@ extension ToolRunner {
     /// capped, no rest clamped, no empty rep range filled, no load seeded. A
     /// prescription that states no rest is written with none.
     ///
-    /// **A block is a list of weeks and they may differ.** Week 3 can prescribe
+    /// **A routine is a list of blocks and they may differ.** Block 3 can prescribe
     /// heavier work than week 1 and week 4 can be a deload; each week states its
     /// own days. A single-week block states one week. Nothing here repeats a
     /// week or fills one in — an unstated week is a week that was not written.
@@ -38,11 +38,13 @@ extension ToolRunner {
     /// block is the first; changing programme is the second, and nothing has to
     /// guess which was meant.
     func writePlan(_ arguments: JSONValue) -> ToolOutcome {
-        guard arguments["weeks"] != nil || arguments["days"] != nil else {
+        guard arguments["blocks"] != nil || arguments["weeks"] != nil
+            || arguments["days"] != nil
+        else {
             return .failure(
-                "write_plan needs a 'weeks' array — one entry per week of the block, each with "
-                    + "its own 'days'. A block of a single week is one entry. A day with no "
-                    + "exercises is a rest day and is fine; leaving the block's training out "
+                "write_plan needs a 'blocks' array — one entry per block of the routine, each "
+                    + "with its own 'days'. A routine of a single block is one entry. A day with "
+                    + "no exercises is a rest day and is fine; leaving the routine's training out "
                     + "entirely is not a plan, so nothing was written.")
         }
 
@@ -106,10 +108,10 @@ extension ToolRunner {
                     + "will not see this plan.")
         }
 
-        let days = document.weeks.flatMap(\.days)
+        let days = document.blocks.flatMap(\.days)
         return .report([
             "writtenTo": .string(documents.planLocation),
-            "weekCount": .integer(document.weekCount),
+            "weekCount": .integer(document.blockCount),
             "dayCount": .integer(days.count),
             "exerciseCount": .integer(days.reduce(0) { $0 + $1.exercises.count }),
             "note": "Written. The app imports it the next time it is opened or comes forward.",
@@ -126,7 +128,7 @@ extension ToolRunner {
     /// in the call. The set is `SessionIcon.all`, which is also what the schema
     /// offers, so the two cannot disagree about what is allowed.
     private static func firstUnknownIcon(in document: PlanDocument) -> SessionIcon? {
-        for day in document.weeks.flatMap(\.days) {
+        for day in document.blocks.flatMap(\.days) {
             guard let icon = day.icon, !icon.isKnown else { continue }
             return icon
         }
@@ -138,7 +140,7 @@ extension ToolRunner {
     private static func firstUnknownExercise(
         in document: PlanDocument, using catalog: any ExerciseCatalogProviding
     ) -> ExerciseID? {
-        for day in document.weeks.flatMap(\.days) {
+        for day in document.blocks.flatMap(\.days) {
             for exercise in day.exercises where catalog.exercise(id: exercise.exerciseID) == nil {
                 return exercise.exerciseID
             }
@@ -151,20 +153,24 @@ extension ToolRunner {
     /// The call's fields with every weekday written as the number `Weekday`
     /// decodes from, wherever the block stated its training.
     ///
-    /// A block may state `weeks`, each with its own days, or bare `days` for a
-    /// single week. Both are normalized here so the document decoder sees one
-    /// shape; stating both is left to the decoder, which refuses it.
+    /// A routine may state `blocks`, each with its own days, or bare `days` for
+    /// a routine of one. Both are normalized here so the document decoder sees
+    /// one shape; stating more than one is left to the decoder, which refuses
+    /// it. `weeks` is the same list under the name the format used before
+    /// version 5 — accepted and carried through unchanged, so a coach who
+    /// learned the old word mid-conversation is not refused for it.
     private static func normalizedTraining(
         in fields: [String: JSONValue]
     ) -> FieldNormalization {
         var fields = fields
-        if let weeks = fields["weeks"]?.arrayValue {
+        for key in ["blocks", "weeks"] {
+            guard let blocks = fields[key]?.arrayValue else { continue }
             var normalized: [JSONValue] = []
-            for week in weeks {
-                guard var members = week.objectValue else {
+            for block in blocks {
+                guard var members = block.objectValue else {
                     // Not an object at all: leave it for the decoder, whose
                     // complaint about the shape is the accurate one.
-                    normalized.append(week)
+                    normalized.append(block)
                     continue
                 }
                 if let days = members["days"]?.arrayValue {
@@ -175,7 +181,7 @@ extension ToolRunner {
                 }
                 normalized.append(.object(members))
             }
-            fields["weeks"] = .array(normalized)
+            fields[key] = .array(normalized)
         }
         if let days = fields["days"]?.arrayValue {
             switch normalizedDays(days) {

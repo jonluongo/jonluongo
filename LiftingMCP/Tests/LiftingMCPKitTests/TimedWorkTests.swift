@@ -19,7 +19,7 @@ struct TimedWorkTests {
     private func heldSnapshot() -> TrainingSnapshot {
         let block = fixtureRoutine(
             title: "Hold block", goal: "Trunk", startDate: daysAgo(10),
-            weeks: [(label: nil, isDeload: false, days: [
+            blocks: [(label: nil, isDeload: false, days: [
                 fixtureDay(
                     weekday: .monday, focus: "Trunk", completedAt: daysAgo(2),
                     exercises: [
@@ -124,7 +124,7 @@ struct TimedWorkTests {
         let definition = ToolCatalog.writePlanDefinition
         let target = try value(
             at: [
-                "properties", "weeks", "items", "properties", "days", "items",
+                "properties", "blocks", "items", "properties", "days", "items",
                 // An entry of a day is an exercise or a group, so the exercise
                 // shape is the first of the two the item may take.
                 "properties", "exercises", "items", "anyOf", "0",
@@ -161,7 +161,7 @@ struct TimedWorkTests {
             ToolCatalog.writePlan,
             arguments: [
                 "title": "Hold block",
-                "weeks": [["days": [[
+                "blocks": [["days": [[
                     "weekday": "monday",
                     "exercises": [[
                         "exerciseID": "push-up", "displayName": "Push Up",
@@ -174,7 +174,7 @@ struct TimedWorkTests {
         // Read back through the phone's own decoder, from the bytes on disk —
         // the one direction an encode-then-decode round trip cannot vouch for.
         let read = try #require(try documents.readPlan())
-        let exercise = try #require(read.weeks.first?.days.first?.exercises.first)
+        let exercise = try #require(read.blocks.first?.days.first?.exercises.first)
 
         #expect(exercise.prescribedSets.map(\.repRange) == ["30 seconds", "45 seconds"])
         #expect(RepRange(exercise.repRange).isEmpty, "a hold states no rep count")

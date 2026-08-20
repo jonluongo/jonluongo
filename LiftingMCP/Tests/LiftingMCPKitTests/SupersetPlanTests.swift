@@ -91,7 +91,7 @@ struct SupersetPlanTests {
         let (outcome, _) = try plan(["days": [Self.supersetDay]])
         let report = try #require(outcome.report)
         let entries = try #require(
-            report["plan"]?["weeks"]?[0]?["days"]?[0]?["exercises"]?.arrayValue)
+            report["plan"]?["blocks"]?[0]?["days"]?[0]?["exercises"]?.arrayValue)
 
         #expect(entries.count == 2)
         #expect(entries[0]["group"] == nil, "the ungrouped press is reported as it always was")
@@ -207,7 +207,7 @@ struct SupersetPlanTests {
         #expect(day.exercises.first?.restSeconds == 240, "its own rest is still its own")
 
         let report = try #require(outcome.report)
-        let entry = try #require(report["plan"]?["weeks"]?[0]?["days"]?[0]?["exercises"]?[0])
+        let entry = try #require(report["plan"]?["blocks"]?[0]?["days"]?[0]?["exercises"]?[0])
         #expect(entry["exerciseID"]?.stringValue == "barbell-squat")
         #expect(entry["group"] == nil)
     }
@@ -220,7 +220,7 @@ struct SupersetPlanTests {
         #expect(definition.description.contains("\"group\""))
         #expect(definition.description.contains("after the round"))
 
-        let weeks = try #require(definition.inputSchema["properties"]?["weeks"])
+        let weeks = try #require(definition.inputSchema["properties"]?["blocks"])
         let week = try #require(weeks["items"])
         let days = try #require(week["properties"]?["days"])
         let day = try #require(days["items"])
@@ -268,7 +268,7 @@ struct SupersetReportTests {
         let block = fixtureRoutine(
             title: "Autumn", goal: "Bigger arms", startDate: daysAgo(10),
             durationMinutes: 60,
-            weeks: [(label: nil, isDeload: false, days: [day])])
+            blocks: [(label: nil, isDeload: false, days: [day])])
         let documents = InMemoryDocuments(snapshot: fixtureSnapshot(blocks: [block]))
         let outcome = try makeRunner(documents: documents)
             .call(ToolCatalog.recentSessions, arguments: [:])

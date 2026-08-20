@@ -168,7 +168,7 @@ struct CoachNoteTests {
 
     @Test("A block that did not arrive as a document says nothing about when it was written")
     func blockWithNoDocumentHasNoWrittenDate() throws {
-        let plan = RoutineBlueprint(weeks: []).makeWorkoutPlan(catalogVersion: 5)
+        let plan = RoutineBlueprint(blocks: []).makeWorkoutPlan(catalogVersion: 5)
 
         #expect(plan.generatedAt == nil)
     }

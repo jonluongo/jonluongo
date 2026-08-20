@@ -39,12 +39,12 @@ struct SessionIconWireTests {
         let data = try PlanDocument.makeEncoder().encode(document)
         let object = try #require(
             try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let weeks = try #require(object["weeks"] as? [[String: Any]])
+        let weeks = try #require(object["blocks"] as? [[String: Any]])
         let days = try #require(weeks.first?["days"] as? [[String: Any]])
         #expect(days.first?["icon"] as? String == "intervals")
 
         let read = try PlanDocument.makeDecoder().decode(PlanDocument.self, from: data)
-        #expect(read.weeks.first?.days.first?.icon == .intervals)
+        #expect(read.blocks.first?.days.first?.icon == .intervals)
     }
 
     @Test("A day that chose no mark writes no key, and reads back as none")
@@ -57,14 +57,14 @@ struct SessionIconWireTests {
         let data = try PlanDocument.makeEncoder().encode(document)
         let object = try #require(
             try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let weeks = try #require(object["weeks"] as? [[String: Any]])
+        let weeks = try #require(object["blocks"] as? [[String: Any]])
         let days = try #require(weeks.first?["days"] as? [[String: Any]])
 
         // Absence stays absence: a `null` would be the app writing "no mark" as
         // a value, which is a different statement from having chosen none.
         #expect(days.first?.keys.contains("icon") == false)
         #expect(try decodedPlan(String(decoding: data, as: UTF8.self))
-            .weeks.first?.days.first?.icon == nil)
+            .blocks.first?.days.first?.icon == nil)
     }
 
     // MARK: - Read the way he writes it
@@ -83,7 +83,7 @@ struct SessionIconWireTests {
         }
         """)
 
-        #expect(plan.weeks.first?.days.first?.icon == .intervals)
+        #expect(plan.blocks.first?.days.first?.icon == .intervals)
     }
 
     @Test("A mark this build does not know still arrives, so it can be refused by name")
@@ -103,7 +103,7 @@ struct SessionIconWireTests {
         }
         """)
 
-        let icon = try #require(plan.weeks.first?.days.first?.icon)
+        let icon = try #require(plan.blocks.first?.days.first?.icon)
         #expect(icon.rawValue == "deadlift")
         #expect(icon.isKnown == false)
     }
@@ -122,7 +122,7 @@ struct SessionIconWireTests {
         }
         """)
 
-        #expect(plan.weeks.first?.days.first?.icon == nil)
+        #expect(plan.blocks.first?.days.first?.icon == nil)
     }
 
     @Test("A key this format does not have is still refused, and named")
@@ -167,11 +167,11 @@ struct SessionIconWireTests {
             try JSONSerialization.jsonObject(with: data) as? [String: Any])
         let routines = try #require(object["routines"] as? [[String: Any]])
         let plan = try #require(routines.first?["document"] as? [String: Any])
-        let weeks = try #require(plan["weeks"] as? [[String: Any]])
+        let weeks = try #require(plan["blocks"] as? [[String: Any]])
         let days = try #require(weeks.first?["days"] as? [[String: Any]])
         #expect(days.first?["icon"] as? String == "strength")
 
         let read = try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
-        #expect(read.routines.first?.document.weeks.first?.days.first?.icon == .strength)
+        #expect(read.routines.first?.document.blocks.first?.days.first?.icon == .strength)
     }
 }

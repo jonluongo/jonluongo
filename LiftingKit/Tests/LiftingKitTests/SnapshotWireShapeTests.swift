@@ -42,7 +42,7 @@ struct SnapshotWireShapeTests {
         durationSeconds: Int? = nil, distance: Distance? = nil
     ) -> LoggedSetRecord {
         LoggedSetRecord(
-            routineID: Self.routineID, weekOrdinal: 1, weekday: .monday, exerciseOrder: 0,
+            routineID: Self.routineID, blockOrdinal: 1, weekday: .monday, exerciseOrder: 0,
             exerciseID: Self.bench, setIndex: 0, isWarmup: false, isCompleted: true,
             completedAt: Self.instant, load: load, reps: reps,
             durationSeconds: durationSeconds, distance: distance)
@@ -57,7 +57,7 @@ struct SnapshotWireShapeTests {
                 document: document ?? self.document(),
                 startDate: Self.instant, completedAt: nil,
                 sessions: [SnapshotSession(
-                    weekOrdinal: 1, weekday: .monday, completedAt: Self.instant)])],
+                    blockOrdinal: 1, weekday: .monday, completedAt: Self.instant)])],
             log: log)
     }
 
@@ -116,7 +116,7 @@ struct SnapshotWireShapeTests {
         let routines = try #require(try object(snapshot())["routines"] as? [[String: Any]])
         let sessions = try #require(routines.first?["sessions"] as? [[String: Any]])
 
-        #expect(sessions.first?["weekOrdinal"] as? Int == 1)
+        #expect(sessions.first?["blockOrdinal"] as? Int == 1)
         // Calendar's numbering, 1 = Sunday, which is what `Weekday` is.
         #expect(sessions.first?["weekday"] as? Int == Weekday.monday.rawValue)
         #expect(sessions.first?["completedAt"] as? String == "2023-11-14T22:13:20Z")
@@ -132,7 +132,7 @@ struct SnapshotWireShapeTests {
         let row = try firstLogRow(snapshot(log: [logged()]))
 
         #expect(row["routineID"] as? String == Self.routineID.uuidString)
-        #expect(row["weekOrdinal"] as? Int == 1)
+        #expect(row["blockOrdinal"] as? Int == 1)
         #expect(row["weekday"] as? Int == Weekday.monday.rawValue)
         #expect(row["exerciseOrder"] as? Int == 0)
         #expect(row["exerciseID"] as? String == "barbell-bench-press")
@@ -189,14 +189,14 @@ struct SnapshotWireShapeTests {
 
     // MARK: - The format says which one it is
 
-    @Test("The snapshot states version 3, and a reader that finds another refuses it")
+    @Test("The snapshot states version 4, and a reader that finds another refuses it")
     func versionIsStatedAndEnforced() throws {
-        #expect(TrainingSnapshot.currentVersion == 3)
-        #expect(try object(snapshot())["version"] as? Int == 3)
+        #expect(TrainingSnapshot.currentVersion == 4)
+        #expect(try object(snapshot())["version"] as? Int == 4)
 
         // Both directions: the shape moved, so neither an older nor a newer file
         // can be read as though sections were merely absent.
-        for stated in [2, 4] {
+        for stated in [3, 5] {
             let data = Data("""
                 {"version": \(stated), "catalogVersion": 5,
                  "generatedAt": "2023-11-14T22:13:20Z"}
@@ -211,7 +211,7 @@ struct SnapshotWireShapeTests {
     func handWrittenSnapshotDecodes() throws {
         let data = Data("""
             {
-              "version": 3,
+              "version": 4,
               "catalogVersion": 5,
               "generatedAt": "2023-11-14T22:13:20Z",
               "routines": [{
@@ -224,11 +224,11 @@ struct SnapshotWireShapeTests {
                      "sets": 3, "repRange": "5"}]}]}]
                 },
                 "startDate": "2023-11-14T22:13:20Z",
-                "sessions": [{"weekOrdinal": 1, "weekday": 2}]
+                "sessions": [{"blockOrdinal": 1, "weekday": 2}]
               }],
               "log": [{
                 "routineID": "3E7F7E2E-2B47-4C51-9E58-52C1D1F0A0B1",
-                "weekOrdinal": 1, "weekday": 2, "exerciseOrder": 0,
+                "blockOrdinal": 1, "weekday": 2, "exerciseOrder": 0,
                 "exerciseID": "barbell-bench-press", "setIndex": 0,
                 "isWarmup": false, "isCompleted": true,
                 "completedAt": "2023-11-14T22:13:20Z", "reps": 5

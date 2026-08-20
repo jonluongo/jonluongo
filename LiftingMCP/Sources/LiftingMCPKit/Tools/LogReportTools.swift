@@ -53,9 +53,9 @@ extension ToolRunner {
         _ record: LoggedSetRecord, in snapshot: TrainingSnapshot, _ prescriptions: Prescriptions
     ) -> JSONValue {
         let routine = snapshot.routines.first { $0.document.id == record.routineID }
-        let week = routine?.document.weeks.indices.contains(record.weekOrdinal - 1) == true
-            ? routine?.document.weeks[record.weekOrdinal - 1] : nil
-        let day = week?.days.first { $0.weekday == record.weekday }
+        let block = routine?.document.blocks.indices.contains(record.blockOrdinal - 1) == true
+            ? routine?.document.blocks[record.blockOrdinal - 1] : nil
+        let day = block?.days.first { $0.weekday == record.weekday }
         return [
             "date": .date(record.completedAt),
             "load": .mass(record.load),
@@ -65,9 +65,9 @@ extension ToolRunner {
             "isCompleted": .bool(record.isCompleted),
             "isWarmup": .bool(record.isWarmup),
             "plan": .string(routine?.document.title ?? ""),
-            "week": .integer(record.weekOrdinal),
-            "weekLabel": .string(week?.label ?? ""),
-            "isDeload": .bool(week?.isDeload ?? false),
+            "block": .integer(record.blockOrdinal),
+            "blockLabel": .string(block?.label ?? ""),
+            "isDeload": .bool(block?.isDeload ?? false),
             "weekday": .string(record.weekday.fullName),
             "focus": .string(day?.focus ?? ""),
             // The prescription is looked up in the document the coach wrote
@@ -138,8 +138,8 @@ extension ToolRunner {
             "date": session.date.map { .date($0) } ?? .null,
             "completedAt": session.completedAt.map { .date($0) } ?? .null,
             "plan": .string(session.planTitle),
-            "week": .integer(session.weekOrdinal),
-            "weekLabel": .string(session.weekLabel),
+            "block": .integer(session.blockOrdinal),
+            "blockLabel": .string(session.blockLabel),
             "isDeload": .bool(session.isDeload),
             "weekday": .string(session.weekday.fullName),
             "focus": .string(session.focus),

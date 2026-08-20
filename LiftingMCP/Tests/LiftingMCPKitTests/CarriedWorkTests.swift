@@ -58,7 +58,7 @@ struct CarriedWorkTests {
     private func carriedSnapshot() -> TrainingSnapshot {
         let block = fixtureRoutine(
             title: "Carry block", goal: "Grip", startDate: daysAgo(10),
-            weeks: [(label: nil, isDeload: false, days: [
+            blocks: [(label: nil, isDeload: false, days: [
                 fixtureDay(
                     weekday: .monday, focus: "Carries", completedAt: daysAgo(2),
                     exercises: [
@@ -191,7 +191,7 @@ struct CarriedWorkTests {
     private func repRangeDescription() throws -> String {
         let described = try value(
             at: [
-                "properties", "weeks", "items", "properties", "days", "items",
+                "properties", "blocks", "items", "properties", "days", "items",
                 // An entry of a day is an exercise or a group, so the exercise
                 // shape is the first of the two the item may take.
                 "properties", "exercises", "items", "anyOf", "0",
@@ -246,7 +246,7 @@ struct CarriedWorkTests {
             ToolCatalog.writePlan,
             arguments: [
                 "title": "Carry block",
-                "weeks": [["days": [[
+                "blocks": [["days": [[
                     "weekday": "monday",
                     "exercises": [[
                         "exerciseID": "kettlebell-farmers-carry",
@@ -260,7 +260,7 @@ struct CarriedWorkTests {
         // Read back through the phone's own decoder, from the bytes on disk —
         // the one direction an encode-then-decode round trip cannot vouch for.
         let read = try #require(try documents.readPlan())
-        let exercise = try #require(read.weeks.first?.days.first?.exercises.first)
+        let exercise = try #require(read.blocks.first?.days.first?.exercises.first)
 
         #expect(exercise.repRange == "40 metres")
         #expect(RepRange("40 metres").isEmpty, "a carry states no rep count")

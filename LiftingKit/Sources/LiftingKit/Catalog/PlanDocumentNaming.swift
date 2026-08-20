@@ -30,10 +30,10 @@ extension PlanDocument {
             version: version, id: id, catalogVersion: catalogVersion,
             generatedAt: generatedAt, title: title, goal: goal,
             durationMinutes: durationMinutes, notes: notes,
-            weeks: weeks.map { week in
-                PlanDocumentWeek(
-                    label: week.label, isDeload: week.isDeload,
-                    days: week.days.map { day in
+            blocks: blocks.map { block in
+                PlanDocumentBlock(
+                    label: block.label, isDeload: block.isDeload,
+                    days: block.days.map { day in
                         PlanDocumentDay(
                             weekday: day.weekday, focus: day.focus,
                             durationMinutes: day.durationMinutes, icon: day.icon,

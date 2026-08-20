@@ -31,10 +31,10 @@ public struct RoutineSchedule: Hashable, Sendable {
     /// highest is what defines the extent: a plan stating weeks 1, 2 and 4
     /// covers four weeks, because the gap is a week it left rather than one to
     /// be closed up.
-    public let weekOrdinals: [Int]
+    public let blockOrdinals: [Int]
 
-    public init(startDate: Date?, weekOrdinals: [Int]) {
+    public init(startDate: Date?, blockOrdinals: [Int]) {
         self.startDate = startDate
-        self.weekOrdinals = weekOrdinals
+        self.blockOrdinals = blockOrdinals
     }
 }

@@ -34,7 +34,7 @@ struct RoutineCalendarTests {
         // last week a week earlier than the plan puts it.
         let subject = RoutineCalendar(calendar: Self.utc)
         let span = try #require(subject.span(
-            of: RoutineSchedule(startDate: Self.at(2026, 3, 2), weekOrdinals: [1, 2, 4])))
+            of: RoutineSchedule(startDate: Self.at(2026, 3, 2), blockOrdinals: [1, 2, 4])))
 
         #expect(span.upperBound == Self.startOfDay(2026, 3, 29))
     }
@@ -43,12 +43,12 @@ struct RoutineCalendarTests {
     func undatedBlockHasNoSpan() {
         let subject = RoutineCalendar(calendar: Self.utc)
 
-        #expect(subject.span(of: RoutineSchedule(startDate: nil, weekOrdinals: [])) == nil)
-        #expect(subject.span(of: RoutineSchedule(startDate: nil, weekOrdinals: [1, 2])) == nil)
+        #expect(subject.span(of: RoutineSchedule(startDate: nil, blockOrdinals: [])) == nil)
+        #expect(subject.span(of: RoutineSchedule(startDate: nil, blockOrdinals: [1, 2])) == nil)
         // A start date with nothing to measure is no extent either — a block
         // with no weeks is not a block of one.
         #expect(subject.span(
-            of: RoutineSchedule(startDate: Self.at(2026, 3, 2), weekOrdinals: [])) == nil)
+            of: RoutineSchedule(startDate: Self.at(2026, 3, 2), blockOrdinals: [])) == nil)
     }
 
     @Test("The day rolls at the lifter's midnight, not at UTC's")
@@ -59,7 +59,7 @@ struct RoutineCalendarTests {
         let newYork = Calendar.inNewYork
         let lateOnTheFirst = Self.at(2026, 3, 2, hour: 4)
         let span = try #require(RoutineCalendar(calendar: newYork).span(
-            of: RoutineSchedule(startDate: lateOnTheFirst, weekOrdinals: [1])))
+            of: RoutineSchedule(startDate: lateOnTheFirst, blockOrdinals: [1])))
 
         #expect(span.lowerBound == Self.startOfDay(2026, 3, 1, in: newYork))
         #expect(span.upperBound == Self.startOfDay(2026, 3, 7, in: newYork))
@@ -74,7 +74,7 @@ struct RoutineCalendarTests {
         let newYork = Calendar.inNewYork
         let span = try #require(RoutineCalendar(calendar: newYork).span(
             of: RoutineSchedule(
-                startDate: Self.startOfDay(2026, 3, 2, in: newYork), weekOrdinals: [1])))
+                startDate: Self.startOfDay(2026, 3, 2, in: newYork), blockOrdinals: [1])))
 
         #expect(span.upperBound == Self.startOfDay(2026, 3, 8, in: newYork))
     }
@@ -84,7 +84,7 @@ struct RoutineCalendarTests {
     private static let utc = Calendar.inUTC
 
     private static func fourWeekBlock() -> RoutineSchedule {
-        RoutineSchedule(startDate: at(2026, 3, 2), weekOrdinals: [1, 2, 3, 4])
+        RoutineSchedule(startDate: at(2026, 3, 2), blockOrdinals: [1, 2, 3, 4])
     }
 
     private static func at(

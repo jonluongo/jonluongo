@@ -210,8 +210,8 @@ struct PlanImporterTests {
     /// genuinely different weeks rather than the same week eight times.
     private func week(
         _ label: String?, load: Double, isDeload: Bool = false
-    ) -> PlanDocumentWeek {
-        PlanDocumentWeek(
+    ) -> PlanDocumentBlock {
+        PlanDocumentBlock(
             label: label, isDeload: isDeload,
             days: [PlanDocumentDay(
                 weekday: .monday, focus: "Lower",
@@ -220,10 +220,10 @@ struct PlanImporterTests {
         )
     }
 
-    private func block(_ weeks: [PlanDocumentWeek], id: UUID = UUID()) -> PlanDocument {
+    private func block(_ weeks: [PlanDocumentBlock], id: UUID = UUID()) -> PlanDocument {
         PlanDocument(
             id: id, catalogVersion: 5, generatedAt: Self.instant,
-            title: "Eight-week block", goal: "Bigger bench", weeks: weeks
+            title: "Eight-block routine", goal: "Bigger bench", blocks: weeks
         )
     }
 
@@ -277,7 +277,7 @@ struct PlanImporterTests {
     @Test("The block trains every day any of its weeks trains")
     func trainingDaysCoverEveryWeek() throws {
         let context = try context()
-        let thursday = PlanDocumentWeek(days: [
+        let thursday = PlanDocumentBlock(days: [
             PlanDocumentDay(weekday: .thursday, exercises: [exercise()])
         ])
         let plan = try PlanImporter.import(
@@ -362,7 +362,7 @@ struct PlanImporterTests {
     @Test("An unknown exercise in a later week fails the whole block")
     func unknownExerciseInALaterWeekImportsNothing() throws {
         let context = try context()
-        let bad = PlanDocumentWeek(days: [
+        let bad = PlanDocumentBlock(days: [
             PlanDocumentDay(
                 weekday: .monday,
                 exercises: [exercise(exerciseID: ExerciseID(rawValue: "zercher-good-morning"))]
@@ -476,8 +476,8 @@ struct PlanImporterTests {
     private func routine(id: UUID, blocks: Int, load: Double = 225) -> PlanDocument {
         PlanDocument(
             id: id, catalogVersion: 5, generatedAt: Self.instant, title: "Autumn strength",
-            weeks: (1...blocks).map { ordinal in
-                PlanDocumentWeek(label: "Block \(ordinal)", days: [
+            blocks: (1...blocks).map { ordinal in
+                PlanDocumentBlock(label: "Block \(ordinal)", days: [
                     PlanDocumentDay(
                         weekday: .monday, focus: "Push",
                         exercises: [exercise(suggestedLoad: Mass(value: load, unit: .pounds))])

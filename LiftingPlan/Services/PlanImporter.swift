@@ -165,10 +165,10 @@ enum PlanImporter {
         let storedWeeks = plan.orderedWeeks
 
         for (index, week) in storedWeeks.enumerated() where isTrained(week) {
-            guard let asStored = stored?.weeks[safe: index] else {
+            guard let asStored = stored?.blocks[safe: index] else {
                 throw PlanImportError.unreadableRoutine
             }
-            guard document.weeks[safe: index] == asStored else {
+            guard document.blocks[safe: index] == asStored else {
                 throw PlanImportError.trainedBlockChanged(index + 1)
             }
         }
@@ -178,10 +178,10 @@ enum PlanImporter {
             // exercises and prescribed sets, and reconciling one tree into
             // another field by field is where a half-applied plan comes from.
             // Nothing is lost, because nothing in it was logged.
-            guard document.weeks[safe: index] != stored?.weeks[safe: index] else { continue }
+            guard document.blocks[safe: index] != stored?.blocks[safe: index] else { continue }
             context.delete(week)
             plan.weeks?.removeAll { $0 === week }
-            if let arriving = blueprint.weeks[safe: index] {
+            if let arriving = blueprint.blocks[safe: index] {
                 let rebuilt = RoutineBlueprint.makeTrainingWeek(arriving, ordinal: index + 1)
                 context.insert(rebuilt)
                 rebuilt.plan = plan
@@ -191,8 +191,8 @@ enum PlanImporter {
         // `stride` rather than a range: a document that states fewer blocks than
         // the store holds is ordinary — the coach dropped one — and a reversed
         // range is a crash rather than an empty loop.
-        for index in stride(from: storedWeeks.count, to: blueprint.weeks.count, by: 1) {
-            guard let arriving = blueprint.weeks[safe: index] else { continue }
+        for index in stride(from: storedWeeks.count, to: blueprint.blocks.count, by: 1) {
+            guard let arriving = blueprint.blocks[safe: index] else { continue }
             let added = RoutineBlueprint.makeTrainingWeek(arriving, ordinal: index + 1)
             context.insert(added)
             added.plan = plan
@@ -201,7 +201,7 @@ enum PlanImporter {
         // A routine that grew is running again: the coach writing next week's
         // block is the plainest statement there is that the lifter is still on
         // this routine.
-        if blueprint.weeks.count > storedWeeks.count { plan.completedAt = nil }
+        if blueprint.blocks.count > storedWeeks.count { plan.completedAt = nil }
     }
 
     /// Whether anything in this block is in the record. A row seeded on screen
@@ -221,7 +221,7 @@ enum PlanImporter {
         in document: PlanDocument,
         using catalog: any ExerciseCatalogProviding
     ) throws {
-        for day in document.weeks.flatMap(\.days) {
+        for day in document.blocks.flatMap(\.days) {
             for exercise in day.exercises where catalog.exercise(id: exercise.exerciseID) == nil {
                 throw PlanImportError.unknownExercise(exercise.exerciseID)
             }
@@ -234,7 +234,7 @@ enum PlanImporter {
     /// when it did not — the same failure a silently dropped key is, and the
     /// same answer: refuse, and say which one.
     private static func confirmEveryIconExists(in document: PlanDocument) throws {
-        for day in document.weeks.flatMap(\.days) {
+        for day in document.blocks.flatMap(\.days) {
             guard let icon = day.icon, !icon.isKnown else { continue }
             throw PlanImportError.unknownIcon(icon)
         }
@@ -267,7 +267,7 @@ enum PlanImporter {
     static func wouldChange(_ document: PlanDocument, in context: ModelContext) throws -> Bool {
         guard let stored = try plan(forDocument: document.id, in: context) else { return true }
         guard let asStored = PlanDocument(reconstructing: stored) else { return true }
-        return asStored.weeks != document.weeks
+        return asStored.blocks != document.blocks
     }
 
     /// The plan already imported from this document, if there is one.

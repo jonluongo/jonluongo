@@ -99,38 +99,38 @@ struct ContextReport {
     private var currentBlock: JSONValue {
         guard let routine = TrainingLog.currentRoutine(in: snapshot) else { return .null }
         let plan = routine.document
-        // Which weeks hold logged work, read off the flat log rather than by
+        // Which blocks hold logged work, read off the flat log rather than by
         // walking the plan: the plan says what was asked for and the log says
         // what happened, and they are two different documents now.
-        let loggedWeeks = Set(
-            snapshot.log.filter { $0.routineID == plan.id }.map(\.weekOrdinal))
+        let loggedBlocks = Set(
+            snapshot.log.filter { $0.routineID == plan.id }.map(\.blockOrdinal))
         let ordinal = Self.currentOrdinal(of: routine)
-        let week = plan.weeks.indices.contains(ordinal - 1) ? plan.weeks[ordinal - 1] : nil
+        let block = plan.blocks.indices.contains(ordinal - 1) ? plan.blocks[ordinal - 1] : nil
         return [
-            // What `write_plan` needs in order to add a week to this routine
+            // What `write_plan` needs in order to add a block to this routine
             // rather than replace it.
             "routineID": .string(plan.id.uuidString),
             "title": .string(plan.title),
             "goal": .string(plan.goal),
             "startDate": .date(routine.startDate),
             "weekdays": .array(
-                Set(plan.weeks.flatMap(\.days).map(\.weekday))
+                Set(plan.blocks.flatMap(\.days).map(\.weekday))
                     .sorted { Weekday.displayOrder.firstIndex(of: $0) ?? 0
                         < Weekday.displayOrder.firstIndex(of: $1) ?? 0 }
                     .map { .string($0.fullName) }),
             "durationMinutes": .integer(plan.durationMinutes),
-            "weeksPrescribed": .integer(plan.weeks.count),
-            "weeksLogged": .integer(loggedWeeks.count),
-            "currentWeekOrdinal": .integer(ordinal),
-            "currentWeekLabel": .string(week?.label ?? ""),
-            "currentWeekIsDeload": .bool(week?.isDeload ?? false),
+            "blocksPrescribed": .integer(plan.blocks.count),
+            "blocksLogged": .integer(loggedBlocks.count),
+            "currentBlockOrdinal": .integer(ordinal),
+            "currentBlockLabel": .string(block?.label ?? ""),
+            "currentBlockIsDeload": .bool(block?.isDeload ?? false),
             // The fact a weekly loop turns on: he is on the last block that was
             // written and every session in it is finished, so there is nothing
             // prescribed for him to train next. It states the position and
             // nothing about what should follow.
             "nothingPrescribedBeyond": .bool(Self.isSpent(routine, at: ordinal)),
             "days": .array(
-                (week?.days ?? []).map {
+                (block?.days ?? []).map {
                     [
                         "weekday": .string($0.weekday.fullName),
                         "focus": .string($0.focus),
@@ -144,16 +144,16 @@ struct ContextReport {
     /// The earliest block still holding an unfinished session, or the last block
     /// when every one of them is finished.
     static func currentOrdinal(of routine: SnapshotRoutine) -> Int {
-        let unfinished = routine.sessions.filter { $0.completedAt == nil }.map(\.weekOrdinal)
-        return unfinished.min() ?? max(1, routine.document.weeks.count)
+        let unfinished = routine.sessions.filter { $0.completedAt == nil }.map(\.blockOrdinal)
+        return unfinished.min() ?? max(1, routine.document.blocks.count)
     }
 
     /// Whether the routine has nothing left to train: the block he is on is the
     /// last one written, and every session in it is finished.
     static func isSpent(_ routine: SnapshotRoutine, at ordinal: Int) -> Bool {
-        guard ordinal == routine.document.weeks.count else { return false }
+        guard ordinal == routine.document.blocks.count else { return false }
         return routine.sessions
-            .filter { $0.weekOrdinal == ordinal }
+            .filter { $0.blockOrdinal == ordinal }
             .allSatisfy { $0.completedAt != nil }
     }
 
@@ -165,7 +165,7 @@ struct ContextReport {
                 [
                     "date": session.date.map { .date($0) } ?? .null,
                     "plan": .string(session.planTitle),
-                    "week": .integer(session.weekOrdinal),
+                    "block": .integer(session.blockOrdinal),
                     "weekday": .string(session.weekday.fullName),
                     "focus": .string(session.focus),
                     "exercises": .array(

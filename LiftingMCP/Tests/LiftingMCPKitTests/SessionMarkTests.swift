@@ -34,7 +34,7 @@ struct SessionMarkTests {
     }
 
     private func arguments(icon: String?) -> JSONValue {
-        ["title": "Block", "goal": "Get stronger", "weeks": [["days": [day(icon: icon)]]]]
+        ["title": "Block", "goal": "Get stronger", "blocks": [["days": [day(icon: icon)]]]]
     }
 
     // MARK: - What the schema offers
@@ -42,7 +42,7 @@ struct SessionMarkTests {
     @Test("The day schema offers exactly the marks the app can draw")
     func schemaOffersEveryMark() throws {
         let definition = ToolCatalog.writePlanDefinition
-        let weeks = try #require(definition.inputSchema["properties"]?["weeks"])
+        let weeks = try #require(definition.inputSchema["properties"]?["blocks"])
         let week = try #require(weeks["items"])
         let days = try #require(week["properties"]?["days"])
         let day = try #require(days["items"])
@@ -68,7 +68,7 @@ struct SessionMarkTests {
             return
         }
         let written = try #require(documents.lastWrittenPlan)
-        #expect(written.weeks.first?.days.first?.icon == .intervals)
+        #expect(written.blocks.first?.days.first?.icon == .intervals)
     }
 
     @Test("A session he marked nothing carries nothing")
@@ -79,7 +79,7 @@ struct SessionMarkTests {
             Issue.record("a plan with no mark is written: \(outcome)")
             return
         }
-        #expect(try #require(documents.lastWrittenPlan).weeks.first?.days.first?.icon == nil)
+        #expect(try #require(documents.lastWrittenPlan).blocks.first?.days.first?.icon == nil)
     }
 
     // MARK: - What it refuses, and when

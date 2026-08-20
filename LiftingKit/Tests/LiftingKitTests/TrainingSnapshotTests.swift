@@ -93,7 +93,7 @@ struct TrainingSnapshotTests {
 
     private func loggedSet(load: Mass?) -> LoggedSetRecord {
         LoggedSetRecord(
-            routineID: Self.routineID, weekOrdinal: 1, weekday: .monday, exerciseOrder: 0,
+            routineID: Self.routineID, blockOrdinal: 1, weekday: .monday, exerciseOrder: 0,
             exerciseID: ExerciseID(rawValue: "barbell-bench-press"), setIndex: 0,
             isWarmup: false, isCompleted: true, completedAt: Self.instant,
             load: load, reps: 5
@@ -117,14 +117,14 @@ struct TrainingSnapshotTests {
             document: PlanDocument(
                 id: Self.routineID, catalogVersion: 5, generatedAt: Self.instant,
                 title: "Strength block", goal: "Bigger bench", durationMinutes: 60,
-                weeks: [PlanDocumentWeek(
+                blocks: [PlanDocumentBlock(
                     label: "Accumulation", isDeload: false,
                     days: [PlanDocumentDay(
                         weekday: .monday, focus: "Push", durationMinutes: 60,
                         exercises: [exercise])])]),
             startDate: Self.instant,
             sessions: [SnapshotSession(
-                weekOrdinal: 1, weekday: .monday, completedAt: Self.instant)]
+                blockOrdinal: 1, weekday: .monday, completedAt: Self.instant)]
         )
         let profile = SnapshotProfile(
             displayUnit: .pounds, experience: .intermediate,
@@ -163,7 +163,7 @@ struct TrainingSnapshotTests {
     /// routine carries.
     private func firstExercise(in snapshot: TrainingSnapshot) throws -> PlanDocumentExercise {
         let routine = try #require(snapshot.routines.first)
-        let week = try #require(routine.document.weeks.first)
+        let week = try #require(routine.document.blocks.first)
         let day = try #require(week.days.first)
         return try #require(day.entries.flatMap(\.exercises).first)
     }
@@ -244,7 +244,7 @@ struct TrainingSnapshotTests {
     func unknownValuesFromRawJSONDecode() throws {
         let json = """
         {
-          "version": 3,
+          "version": 4,
           "catalogVersion": 99,
           "generatedAt": "2023-11-14T22:13:20Z",
           "profile": {
@@ -288,7 +288,7 @@ struct TrainingSnapshotTests {
     @Test("Absent sections decode as empty rather than failing")
     func absentSectionsDecodeAsEmpty() throws {
         let json = """
-        {"version": 3, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
+        {"version": 4, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
         """
         let decoded = try TrainingSnapshot.makeDecoder()
             .decode(TrainingSnapshot.self, from: Data(json.utf8))
@@ -342,7 +342,7 @@ struct TrainingSnapshotTests {
     func profileWithoutStatedFactsDecodes() throws {
         let json = """
         {
-          "version": 3,
+          "version": 4,
           "catalogVersion": 5,
           "generatedAt": "2023-11-14T22:13:20Z",
           "profile": {

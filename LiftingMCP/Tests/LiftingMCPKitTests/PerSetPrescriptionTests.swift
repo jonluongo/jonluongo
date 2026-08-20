@@ -85,7 +85,7 @@ struct PerSetPrescriptionTests {
             ]])]
         ])
         let reported = try #require(
-            outcome.report?["plan"]?["weeks"]?[0]?["days"]?[0]?["exercises"]?[0])
+            outcome.report?["plan"]?["blocks"]?[0]?["days"]?[0]?["exercises"]?[0])
 
         #expect(reported["sets"]?.intValue == 2)
         let sets = try #require(reported["prescribedSets"]?.arrayValue)
@@ -200,7 +200,7 @@ struct PerSetPrescriptionTests {
             ]])]
         ])
         let reported = try #require(
-            outcome.report?["plan"]?["weeks"]?[0]?["days"]?[0]?["exercises"]?[0])
+            outcome.report?["plan"]?["blocks"]?[0]?["days"]?[0]?["exercises"]?[0])
 
         #expect(reported["intensity"]?["scale"] == .string("rpe"))
         #expect(reported["intensity"]?["value"] == .string("8-9"))

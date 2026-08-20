@@ -69,7 +69,7 @@ struct ConditioningVolumeTests {
         let block = fixtureRoutine(
             title: "Mixed block", goal: "Bench and conditioning", startDate: daysAgo(10),
             durationMinutes: 75,
-            weeks: [(label: nil, isDeload: false, days: [
+            blocks: [(label: nil, isDeload: false, days: [
                 fixtureDay(
                     weekday: .monday, focus: "Push and conditioning", durationMinutes: 75,
                     completedAt: daysAgo(2),
@@ -107,7 +107,7 @@ struct ConditioningVolumeTests {
         let outcome = try makeRunner(
             documents: InMemoryDocuments(snapshot: mixedSnapshot()),
             catalog: try mixedCatalog()
-        ).call(ToolCatalog.volumeByMuscle, arguments: ["weeks": 4])
+        ).call(ToolCatalog.volumeByMuscle, arguments: ["blocks": 4])
         return try #require(outcome.report)
     }
 
@@ -172,7 +172,7 @@ struct ConditioningVolumeTests {
     @Test("Nothing excluded reads as nothing excluded, not as an absent section")
     func nothingExcludedIsStated() throws {
         let outcome = try makeRunner(documents: InMemoryDocuments(snapshot: fixtureSnapshot()))
-            .call(ToolCatalog.volumeByMuscle, arguments: ["weeks": 4])
+            .call(ToolCatalog.volumeByMuscle, arguments: ["blocks": 4])
         let report = try #require(outcome.report)
 
         #expect(report["excluded"]?["sets"] == 0)

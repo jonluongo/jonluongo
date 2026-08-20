@@ -26,6 +26,12 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// The format version this build writes. Bump it when a reader would need
     /// to behave differently, not for an additive field.
     ///
+    /// Version 4 renamed `weekOrdinal` to `blockOrdinal` everywhere the log and
+    /// the sessions name where a thing sits, following `PlanDocument` version 5
+    /// and the word the app, the coach and the lifter already use. Refused
+    /// rather than read loosely: a reader that took a missing `blockOrdinal` as
+    /// zero would file every set under a block that does not exist.
+    ///
     /// Version 3 replaced `plans` — a tree of snapshot types that restated the
     /// plan document in a second shape — with `routines`, which carry the
     /// document itself, and `log`, a flat series of every set logged against
@@ -34,7 +40,7 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// not know before it looks at anything else.
     ///
     /// Version 2 dropped the per-set `rpe` a lifter used to be asked for.
-    public static let currentVersion = 3
+    public static let currentVersion = 4
 
     /// The format version of this document, as written.
     public let version: Int

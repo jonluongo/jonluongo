@@ -45,8 +45,8 @@ struct PlanDocumentRoundTripTests {
             id: UUID(), catalogVersion: 5, generatedAt: Self.instant,
             title: "Autumn strength", goal: "Add 20 lb to the squat",
             durationMinutes: 60, notes: "The fourth week is lighter on purpose.",
-            weeks: [
-                PlanDocumentWeek(label: "Accumulation", isDeload: false, days: [
+            blocks: [
+                PlanDocumentBlock(label: "Accumulation", isDeload: false, days: [
                     PlanDocumentDay(
                         weekday: .monday, focus: "Push", durationMinutes: 55,
                         icon: .strength,
@@ -59,7 +59,7 @@ struct PlanDocumentRoundTripTests {
                                 tempo: "3-0-1-0", notes: "Pause the last rep")
                         ]),
                 ]),
-                PlanDocumentWeek(label: "Deload", isDeload: true, days: [
+                PlanDocumentBlock(label: "Deload", isDeload: true, days: [
                     PlanDocumentDay(weekday: .friday, focus: "Pull", exercises: [
                         PlanDocumentExercise(
                             exerciseID: Self.row, displayName: "Barbell Row", sets: 2)
@@ -74,7 +74,7 @@ struct PlanDocumentRoundTripTests {
     func unnamedWeekStaysUnnamed() throws {
         let document = PlanDocument(
             id: UUID(), catalogVersion: 5, generatedAt: Self.instant,
-            weeks: [PlanDocumentWeek(days: [
+            blocks: [PlanDocumentBlock(days: [
                 PlanDocumentDay(weekday: .monday, exercises: [
                     PlanDocumentExercise(
                         exerciseID: Self.bench, displayName: "Barbell Bench Press", sets: 3)
@@ -82,7 +82,7 @@ struct PlanDocumentRoundTripTests {
             ])])
 
         let read = try #require(try roundTrip(document))
-        #expect(read.weeks[0].label == nil)
+        #expect(read.blocks[0].label == nil)
         #expect(read == document)
     }
 
@@ -109,7 +109,7 @@ struct PlanDocumentRoundTripTests {
 
         let read = try #require(try roundTrip(document))
         #expect(read == document)
-        #expect(read.weeks[0].days[0].entries[0].exercises[0].statedSets == ramp)
+        #expect(read.blocks[0].days[0].entries[0].exercises[0].statedSets == ramp)
     }
 
     @Test("A superset comes back as a group, with the rest on the group")
@@ -135,7 +135,7 @@ struct PlanDocumentRoundTripTests {
 
         let read = try #require(try roundTrip(document))
         #expect(read == document)
-        guard case .group(let group) = read.weeks[0].days[0].entries[1] else {
+        guard case .group(let group) = read.blocks[0].days[0].entries[1] else {
             Issue.record("Expected the second entry to be a group")
             return
         }
@@ -159,8 +159,8 @@ struct PlanDocumentRoundTripTests {
             ])
 
         let read = try #require(try roundTrip(document))
-        #expect(read.weeks[0].days[0].icon == .intervals)
-        #expect(read.weeks[0].days[1].icon == nil)
+        #expect(read.blocks[0].days[0].icon == .intervals)
+        #expect(read.blocks[0].days[1].icon == nil)
         #expect(read == document)
     }
 
@@ -177,7 +177,7 @@ struct PlanDocumentRoundTripTests {
             ])
 
         let read = try #require(try roundTrip(document))
-        #expect(read.weeks[0].days.count == 2)
+        #expect(read.blocks[0].days.count == 2)
         #expect(read == document)
     }
 

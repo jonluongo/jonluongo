@@ -55,7 +55,7 @@ struct LifterNoteTests {
         let note = try #require(try exported(context).lifterNotes.first)
         #expect(note.text == "Knee hurt at the end.")
         #expect(note.exerciseID == Self.bench)
-        #expect(note.weekOrdinal == 1)
+        #expect(note.blockOrdinal == 1)
         #expect(note.weekday == .monday)
         #expect(note.exerciseOrder == 0)
     }

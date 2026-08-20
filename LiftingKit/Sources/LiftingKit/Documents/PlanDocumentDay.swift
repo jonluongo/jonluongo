@@ -1,6 +1,6 @@
 import Foundation
 
-/// One training day of a `PlanDocumentWeek`.
+/// One training day of a `PlanDocumentBlock`.
 ///
 /// Read `entries` in the order given — that is the order the work is meant to be
 /// done in, and nothing downstream re-sorts it. An empty day is a rest day the

@@ -29,18 +29,18 @@ struct RoutineBlueprint: Equatable {
     /// did not come from one. Distinct from the start date the mapping is given,
     /// which is when it arrived.
     var generatedAt: Date?
-    /// The block's weeks, in the order they are to be trained. A week's
+    /// The routine's blocks, in the order they are to be trained. A block's
     /// position here is its ordinal.
-    var weeks: [BlockBlueprint]
+    var blocks: [BlockBlueprint]
 
-    /// How many weeks the block runs: the weeks it actually holds. Derived
+    /// How many blocks the routine runs: the blocks it actually holds. Derived
     /// rather than carried, so a stated length and the training that arrived
     /// cannot disagree.
-    var weekCount: Int { weeks.count }
+    var blockCount: Int { blocks.count }
 
     /// Every training day of the block, in order. The days a block trains are a
-    /// restatement of the days it prescribes, across all of its weeks.
-    var days: [DayBlueprint] { weeks.flatMap(\.days) }
+    /// restatement of the days it prescribes, across all of its blocks.
+    var days: [DayBlueprint] { blocks.flatMap(\.days) }
 }
 
 extension RoutineBlueprint {
@@ -58,7 +58,7 @@ extension RoutineBlueprint {
         self.init(
             title: title, goal: goal, notes: notes,
             durationMinutes: durationMinutes, generatedAt: generatedAt,
-            weeks: [BlockBlueprint(days: days)]
+            blocks: [BlockBlueprint(days: days)]
         )
     }
 }
@@ -122,13 +122,13 @@ extension RoutineBlueprint {
             notes: notes,
             startDate: startDate,
             generatedAt: generatedAt,
-            weekCount: weekCount,
+            weekCount: blockCount,
             weekdays: Set(days.map(\.weekday)),
             durationMinutes: durationMinutes,
             catalogVersion: catalogVersion
         )
-        plan.weeks = weeks.enumerated().map { index, week in
-            Self.makeTrainingWeek(week, ordinal: index + 1)
+        plan.weeks = blocks.enumerated().map { index, block in
+            Self.makeTrainingWeek(block, ordinal: index + 1)
         }
         return plan
     }
@@ -241,11 +241,11 @@ extension RoutineBlueprint {
             notes: document.notes,
             durationMinutes: document.durationMinutes,
             generatedAt: document.generatedAt,
-            weeks: document.weeks.map { week in
+            blocks: document.blocks.map { block in
                 BlockBlueprint(
-                    label: week.label,
-                    isDeload: week.isDeload,
-                    days: week.days.map(Self.dayBlueprint)
+                    label: block.label,
+                    isDeload: block.isDeload,
+                    days: block.days.map(Self.dayBlueprint)
                 )
             }
         )

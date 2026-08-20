@@ -66,8 +66,8 @@ extension ToolRunner {
     }
 
     /// The plan as it was written, so the caller sees what landed rather than
-    /// what it sent — including the weeks, which is the whole point of writing
-    /// a block rather than a week.
+    /// what it sent — including the blocks, which is the whole point of writing
+    /// a routine rather than a single session.
     static func reported(_ document: PlanDocument) -> JSONValue {
         [
             "id": .string(document.id.uuidString),
@@ -76,16 +76,16 @@ extension ToolRunner {
             "generatedAt": .date(document.generatedAt),
             "title": .string(document.title),
             "goal": .string(document.goal),
-            "weekCount": .integer(document.weekCount),
+            "blockCount": .integer(document.blockCount),
             "durationMinutes": .integer(document.durationMinutes),
             "notes": .string(document.notes),
-            "weeks": .array(
-                document.weeks.enumerated().map { ordinal, week in
+            "blocks": .array(
+                document.blocks.enumerated().map { ordinal, block in
                     [
                         "ordinal": .integer(ordinal + 1),
-                        "label": .string(week.label),
-                        "isDeload": .bool(week.isDeload),
-                        "days": .array(week.days.map(reported(day:))),
+                        "label": .string(block.label),
+                        "isDeload": .bool(block.isDeload),
+                        "days": .array(block.days.map(reported(day:))),
                     ]
                 }),
         ]

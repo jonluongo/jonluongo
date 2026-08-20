@@ -5,7 +5,7 @@ import LiftingKit
 ///
 /// The wire carries a block as the document the coach wrote and the work against
 /// it as a flat series, which is the right shape for a reader and a long walk
-/// for a test: `snapshot.routines.first?.document.weeks.first?.days.first?` is
+/// for a test: `snapshot.routines.first?.document.blocks.first?.days.first?` is
 /// four optionals before the assertion starts. These name the walk once.
 ///
 /// Test support only — nothing in the app reads a snapshot at all. It writes
@@ -16,7 +16,7 @@ extension TrainingSnapshot {
     var firstDocument: PlanDocument? { routines.first?.document }
 
     /// The first day of the first week of that block.
-    var firstDay: PlanDocumentDay? { firstDocument?.weeks.first?.days.first }
+    var firstDay: PlanDocumentDay? { firstDocument?.blocks.first?.days.first }
 
     /// The day's movements in prescribed order, groups flattened into the
     /// sequence they are performed in.

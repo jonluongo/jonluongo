@@ -84,7 +84,7 @@ enum RoutineListing {
     /// blocks that refused to date them would be a list of anonymous rows.
     static func span(of plan: TrainingPlan, calendar: Calendar = .current) -> ClosedRange<Date>? {
         RoutineCalendar(calendar: calendar).span(of: RoutineSchedule(
-            startDate: plan.startDate, weekOrdinals: plan.orderedWeeks.map(\.ordinal)))
+            startDate: plan.startDate, blockOrdinals: plan.orderedWeeks.map(\.ordinal)))
     }
 
     /// The block's timeframe, or the fact that it has none.

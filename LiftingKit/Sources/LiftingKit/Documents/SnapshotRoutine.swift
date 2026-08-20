@@ -23,7 +23,7 @@ import Foundation
 /// the tree before it could ask anything.
 ///
 /// **How it is used.** Read `document` for what was prescribed —
-/// `weeks[weekOrdinal - 1]`, the day whose `weekday` matches, its entries in
+/// `weeks[blockOrdinal - 1]`, the day whose `weekday` matches, its entries in
 /// order. Read `sessions` for what the record says about those days.
 ///
 /// **What it depends on.** `PlanDocument` and `Weekday`.
@@ -73,7 +73,7 @@ public struct SnapshotSession: Codable, Hashable, Sendable {
 
     /// 1-based position of the week within the block, matching the document's
     /// `weeks` array.
-    public let weekOrdinal: Int
+    public let blockOrdinal: Int
     public let weekday: Weekday
 
     /// When the lifter marked the session finished. `nil` when he has not.
@@ -83,8 +83,8 @@ public struct SnapshotSession: Codable, Hashable, Sendable {
     /// is finished. Only he can say which, which is what the mark is for.
     public let completedAt: Date?
 
-    public init(weekOrdinal: Int, weekday: Weekday, completedAt: Date?) {
-        self.weekOrdinal = weekOrdinal
+    public init(blockOrdinal: Int, weekday: Weekday, completedAt: Date?) {
+        self.blockOrdinal = blockOrdinal
         self.weekday = weekday
         self.completedAt = completedAt
     }
@@ -109,7 +109,7 @@ public struct SnapshotSession: Codable, Hashable, Sendable {
 public struct LifterNote: Codable, Hashable, Sendable {
 
     public let routineID: UUID
-    public let weekOrdinal: Int
+    public let blockOrdinal: Int
     public let weekday: Weekday
     public let exerciseOrder: Int
     public let exerciseID: ExerciseID
@@ -117,11 +117,11 @@ public struct LifterNote: Codable, Hashable, Sendable {
     public let text: String
 
     public init(
-        routineID: UUID, weekOrdinal: Int, weekday: Weekday, exerciseOrder: Int,
+        routineID: UUID, blockOrdinal: Int, weekday: Weekday, exerciseOrder: Int,
         exerciseID: ExerciseID, text: String
     ) {
         self.routineID = routineID
-        self.weekOrdinal = weekOrdinal
+        self.blockOrdinal = blockOrdinal
         self.weekday = weekday
         self.exerciseOrder = exerciseOrder
         self.exerciseID = exerciseID
@@ -157,7 +157,7 @@ public struct LoggedSetRecord: Codable, Hashable, Sendable {
     /// The `PlanDocument.id` of the block this set was logged against.
     public let routineID: UUID
     /// 1-based position of the week within that block.
-    public let weekOrdinal: Int
+    public let blockOrdinal: Int
     public let weekday: Weekday
     /// Where the movement sits among the day's exercises, counting through a
     /// group's members in the order they are performed.
@@ -185,13 +185,13 @@ public struct LoggedSetRecord: Codable, Hashable, Sendable {
     public let distance: Distance?
 
     public init(
-        routineID: UUID, weekOrdinal: Int, weekday: Weekday, exerciseOrder: Int,
+        routineID: UUID, blockOrdinal: Int, weekday: Weekday, exerciseOrder: Int,
         exerciseID: ExerciseID, setIndex: Int, isWarmup: Bool, isCompleted: Bool,
         completedAt: Date, load: Mass? = nil, reps: Int = 0,
         durationSeconds: Int? = nil, distance: Distance? = nil
     ) {
         self.routineID = routineID
-        self.weekOrdinal = weekOrdinal
+        self.blockOrdinal = blockOrdinal
         self.weekday = weekday
         self.exerciseOrder = exerciseOrder
         self.exerciseID = exerciseID

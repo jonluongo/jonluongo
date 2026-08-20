@@ -268,7 +268,7 @@ struct PerSetPrescriptionTests {
         let root = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         let routines = try #require(root["routines"] as? [[String: Any]])
         let document = try #require(routines.first?["document"] as? [String: Any])
-        let weeks = try #require(document["weeks"] as? [[String: Any]])
+        let weeks = try #require(document["blocks"] as? [[String: Any]])
         let days = try #require(weeks.first?["days"] as? [[String: Any]])
         let exercises = try #require(days.first?["exercises"] as? [[String: Any]])
         // The sets the plan listed one at a time, under the key the format that
