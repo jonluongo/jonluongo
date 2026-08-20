@@ -311,4 +311,54 @@ struct ProfileUpdateFoldingTests {
 
         #expect(later.superseding(update()) == later)
     }
+
+    // MARK: - A baseline has to be at least one repetition
+
+    @Test("A baseline of zero repetitions is refused, not recorded")
+    func aBaselineOfNothingIsRefused() {
+        // It would be shown to the lifter as "225 lb × 0" on the one page that
+        // says what he can already do — a set nobody performed, recorded as a
+        // fact about him.
+        #expect(throws: DocumentRefusal.self) {
+            try ProfileUpdate.makeDecoder().decode(
+                ProfileUpdate.self,
+                from: Data("""
+                    {"version": 3, "id": "11111111-2222-3333-4444-555555555555",
+                     "generatedAt": "2023-11-14T22:13:20Z",
+                     "baselines": [{"exerciseID": "barbell-bench-press",
+                                    "load": {"value": 225, "unit": "lb"}, "reps": 0}]}
+                    """.utf8))
+        }
+    }
+
+    @Test("The refusal names the lift, so the one to fix is obvious")
+    func theRefusalNamesTheLift() {
+        do {
+            _ = try ProfileUpdate.makeDecoder().decode(
+                ProfileUpdate.self,
+                from: Data("""
+                    {"version": 3, "id": "11111111-2222-3333-4444-555555555555",
+                     "generatedAt": "2023-11-14T22:13:20Z",
+                     "baselines": [{"exerciseID": "barbell-squat", "reps": 0}]}
+                    """.utf8))
+            Issue.record("a baseline of zero has to be refused")
+        } catch {
+            #expect("\(error)".contains("barbell-squat") || (error as? DocumentRefusal)
+                .map { ($0.errorDescription ?? "").contains("barbell-squat") } == true)
+        }
+    }
+
+    @Test("A baseline of one repetition is a fact and is kept")
+    func oneRepetitionIsEnough() throws {
+        let update = try ProfileUpdate.makeDecoder().decode(
+            ProfileUpdate.self,
+            from: Data("""
+                {"version": 3, "id": "11111111-2222-3333-4444-555555555555",
+                 "generatedAt": "2023-11-14T22:13:20Z",
+                 "baselines": [{"exerciseID": "barbell-squat",
+                                "load": {"value": 315, "unit": "lb"}, "reps": 1}]}
+                """.utf8))
+
+        #expect(update.baselines.first?.reps == 1)
+    }
 }

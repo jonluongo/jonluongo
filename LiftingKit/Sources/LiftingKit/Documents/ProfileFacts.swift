@@ -97,7 +97,8 @@ public struct BaselineStatement: Codable, Hashable, Sendable {
     }
 
     /// The lift and the reps are required — a baseline that cannot say which
-    /// movement, or how many, anchors nothing. An unknown key is refused by
+    /// movement, or how many, anchors nothing — and the reps have to be at
+    /// least one, for the same reason. An unknown key is refused by
     /// name, as everywhere else in this format.
     public init(from decoder: any Decoder) throws {
         try decoder.refuseUnknownKeys(besides: Set(CodingKeys.allCases.map(\.stringValue)))
@@ -106,5 +107,17 @@ public struct BaselineStatement: Codable, Hashable, Sendable {
         load = try container.decodeIfPresent(Mass.self, forKey: .load)
         reps = try container.decode(Int.self, forKey: .reps)
         recordedAt = try container.decodeIfPresent(Date.self, forKey: .recordedAt)
+
+        // **A baseline of no repetitions anchors nothing**, which is the same
+        // reason the key is required at all. Zero would be recorded as a fact
+        // and shown to the lifter as *225 lb × 0* — a set nobody performed,
+        // sitting in the one place the record says what he can already do.
+        guard reps > 0 else {
+            throw DocumentRefusal.contradiction(
+                "The baseline for '\(exerciseID.rawValue)' says \(reps) repetitions. A "
+                    + "baseline is the most he has done on a lift, so it has to be at least "
+                    + "one — nothing was taken in. Send the reps he actually did, or leave the "
+                    + "baseline out until he says.")
+        }
     }
 }
