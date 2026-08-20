@@ -108,9 +108,25 @@ final class RestTimerModel {
         return "The rest timer can't alert you once the screen locks: \(reason)"
     }
 
+    /// Whether permission has been asked for in this run. iOS prompts once per
+    /// install; this stops the app asking it again every set.
+    private var hasAskedToNotify = false
+
     /// Begin (or restart) a countdown of `seconds`, tied to a set the lifter just logged.
+    ///
+    /// **The first rest is when permission is asked for.** It used to be asked
+    /// at launch, in front of an empty app: a dialog about alerts for a
+    /// countdown that had never run, on a screen that says he has no routine.
+    /// iOS gives one chance at that question, and *Don't Allow* there costs him
+    /// the cue he would actually have wanted. Here it arrives with its answer
+    /// in view — the clock has just started, and the alert is what tells him it
+    /// finished while his phone is in his pocket.
     func start(seconds: Int, context: String) {
         guard seconds > 0 else { return }
+        if !hasAskedToNotify {
+            hasAskedToNotify = true
+            Task { await requestNotificationAuthorization() }
+        }
         total = seconds
         remaining = seconds
         contextLabel = context

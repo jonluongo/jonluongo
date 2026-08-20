@@ -90,8 +90,15 @@ struct LiftingPlanApp: App {
                     // Presented in the foreground too. Without a delegate iOS
                     // silently swallows a notification that fires while the app
                     // is open — which, during a workout, is every one of them.
+                    //
+                    // **Permission is not asked here.** It used to be, which
+                    // meant the first thing a new install did was put a system
+                    // dialog in front of a screen reading *No routine yet* — an
+                    // app whose whole premise is that it asks him nothing,
+                    // opening by asking him something he has no way to judge.
+                    // `RestTimerModel` asks when the first rest starts, which
+                    // is the moment the answer means anything.
                     UNUserNotificationCenter.current().delegate = Self.foregroundAlerts
-                    await restTimer.requestNotificationAuthorization()
                 }
                 // Started once, for the life of the app: anything arriving
                 // from the Mac is taken in wherever the lifter happens to be.

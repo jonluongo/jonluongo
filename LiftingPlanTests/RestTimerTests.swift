@@ -14,9 +14,11 @@ private final class FakeNotificationCenter: RestNotificationScheduling {
     var schedulingError: (any Error)?
     private(set) var scheduled: [UNNotificationRequest] = []
     private(set) var removed: [String] = []
+    private(set) var authorizationRequests = 0
 
     func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
-        try authorizationAnswer.get()
+        authorizationRequests += 1
+        return try authorizationAnswer.get()
     }
 
     func add(_ request: UNNotificationRequest) async throws {
@@ -223,5 +225,27 @@ struct RestTimerNotificationTests {
     private final class AlertCounter {
         private(set) var count = 0
         func fire() { count += 1 }
+    }
+
+    // MARK: - When permission is asked for
+
+    @Test("The first rest asks for permission; the ones after it do not")
+    func permissionIsAskedForOnceWhenItMeansSomething() async throws {
+        // It used to be asked at launch, in front of a screen reading "No
+        // routine yet" — a dialog about alerts for a countdown that had never
+        // run, in an app whose premise is that it asks him nothing. iOS gives
+        // one chance at that question.
+        let center = FakeNotificationCenter()
+        let timer = RestTimerModel(center: center, alert: {})
+
+        #expect(center.authorizationRequests == 0, "nothing has started yet")
+
+        timer.start(seconds: 90, context: "Squat")
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(center.authorizationRequests == 1, "the clock is running; the alert makes sense")
+
+        timer.start(seconds: 90, context: "Bench")
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(center.authorizationRequests == 1, "asking again every set is asking him nothing")
     }
 }
