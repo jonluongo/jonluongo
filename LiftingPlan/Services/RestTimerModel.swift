@@ -45,12 +45,26 @@ final class RestTimerModel {
         "rest-timer-finished-\(index)"
     }
     private let center: any RestNotificationScheduling
+    /// What time it is. Injected so a test can put the clock past the end of a
+    /// rest without waiting for one — which is the only way to reach the state
+    /// a suspended app comes back in.
+    private let now: () -> Date
+    /// The cue in his hand: haptic and sound. Injected for the same reason the
+    /// clock is — whether it fires is the whole of what `finish` decides, and a
+    /// system sound played straight into the speaker cannot be asked about.
+    private let alert: @MainActor () -> Void
 
     /// The real notification centre by default; a fake in tests, which cannot
     /// ask a simulator for permission and must still be able to check that a
     /// refusal is reported rather than swallowed.
-    init(center: any RestNotificationScheduling = SystemRestNotificationCenter()) {
+    init(
+        center: any RestNotificationScheduling = SystemRestNotificationCenter(),
+        now: @escaping () -> Date = Date.init,
+        alert: @escaping @MainActor () -> Void = RestTimerModel.playInHandAlert
+    ) {
         self.center = center
+        self.now = now
+        self.alert = alert
     }
 
     /// Fraction elapsed, 0...1 — drives the ring.
@@ -100,7 +114,7 @@ final class RestTimerModel {
         total = seconds
         remaining = seconds
         contextLabel = context
-        endDate = Date().addingTimeInterval(TimeInterval(seconds))
+        endDate = now().addingTimeInterval(TimeInterval(seconds))
         isRunning = true
         scheduleTicker()
         scheduleFinishNotification(after: seconds, context: context)
@@ -113,7 +127,7 @@ final class RestTimerModel {
             if seconds > 0 { start(seconds: seconds, context: contextLabel) }
             return
         }
-        let minimumEnd = Date().addingTimeInterval(1)
+        let minimumEnd = now().addingTimeInterval(1)
         let proposedEnd = current.addingTimeInterval(TimeInterval(seconds))
         endDate = max(proposedEnd, minimumEnd)
         recomputeRemaining()
@@ -147,30 +161,50 @@ final class RestTimerModel {
         ticker = timer
     }
 
-    private func recomputeRemaining() {
+    /// Brings `remaining` up to date, and ends the rest once it has run out.
+    ///
+    /// Internal so a test can drive it: the ticker is a real `Timer`, and the
+    /// state worth testing is the one where time has passed without it firing.
+    func recomputeRemaining() {
         guard let endDate else { return }
-        let secondsLeft = Int(ceil(endDate.timeIntervalSinceNow))
+        let secondsLeft = Int(ceil(endDate.timeIntervalSince(now())))
         if secondsLeft <= 0 {
             remaining = 0
-            finish()
+            finish(overshoot: now().timeIntervalSince(endDate))
         } else {
             remaining = secondsLeft
         }
     }
 
-    private func finish() {
+    /// Ends the rest, sounding the in-hand cue only if it ended just now.
+    ///
+    /// **A suspended app comes back to a countdown that ran out while it was
+    /// away.** The ticker is a run-loop timer, so it stops with the app and
+    /// catches up on the next foreground — and firing the haptic and the ding
+    /// there means alarming, in his hand, about a rest that ended ten minutes
+    /// ago and has already been announced three times by the notifications. The
+    /// cue is for the phone he is looking at; past `staleAfter` the screen-locked
+    /// alerts have done the job and this stays quiet.
+    private func finish(overshoot: TimeInterval) {
         guard isRunning else { return }
         ticker?.invalidate()
         ticker = nil
         isRunning = false
         endDate = nil
-        fireLocalAlert()
+        guard overshoot < Self.staleAfter else { return }
+        alert()
     }
+
+    /// How far past the end a rest can be and still be worth sounding in his
+    /// hand. Longer than a tick, shorter than a walk back to the bar.
+    private static let staleAfter: TimeInterval = 5
 
     // MARK: - Alerts
 
-    private func fireLocalAlert() {
-        // Vibrate + play the standard alert sound so it's felt and heard mid-set.
+    /// Vibrate and play the standard alert sound, so the end of a rest is felt
+    /// and heard by a lifter looking at the phone.
+    @MainActor
+    static func playInHandAlert() {
         AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
         AudioServicesPlaySystemSound(1005)
         #if canImport(UIKit)

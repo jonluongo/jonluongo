@@ -164,4 +164,64 @@ struct RestTimerNotificationTests {
 
         #expect(Set(center.removed).count == 3)
     }
+
+    // MARK: - Coming back to a rest that ran out while the app was away
+
+    @Test("A rest that ended while the app was suspended does not ring in his hand")
+    func aStaleFinishIsQuiet() throws {
+        // The ticker is a run-loop timer, so it stops with the app and catches
+        // up on the next foreground. Sounding the cue there is the app alarming
+        // about a rest that ended ten minutes ago and was announced three times
+        // by the notifications while he was away.
+        let center = FakeNotificationCenter()
+        var clock = Date(timeIntervalSince1970: 1_700_000_000)
+        let alerts = AlertCounter()
+        let timer = RestTimerModel(center: center, now: { clock }, alert: alerts.fire)
+
+        timer.start(seconds: 90, context: "Squat")
+        clock.addTimeInterval(600)
+        timer.recomputeRemaining()
+
+        #expect(!timer.isRunning)
+        #expect(timer.remaining == 0)
+        #expect(alerts.count == 0, "the notifications announced this while he was away")
+    }
+
+    @Test("A rest that ends while he is looking at it still ends")
+    func aTimelyFinishStillEnds() throws {
+        let center = FakeNotificationCenter()
+        var clock = Date(timeIntervalSince1970: 1_700_000_000)
+        let alerts = AlertCounter()
+        let timer = RestTimerModel(center: center, now: { clock }, alert: alerts.fire)
+
+        timer.start(seconds: 90, context: "Squat")
+        clock.addTimeInterval(90)
+        timer.recomputeRemaining()
+
+        #expect(!timer.isRunning)
+        #expect(timer.remaining == 0)
+        #expect(alerts.count == 1, "he is looking at it, so it is felt and heard")
+    }
+
+    @Test("A running rest counts down against the clock, not against ticks")
+    func remainingFollowsTheClock() throws {
+        let center = FakeNotificationCenter()
+        var clock = Date(timeIntervalSince1970: 1_700_000_000)
+        let timer = RestTimerModel(center: center, now: { clock })
+
+        timer.start(seconds: 180, context: "Bench")
+        clock.addTimeInterval(60)
+        timer.recomputeRemaining()
+
+        #expect(timer.isRunning)
+        #expect(timer.remaining == 120, "a minute away is a minute off the rest")
+    }
+
+    /// Counts the in-hand cue, which is otherwise a system sound nothing can
+    /// ask about.
+    @MainActor
+    private final class AlertCounter {
+        private(set) var count = 0
+        func fire() { count += 1 }
+    }
 }
