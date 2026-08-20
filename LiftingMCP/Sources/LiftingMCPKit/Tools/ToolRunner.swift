@@ -104,22 +104,38 @@ public struct ToolRunner: Sendable {
 
     /// The message the owner will see the very first time he tries this.
     ///
-    /// It says what is missing, the one action that produces it, where the
+    /// It says what is missing, what has to be true for it to arrive, where the
     /// server looked, and how to point it somewhere else — because every one of
     /// those is a thing he would otherwise have to guess.
+    ///
+    /// **It used to say "wait a few seconds for iCloud to sync", which sends him
+    /// in circles when sync is the thing that is broken.** Two conditions have
+    /// to hold and neither is waiting: the phone has to have written the file,
+    /// and this Mac has to be syncing that container. The second fails silently
+    /// and permanently — macOS will not sync a ubiquity container no installed
+    /// app on this Mac claims, and a full iCloud account stops the upload at the
+    /// other end — so both are named rather than left to patience.
     static func noSnapshotYet(at location: String) -> String {
         """
         No training snapshot yet, so there is nothing to report on. This is not \
-        a lifter with no history — it is a file that has not been written.
+        a lifter with no history — it is a file that has not arrived.
 
         Superset writes snapshot.json whenever the record changes: when a \
         session is finished or taken back, when a plan you sent lands, and when \
-        the app goes to the background. On your iPhone: open Superset and wait \
-        a few seconds for iCloud to sync. Then try again.
+        the app goes to the background. For it to reach this Mac, two things \
+        have to be true, and neither of them is waiting longer:
+
+          1. The phone wrote it. Open Superset; it shows an error if the write \
+        failed.
+          2. This Mac is syncing that iCloud container. `brctl status | grep \
+        -A1 L{9}n` reports it — "SYNC DISABLED (app not installed)" or \
+        "last-sync: never" means nothing will ever appear here, however long \
+        you wait. A full iCloud account stops it at the other end; `brctl \
+        quota` says how much is left.
 
         Looked for: \(location)
 
-        If that is the wrong folder, launch the server with \
+        If the file is somewhere else, launch the server with \
         `\(ServerConfiguration.directoryArgument) /path/to/folder` or set \
         \(ServerConfiguration.directoryEnvironmentKey) to the folder holding \
         snapshot.json.
