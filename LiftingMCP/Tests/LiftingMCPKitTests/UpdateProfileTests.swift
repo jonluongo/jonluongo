@@ -355,4 +355,24 @@ private final class BrokenReadDocuments: TrainingDocuments, @unchecked Sendable 
     func writeProfileUpdate(_ update: ProfileUpdate) throws {
         lock.withLock { written = update }
     }
+
+    /// The date a fact was stated is written from the call and is not an
+    /// argument. It became worth pinning the moment reports started carrying
+    /// dates: a reader who can see `statedAt` is a writer who may try to set it,
+    /// and a silently dropped date would be the record claiming he said
+    /// something on a day he did not.
+    @Test("A caller trying to set the date is refused, with the key named")
+    func aStatedDateCannotBeSent() throws {
+        let documents = InMemoryDocuments(snapshot: fixtureSnapshot())
+        let outcome = try makeRunner(documents: documents).call(
+            ToolCatalog.updateProfile,
+            arguments: [
+                "constraints": "Shoulder again",
+                "statedAt": ["constraints": "2020-01-01T00:00:00Z"],
+            ])
+
+        let message = try #require(outcome.failureMessage)
+        #expect(message.contains("statedAt"))
+        #expect(documents.lastWrittenProfileUpdate == nil, "and nothing was written")
+    }
 }

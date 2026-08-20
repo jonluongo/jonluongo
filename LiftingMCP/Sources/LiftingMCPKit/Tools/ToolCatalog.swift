@@ -198,7 +198,11 @@ public enum ToolCatalog {
             overwritten. Those two cannot be nulled, and a null on either is \
             refused rather than ignored: it would read either as recording \
             nothing or as erasing every entry. Correct a series by stating that \
-            day's reading, or that lift's baseline, again.
+            day's reading, or that lift's baseline, again. Every fact you state \
+            here is dated with this call, and stating one again records that he \
+            said it again — which is how a constraint he mentioned last year and \
+            one he mentioned this week are told apart later. The dates are \
+            written from the call and are not yours to send.
             """,
         inputSchema: object([
             "equipment": [
