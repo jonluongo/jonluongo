@@ -102,10 +102,17 @@ struct ExerciseDetailView: View {
                         series: .value("Run", point.run)
                     )
                     .interpolationMethod(.monotone)
+                    // Ink, stated rather than inherited. Unstyled marks take
+                    // the app's tint asset, which is near-black in light and
+                    // the theme in dark — so the one line on the page changed
+                    // what it meant with the appearance. The theme is a fill
+                    // and never a line; a plotted series is a line.
+                    .foregroundStyle(Palette.ink)
                     PointMark(
                         x: .value("Date", point.date),
                         y: .value("Heaviest set", point.value)
                     )
+                    .foregroundStyle(Palette.ink)
                 }
                 .frame(height: 200)
                 .panelRow(.only)

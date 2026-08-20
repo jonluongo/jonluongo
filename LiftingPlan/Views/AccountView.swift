@@ -104,10 +104,6 @@ struct AccountView: View {
     private var record: some View {
         let rows = facts + baselines
         Section {
-            // Under the heading rather than under the panel. It states the whole
-            // premise of the page — nothing here was asked by the app — so it
-            // frames what follows instead of footnoting it.
-
             if rows.isEmpty {
                 Text("Nothing yet.")
                     .font(.supersetBody)

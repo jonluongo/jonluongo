@@ -74,6 +74,12 @@ struct ExerciseRestSheet: View {
                     Toggle("Rest timer", isOn: switchBinding)
                         .accessibilityHint("Turns the countdown on or off everywhere")
                         .font(.supersetBody)
+                        // The one switch in the app, and it came up in the
+                        // system's green — the second saturated colour in a
+                        // one-accent palette, which is what a green Finish
+                        // button was killed for. A switch on is a filled
+                        // shape, which is exactly what the theme is for.
+                        .tint(Palette.accent)
                         .panelRow(isOn ? .first : .only)
                         .listRowSeparator(.hidden)
                     if isOn {
@@ -112,6 +118,9 @@ struct ExerciseRestSheet: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.medium])
+        // Every other sheet in the app draws one. Without it this was the one
+        // half-height sheet with no sign it could be pulled down.
+        .presentationDragIndicator(.visible)
     }
 
     /// What Claude asked for, said plainly, together with the one thing the
