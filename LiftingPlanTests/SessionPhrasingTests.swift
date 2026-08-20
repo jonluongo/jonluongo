@@ -13,15 +13,15 @@ import LiftingKit
 /// progress note, a count of exercises and minutes, and a block's record line.
 /// Each went with the screen that printed it.
 @Suite("Session naming")
-struct TodayPhrasingTests {
+struct SessionPhrasingTests {
 
     @Test("A session is called what the plan said it is for")
     func sessionTitleUsesFocus() {
-        #expect(TodayPhrasing.sessionTitle(focus: "Push", weekday: .monday) == "Push")
+        #expect(SessionPhrasing.sessionTitle(focus: "Push", weekday: .monday) == "Push")
     }
 
     @Test("A session the plan named nothing is called by its day")
     func sessionTitleFallsBackToWeekday() {
-        #expect(TodayPhrasing.sessionTitle(focus: "", weekday: .monday) == "Monday")
+        #expect(SessionPhrasing.sessionTitle(focus: "", weekday: .monday) == "Monday")
     }
 }

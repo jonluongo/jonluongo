@@ -10,8 +10,8 @@ import Foundation
 /// control, which is the reason day rows carried no icon at all until now.
 ///
 /// **How it is used.** `PlanDocumentDay.icon` carries it in, `WorkoutDay` stores
-/// the raw name, `SnapshotDay` carries it back out so the coach can see what he
-/// chose last time, and `RoutineView` draws it. The name is the app's own —
+/// the raw name, the snapshot carries the document back out so the coach can see
+/// what he chose last time, and `RoutineView` draws it. The name is the app's own —
 /// `strength`, `intervals` — never the system symbol behind it: which glyph a
 /// name resolves to is this app's business, and changing one must not be a
 /// change to the format the coach writes.

@@ -9,10 +9,10 @@ import Foundation
 /// the same as stating nothing: an exercise states a prescription for its sets,
 /// and a set that adds nothing of its own is prescribed exactly that.
 ///
-/// **How it is used.** Three places share this one type, so the vocabulary
-/// cannot drift: a `PlanDocumentExercise` lists them when its sets differ, the
-/// app stores them, and `SnapshotPlannedExercise` reports every set back in
-/// full. Read `PlanDocumentExercise.prescribedSets` rather than these raw
+/// **How it is used.** Two places share this one type, so the vocabulary cannot
+/// drift: a `PlanDocumentExercise` lists them when its sets differ, and the app
+/// stores them. Nothing restates them on the way back out — the snapshot carries
+/// the document itself, which is where they were stated. Read `PlanDocumentExercise.prescribedSets` rather than these raw
 /// values when you want what a set actually prescribes — that is where a set's
 /// own statements and the exercise's are put together, by `everySet(...)`
 /// below.

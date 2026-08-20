@@ -187,7 +187,7 @@ private struct DayRow: View {
     var isLater: Bool = false
 
     private var title: String {
-        TodayPhrasing.sessionTitle(focus: day.focus, weekday: day.weekday)
+        SessionPhrasing.sessionTitle(focus: day.focus, weekday: day.weekday)
     }
 
     var body: some View {

@@ -252,14 +252,15 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
     public static func makeDecoder() -> JSONDecoder { DocumentCoding.makeDecoder() }
 }
 
-/// One week of a `PlanDocument`.
+/// One block of a `PlanDocument` — a week of training, named rather than
+/// numbered.
 ///
-/// **Weeks are stated one at a time because they differ.** A block that ramps
-/// says so by prescribing more in week 3 than in week 1, and a deload says so
-/// with `isDeload` — the flag `TrainingWeek` and `SnapshotWeek` have always
-/// carried and nothing could previously write. A week's ordinal is its position
-/// in the document's `weeks`, so nothing has to reconcile a stated number with
-/// where the week actually sits.
+/// **Blocks are stated one at a time because they differ.** A routine that ramps
+/// says so by prescribing more in block 3 than in block 1, and a deload says so
+/// with `isDeload` — the flag the store has always carried and nothing could
+/// previously write. A block's ordinal is its position in the document's
+/// `blocks`, so nothing has to reconcile a stated number with where the block
+/// actually sits.
 ///
 /// Depends on: `PlanDocumentDay`, `DocumentRefusal`.
 public struct PlanDocumentBlock: Codable, Hashable, Sendable {

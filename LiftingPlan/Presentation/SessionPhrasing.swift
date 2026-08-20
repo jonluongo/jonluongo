@@ -18,7 +18,7 @@ import LiftingKit
 /// a progress note for a card that was replaced by a mark, a count of exercises
 /// and minutes that the day row now says by naming the movements, and a record
 /// line for a block summary nothing draws. They went with what printed them.
-enum TodayPhrasing {
+enum SessionPhrasing {
 
     /// What to call this workout: what the plan said it is for, or the day
     /// the plan filed it under when it named it nothing. Both are things Claude

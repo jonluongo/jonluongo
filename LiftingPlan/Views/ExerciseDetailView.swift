@@ -15,8 +15,8 @@ import LiftingKit
 ///
 /// **It is one screen and not two.** Information about an exercise and the
 /// record of it are the same exercise, and splitting them would give the app two
-/// destinations each showing half of one — which is what `SessionDetailView` and
-/// the History tab were doing when they were deleted. What the movement is comes
+/// destinations each showing half of one — which is what a session-detail screen
+/// and a History tab were doing when both were deleted. What the movement is comes
 /// first because it answers the question the name raises; the record follows,
 /// and is the longer scroll.
 ///

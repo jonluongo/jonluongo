@@ -15,7 +15,7 @@ import LiftingKit
 /// it. It
 /// is a plain enum of static functions, separate from the view, so the phrasing
 /// is testable without a simulator — the same reason `BlockSelection` and
-/// `TodayPhrasing` are. Colour is deliberately not here: a standing knows the
+/// `SessionPhrasing` are. Colour is deliberately not here: a standing knows the
 /// word it is said with, and the view decides what tint follows it.
 ///
 /// **What it depends on.** `TrainingPlan` from Store, and `RoutineSchedule` and

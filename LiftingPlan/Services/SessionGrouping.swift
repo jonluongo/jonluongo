@@ -134,10 +134,10 @@ struct ExerciseGroup: Identifiable {
     /// counted — they are rounds of one, which is what the lifter is actually
     /// doing by then.
     ///
-    /// It lived in `GroupRounds`, a value type that also built every row of a
-    /// screen: the notation, the prescription, the ghost load, the warm-ups
-    /// outside the rounds. That screen was replaced by movements drawn as
-    /// movements, and this was the only line of it anything still asked for.
+    /// It lived in a value type that also built every row of a superset screen:
+    /// the notation, the prescription, the ghost load, the warm-ups outside the
+    /// rounds. That screen was replaced by movements drawn as movements, and
+    /// this was the only line of it anything still asked for; the type went.
     var hasCompleteRound: Bool {
         var rounds: [[LoggedSet]] = []
         for member in members {
