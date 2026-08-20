@@ -34,7 +34,10 @@ struct RestTimerBar: View {
                 Button { restTimer.dismissError() } label: {
                     Label(errorMessage, systemImage: "bell.slash")
                         .font(.supersetSupport)
-                        .foregroundStyle(.secondary)
+                        // Named for the reason the exercise menu's is: this sits
+                        // inside a `Button`, where `.secondary` resolves against
+                        // the tint rather than against the ink.
+                        .foregroundStyle(Palette.muted)
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }

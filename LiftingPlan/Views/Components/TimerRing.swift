@@ -64,7 +64,9 @@ struct TimerRing: View {
                 if showsLabel {
                     Text(isRunning ? "REST" : "READY")
                         .font(.supersetLabel)
-                        .foregroundStyle(.secondary)
+                        // The ring is drawn inside tinted controls in both of
+                        // its callers, so this word inherited the same leak.
+                        .foregroundStyle(Palette.muted)
                 }
             }
             .lineLimit(1)

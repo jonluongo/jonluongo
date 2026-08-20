@@ -131,7 +131,12 @@ struct ExerciseHeaderView: View {
                 // there.
                 Image(systemName: "ellipsis")
                     .font(.supersetBody)
-                    .foregroundStyle(.secondary)
+                    // Named, not `.secondary`. A hierarchical style resolves
+                    // against whatever tint is in scope, and inside a `Menu`
+                    // that is the accent — so this glyph measured neutral grey
+                    // in light and olive in dark, the same control in two
+                    // colours. Every colour in this app is one of Style's own.
+                    .foregroundStyle(Palette.muted)
                     .contentShape(.rect)
             }
             .accessibilityLabel("\(exercise.displayName) options")
