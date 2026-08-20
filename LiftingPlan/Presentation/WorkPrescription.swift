@@ -33,6 +33,24 @@ enum WorkPrescription {
     /// otherwise by the first of its sets that names one — which is what a plank
     /// prescribed as three thirty-second holds, or a carry prescribed as three
     /// listed distances, looks like from either direction.
+    /// What *this set* is measured in: what was prescribed for it, and the
+    /// movement's own target when the set stated none.
+    ///
+    /// **A set is counted, held, or carried, and the set decides.** The
+    /// movement-wide answer below takes the first set that is not counted and
+    /// applies it to every row — so a prescription that states eight reps and
+    /// then a thirty-second hold made both rows holds, and the reps he typed
+    /// into the first went into the log as seconds. A number nobody performed,
+    /// in a column nobody prescribed, propagating into every report after it.
+    static func measure(for prescription: SetPrescription?, in exercise: PlannedExercise)
+        -> WorkMeasure
+    {
+        guard let target = prescription?.repRange, !target.isEmpty else {
+            return measure(of: exercise)
+        }
+        return WorkMeasure(target)
+    }
+
     static func measure(of exercise: PlannedExercise) -> WorkMeasure {
         let own = WorkMeasure(exercise.repRange)
         guard own == .repetitions else { return own }

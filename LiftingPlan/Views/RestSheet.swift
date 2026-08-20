@@ -167,11 +167,12 @@ struct RestSheet: View {
                 set: slot.set,
                 identity: slot.identity,
                 repTargetText: WorkPrescription.targetFigure(
-                    for: prescribed?.repRange, measure: reading.measure),
+                    for: prescribed?.repRange,
+                    measure: WorkPrescription.measure(for: prescribed, in: slot.exercise)),
                 loadTargetText: reading.loadTarget(prescribed),
                 prescriptionDetail: PrescriptionSummary.detail(
                     for: prescribed, in: slot.exercise),
-                measure: reading.measure,
+                measure: WorkPrescription.measure(for: prescribed, in: slot.exercise),
                 unit: profile.displayUnit,
                 // Animated from here rather than by the caller: the set the
                 // sheet is showing changes as a result of this write, and the

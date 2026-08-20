@@ -167,4 +167,47 @@ struct TimedWorkTests {
         #expect(history.recentSets.first?.durationSeconds == 34)
         #expect(history.recentSets.first?.reps == 0)
     }
+
+    // MARK: - A prescription whose sets are not all the same kind of work
+
+    /// A movement whose sets are stated one at a time, each with its own target.
+    private func imported(
+        statedSets targets: [String], into context: ModelContext
+    ) throws -> PlannedExercise {
+        let document = PlanDocument(
+            id: UUID(), catalogVersion: 5, generatedAt: Self.instant,
+            days: [PlanDocumentDay(
+                weekday: .monday,
+                exercises: [PlanDocumentExercise(
+                    exerciseID: Self.plank, displayName: "Front Plank",
+                    sets: targets.map { SetPrescription(repRange: $0) },
+                    restSeconds: 60)])])
+        let plan = try PlanImporter.import(document, into: context, catalog: try catalog())
+        let week = try #require(plan.orderedWeeks.first)
+        let day = try #require(week.orderedDays.first)
+        return try #require(day.orderedExercises.first)
+    }
+
+    @Test("Each set is measured as it was prescribed, not as its neighbours were")
+    func eachSetKeepsItsOwnMeasure() throws {
+        // The movement-wide answer took the first set that was not counted and
+        // applied it to every row, so a prescription of eight reps and then a
+        // thirty-second hold made both rows holds — and the reps he typed into
+        // the first were written to the log as seconds. A number nobody
+        // performed, in a column nobody prescribed.
+        let exercise = try imported(statedSets: ["8", "30 seconds"], into: try context())
+        let sets = exercise.prescribedSets
+
+        #expect(WorkPrescription.measure(for: sets[0], in: exercise) == .repetitions)
+        #expect(WorkPrescription.measure(for: sets[1], in: exercise) == .time)
+    }
+
+    @Test("A set that states nothing of its own is measured by the movement")
+    func aSilentSetFollowsTheMovement() throws {
+        let exercise = try imported("45 seconds", sets: 3, into: try context())
+
+        #expect(WorkPrescription.measure(for: nil, in: exercise) == .time, "a warm-up, say")
+        #expect(
+            WorkPrescription.measure(for: exercise.prescribedSets.first, in: exercise) == .time)
+    }
 }

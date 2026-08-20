@@ -77,14 +77,18 @@ struct ExerciseLogSection: View {
                 let number = workingNumber(at: index)
                 let prescribed = reading.prescription(
                     forWorkingNumber: number, isWarmup: set.isWarmup)
+                // This row's own measure. A ramp may state a hold on one set and
+                // reps on the next, and what a row writes is decided by what was
+                // prescribed for it.
+                let measure = WorkPrescription.measure(for: prescribed, in: exercise)
                 SetRowView(
                     set: set,
                     identity: set.isWarmup ? .warmup : .working(number),
                     repTargetText: WorkPrescription.targetFigure(
-                        for: prescribed?.repRange, measure: reading.measure),
+                        for: prescribed?.repRange, measure: measure),
                     loadTargetText: loadPlaceholder(prescribed, number: number, set: set),
                     prescriptionDetail: PrescriptionSummary.detail(for: prescribed, in: exercise),
-                    measure: reading.measure,
+                    measure: measure,
                     unit: profile.displayUnit,
                     isLocked: isLocked,
                     onCompletionChanged: { onCompletionChanged(exercise, set, $0) }
