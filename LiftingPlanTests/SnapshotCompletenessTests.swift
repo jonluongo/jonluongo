@@ -93,4 +93,75 @@ struct SnapshotCompletenessTests {
         let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 4)
         #expect(try #require(snapshot.firstDocument).blocks.count == 2)
     }
+
+    // MARK: - A routine grown a block at a time
+
+    /// One block of one Monday push session, at `load`.
+    private func routine(id: UUID, blocks: Int, load: Double) -> PlanDocument {
+        PlanDocument(
+            id: id, catalogVersion: 5, generatedAt: Date(), title: "Autumn Strength",
+            blocks: (1...blocks).map { ordinal in
+                PlanDocumentBlock(label: "Block \(ordinal)", days: [
+                    PlanDocumentDay(
+                        weekday: .monday, focus: "Push",
+                        exercises: [
+                            PlanDocumentExercise(
+                                exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
+                                displayName: "Barbell Bench Press", sets: 3, repRange: "6-8",
+                                suggestedLoad: Mass(
+                                    value: ordinal == blocks ? load : 185, unit: .pounds))
+                        ])
+                ])
+            })
+    }
+
+    /// Trains every session of the block he is on, whole.
+    private func trainCurrentBlock(of plan: TrainingPlan, in context: ModelContext) throws {
+        let ordinal = try #require(BlockSelection.currentBlockOrdinal(in: plan.orderedWeeks))
+        let block = try #require(plan.orderedWeeks.first { $0.ordinal == ordinal })
+        for day in block.orderedDays {
+            SetSeeding.seedMissingSets(for: day.orderedExercises, in: context)
+            for exercise in day.orderedExercises {
+                for set in exercise.loggedSets ?? [] {
+                    set.isCompleted = true
+                    set.reps = 8
+                }
+            }
+            day.completedAt = Date()
+        }
+        try context.saveOrThrow()
+    }
+
+    @Test("A second week trained on a grown routine exports beside the first, not over it")
+    func aGrownRoutineExportsEveryBlocksWork() throws {
+        let context = ModelContext(try StoreContainer.inMemory())
+        let catalog = try ExerciseCatalog.bundled()
+        let id = UUID()
+
+        let plan = try PlanImporter.import(
+            routine(id: id, blocks: 1, load: 185), into: context, catalog: catalog)
+        try trainCurrentBlock(of: plan, in: context)
+        try PlanImporter.import(
+            routine(id: id, blocks: 2, load: 200), into: context, catalog: catalog)
+        try trainCurrentBlock(of: plan, in: context)
+
+        let snapshot = try SnapshotExporter.export(from: context, catalogVersion: catalog.version)
+        let routine = try #require(snapshot.routines.first)
+
+        // The steady state of the weekly loop, which the unit tests reach one
+        // hop at a time: two blocks written a week apart, both trained, both in
+        // the record under their own ordinal.
+        #expect(snapshot.routines.count == 1, "one routine, not one per week")
+        #expect(routine.document.blocks.count == 2)
+        #expect(routine.sessions.count == 2)
+        #expect(routine.sessions.allSatisfy { $0.completedAt != nil })
+        #expect(Set(snapshot.log.map(\.blockOrdinal)) == [1, 2])
+        #expect(snapshot.log.count == 6, "three sets a session, both sessions")
+
+        // The load he trained the second week at is the second block's, so the
+        // week's work is not filed under the week before it.
+        let second = snapshot.log.filter { $0.blockOrdinal == 2 }
+        #expect(second.allSatisfy { $0.load == Mass(value: 200, unit: .pounds) })
+        #expect(second.count == 3)
+    }
 }
