@@ -93,17 +93,15 @@ struct RestPrescriptionTests {
         return defaults
     }
 
-    @Test("No prescribed rest draws no label — the app neither invents one nor asks for one")
-    func absentRestDrawsNothing() {
-        #expect(RestPrescription.label(seconds: nil) == nil)
-    }
-
-    @Test("A prescribed rest is written out as the plan set it")
-    func prescribedRestLabel() {
-        #expect(RestPrescription.label(seconds: 90) == "Rest 1min 30s")
-        #expect(RestPrescription.label(seconds: 45) == "Rest 45s")
-        #expect(RestPrescription.durationText(120) == "2min")
-        #expect(RestPrescription.durationText(59) == "59s")
-        #expect(RestPrescription.durationText(0) == "0s")
+    /// One spelling, and it is the one the wheels beside the sentence use. It
+    /// wrote `3min`, which reads as a typo in the sentence that is its only
+    /// caller, on a screen whose pickers already said `3 min`.
+    @Test("A prescribed rest is written the way the wheels beside it are")
+    func prescribedRestReadsAsASentence() {
+        #expect(RestPrescription.durationText(180) == "3 min")
+        #expect(RestPrescription.durationText(150) == "2 min 30 s")
+        #expect(RestPrescription.durationText(120) == "2 min")
+        #expect(RestPrescription.durationText(59) == "59 s")
+        #expect(RestPrescription.durationText(0) == "0 s")
     }
 }

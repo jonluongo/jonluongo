@@ -2,28 +2,31 @@ import Foundation
 
 /// How a prescribed rest is written out for the lifter.
 ///
-/// Used by `ExerciseLogSection` and `ExerciseRestSheet`
-/// so one rest length reads the same everywhere. It is display only, and it
+/// **What it does.** Turns a number of seconds into the words that go in a
+/// sentence: `"45 s"`, `"3 min"`, `"2 min 30 s"`.
+///
+/// **How it is used.** By `ExerciseRestSheet`, to say what the coach asked for
+/// above the wheels that set the lifter's own clock. It is display only, and it
 /// offers nothing: there is no list of suggested rest lengths here or anywhere
 /// else in the app, because how long to rest is a training decision and the app
-/// makes none. When a plan prescribes no rest, `label` answers `nil` and the
-/// caller shows nothing rather than inventing a number or asking for one.
+/// makes none. A plan that prescribes no rest reaches a caller that shows
+/// nothing, rather than one inventing a number or asking for one.
 ///
-/// Depends on: Foundation and `LifterRest`.
+/// **Spaced, because the only place it is read is inside a sentence.** It wrote
+/// `"3min"`, which is fine on a label and reads as a typo in prose — and it sat
+/// directly under wheels the app draws as `3 min` and `0 s`, so one screen
+/// spelled one duration two ways. There is one spelling now, and it is the one
+/// the wheels were already using.
+///
+/// **What it depends on.** Foundation.
 enum RestPrescription {
 
-    /// `"Rest 90s"` / `"Rest 2min 30s"`, or `nil` when no rest was prescribed.
-    static func label(seconds: Int?) -> String? {
-        guard let seconds else { return nil }
-        return "Rest \(durationText(seconds))"
-    }
-
-    /// `"45s"`, `"2min"`, `"2min 30s"` — a duration, written the way a lifter
-    /// says it.
+    /// `"45 s"`, `"3 min"`, `"2 min 30 s"` — a duration, written the way the
+    /// wheels beside it are.
     static func durationText(_ seconds: Int) -> String {
-        guard seconds >= 60 else { return "\(seconds)s" }
+        guard seconds >= 60 else { return "\(seconds) s" }
         let minutes = seconds / 60
         let remainder = seconds % 60
-        return remainder == 0 ? "\(minutes)min" : "\(minutes)min \(remainder)s"
+        return remainder == 0 ? "\(minutes) min" : "\(minutes) min \(remainder) s"
     }
 }
