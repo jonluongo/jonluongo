@@ -222,6 +222,17 @@ extension Font {
     /// mono is a terminal, not an instrument.
     static let supersetMetric: Font = .system(.title3, design: .monospaced).weight(.semibold)
 
+    /// The one figure read from across a room: the rest countdown, on the sheet
+    /// that exists to show it.
+    ///
+    /// Monospaced like every other figure in the app, so `2:54` and `2:04` are
+    /// the same width and the ring around it does not appear to twitch once a
+    /// second. It is a text style rather than a size, so it grows with the
+    /// lifter's own type — a countdown that ignored Dynamic Type would be the
+    /// one number here nobody could enlarge.
+    static let supersetClock: Font =
+        .system(.largeTitle, design: .monospaced).weight(.semibold)
+
     /// The name of a section, drawn above the panel that holds its contents.
     /// A step clear of `supersetTitle` so the hierarchy is visible rather than
     /// implied by position alone.

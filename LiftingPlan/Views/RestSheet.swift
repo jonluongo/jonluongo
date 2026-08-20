@@ -45,18 +45,22 @@ struct RestSheet: View {
     var body: some View {
         VStack(spacing: Spacing.major) {
             clock
+            controls
+            Spacer(minLength: 0)
             if let next {
                 row(next)
             } else {
-                Text("Nothing left.")
+                // Every row is ticked, so the only thing left to say is that
+                // the clock is running for nothing in particular.
+                Text("Nothing left to do.")
                     .font(.supersetBody)
                     .foregroundStyle(Palette.muted)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, PanelMetrics.contentInset)
             }
-            Spacer(minLength: 0)
         }
-        .padding(.top, Spacing.major)
+        // Clear of the grabber: the ring's twelve o'clock is exactly where the
+        // sheet draws it, and the two touching read as one broken shape.
+        .padding(.top, Spacing.major * 2)
+        .padding(.bottom, Spacing.section)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Palette.surface)
         // Half the screen: enough for a ring read at arm's length and one row,
@@ -79,13 +83,56 @@ struct RestSheet: View {
     /// the two were the same words twice on the same sheet, and the wrong one
     /// was the larger.
     private var clock: some View {
-        TimerRing(
-            progress: restTimer.progress,
-            timeText: restTimer.formattedRemaining,
-            isRunning: restTimer.isRunning,
-            size: Self.ringSize,
-            lineWidth: Self.ringWidth,
-            showsLabel: false)
+        ZStack {
+            Circle()
+                .stroke(Palette.rule, lineWidth: Self.ringWidth)
+            // **It drains rather than fills.** `progress` is how much of the
+            // rest has gone, so drawing it directly left a countdown that starts
+            // as an empty ring with a stub at twelve o'clock — under the sheet's
+            // own grabber — and is at its fullest the moment it stops mattering.
+            // A rest is a thing running out, and the ring says so: whole at the
+            // start, gone at the end.
+            Circle()
+                .trim(from: 0, to: 1 - restTimer.progress)
+                .stroke(
+                    Palette.ink,
+                    style: StrokeStyle(lineWidth: Self.ringWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.linear(duration: 0.25), value: restTimer.progress)
+            Text(restTimer.formattedRemaining)
+                .font(.supersetClock)
+                .foregroundStyle(Palette.ink)
+                .contentTransition(.numericText())
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .padding(.horizontal, Spacing.major)
+        }
+        .frame(width: Self.ringSize, height: Self.ringSize)
+    }
+
+    /// The same three things the bar does, at the size of a thing pressed with
+    /// a thumb between sets. The sheet must not be able to do less than the bar
+    /// it was opened from, or leaving it becomes the way to reach them.
+    private var controls: some View {
+        HStack(spacing: Spacing.section) {
+            Button("−15") { restTimer.addTime(-15) }
+            Button("+15") { restTimer.addTime(15) }
+            Button {
+                restTimer.skip()
+            } label: {
+                Label("Skip rest", systemImage: "forward.end.fill")
+                    .labelStyle(.iconOnly)
+            }
+            .tint(Palette.accent)
+            .foregroundStyle(Palette.onAccent)
+        }
+        .font(.supersetBody)
+        .fontWeight(.semibold)
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.capsule)
+        .controlSize(.large)
+        .tint(Palette.rule)
+        .foregroundStyle(Palette.ink)
     }
 
     /// The next set, drawn by the same row the table draws.
@@ -117,7 +164,10 @@ struct RestSheet: View {
     }
 
     /// Read at arm's length with a phone on the floor, which is what makes this
-    /// worth a sheet of its own.
-    private static let ringSize: CGFloat = 168
-    private static let ringWidth: CGFloat = 10
+    /// worth a sheet of its own. The ring is drawn here rather than through
+    /// `TimerRing` because that one is built for the 52pt bar — it puts the
+    /// figure in support type and hides it behind a `READY` label — and this
+    /// screen exists for the figure.
+    private static let ringSize: CGFloat = 200
+    private static let ringWidth: CGFloat = 8
 }
