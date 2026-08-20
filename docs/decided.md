@@ -226,6 +226,17 @@ heaviest on both, `volume_by_muscle` counting the same twelve sets and sixty
 reps under chest, and eight sessions reported where eight were logged. The read
 path does not lie.
 
+**The dated statements were driven the same way on 2026-08-20, and the
+distinction holds through real files.** Two `profile-update.json` documents were
+written by hand — a March one stating a constraint and an experience, an August
+one stating only the goal — dropped in the folder one at a time, taken in by the
+app's own inbox, and exported by backgrounding it. The snapshot came back with
+`constraints` and `experience` dated March and `goal` dated August, which is
+exactly what a single `updatedAt` could never say: under it, the August goal
+would have restamped the March shoulder. Driving the release server against that
+file, `unstated_facts` reported the same three dates and passed no verdict on
+any of them.
+
 Worth knowing for anyone probing this again: **killing the app does not export.**
 `simctl terminate` — and a lifter swiping the app away — ends the process without
 `scenePhase` reaching `.background`, so the export never runs and the file on
