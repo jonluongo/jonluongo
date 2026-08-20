@@ -76,6 +76,16 @@ struct CarriedWorkTests {
         return fixtureSnapshot(blocks: [block])
     }
 
+    /// The context resource over the carry block, read the same way the coach
+    /// receives it.
+    private func context() throws -> JSONValue {
+        try #require(
+            try makeRunner(
+                documents: InMemoryDocuments(snapshot: carriedSnapshot()),
+                catalog: try carryCatalog()
+            ).contextResource().report)
+    }
+
     private func report(_ tool: String, _ arguments: JSONValue = [:]) throws -> JSONValue {
         let outcome = try makeRunner(
             documents: InMemoryDocuments(snapshot: carriedSnapshot()),
@@ -134,6 +144,43 @@ struct CarriedWorkTests {
         let counts = try #require(try report(ToolCatalog.volumeByMuscle)["counts"]?.stringValue)
 
         #expect(counts.contains("distance"))
+    }
+
+    // MARK: - What he is working with
+
+    /// The context resource is the one report the coach reads on every turn,
+    /// and it spoke in loads and repetitions only. A carry has neither: it
+    /// reported `"reps": 0` for a lifter who walked 38 metres under two 32 kg
+    /// bells — a number nobody performed, in the summary that shapes what is
+    /// prescribed next.
+    @Test("A carry is stated as a distance in the working weights, never as zero reps")
+    func workingWeightsStateTheCarry() throws {
+        let weights = try #require(try context()["workingWeights"]?.arrayValue)
+        let carry = try #require(
+            weights.first { $0["exerciseID"] == "kettlebell-farmers-carry" })
+
+        #expect(carry["distance"] == ["value": 38.0, "unit": "m"], "the last one he carried")
+        #expect(carry.objectValue?["durationSeconds"] == .null, "nothing was held")
+        // Zero here is the record's own spelling for a set that was not counted
+        // — `LoggedSetRecord.reps` is not optional — and it is only honest
+        // because the distance stands beside it saying which measure was
+        // performed. Alone, as it was, it read as a carry that went nowhere.
+        #expect(carry["reps"] == 0)
+    }
+
+    /// Its pair: a counted lift still reports the reps it was counted in, and
+    /// says nothing about seconds or metres.
+    @Test("A counted lift still states its reps, and no distance beside them")
+    func workingWeightsStateCountedReps() throws {
+        let counted = try #require(
+            try makeRunner(documents: InMemoryDocuments(snapshot: fixtureSnapshot()))
+                .contextResource().report)
+        let weights = try #require(counted["workingWeights"]?.arrayValue)
+        let bench = try #require(weights.first { $0["exerciseID"] == "barbell-bench-press" })
+
+        #expect(bench["reps"] != .null)
+        #expect(bench.objectValue?["distance"] == .null)
+        #expect(bench.objectValue?["durationSeconds"] == .null)
     }
 
     // MARK: - What the log reports back
