@@ -133,19 +133,13 @@ public enum LifterFacts {
         snapshot.profile?.bodyweight ?? snapshot.bodyMetrics.last?.bodyweight
     }
 
-    /// The three `update_profile` keys deliberately left out of the survey, and
-    /// why — checked against `ProfileUpdate.statedKeys` by the tests, so a fact
-    /// added to the document lands on one side of this line or fails the build's
-    /// tests rather than quietly going unreported.
+    /// The `update_profile` keys deliberately left out of the survey — the
+    /// document's own list, not a second one kept here.
     ///
-    /// `displayUnit` always has a value and is about how a number is drawn
-    /// rather than about the lifter. `avoidedPatterns` and `avoidedExercises`
-    /// are stored as plain lists with no absent state, so an empty one cannot be
-    /// told from a lifter who avoids nothing — and reporting "unstated" for a
-    /// lifter who has nothing to avoid would assert something the record does
-    /// not know. They are the enforceable half of `constraints`, which is
-    /// surveyed.
-    public static let unsurveyedKeys: Set<String> = [
-        "displayUnit", "avoidedPatterns", "avoidedExercises",
-    ]
+    /// Checked against `ProfileUpdate.statedKeys` by the tests, so a fact added
+    /// to the document lands on one side of this line or fails the build rather
+    /// than quietly going unreported. The two avoided lists are the enforceable
+    /// half of `constraints`, which is surveyed. See
+    /// `ProfileUpdate.unsurveyableKeys` for why each is out.
+    public static let unsurveyedKeys = ProfileUpdate.unsurveyableKeys
 }

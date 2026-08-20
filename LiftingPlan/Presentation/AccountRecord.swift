@@ -77,19 +77,57 @@ enum AccountRecord {
     static func notYetSaid(
         profile: UserProfile, weighIns: [BodyMetric], baselineCount: Int
     ) -> [String] {
-        var unstated: [String] = []
-        if profile.goal.isEmpty { unstated.append("goal") }
-        if profile.experience == nil { unstated.append("experience") }
-        if profile.constraints.isEmpty { unstated.append("constraints") }
-        if latestWeight(profile: profile, weighIns: weighIns) == nil {
-            unstated.append("bodyweight")
-        }
-        if profile.ownedEquipment == nil { unstated.append("equipment") }
-        if profile.preferredWeekdays.isEmpty { unstated.append("training days") }
-        if profile.preferredDurationMinutes == nil { unstated.append("session length") }
-        if baselineCount == 0 { unstated.append("strength baselines") }
-        return unstated
+        surveyed
+            .filter { !$0.isStated(profile, weighIns, baselineCount) }
+            .map(\.name)
     }
+
+    /// One fact the record can hold: the key `update_profile` states it under,
+    /// the words the lifter reads, and whether this record holds it.
+    ///
+    /// **The key is here so the survey cannot quietly fall behind the format.**
+    /// The server's own survey is checked against `ProfileUpdate.statedKeys`, so
+    /// a ninth fact added to the document forces a decision there; this page had
+    /// no such guard and would simply never have mentioned it. Same list, same
+    /// enforcement, on the side the lifter reads.
+    struct AccountFact: @unchecked Sendable {
+        let key: String
+        let name: String
+        /// `@unchecked` because the closure touches `@Model` types, which are
+        /// main-actor work by construction here: every caller is a view or its
+        /// test. The predicate holds no state of its own.
+        let isStated: (UserProfile, [BodyMetric], Int) -> Bool
+    }
+
+    /// Every fact this page surveys, in the order it names them.
+    static let surveyed: [AccountFact] = [
+        AccountFact(key: "goal", name: "goal") { profile, _, _ in !profile.goal.isEmpty },
+        AccountFact(key: "experience", name: "experience") { profile, _, _ in
+            profile.experience != nil
+        },
+        AccountFact(key: "constraints", name: "constraints") { profile, _, _ in
+            !profile.constraints.isEmpty
+        },
+        AccountFact(key: "bodyweight", name: "bodyweight") { profile, weighIns, _ in
+            latestWeight(profile: profile, weighIns: weighIns) != nil
+        },
+        AccountFact(key: "equipment", name: "equipment") { profile, _, _ in
+            profile.ownedEquipment != nil
+        },
+        AccountFact(key: "preferredWeekdays", name: "training days") { profile, _, _ in
+            !profile.preferredWeekdays.isEmpty
+        },
+        AccountFact(key: "preferredDurationMinutes", name: "session length") { profile, _, _ in
+            profile.preferredDurationMinutes != nil
+        },
+        AccountFact(key: "baselines", name: "strength baselines") { _, _, count in count > 0 },
+    ]
+
+    /// The keys this page deliberately does not survey — the document's own
+    /// list, which the coach's server reads too, so the two reports of what
+    /// nobody has said cannot draw the line in different places. See
+    /// `ProfileUpdate.unsurveyableKeys` for why each is out.
+    static let unsurveyedKeys = ProfileUpdate.unsurveyableKeys
 
     /// The names as one sentence — `"Goal, bodyweight and equipment."` — or
     /// `nil` when the record holds everything it can.

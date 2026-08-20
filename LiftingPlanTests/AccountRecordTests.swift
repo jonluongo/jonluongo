@@ -241,4 +241,20 @@ struct AccountRecordTests {
     func noAvoidancesNoRows() throws {
         #expect(facts(try emptyProfile()).isEmpty)
     }
+
+    // MARK: - The survey against the format
+
+    /// The guard the server already had and this page did not.
+    ///
+    /// The checks behind *not yet said* were eight `if` statements tied to
+    /// nothing, so a ninth fact added to `ProfileUpdate` would have failed the
+    /// server's own test — forcing a decision there — while this page silently
+    /// never mentioned it. A lifter would then read a complete-looking account
+    /// with a fact missing from it that his coach could see was missing.
+    @Test("Every fact the document can hold is surveyed, or left out by name")
+    func noFactGoesUnsurveyed() {
+        let surveyed = Set(AccountRecord.surveyed.map(\.key))
+        #expect(surveyed.union(AccountRecord.unsurveyedKeys) == ProfileUpdate.statedKeys)
+        #expect(surveyed.isDisjoint(with: AccountRecord.unsurveyedKeys))
+    }
 }

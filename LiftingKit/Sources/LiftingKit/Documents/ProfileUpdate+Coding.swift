@@ -35,6 +35,26 @@ extension ProfileUpdate {
         Set(CodingKeys.allCases.map(\.stringValue)).subtracting(["version", "id", "generatedAt"])
     }
 
+    /// The stated keys whose absence cannot be read, and why.
+    ///
+    /// Every other fact is three-way — absent, stated, or explicitly none — so
+    /// an empty one means nobody has said. These three are not. `displayUnit`
+    /// always has a value and is about how a number is drawn rather than about
+    /// the lifter; the two avoided lists are plain lists with no absent state,
+    /// so an empty one cannot be told from a lifter who avoids nothing. Calling
+    /// any of them *not yet said* would assert something the record does not
+    /// know.
+    ///
+    /// **It lives here because two surveys read it.** The phone's account page
+    /// and the server's `unstated_facts` each report what nobody has stated, and
+    /// each is checked against `statedKeys` less this set. Two copies of the
+    /// list would let the two reports disagree about a fact while both passing
+    /// their own tests, which is the one failure a survey of absences must not
+    /// have.
+    public static let unsurveyableKeys: Set<String> = [
+        "displayUnit", "avoidedPatterns", "avoidedExercises",
+    ]
+
     /// Every key a document itself may carry: the facts, the three things that
     /// make it a document, and the one key an older format used.
     private static var acceptedKeys: Set<String> {
