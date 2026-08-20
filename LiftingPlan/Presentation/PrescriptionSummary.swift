@@ -37,8 +37,8 @@ enum PrescriptionSummary {
     /// same thing twice, and the second saying is the one competing with the
     /// sets for the top of the card. The same goes for a ramp's span of load:
     /// every row carries its own load as its own placeholder. A browsing screen
-    /// has no table under it and still needs the whole line — that is what
-    /// `text(for:unit:)` is, and `PrescribedExerciseRow` still calls it.
+    /// has no table under it and still needs the whole line — which is what the
+    /// third function wrote, and both such screens went before it did.
     ///
     /// **What a row cannot say is the effort every set shares.** `unloadedEffort`
     /// deliberately draws nothing when all the sets ask for the same one, on the

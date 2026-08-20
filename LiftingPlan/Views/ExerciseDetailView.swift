@@ -20,9 +20,11 @@ import LiftingKit
 /// first because it answers the question the name raises; the record follows,
 /// and is the longer scroll.
 ///
-/// **How it is used.** Pushed from a prescribed exercise row, on Today and on a
-/// week inside the Plan tab, and presented as a sheet from an exercise's menu on
-/// the logging screen.
+/// **How it is used.** Presented as a sheet from an exercise's menu on the
+/// logging screen, which is the only way in. It was reached from three places
+/// on two screens that no longer exist — this said so for as long as they have
+/// been gone, which is what a *how it is used* line costs when nothing checks
+/// it.
 ///
 /// **It shares its chrome with the block's information sheet.** Both are an
 /// `InfoSheet`: the same surface, the same inline title, the same grabber, and

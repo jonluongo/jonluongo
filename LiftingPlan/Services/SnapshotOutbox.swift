@@ -7,8 +7,8 @@ import LiftingKit
 /// Build one with the app's transport, the `ModelContext`, and the loaded
 /// catalog; call `exportSnapshot()` when the app backgrounds and read
 /// `errorMessage` to show what went wrong. It is the outbound mirror of
-/// `PlanInbox`: that one imports what Claude wrote, this one writes what Claude
-/// reads.
+/// `DocumentInbox`: that one takes in what the coach wrote, this one writes
+/// what he reads.
 ///
 /// **A failed export is shown, not logged.** iCloud being signed out, or the
 /// container being unreachable, breaks the outbound half permanently — the Mac
