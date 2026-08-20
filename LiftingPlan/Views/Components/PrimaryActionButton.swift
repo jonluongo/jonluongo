@@ -54,6 +54,11 @@ struct PrimaryActionButton: View {
         /// still being one, which is what a thing you press by mistake should
         /// be.
         case quiet
+        /// The same as `quiet`, in the one colour that means this does not come
+        /// back. A slab would give the most destructive control on its screen
+        /// the most weight; the word alone gives it the least, and the
+        /// confirmation that follows is where the deciding actually happens.
+        case danger
     }
 
     let title: String
@@ -92,7 +97,7 @@ struct PrimaryActionButton: View {
         switch prominence {
         case .primary: Palette.ink
         case .tentative: Palette.rule
-        case .quiet: .clear
+        case .quiet, .danger: .clear
         }
     }
 
@@ -103,6 +108,7 @@ struct PrimaryActionButton: View {
         switch prominence {
         case .primary: Palette.onInk
         case .tentative, .quiet: Palette.ink
+        case .danger: Palette.destructive
         }
     }
 

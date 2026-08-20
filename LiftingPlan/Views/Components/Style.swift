@@ -101,6 +101,14 @@ enum Palette {
     /// not something highlighted.
     static let onInk = dynamic(light: 0xF4F4F6, dark: 0x0F0F11)
 
+    /// The one word in the app that undoes something that does not come back.
+    ///
+    /// Apple's system red at both appearances, stated here rather than taken
+    /// from `Color.red` so the app's colours are all in one file — and so a
+    /// destructive word reads the same whether the control drawing it is one of
+    /// ours or one of the system's.
+    static let destructive = dynamic(light: 0xD70015, dark: 0xFF453A)
+
     /// The ground a panel is written on once what it holds is in the record.
     ///
     /// The highlighter, thinned to a wash. A list of sessions used to read as

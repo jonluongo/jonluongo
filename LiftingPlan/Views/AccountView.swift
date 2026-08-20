@@ -128,19 +128,21 @@ struct AccountView: View {
 
     // MARK: - The one destructive thing
 
-    /// Alone, at the bottom, and carrying no explanation of its own — the
-    /// confirmation states exactly what goes and what stays, which is the moment
-    /// that matters. Saying it twice made neither saying count.
+    /// Alone at the bottom, as a word — no heading over it and no panel under
+    /// it. The confirmation states exactly what goes and what stays, which is
+    /// the moment that matters; saying it twice made neither saying count, and a
+    /// panel gave the one irreversible control on the page the most weight of
+    /// anything on it. Jon: *"Data should have no header and be just centered
+    /// text instead of a button like reset on timer."*
     private var data: some View {
         Section {
-            SectionHeading("Data")
-            Button(role: .destructive) {
+            PrimaryActionButton(title: "Delete All Routines", prominence: .danger) {
                 showingResetConfirm = true
-            } label: {
-                Text("Delete All Routines")
-                    .font(.supersetBody)
             }
-            .panelRow()
+            .listRowInsets(EdgeInsets(
+                top: Spacing.section, leading: PanelMetrics.inset,
+                bottom: 0, trailing: PanelMetrics.inset))
+            .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
         }
     }
