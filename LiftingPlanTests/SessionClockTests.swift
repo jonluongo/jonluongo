@@ -324,6 +324,7 @@ struct TickPersistenceTests {
 /// A notification centre that takes everything and reaches nobody.
 private struct SilentCenter: RestNotificationScheduling {
     func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool { true }
+    func allowsAlerts() async -> Bool { true }
     func add(_ request: UNNotificationRequest) async throws {}
     func removePendingRequests(withIdentifiers identifiers: [String]) {}
 }

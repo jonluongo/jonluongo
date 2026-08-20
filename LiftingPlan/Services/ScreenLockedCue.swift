@@ -89,9 +89,14 @@ final class ScreenLockedCue {
                         identifier: Self.notificationID(index), content: content,
                         trigger: trigger))
                 }
-                // A successful arming clears a stale message, so a lifter who
-                // fixed it in Settings stops being told about it.
-                errorMessage = nil
+                // **Scheduling succeeding is not the cue being able to fire.**
+                // iOS accepts these requests from an app it will never display
+                // one for, so clearing the message here told a lifter with
+                // notifications off that all was well from his second rest
+                // onward. Asked rather than assumed — which also means a lifter
+                // who fixed it in Settings stops being told, and one who turned
+                // them off months ago starts being told again.
+                errorMessage = await center.allowsAlerts() ? nil : Self.refusedMessage
             } catch {
                 errorMessage = Self.describe(error)
             }
@@ -159,6 +164,15 @@ final class ScreenLockedCue {
 /// Depends on: `UserNotifications`.
 @MainActor
 protocol RestNotificationScheduling {
+    /// Whether an alert armed right now would actually be shown.
+    ///
+    /// A separate question from what `requestAuthorization` answered, and the
+    /// one that matters: iOS accepts a notification request from an app it will
+    /// never display one for, so scheduling succeeding says nothing about
+    /// whether the cue can fire. It is asked again on every arming because the
+    /// answer changes in Settings, months later, without the app being told.
+    func allowsAlerts() async -> Bool
+
     func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
     func add(_ request: UNNotificationRequest) async throws
     func removePendingRequests(withIdentifiers identifiers: [String])
@@ -183,5 +197,13 @@ struct SystemRestNotificationCenter: RestNotificationScheduling {
     func removePendingRequests(withIdentifiers identifiers: [String]) {
         UNUserNotificationCenter.current()
             .removePendingNotificationRequests(withIdentifiers: identifiers)
+    }
+
+    /// Provisional counts: a quiet delivery still reaches the lock screen, which
+    /// is the whole of what this cue promises.
+    func allowsAlerts() async -> Bool {
+        let status = await UNUserNotificationCenter.current().notificationSettings()
+            .authorizationStatus
+        return status == .authorized || status == .provisional
     }
 }

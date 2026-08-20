@@ -11,6 +11,9 @@ import UserNotifications
 @MainActor
 private final class FakeNotificationCenter: RestNotificationScheduling {
     var authorizationAnswer: Result<Bool, any Error> = .success(true)
+    /// What iOS would say if asked right now, which is a different question
+    /// from what it answered when it was asked.
+    var isAllowed = true
     var schedulingError: (any Error)?
     private(set) var scheduled: [UNNotificationRequest] = []
     private(set) var removed: [String] = []
@@ -29,6 +32,8 @@ private final class FakeNotificationCenter: RestNotificationScheduling {
     func removePendingRequests(withIdentifiers identifiers: [String]) {
         removed.append(contentsOf: identifiers)
     }
+
+    func allowsAlerts() async -> Bool { isAllowed }
 }
 
 private struct NotificationsOff: LocalizedError {
@@ -150,6 +155,28 @@ struct RestTimerNotificationTests {
         // Three, a few seconds apart: one short sound is one a phone
         // face-down on a bench is as likely to miss as to hear.
         #expect(center.scheduled.count == 3)
+    }
+
+    @Test("Arming succeeds with notifications off, and he is still told")
+    func armingDoesNotClearARealRefusal() async throws {
+        // iOS accepts a notification request from an app it will never display
+        // one for, so a successful `add` says nothing about whether the cue can
+        // fire. Clearing the message on that success told a lifter with
+        // notifications off that everything was fine, from his second rest
+        // onward — the one failure this message exists to report.
+        let center = FakeNotificationCenter()
+        center.authorizationAnswer = .success(false)
+        center.isAllowed = false
+        let cue = ScreenLockedCue(center: center)
+
+        await cue.requestAuthorization()
+        #expect(cue.errorMessage != nil)
+
+        cue.arm(after: 90, context: "Squat")
+        try await Task.sleep(for: .milliseconds(50))
+
+        #expect(center.scheduled.count == 3, "the requests were accepted")
+        #expect(cue.errorMessage != nil, "and none of them will be shown")
     }
 
     @Test("A restarted timer cancels every alert of the one before it")
