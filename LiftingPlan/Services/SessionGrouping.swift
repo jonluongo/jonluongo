@@ -138,18 +138,42 @@ struct ExerciseGroup: Identifiable {
     /// the notation, the prescription, the ghost load, the warm-ups outside the
     /// rounds. That screen was replaced by movements drawn as movements, and
     /// this was the only line of it anything still asked for; the type went.
-    var hasCompleteRound: Bool {
-        var rounds: [[LoggedSet]] = []
+    /// **The round `set` belongs to, not any round.** It used to ask whether
+    /// *any* round of the group was finished, which from round two onward was
+    /// always true because round one was: ticking the first movement of a round
+    /// started the group's rest, and a superset is precisely the thing that must
+    /// not do that. The lifter was sent to wait ninety seconds instead of
+    /// straight to the movement that follows immediately.
+    func hasCompleteRound(containing set: LoggedSet) -> Bool {
+        guard !set.isWarmup, let position = position(of: set) else { return false }
+        return round(at: position).allSatisfy(\.isCompleted)
+    }
+
+    /// Where this set sits among the working sets of its own movement, which is
+    /// which round it belongs to.
+    private func position(of set: LoggedSet) -> Int? {
         for member in members {
-            let working = (member.loggedSets ?? [])
-                .filter { !$0.isWarmup }
-                .sorted { $0.setIndex < $1.setIndex }
-            for (position, set) in working.enumerated() {
-                while rounds.count <= position { rounds.append([]) }
-                rounds[position].append(set)
+            if let index = workingSets(of: member).firstIndex(where: { $0 === set }) {
+                return index
             }
         }
-        return rounds.contains { !$0.isEmpty && $0.allSatisfy(\.isCompleted) }
+        return nil
+    }
+
+    /// The sets at one position across the members. A movement prescribed more
+    /// sets than its partner has later positions to itself — they are rounds of
+    /// one, which is what the lifter is actually doing by then.
+    private func round(at position: Int) -> [LoggedSet] {
+        members.compactMap { member in
+            let working = workingSets(of: member)
+            return working.indices.contains(position) ? working[position] : nil
+        }
+    }
+
+    private func workingSets(of member: PlannedExercise) -> [LoggedSet] {
+        (member.loggedSets ?? [])
+            .filter { !$0.isWarmup }
+            .sorted { $0.setIndex < $1.setIndex }
     }
 
     /// What the group is called: the standard word for a group of this size,

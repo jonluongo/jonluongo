@@ -101,8 +101,10 @@ struct SessionLog {
 
     /// The same for a movement inside a group, where the rest waits for the
     /// round rather than the set.
-    func roundCompletionChanged(_ group: ExerciseGroup, completed: Bool) throws {
-        roundChanged(group, completed: completed)
+    func roundCompletionChanged(
+        _ group: ExerciseGroup, set: LoggedSet, completed: Bool
+    ) throws {
+        roundChanged(group, set: set, completed: completed)
         try context.saveOrThrow()
     }
 
@@ -146,8 +148,8 @@ struct SessionLog {
     /// difference a group makes and the whole reason the grouping is worth
     /// expressing: ticking one movement starts nothing, because the next
     /// follows immediately.
-    private func roundChanged(_ group: ExerciseGroup, completed: Bool) {
-        guard completed, group.hasCompleteRound else { return restTimer.stop() }
+    private func roundChanged(_ group: ExerciseGroup, set: LoggedSet, completed: Bool) {
+        guard completed, group.hasCompleteRound(containing: set) else { return restTimer.stop() }
         // The round that closes the session has nothing after it either.
         guard hasWorkLeft else { return restTimer.stop() }
         guard let key = group.restKey,

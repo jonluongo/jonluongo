@@ -60,10 +60,12 @@ struct SupersetRoundsTests {
         let first = group.members.map { ($0.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }[0] }
 
         first[0].isCompleted = true
-        #expect(!group.hasCompleteRound, "A1 alone does not finish the round")
+        #expect(
+            !group.hasCompleteRound(containing: first[0]),
+            "A1 alone does not finish the round")
 
         first[1].isCompleted = true
-        #expect(group.hasCompleteRound)
+        #expect(group.hasCompleteRound(containing: first[1]))
     }
 
     @Test("Taking a set back un-finishes the round it was in")
@@ -71,10 +73,10 @@ struct SupersetRoundsTests {
         let (group, _) = try group()
         let first = group.members.map { ($0.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }[0] }
         for set in first { set.isCompleted = true }
-        #expect(group.hasCompleteRound)
+        #expect(group.hasCompleteRound(containing: first[1]))
 
         first[0].isCompleted = false
-        #expect(!group.hasCompleteRound)
+        #expect(!group.hasCompleteRound(containing: first[1]))
     }
 
     @Test("A tri-set rests only when all three are ticked")
@@ -85,10 +87,11 @@ struct SupersetRoundsTests {
 
         first[0].isCompleted = true
         first[1].isCompleted = true
-        #expect(!group.hasCompleteRound, "two of three is not a round")
+        #expect(
+            !group.hasCompleteRound(containing: first[1]), "two of three is not a round")
 
         first[2].isCompleted = true
-        #expect(group.hasCompleteRound)
+        #expect(group.hasCompleteRound(containing: first[2]))
     }
 
     @Test("A warm-up finishes no round")
@@ -100,6 +103,51 @@ struct SupersetRoundsTests {
 
         // A warm-up belongs to the movement it warms up, not to a round the
         // partner movement is also in.
-        #expect(!group.hasCompleteRound)
+        #expect(!group.hasCompleteRound(containing: warmup))
+    }
+
+    // MARK: - Which round
+
+    @Test("A round that closed earlier does not owe rest for the one being trained")
+    func anEarlierRoundDoesNotPayForThisOne() throws {
+        // The failure: `hasCompleteRound` asked whether *any* round was
+        // finished. From round two onward the answer was yes because round one
+        // was, so ticking the first movement of a round started the group's
+        // rest — the exact thing a superset exists not to do, and the lifter is
+        // sent to wait 90 seconds instead of straight to the next movement.
+        let (group, _) = try group()
+        let sets = group.members.map { ($0.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex } }
+
+        // Round one, closed properly.
+        sets[0][0].isCompleted = true
+        sets[1][0].isCompleted = true
+        #expect(group.hasCompleteRound(containing: sets[1][0]), "the round he just closed")
+
+        // Round two: the first movement only.
+        sets[0][1].isCompleted = true
+        #expect(
+            !group.hasCompleteRound(containing: sets[0][1]),
+            "the next movement follows immediately; nothing is owed yet")
+
+        sets[1][1].isCompleted = true
+        #expect(group.hasCompleteRound(containing: sets[1][1]))
+    }
+
+    @Test("A movement prescribed more sets than its partner rests on its own rounds")
+    func aRoundOfOneStillCloses() throws {
+        // Documented behaviour: the later positions are rounds of one, which is
+        // what the lifter is actually doing by then.
+        let (group, _) = try group(sets: [3, 2])
+        let sets = group.members.map { ($0.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex } }
+        for round in 0..<2 {
+            sets[0][round].isCompleted = true
+            sets[1][round].isCompleted = true
+        }
+
+        sets[0][2].isCompleted = true
+
+        #expect(
+            group.hasCompleteRound(containing: sets[0][2]),
+            "nobody else is in this round, so ticking it closes it")
     }
 }

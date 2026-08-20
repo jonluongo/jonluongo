@@ -309,7 +309,7 @@ struct ActiveWorkoutView: View {
     ) {
         let group = group ?? day.entries.compactMap { $0.groupContaining(exercise) }.first
         if let group {
-            write { try log.roundCompletionChanged(group, completed: completed) }
+            write { try log.roundCompletionChanged(group, set: set, completed: completed) }
         } else {
             write { try log.completionChanged(for: exercise, isCompleted: completed) }
         }
