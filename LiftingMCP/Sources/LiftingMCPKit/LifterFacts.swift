@@ -76,7 +76,12 @@ public enum LifterFacts {
 
     public static let goal = LifterFact(
         "goal",
-        "What he is training for, in his own words.",
+        "What he is training for, in his own words — the fact the rest of the "
+            + "plan follows from. A lineman training for strength and "
+            + "explosiveness, someone who wants to look bigger, and someone "
+            + "chasing a first pull-up are three different programmes, and "
+            + "nothing else in this record distinguishes them. Recorded as he "
+            + "says it; what it implies is yours.",
         stated: { $0.profile.map { !$0.goal.isEmpty } ?? false })
 
     public static let constraints = LifterFact(

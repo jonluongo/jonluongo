@@ -252,7 +252,15 @@ public enum ToolCatalog {
                         + "and is recorded as written. Null if he has not said."),
                 "anyOf": [["type": "string"], ["type": "null"]],
             ],
-            "goal": string("What he is training for, in his words."),
+            "goal": string(
+                "What he is training for, in his words. This is the fact the "
+                    + "rest of the plan follows from — the split, the rep "
+                    + "ranges, the intensity and what progress even means all "
+                    + "answer to it, and nothing else in this record "
+                    + "distinguishes a lineman training for explosiveness from "
+                    + "someone who wants to look bigger. 'Get in shape' records "
+                    + "as little as it says; it is worth asking what he is "
+                    + "actually after before writing it down."),
             "constraints": string(
                 "Injuries and limitations in his words, with the nuance a list "
                     + "cannot hold, e.g. 'left shoulder hurts overhead'."),

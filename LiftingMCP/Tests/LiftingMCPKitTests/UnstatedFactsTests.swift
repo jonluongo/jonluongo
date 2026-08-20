@@ -106,6 +106,25 @@ struct UnstatedFactsTests {
         #expect(!described.contains("nothing more"))
     }
 
+    @Test("The goal says what it drives, not only what it holds")
+    func theGoalSaysWhatItIsFor() throws {
+        // Every fact here is one line of a list, and the goal is not one fact
+        // among equals: the split, the rep ranges and the intensity all answer
+        // to it, and nothing else in the record tells a lineman training for
+        // explosiveness from someone who wants to look bigger. A reader shown
+        // "what he is training for" and nothing more has no reason to push on a
+        // vague one.
+        let report = try facts(
+            in: fixtureSnapshot(profile: fixtureProfile(goal: "")))
+        let unstated = try #require(report["unstated"]?.arrayValue)
+        let goal = try #require(unstated.first { $0["fact"] == "goal" }?.objectValue)
+        let holds = try #require(goal["holds"]?.stringValue)
+
+        #expect(holds.count > LifterFacts.experience.holds.count,
+            "it carries more than the one-line facts")
+        #expect(holds.lowercased().contains("follows from"))
+    }
+
     @Test("Nothing in the report calls a date old")
     func theServerPassesNoJudgementOnADate() throws {
         // Whether eighteen months is stale is a training judgement, and the one
