@@ -40,7 +40,7 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// not know before it looks at anything else.
     ///
     /// Version 2 dropped the per-set `rpe` a lifter used to be asked for.
-    public static let currentVersion = 4
+    public static let currentVersion = 5
 
     /// The format version of this document, as written.
     public let version: Int
@@ -190,14 +190,30 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
     /// facts the lifter may have changed since. `nil` when none has been
     /// applied.
     public let appliedProfileUpdateID: UUID?
-    public let updatedAt: Date
+
+    /// When each of these facts was last stated, keyed as `update_profile`
+    /// names them. A fact absent from this was stated before the phone began
+    /// keeping dates, or never.
+    ///
+    /// **It replaces a single `updatedAt` for the whole profile**, which moved
+    /// whenever any one fact changed and so could not answer the question a
+    /// reader of `constraints` actually has: is this still true, or is it two
+    /// years old? No tool ever reported that timestamp, because a whole-record
+    /// date cannot honestly mean *when he said this*.
+    ///
+    /// `bodyweight` and the baselines are not here. Each is already a dated
+    /// series of its own, and a second date for them would be a second answer.
+    ///
+    /// Nothing here says whether a date is *old*. That is a training judgement.
+    public let statedAt: [String: Date]
 
     public init(
         displayUnit: MassUnit, experience: ExperienceLevel?,
         availableEquipment: [EquipmentType]?, goal: String, constraints: String,
         bodyweight: Mass?, avoidedPatterns: [MovementPattern],
         avoidedExercises: [ExerciseID], preferredWeekdays: [Weekday],
-        preferredDurationMinutes: Int?, appliedProfileUpdateID: UUID? = nil, updatedAt: Date
+        preferredDurationMinutes: Int?, appliedProfileUpdateID: UUID? = nil,
+        statedAt: [String: Date] = [:]
     ) {
         self.displayUnit = displayUnit
         self.experience = experience
@@ -210,7 +226,38 @@ public struct SnapshotProfile: Codable, Hashable, Sendable {
         self.preferredWeekdays = preferredWeekdays
         self.preferredDurationMinutes = preferredDurationMinutes
         self.appliedProfileUpdateID = appliedProfileUpdateID
-        self.updatedAt = updatedAt
+        self.statedAt = statedAt
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case displayUnit, experience, availableEquipment, goal, constraints, bodyweight
+        case avoidedPatterns, avoidedExercises, preferredWeekdays, preferredDurationMinutes
+        case appliedProfileUpdateID, statedAt
+    }
+
+    /// **A profile with no dates on it is read as a profile with no dates**,
+    /// rather than as a malformed one. Every install that predates the phone
+    /// keeping them has exactly that, and so does a snapshot written by hand —
+    /// which this format is meant to stay writable by. The facts are still
+    /// there; only the record of when they were stated is missing, which is
+    /// what an empty map says.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        displayUnit = try container.decode(MassUnit.self, forKey: .displayUnit)
+        experience = try container.decodeIfPresent(ExperienceLevel.self, forKey: .experience)
+        availableEquipment = try container.decodeIfPresent(
+            [EquipmentType].self, forKey: .availableEquipment)
+        goal = try container.decode(String.self, forKey: .goal)
+        constraints = try container.decode(String.self, forKey: .constraints)
+        bodyweight = try container.decodeIfPresent(Mass.self, forKey: .bodyweight)
+        avoidedPatterns = try container.decode([MovementPattern].self, forKey: .avoidedPatterns)
+        avoidedExercises = try container.decode([ExerciseID].self, forKey: .avoidedExercises)
+        preferredWeekdays = try container.decode([Weekday].self, forKey: .preferredWeekdays)
+        preferredDurationMinutes = try container.decodeIfPresent(
+            Int.self, forKey: .preferredDurationMinutes)
+        appliedProfileUpdateID = try container.decodeIfPresent(
+            UUID.self, forKey: .appliedProfileUpdateID)
+        statedAt = try container.decodeIfPresent([String: Date].self, forKey: .statedAt) ?? [:]
     }
 }
 

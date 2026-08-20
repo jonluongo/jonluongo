@@ -79,7 +79,11 @@ func fixtureProfile(
     avoidedExercises: [ExerciseID] = [],
     goal: String = "Add 20 lb to the bench",
     constraints: String = "Left shoulder is touchy overhead",
-    appliedProfileUpdateID: UUID? = nil
+    appliedProfileUpdateID: UUID? = nil,
+    /// When each fact was last stated. Defaulted so the fixture reads as a
+    /// lifter whose facts were stated at different times, which is the ordinary
+    /// case and the one the dates exist for.
+    statedAt: [String: Date] = ["goal": daysAgo(60), "constraints": daysAgo(400)]
 ) -> SnapshotProfile {
     SnapshotProfile(
         displayUnit: .pounds,
@@ -93,7 +97,7 @@ func fixtureProfile(
         preferredWeekdays: [.monday, .thursday],
         preferredDurationMinutes: 60,
         appliedProfileUpdateID: appliedProfileUpdateID,
-        updatedAt: daysAgo(60)
+        statedAt: statedAt
     )
 }
 

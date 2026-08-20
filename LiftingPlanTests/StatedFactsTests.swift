@@ -155,6 +155,43 @@ struct StatedFactsTests {
         #expect(StatedFacts.lastStated("goal", in: [recorded]) == Self.march)
     }
 
+    // MARK: - Reaching the coach
+
+    @Test("The dates the phone kept are the dates the snapshot carries")
+    func theSnapshotCarriesEachDate() throws {
+        let context = try context()
+        _ = try ProfileUpdater.apply(
+            ProfileUpdate(
+                id: UUID(), generatedAt: Self.march, constraints: .stated("Shoulder")),
+            to: context, catalog: try catalog())
+        _ = try ProfileUpdater.apply(
+            ProfileUpdate(id: UUID(), generatedAt: Self.august, goal: .stated("Bench 245")),
+            to: context, catalog: try catalog())
+
+        let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
+        let profile = try #require(snapshot.profile)
+
+        #expect(profile.statedAt["constraints"] == Self.march)
+        #expect(profile.statedAt["goal"] == Self.august)
+        #expect(profile.statedAt["equipment"] == nil, "he has said nothing about it")
+    }
+
+    @Test("A profile with no statements behind it carries no dates rather than wrong ones")
+    func aProfileFromBeforeTheDatesCarriesNone() throws {
+        // Every install that predates this build has a profile and no
+        // statements. Dating those facts today would claim he restated all of
+        // them the moment he updated the app.
+        let context = try context()
+        let profile = UserProfile()
+        profile.goal = "Stated by an earlier build"
+        context.insert(profile)
+        try context.save()
+
+        let snapshot = try SnapshotExporter.export(from: context, catalogVersion: 5)
+
+        #expect(try #require(snapshot.profile).statedAt.isEmpty)
+    }
+
     @Test("The same update applied twice is one statement")
     func anUpdateIsRecordedOnce() throws {
         let context = try context()

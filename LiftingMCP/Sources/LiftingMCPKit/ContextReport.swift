@@ -79,7 +79,25 @@ struct ContextReport {
             "displayUnit": .string(profile.displayUnit.rawValue),
             "bodyweight": .mass(LifterFacts.latestBodyweight(in: snapshot)),
             "unstated": .array(unstatedFacts.map { .string($0) }),
+            // When he last said each of these. A fact he stated in March and a
+            // fact he stated this week read identically without it, and they
+            // are not the same instruction: a shoulder that was sore before the
+            // last two blocks is worth asking about, and one he mentioned on
+            // Tuesday is worth programming around.
+            //
+            // Absent from this map means the date is not on record — stated
+            // before the phone began keeping them, or never stated. It never
+            // means *recently*. Nothing here says whether a date is old, which
+            // is a judgement and is yours.
+            "statedAt": statedAt(of: profile),
         ]
+    }
+
+    /// The dates the profile carries, as an object keyed the way
+    /// `update_profile` names its arguments, so a fact and the date it was
+    /// stated on are looked up by the same word.
+    private func statedAt(of profile: SnapshotProfile) -> JSONValue {
+        .object(profile.statedAt.mapValues { .date($0) })
     }
 
     /// The facts nobody has stated yet, named rather than left for a reader to

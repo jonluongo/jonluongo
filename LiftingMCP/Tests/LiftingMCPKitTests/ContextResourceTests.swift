@@ -27,6 +27,28 @@ struct ContextResourceTests {
         #expect(lifter["preferredDurationMinutes"] == 60)
     }
 
+    @Test("Each fact carries the date it was stated, not one date for all of them")
+    func factsCarryTheirOwnDates() throws {
+        // The whole reason `statedAt` replaced a single `updatedAt`: a goal
+        // stated two months ago and a constraint stated over a year ago read
+        // identically without it, and they are not the same instruction.
+        let stated = try #require(try context()["lifter"]?["statedAt"]?.objectValue)
+
+        #expect(stated["goal"] != nil)
+        #expect(stated["constraints"] != nil)
+        #expect(stated["goal"] != stated["constraints"], "different days, different dates")
+    }
+
+    @Test("A fact with no date on record is absent rather than dated today")
+    func anUndatedFactIsAbsent() throws {
+        // Absent means the date is not on record — stated before the phone kept
+        // them, or never stated. Filling it in with today would say he
+        // mentioned his equipment this morning.
+        let stated = try #require(try context()["lifter"]?["statedAt"]?.objectValue)
+
+        #expect(stated["equipment"] == nil)
+    }
+
     @Test("Free text nobody has given is null, like every other fact he has not stated")
     func unstatedFreeTextIsNull() throws {
         // The store spells absent free text as an empty string. Carrying that

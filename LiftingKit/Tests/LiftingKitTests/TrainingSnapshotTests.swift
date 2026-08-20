@@ -134,7 +134,7 @@ struct TrainingSnapshotTests {
             avoidedPatterns: avoidedPatterns,
             avoidedExercises: [ExerciseID(rawValue: "barbell-upright-row")],
             preferredWeekdays: [.monday, .thursday], preferredDurationMinutes: 60,
-            updatedAt: Self.instant
+            statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
         )
         return TrainingSnapshot(
             catalogVersion: 5, generatedAt: Self.instant, profile: profile,
@@ -244,7 +244,7 @@ struct TrainingSnapshotTests {
     func unknownValuesFromRawJSONDecode() throws {
         let json = """
         {
-          "version": 4,
+          "version": 5,
           "catalogVersion": 99,
           "generatedAt": "2023-11-14T22:13:20Z",
           "profile": {
@@ -288,7 +288,7 @@ struct TrainingSnapshotTests {
     @Test("Absent sections decode as empty rather than failing")
     func absentSectionsDecodeAsEmpty() throws {
         let json = """
-        {"version": 4, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
+        {"version": 5, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
         """
         let decoded = try TrainingSnapshot.makeDecoder()
             .decode(TrainingSnapshot.self, from: Data(json.utf8))
@@ -307,7 +307,7 @@ struct TrainingSnapshotTests {
             displayUnit: .pounds, experience: nil,
             availableEquipment: nil, goal: "", constraints: "", bodyweight: nil,
             avoidedPatterns: [], avoidedExercises: [], preferredWeekdays: [],
-            preferredDurationMinutes: nil, updatedAt: Self.instant
+            preferredDurationMinutes: nil, statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
         )
         let decoded = try roundTrip(
             TrainingSnapshot(catalogVersion: 5, generatedAt: Self.instant, profile: blank)
@@ -327,7 +327,7 @@ struct TrainingSnapshotTests {
             displayUnit: .pounds, experience: nil,
             availableEquipment: nil, goal: "", constraints: "", bodyweight: nil,
             avoidedPatterns: [], avoidedExercises: [], preferredWeekdays: [],
-            preferredDurationMinutes: nil, updatedAt: Self.instant
+            preferredDurationMinutes: nil, statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
         )
         let data = try TrainingSnapshot.makeEncoder().encode(
             TrainingSnapshot(catalogVersion: 5, generatedAt: Self.instant, profile: blank))
@@ -338,11 +338,34 @@ struct TrainingSnapshotTests {
         #expect(!json.contains("experience"))
     }
 
+    @Test("A profile with no dates on it reads as a profile with no dates")
+    func aProfileWithoutStatedDatesDecodes() throws {
+        // Every install predating the phone keeping dates has exactly this, and
+        // so does a snapshot written by hand. The facts are there; only the
+        // record of when they were stated is missing.
+        let data = Data(        """
+        {
+          "version": 5, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
+          "profile": {
+            "displayUnit": "lb", "goal": "Bench 225", "constraints": "",
+            "avoidedPatterns": [], "avoidedExercises": [], "preferredWeekdays": []
+          }
+        }
+        """
+       .utf8)
+
+        let snapshot = try TrainingSnapshot.makeDecoder()
+            .decode(TrainingSnapshot.self, from: data)
+
+        #expect(snapshot.profile?.goal == "Bench 225")
+        #expect(snapshot.profile?.statedAt.isEmpty == true)
+    }
+
     @Test("A profile written before these facts were known decodes as not knowing them")
     func profileWithoutStatedFactsDecodes() throws {
         let json = """
         {
-          "version": 4,
+          "version": 5,
           "catalogVersion": 5,
           "generatedAt": "2023-11-14T22:13:20Z",
           "profile": {

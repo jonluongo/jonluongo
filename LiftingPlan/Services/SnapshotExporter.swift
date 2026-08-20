@@ -48,6 +48,10 @@ enum SnapshotExporter {
         let baselines = try context.fetch(FetchDescriptor<StrengthBaseline>(
             sortBy: [SortDescriptor(\.recordedAt)]
         ))
+        // When each stated fact was last spoken to. Read here rather than off
+        // the profile because the profile holds one date for all of them.
+        let statedAt = StatedFacts.dates(
+            in: try context.fetch(FetchDescriptor<ProfileStatement>()))
         let plans = try context.fetch(FetchDescriptor<TrainingPlan>(
             sortBy: [SortDescriptor(\.startDate)]
         ))
@@ -55,7 +59,7 @@ enum SnapshotExporter {
         return TrainingSnapshot(
             catalogVersion: catalogVersion,
             generatedAt: generatedAt,
-            profile: profiles.first.map(snapshot(of:)),
+            profile: profiles.first.map { snapshot(of: $0, statedAt: statedAt) },
             bodyMetrics: metrics.map(snapshot(of:)),
             baselines: baselines.map(snapshot(of:)),
             routines: plans.compactMap(routine(of:)),
@@ -72,7 +76,9 @@ enum SnapshotExporter {
     /// Intermediate" about someone who never said so has no way to tell it from
     /// a fact. `availableEquipment` is `nil` for the same reason rather than
     /// empty: empty says he can perform nothing.
-    private static func snapshot(of profile: UserProfile) -> SnapshotProfile {
+    private static func snapshot(
+        of profile: UserProfile, statedAt: [String: Date]
+    ) -> SnapshotProfile {
         SnapshotProfile(
             displayUnit: profile.displayUnit,
             experience: profile.experience,
@@ -88,7 +94,11 @@ enum SnapshotExporter {
             // Carried so the writer of the next update can tell one still
             // waiting in the folder from one already taken in.
             appliedProfileUpdateID: profile.appliedProfileUpdateID,
-            updatedAt: profile.updatedAt
+            // When he said each of these, rather than one date for all of them.
+            // The profile's own `updatedAt` moves whenever any fact changes, so
+            // it could never say whether a constraint is current — see
+            // `SnapshotProfile.statedAt`.
+            statedAt: statedAt
         )
     }
 

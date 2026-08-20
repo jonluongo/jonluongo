@@ -90,7 +90,7 @@ private func makeSnapshot(catalogVersion: Int = 5) -> TrainingSnapshot {
             bodyweight: Mass(value: 182, unit: .pounds),
             avoidedPatterns: [], avoidedExercises: [],
             preferredWeekdays: [.monday, .thursday],
-            preferredDurationMinutes: 60, updatedAt: instant
+            preferredDurationMinutes: 60, statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
         ),
         baselines: [
             SnapshotBaseline(

@@ -189,14 +189,14 @@ struct SnapshotWireShapeTests {
 
     // MARK: - The format says which one it is
 
-    @Test("The snapshot states version 4, and a reader that finds another refuses it")
+    @Test("The snapshot states version 5, and a reader that finds another refuses it")
     func versionIsStatedAndEnforced() throws {
-        #expect(TrainingSnapshot.currentVersion == 4)
-        #expect(try object(snapshot())["version"] as? Int == 4)
+        #expect(TrainingSnapshot.currentVersion == 5)
+        #expect(try object(snapshot())["version"] as? Int == 5)
 
         // Both directions: the shape moved, so neither an older nor a newer file
         // can be read as though sections were merely absent.
-        for stated in [3, 5] {
+        for stated in [4, 6] {
             let data = Data("""
                 {"version": \(stated), "catalogVersion": 5,
                  "generatedAt": "2023-11-14T22:13:20Z"}
@@ -211,7 +211,7 @@ struct SnapshotWireShapeTests {
     func handWrittenSnapshotDecodes() throws {
         let data = Data("""
             {
-              "version": 4,
+              "version": 5,
               "catalogVersion": 5,
               "generatedAt": "2023-11-14T22:13:20Z",
               "routines": [{
