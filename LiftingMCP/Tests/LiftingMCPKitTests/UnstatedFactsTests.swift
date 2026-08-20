@@ -49,10 +49,53 @@ struct UnstatedFactsTests {
         let report = try facts(
             in: fixtureSnapshot(
                 profile: fixtureProfile(experience: nil, availableEquipment: nil)))
-        let stated = try #require(report["stated"]?.arrayValue).compactMap(\.stringValue)
+        let stated = try #require(report["stated"]?.arrayValue)
+            .compactMap { $0["fact"]?.stringValue }
 
         #expect(try names(report) == ["equipment", "experience"])
         #expect((try names(report) + stated).sorted() == LifterFacts.known.map(\.name).sorted())
+    }
+
+    @Test("A stated fact carries the date he last said it")
+    func aStatedFactCarriesItsDate() throws {
+        // The date is the thing that could not be read anywhere before. A
+        // constraint stated eighteen months ago and one stated on Tuesday were
+        // the same word in this list.
+        let report = try facts(in: fixtureSnapshot())
+        let stated = try #require(report["stated"]?.arrayValue)
+        // Read through `objectValue`: the subscript answers `nil` for an
+        // explicit null as readily as for an absent key, so `!= .null` on it is
+        // an assertion that passes whatever the report says.
+        let constraints = try #require(stated.first { $0["fact"] == "constraints" }?.objectValue)
+        let goal = try #require(stated.first { $0["fact"] == "goal" }?.objectValue)
+
+        #expect(constraints["statedAt"] != .null)
+        #expect(goal["statedAt"] != .null)
+        #expect(constraints["statedAt"] != goal["statedAt"], "said on different days")
+    }
+
+    @Test("A fact whose date is not on record says so, rather than reading as today")
+    func anUndatedStatedFactIsNull() throws {
+        // Every record predating the phone keeping dates is this. Filling one
+        // in would claim he restated everything the day he updated the app.
+        let report = try facts(
+            in: fixtureSnapshot(profile: fixtureProfile(statedAt: [:])))
+        let stated = try #require(report["stated"]?.arrayValue)
+
+        #expect(stated.allSatisfy { $0.objectValue?["statedAt"] == .null })
+        #expect(!stated.isEmpty, "and they are still stated facts")
+    }
+
+    @Test("Nothing in the report calls a date old")
+    func theServerPassesNoJudgementOnADate() throws {
+        // Whether eighteen months is stale is a training judgement, and the one
+        // thing this server does not do is make those.
+        let report = try facts(in: fixtureSnapshot())
+        let note = try #require(report["note"]?.stringValue).lowercased()
+
+        for verdict in ["stale", "out of date", "outdated", "too old", "should ask"] {
+            #expect(!note.contains(verdict), "the note passes a verdict: \(verdict)")
+        }
     }
 
     // MARK: - What it says about a gap

@@ -213,6 +213,12 @@ extension JSONValue {
         .string(date.formatted(isoStyle))
     }
 
+    /// A date that may not be known. `nil` stays `null` rather than becoming
+    /// now — a fact whose date is not on record is not a fact stated today.
+    public static func date(_ date: Date?) -> JSONValue {
+        date.map(Self.date) ?? .null
+    }
+
     /// A weight as the lifter entered it, never converted. `nil` stays `null`,
     /// which is how a bodyweight movement is told apart from an empty bar.
     public static func mass(_ mass: Mass?) -> JSONValue {

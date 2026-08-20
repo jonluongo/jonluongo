@@ -32,8 +32,15 @@ extension ToolRunner {
     /// Both lists together are every fact the record can hold, which is what
     /// makes this a statement about the record rather than a list somebody
     /// curated. The unstated ones carry what each field holds, because a name on
-    /// its own does not say what would go in it; the stated ones are named only,
-    /// since their values are already in the context resource.
+    /// its own does not say what would go in it; the stated ones carry when they
+    /// were last stated, since their values are already in the context resource
+    /// and the date is the thing that could not be read anywhere before.
+    ///
+    /// **A date, and no verdict on it.** A fact stated eighteen months ago and
+    /// one stated on Tuesday are both `stated`, and the difference between them
+    /// is a training judgement: an old constraint may be worth asking about, or
+    /// may be a shoulder that has simply always been like that. This server does
+    /// not rank them, flag them, or call any of them stale.
     static func factsReport(for snapshot: TrainingSnapshot) -> JSONValue {
         [
             "snapshotGeneratedAt": .date(snapshot.generatedAt),
@@ -41,7 +48,17 @@ extension ToolRunner {
                 LifterFacts.unstated(in: snapshot).map {
                     ["fact": .string($0.name), "holds": .string($0.holds)]
                 }),
-            "stated": .array(LifterFacts.stated(in: snapshot).map { .string($0.name) }),
+            "stated": .array(
+                LifterFacts.stated(in: snapshot).map { fact in
+                    [
+                        "fact": .string(fact.name),
+                        // When he last said it, or null when the date is not on
+                        // record — stated before the phone began keeping them.
+                        // Never a stand-in date: absent says the date is
+                        // unknown, which is not the same as recent.
+                        "statedAt": .date(snapshot.profile?.statedAt[fact.name]),
+                    ]
+                }),
             "statedWith": .string(ToolCatalog.updateProfile),
             "note": .string(note),
         ]
@@ -59,6 +76,9 @@ extension ToolRunner {
         records one, and it merges, so one fact at a time is fine. Which of \
         these matter for what you are about to do, whether to ask about them at \
         all, and in what order, is yours to judge; this only says which fields \
-        are empty.
+        are empty. A fact under 'stated' carries the date he last said it, or \
+        null where the record predates those dates being kept — an old date is \
+        not a problem being reported to you, it is a fact you could not see \
+        before.
         """
 }
