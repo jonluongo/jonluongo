@@ -93,4 +93,57 @@ struct SnapshotOutboxTests {
 
         #expect(outbox.errorMessage == nil)
     }
+
+    // MARK: - Written is not delivered
+
+    /// A transport that writes into a real folder, and answers as iCloud would
+    /// about whether the file ever left the phone.
+    private func iCloudTransport(
+        at directory: URL, uploadFailure: String?
+    ) -> ICloudDocumentTransport {
+        ICloudDocumentTransport(
+            containerIdentifier: "iCloud.test",
+            resolveContainer: { _ in directory },
+            uploadFailure: { _ in uploadFailure }
+        )
+    }
+
+    @Test("A snapshot iCloud will not take is reported, not counted as sent")
+    func anUndeliveredSnapshotIsReported() async throws {
+        // The failure this closes broke the product silently: the write into
+        // the ubiquity container is local and succeeds, iCloud refuses to
+        // carry it — a full account is the ordinary case — and nothing threw.
+        // The app looked fine while the coach read nothing.
+        let directory = URL.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let context = try context()
+        let outbox = try outbox(
+            transport: iCloudTransport(at: directory, uploadFailure: "Quota exceeded"),
+            context: context)
+
+        await outbox.exportSnapshot()
+
+        let message = try #require(outbox.errorMessage)
+        #expect(message.contains("Quota exceeded"), "iCloud's own reason, not a paraphrase")
+        #expect(message.contains("coach"), "what it costs him is the point of saying it")
+        // The file is still written: the record is the phone's either way, and
+        // it goes out the moment iCloud will take it.
+        #expect(try DocumentFolder(
+            directory: directory.appending(path: "Documents")).readSnapshot() != nil)
+    }
+
+    @Test("A snapshot iCloud takes is reported as nothing at all")
+    func aDeliveredSnapshotSaysNothing() async throws {
+        let directory = URL.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let context = try context()
+        let outbox = try outbox(
+            transport: iCloudTransport(at: directory, uploadFailure: nil), context: context)
+
+        await outbox.exportSnapshot()
+
+        #expect(outbox.errorMessage == nil)
+    }
 }

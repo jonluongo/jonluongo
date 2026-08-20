@@ -36,6 +36,10 @@ final class SnapshotOutbox {
     private(set) var errorMessage: String?
 
     private let transport: any DocumentTransport
+    /// The same transport, when it is one that can say why a file has not
+    /// reached iCloud. `nil` for a plain folder — a test's temporary directory
+    /// has no upload to fail.
+    private var uploads: ICloudDocumentTransport? { transport as? ICloudDocumentTransport }
     private let context: ModelContext
     private let catalog: any ExerciseCatalogProviding
 
@@ -47,6 +51,14 @@ final class SnapshotOutbox {
         self.transport = transport
         self.context = context
         self.catalog = catalog
+    }
+
+    /// What the lifter is told when the file was written but iCloud will not
+    /// take it. It names iCloud's own reason rather than paraphrasing: *Quota
+    /// exceeded* is the sentence that tells him what to do.
+    private static func notDelivered(_ reason: String) -> String {
+        "Your record was saved on this phone but iCloud has not taken it, so "
+            + "your coach is reading an older one. iCloud says: \(reason)"
     }
 
     /// Clears a reported failure, after the lifter has been shown it.
@@ -68,7 +80,12 @@ final class SnapshotOutbox {
             )
             // Off it, where resolving iCloud belongs.
             try await Self.write(snapshot, through: transport)
-            errorMessage = nil
+            // **Written is not delivered.** The write above is a local one into
+            // the ubiquity container; carrying it to the Mac is iCloud's job
+            // and it can fail permanently — a full account is the ordinary
+            // case. Nothing threw, the app looked fine, and the coach read
+            // nothing. So the file is asked about rather than assumed.
+            errorMessage = try uploads?.snapshotUploadFailure().map(Self.notDelivered)
         } catch {
             errorMessage = (error as? any LocalizedError)?.errorDescription
                 ?? error.localizedDescription

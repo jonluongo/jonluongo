@@ -62,6 +62,10 @@ struct ICloudDocumentTransport: DocumentTransport {
 
     private let containerIdentifier: String
     private let resolveContainer: @Sendable (String) -> URL?
+    /// Why the file at this URL has not reached iCloud, if it has not. Injected
+    /// for the same reason the container lookup is: a test has a real directory
+    /// and no iCloud, where these values do not exist.
+    private let uploadFailure: @Sendable (URL) -> String?
 
     /// - Parameters:
     ///   - containerIdentifier: the ubiquity container to use. Defaults to the
@@ -73,10 +77,40 @@ struct ICloudDocumentTransport: DocumentTransport {
         containerIdentifier: String = ICloudDocumentTransport.defaultContainerIdentifier,
         resolveContainer: @escaping @Sendable (String) -> URL? = {
             FileManager.default.url(forUbiquityContainerIdentifier: $0)
-        }
+        },
+        uploadFailure: @escaping @Sendable (URL) -> String? =
+            ICloudDocumentTransport.systemUploadFailure
     ) {
         self.containerIdentifier = containerIdentifier
         self.resolveContainer = resolveContainer
+        self.uploadFailure = uploadFailure
+    }
+
+    /// What iCloud says about the snapshot it was last handed, or `nil` when it
+    /// is on its way or already there.
+    ///
+    /// **The write succeeding is not the file arriving.** Writing into the
+    /// ubiquity container is a local file write; carrying it to the other end
+    /// is iCloud's, and it can fail permanently — a full account is the
+    /// ordinary case — without anything here throwing. The app looked
+    /// successful while the coach read nothing, which is the one failure that
+    /// reports success. iOS knows, and this asks.
+    func snapshotUploadFailure() throws -> String? {
+        uploadFailure(try documentsFolder().url.appending(path: DocumentFolder.snapshotFilename))
+    }
+
+    /// The real answer, read off the file's own iCloud state.
+    ///
+    /// An error is quoted as iCloud stated it — *Quota exceeded* is the one
+    /// worth naming and not one to paraphrase. A file simply still uploading is
+    /// not a failure and answers `nil`.
+    @Sendable
+    static func systemUploadFailure(for url: URL) -> String? {
+        guard let values = try? url.resourceValues(forKeys: [
+            .ubiquitousItemUploadingErrorKey, .ubiquitousItemIsUploadedKey,
+        ]) else { return nil }
+        guard let error = values.ubiquitousItemUploadingError else { return nil }
+        return error.localizedDescription
     }
 
     func writeSnapshot(_ snapshot: TrainingSnapshot) throws {
