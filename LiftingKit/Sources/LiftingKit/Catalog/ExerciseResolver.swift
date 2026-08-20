@@ -30,17 +30,21 @@ public struct ResolvedExercise: Hashable, Sendable {
 
 /// Maps free text onto a real catalog entry.
 ///
-/// This is the guard that keeps invented exercises out of the database. Claude
-/// is free to name a movement however it likes; every name it produces passes
-/// through here, and anything that cannot be resolved is either replaced from a
-/// fallback filter or rejected. **A name that does not resolve is never
-/// persisted** — history is keyed by exercise identity, and a fabricated key
-/// fragments a lift's history irreparably.
+/// **Nothing calls this today, and the doc comment used to claim otherwise.** It
+/// said every name Claude produces passes through here. It does not: a plan
+/// states `ExerciseID`s the coach picked out of the catalog with
+/// `list_exercises`, and an ID the catalog does not have is refused by name —
+/// by `write_plan` before the file is written and by `PlanImporter` before
+/// anything is stored. Refusing beats guessing, and that refusal is what
+/// actually keeps invented exercises out of the database.
+///
+/// **What it would be for.** Anywhere free text has to become an `ExerciseID`:
+/// a search field, or `list_exercises` finding *incline dumbbell bench* when
+/// the catalog calls it something else. `ExerciseCatalog.search` does that job
+/// today with a substring match, which finds less.
 ///
 /// Construct one with any `ExerciseCatalogProviding` and reuse it — the
-/// normalized index is built once at initialization. Both clients of this
-/// package resolve through the same instance of these rules, so the app and the
-/// MCP server cannot disagree about what a name refers to.
+/// normalized index is built once at initialization.
 ///
 /// Depends on: `ExerciseCatalogProviding` and Foundation.
 public struct ExerciseResolver: Sendable {

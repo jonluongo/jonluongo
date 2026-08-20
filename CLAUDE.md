@@ -274,9 +274,12 @@ be silently dropped.
 **Protocol seams at boundaries.** Layers depend on protocols, not concrete
 types, so implementations can be swapped and faked.
 
-**Tests before implementation.** The pure layers carry real coverage. The
-exercise resolver and unit conversion are the highest-value suites in the
-project — they are the guard on data integrity.
+**Tests before implementation.** The pure layers carry real coverage. Unit
+conversion and the two refusals — an `ExerciseID` the catalog lacks, a document
+key this format does not have — are the highest-value suites in the project,
+because they are the guard on data integrity. (`ExerciseResolver` has a suite of
+its own and no callers: plans arrive as catalog IDs and unknown ones are
+refused, so nothing resolves free text. Its doc comment says so.)
 
 **Every public type answers three questions** in its doc comment: what it does,
 how it is used, what it depends on. If a type cannot be understood without
