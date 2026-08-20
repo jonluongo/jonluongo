@@ -112,9 +112,10 @@ public struct ToolRunner: Sendable {
         No training snapshot yet, so there is nothing to report on. This is not \
         a lifter with no history — it is a file that has not been written.
 
-        Superset writes snapshot.json when the app moves to the background. \
-        On your iPhone: open Superset, then swipe up to the Home Screen and \
-        wait a few seconds for iCloud to sync. Then try again.
+        Superset writes snapshot.json whenever the record changes: when a \
+        session is finished or taken back, when a plan you sent lands, and when \
+        the app goes to the background. On your iPhone: open Superset and wait \
+        a few seconds for iCloud to sync. Then try again.
 
         Looked for: \(location)
 
