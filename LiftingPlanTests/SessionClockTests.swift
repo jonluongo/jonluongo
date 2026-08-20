@@ -1,4 +1,5 @@
 import Testing
+import UserNotifications
 import SwiftData
 import Foundation
 @testable import LiftingPlan
@@ -277,4 +278,52 @@ struct TickPersistenceTests {
         let stored = try #require(try reader.fetch(FetchDescriptor<LoggedSet>()).first)
         #expect(!stored.isCompleted, "a set taken back did not happen, and the record says so")
     }
+
+    // MARK: - A clock that outlives what it was timing
+
+    /// A timer whose alerts go nowhere, so a test can watch it run and stop.
+    private func silentTimer() -> RestTimerModel {
+        RestTimerModel(center: SilentCenter(), alert: {})
+    }
+
+    @Test("Logging a set with no rest against it stops the rest still running")
+    func aSetWithNoRestStopsTheClock() throws {
+        let context = ModelContext(try StoreContainer.inMemory())
+        let (day, exercise, _) = try session(in: context)
+        // Nothing prescribed on this movement, which is the ordinary case for
+        // bodyweight work between loaded lifts.
+        exercise.restSeconds = nil
+        let timer = silentTimer()
+        timer.start(seconds: 180, context: "Barbell Bench Press")
+        let log = SessionLog(
+            day: day, context: context, restTimer: timer, restPreferences: RestPreferences())
+
+        try log.completionChanged(for: exercise, isCompleted: true)
+
+        #expect(!timer.isRunning, "the clock was timing the pause after a set he has since done")
+    }
+
+    @Test("Switching the clock off stops the countdown already going")
+    func theSwitchSilencesTheRunningClock() throws {
+        // Reaching for that switch mid-rest is when anyone reaches for it.
+        let context = ModelContext(try StoreContainer.inMemory())
+        let (day, _, _) = try session(in: context)
+        let timer = silentTimer()
+        timer.start(seconds: 180, context: "Barbell Bench Press")
+        let preferences = RestPreferences()
+        let log = SessionLog(
+            day: day, context: context, restTimer: timer, restPreferences: preferences)
+
+        log.clockSwitched(false)
+
+        #expect(!timer.isRunning)
+        #expect(!preferences.isClockOn)
+    }
+}
+
+/// A notification centre that takes everything and reaches nobody.
+private struct SilentCenter: RestNotificationScheduling {
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool { true }
+    func add(_ request: UNNotificationRequest) async throws {}
+    func removePendingRequests(withIdentifiers identifiers: [String]) {}
 }

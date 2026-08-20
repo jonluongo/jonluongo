@@ -62,6 +62,17 @@ struct SessionLog {
         try context.saveOrThrow()
     }
 
+    /// Turns the countdown on or off everywhere, and stops the one running.
+    ///
+    /// **The switch has to silence the clock that is already going.** It only
+    /// wrote the preference, so a lifter reaching for it mid-rest — which is
+    /// when anyone reaches for it — kept the bar counting and kept the three
+    /// alerts armed. Off means off now, not from the next set.
+    func clockSwitched(_ isOn: Bool) {
+        restPreferences.setClockIsOn(isOn)
+        if !isOn { restTimer.stop() }
+    }
+
     /// Takes a finished session back to unfinished, which is what makes
     /// reopening one mean anything.
     func unfinish() throws {
@@ -103,9 +114,15 @@ struct SessionLog {
     private func restChanged(for exercise: PlannedExercise, isCompleted: Bool) {
         guard isCompleted else { return restTimer.stop() }
         guard hasWorkLeft else { return restTimer.stop() }
+        // **Nothing to run means nothing running.** A set with no rest against
+        // it, or a clock the lifter has switched off, used to fall through here
+        // and leave the countdown from the set before it going — timing the gap
+        // after work he has since finished, on a bar he cannot argue with. The
+        // clock measures the pause after the last set; logging another one ends
+        // it either way.
         guard let seconds = restPreferences.runningSeconds(
             prescribed: exercise.restSeconds, for: exercise.exerciseID
-        ) else { return }
+        ) else { return restTimer.stop() }
         restTimer.start(seconds: seconds, context: exercise.displayName)
     }
 
@@ -136,7 +153,7 @@ struct SessionLog {
         guard let key = group.restKey,
             let seconds = restPreferences.runningSeconds(
                 prescribed: group.restSeconds, for: key)
-        else { return }
+        else { return restTimer.stop() }
         restTimer.start(seconds: seconds, context: group.title)
     }
 }
