@@ -199,6 +199,25 @@ struct CarriedWorkTests {
         #expect(sets.first?["prescribed"]?["repRange"] == "40 metres")
     }
 
+    @Test("What the history tool advertises is what a carry actually reads as")
+    func theDescriptionMatchesACarry() throws {
+        // The description said a carry reports "no reps", which reads as an
+        // absent field. It reports 0 — the app stores a repetition count rather
+        // than an optional one — and a coach expecting null could take a real
+        // zero and a not-counted zero for different things, or the same thing.
+        let sets = try #require(
+            try report(
+                ToolCatalog.exerciseHistory, ["id": "kettlebell-farmers-carry"]
+            )["sets"]?.arrayValue)
+        let first = try #require(sets.first?.objectValue)
+        let described = ToolCatalog.exerciseHistoryDefinition.description
+
+        #expect(first["reps"] == .integer(0), "0, not absent")
+        #expect(first["durationSeconds"] == .null)
+        #expect(described.contains("0"), "and the description says 0 rather than 'no reps'")
+        #expect(!described.contains("no \nreps") && !described.contains("and no reps"))
+    }
+
     @Test("A counted set reports no distance rather than a zero one")
     func countedSetReportsNoDistance() throws {
         let outcome = try makeRunner(documents: InMemoryDocuments(snapshot: fixtureSnapshot()))

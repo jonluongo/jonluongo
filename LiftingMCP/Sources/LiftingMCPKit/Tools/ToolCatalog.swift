@@ -90,10 +90,13 @@ public enum ToolCatalog {
         description: """
             Every set ever logged for one movement, oldest first, with the load, \
             reps, and what was prescribed at the time. A set held for time \
-            reports 'durationSeconds' and no reps; a set carried for distance \
-            reports 'distance' as a value and its unit and no reps; a counted set \
-            reports reps and nulls for both — no two of them are ever the same \
-            number. Includes warmups and uncompleted rows, each flagged, plus any \
+            reports 'durationSeconds', a set carried for distance reports \
+            'distance' as a value and its unit, and a counted set reports 'reps' — \
+            no two of them are ever the same number. The measure a set was not \
+            performed in is null, except 'reps', which is 0 there because the app \
+            stores a repetition count rather than an absent one: read that 0 as \
+            'not counted in reps', with the seconds or the distance beside it \
+            saying what he did. Includes warmups and uncompleted rows, each flagged, plus any \
             stated starting baseline.
             """,
         inputSchema: object(
