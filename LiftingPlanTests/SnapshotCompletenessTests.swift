@@ -21,7 +21,7 @@ struct SnapshotCompletenessTests {
     private func block(in context: ModelContext) throws {
         let plan = TrainingPlan(
             title: "Push Pull Legs", goal: "Hypertrophy", generatedAt: Date(),
-            weekCount: 3, catalogVersion: 5, sourceDocumentID: UUID())
+            catalogVersion: 5, sourceDocumentID: UUID())
         context.insert(plan)
         for ordinal in 1...3 {
             let week = TrainingWeek(ordinal: ordinal, label: "Week \(ordinal)")
@@ -80,7 +80,7 @@ struct SnapshotCompletenessTests {
         // block than he prescribed.
         let context = ModelContext(try StoreContainer.inMemory())
         let plan = TrainingPlan(
-            title: "Sparse", generatedAt: Date(), weekCount: 2, catalogVersion: 5,
+            title: "Sparse", generatedAt: Date(), catalogVersion: 5,
             sourceDocumentID: UUID())
         context.insert(plan)
         for ordinal in 1...2 {

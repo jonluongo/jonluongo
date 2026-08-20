@@ -33,11 +33,6 @@ struct RoutineBlueprint: Equatable {
     /// position here is its ordinal.
     var blocks: [BlockBlueprint]
 
-    /// How many blocks the routine runs: the blocks it actually holds. Derived
-    /// rather than carried, so a stated length and the training that arrived
-    /// cannot disagree.
-    var blockCount: Int { blocks.count }
-
     /// Every training day of the block, in order. The days a block trains are a
     /// restatement of the days it prescribes, across all of its blocks.
     var days: [DayBlueprint] { blocks.flatMap(\.days) }
@@ -122,7 +117,6 @@ extension RoutineBlueprint {
             notes: notes,
             startDate: startDate,
             generatedAt: generatedAt,
-            weekCount: blockCount,
             weekdays: Set(days.map(\.weekday)),
             durationMinutes: durationMinutes,
             catalogVersion: catalogVersion

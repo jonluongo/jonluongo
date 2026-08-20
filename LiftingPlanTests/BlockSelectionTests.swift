@@ -84,7 +84,7 @@ struct BlockSelectionTests {
     @Test("Every week of a stored block is reachable, deload included")
     func everyStoredWeekIsReachable() throws {
         let context = ModelContext(try StoreContainer.inMemory())
-        let plan = TrainingPlan(title: "Four-week block", weekCount: 4)
+        let plan = TrainingPlan(title: "Four-block routine")
         plan.weeks = [
             week(1, days: [day(.monday, done: true)], label: "Accumulation"),
             week(2, days: [day(.monday, done: false)], label: "Accumulation"),

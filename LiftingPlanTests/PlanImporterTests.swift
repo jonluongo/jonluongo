@@ -82,9 +82,10 @@ struct PlanImporterTests {
 
         #expect(plan.title == "Strength block")
         #expect(plan.goal == "Bigger bench")
-        // One week was stated, so the block runs one week. The count is the
-        // weeks that arrived, not a number the document was taken on trust for.
-        #expect(plan.weekCount == 1)
+        // One block was stated, so the routine holds one. What it runs is the
+        // blocks that arrived, never a length the document was taken on trust
+        // for — nothing stores a separate count to disagree with them.
+        #expect(plan.orderedWeeks.count == 1)
         #expect(plan.durationMinutes == 60)
         #expect(plan.startDate == Self.instant)
         #expect(plan.completedAt == nil)
@@ -238,7 +239,7 @@ struct PlanImporterTests {
         )
 
         #expect(plan.orderedWeeks.count == 8)
-        #expect(plan.weekCount == 8)
+        #expect(plan.orderedWeeks.count == 8)
         #expect(plan.orderedWeeks.map(\.ordinal) == Array(1...8))
         #expect(plan.orderedWeeks.allSatisfy { $0.orderedDays.count == 1 })
 

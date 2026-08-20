@@ -35,8 +35,6 @@ final class TrainingPlan {
     /// of it: a plan written on Friday and imported on Monday has two dates, and
     /// reading one for the other misdates the block.
     var generatedAt: Date?
-    /// How many weeks the block runs. `nil` until a plan says.
-    var weekCount: Int?
     /// When this block stopped being the lifter's current one. `nil` while it is
     /// running.
     ///
@@ -80,7 +78,7 @@ final class TrainingPlan {
     init(
         title: String = "", goal: String = "", notes: String? = nil,
         startDate: Date = Date(), generatedAt: Date? = nil,
-        weekCount: Int? = nil, weekdays: Set<Weekday> = [],
+        weekdays: Set<Weekday> = [],
         durationMinutes: Int? = nil, catalogVersion: Int? = nil,
         sourceDocumentID: UUID? = nil
     ) {
@@ -89,7 +87,6 @@ final class TrainingPlan {
         self.notes = notes
         self.startDate = startDate
         self.generatedAt = generatedAt
-        self.weekCount = weekCount
         self.weekdayRawValues = weekdays.map(\.rawValue).sorted()
         self.durationMinutes = durationMinutes
         self.catalogVersion = catalogVersion

@@ -33,7 +33,7 @@ struct ExerciseTrendTests {
         day.exercises = exercises
         let week = TrainingWeek(ordinal: 1)
         week.days = [day]
-        let trainingPlan = TrainingPlan(title: "Block", weekCount: 1)
+        let trainingPlan = TrainingPlan(title: "Block")
         trainingPlan.weeks = [week]
         return trainingPlan
     }

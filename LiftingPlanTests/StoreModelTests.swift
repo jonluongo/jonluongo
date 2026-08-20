@@ -48,7 +48,7 @@ struct StoreModelTests {
     @Test("A plan holds weeks in order, and a week can be a deload")
     func planHoldsOrderedWeeks() throws {
         let context = try context()
-        let plan = TrainingPlan(title: "Strength block", goal: "Bigger bench", weekCount: 4)
+        let plan = TrainingPlan(title: "Strength block", goal: "Bigger bench")
         plan.weeks = [
             TrainingWeek(ordinal: 4, label: "Deload", isDeload: true),
             TrainingWeek(ordinal: 1, label: "Accumulation"),
@@ -69,7 +69,7 @@ struct StoreModelTests {
         heavy.days = [dayWithBench(sets: 5)]
         let deload = TrainingWeek(ordinal: 2, label: "Deload", isDeload: true)
         deload.days = [dayWithBench(sets: 2)]
-        let plan = TrainingPlan(title: "Block", weekCount: 2)
+        let plan = TrainingPlan(title: "Block")
         plan.weeks = [heavy, deload]
         context.insert(plan)
         try context.saveOrThrow()
@@ -102,7 +102,7 @@ struct StoreModelTests {
         day.exercises = [exercise]
         let week = TrainingWeek(ordinal: 1)
         week.days = [day]
-        let plan = TrainingPlan(title: "Block", weekCount: 1)
+        let plan = TrainingPlan(title: "Block")
         plan.weeks = [week]
         context.insert(plan)
         try context.saveOrThrow()
@@ -116,17 +116,15 @@ struct StoreModelTests {
         #expect(try context.fetch(FetchDescriptor<LoggedSet>()).isEmpty)
     }
 
-    @Test("A plan records its training days and its length")
-    func planRecordsScheduleAndLength() throws {
+    @Test("A plan records the days it trains on")
+    func planRecordsSchedule() throws {
         let context = try context()
         context.insert(TrainingPlan(
-            title: "Block", goal: "Squat", weekCount: 12,
-            weekdays: [.friday, .monday]
+            title: "Block", goal: "Squat", weekdays: [.friday, .monday]
         ))
         try context.saveOrThrow()
 
         let loaded = try #require(try context.fetch(FetchDescriptor<TrainingPlan>()).first)
-        #expect(loaded.weekCount == 12)
         // `weekdays` is a Set, so compare against a Set — an array literal
         // here does not type-check.
         #expect(loaded.weekdays == Set<Weekday>([.monday, .friday]))
@@ -242,7 +240,6 @@ struct StoreModelTests {
         context.insert(exercise)
         try context.saveOrThrow()
 
-        #expect(plan.weekCount == nil)
         #expect(plan.weekdays.isEmpty)
         #expect(plan.durationMinutes == nil)
         #expect(day.durationMinutes == nil)

@@ -191,7 +191,7 @@ struct RoutineListingTests {
     private func plan(
         startingOn start: Date, weeks weekCount: Int, daysPerWeek: Int = 1, logged: Int = 0
     ) -> TrainingPlan {
-        let plan = TrainingPlan(title: "Block", startDate: start, weekCount: weekCount)
+        let plan = TrainingPlan(title: "Block", startDate: start)
         var remainingToLog = logged
         plan.weeks = (1...weekCount).map { ordinal in
             let week = TrainingWeek(ordinal: ordinal)

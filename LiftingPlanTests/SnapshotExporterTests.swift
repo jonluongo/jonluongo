@@ -23,7 +23,7 @@ struct SnapshotExporterTests {
         // and the exporter reports it as absent rather than inventing one.
         let plan = TrainingPlan(
             title: "Strength block", goal: "Bigger bench", generatedAt: Date(),
-            weekCount: 4, weekdays: [.monday], durationMinutes: 60,
+            weekdays: [.monday], durationMinutes: 60,
             catalogVersion: 5, sourceDocumentID: UUID()
         )
         let week = TrainingWeek(ordinal: 1, label: "Accumulation")
