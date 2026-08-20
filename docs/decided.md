@@ -284,3 +284,23 @@ looking and not where its siblings were** — panel insets applied to two caller
 of five, a completed-row background left on the group table after deletion from
 the exercise table, a `Done` button left on one sheet of three. Rendering the
 screen being worked on is not verification. See *Verification* in `CLAUDE.md`.
+
+## Waiting on the owner
+
+Open questions and blocked work, with what each needs. **Not decisions** — this
+section exists because a long session gets compacted and an unanswered question
+looks identical to a settled one afterwards. Anything answered moves up into
+*Settled by asking* and leaves here.
+
+| What | What it needs | Where it stands |
+|---|---|---|
+| The loop reaching the Mac at all | iCloud storage freed (**101 KB left**), and a Mac app bundle claiming `iCloud.com.jonluongo.LiftingPlan` | Both halves are his. `brctl status` reports `SYNC DISABLED (app not installed)`; the write half is proven by driving the release binary, and every layer reports the failure honestly — the phone's *Couldn't Share Your Log*, the server's missing-snapshot message, `write_plan`'s delivery note. None of it is fixed. |
+| Dated statements | Go, and a choice on step 4 | Written up: `docs/superpowers/specs/2026-08-20-dated-statements-design.md`. Steps 1–3 are invisible to the lifter and can land without a design call. |
+| `reps` optional | Part of the same decision, taken separately | A set prescribed as a range and ticked without typing logs `0 reps`, which the coach reads as a completed working set at `185 lb × 0`. `durationSeconds` and `distance` are already optional for this exact reason. |
+| `ExerciseResolver` | Delete 286 lines, or wire it into `list_exercises` | It has a full suite and no callers, and its own doc comment says so: plans arrive as catalog IDs and unknown ones are refused, so nothing resolves free text. The assistant leans wire-in. |
+| Time Sensitive Notifications | A capability toggle on the App ID in the developer portal | The rest timer asks for it; a build claiming the entitlement without it is **refused at signing** — checked, not assumed. The code states the intent and starts being honoured the day it is on. |
+| The account's baseline rows | Which of three phrasings | They read `Barbell Bench Press — 205 lb × 5` in a list whose left column otherwise names a *fact*, with nothing saying these are starting points rather than current bests. Put as three options and redirected into the architecture question above; the phrasing falls out of step 4. |
+
+**The phone was unavailable from 2026-08-20 morning.** Commits from `68c3d60`
+onward are built and tested but not installed on it. `1e697db` is the last build
+it ran.
