@@ -14,6 +14,7 @@ enum StoreContainer {
     /// silently never persists.
     static let schema = Schema([
         UserProfile.self,
+        ProfileStatement.self,
         TrainingPlan.self,
         TrainingWeek.self,
         WorkoutDay.self,

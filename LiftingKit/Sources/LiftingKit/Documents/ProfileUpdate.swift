@@ -143,6 +143,39 @@ public struct ProfileUpdate: Codable, Hashable, Sendable, Identifiable {
             && preferredDurationMinutes.isUnchanged && bodyweight.isEmpty && baselines.isEmpty
     }
 
+    /// The facts this update actually said something about, as the wire names
+    /// them.
+    ///
+    /// **Said something about** includes stating that a fact is no longer known:
+    /// *he no longer avoids overhead pressing* is a statement made on a date,
+    /// exactly as stating a value is. Only `unchanged` — the update not
+    /// mentioning the fact — is silence.
+    ///
+    /// Bodyweight and baselines are dated where they are stored, as a series
+    /// each, so they are not here: asking this document when they were stated
+    /// would be a second answer to a question the record already answers better.
+    ///
+    /// It is public because the phone records these keys against the date the
+    /// update was generated, which is how *when did he last say this?* becomes
+    /// answerable at all. A profile has one timestamp for every field, so it
+    /// cannot tell a constraint stated last week from one stated two years ago.
+    public var keysStated: Set<String> {
+        var keys: Set<String> = []
+        func note(_ name: String, _ isUnchanged: Bool) {
+            if !isUnchanged { keys.insert(name) }
+        }
+        note("displayUnit", displayUnit.isUnchanged)
+        note("experience", experience.isUnchanged)
+        note("equipment", equipment.isUnchanged)
+        note("goal", goal.isUnchanged)
+        note("constraints", constraints.isUnchanged)
+        note("avoidedPatterns", avoidedPatterns.isUnchanged)
+        note("avoidedExercises", avoidedExercises.isUnchanged)
+        note("preferredWeekdays", preferredWeekdays.isUnchanged)
+        note("preferredDurationMinutes", preferredDurationMinutes.isUnchanged)
+        return keys
+    }
+
     /// This update laid over one that has not been applied yet.
     ///
     /// The folder holds one update at a time, so a second one written before

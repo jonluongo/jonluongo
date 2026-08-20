@@ -116,10 +116,33 @@ enum ProfileUpdater {
         try record(update.bodyweight, from: update.generatedAt, in: context, on: profile)
         try record(update.baselines, from: update.generatedAt, in: context)
 
+        // **When he said each of these, kept apart from what he said.** The
+        // profile above holds one value per fact and one timestamp for all of
+        // them, so this is the only record able to tell a constraint stated last
+        // week from one stated two years ago. See `ProfileStatement`.
+        try record(update, appliedAt: appliedAt, in: context)
+
         profile.appliedProfileUpdateID = update.id
         profile.updatedAt = appliedAt
         try context.saveOrThrow()
         return profile
+    }
+
+    /// Notes the date this update spoke to each fact, unless it spoke to none.
+    ///
+    /// An update stating only a weigh-in leaves no statement behind: bodyweight
+    /// is a dated series where it is stored, and a row saying *something was
+    /// said on Tuesday* about nothing this records would be a row nobody can
+    /// read.
+    private static func record(
+        _ update: ProfileUpdate, appliedAt: Date, in context: ModelContext
+    ) throws {
+        let keys = update.keysStated
+        guard !keys.isEmpty else { return }
+        context.insert(
+            ProfileStatement(
+                id: update.id, generatedAt: update.generatedAt, appliedAt: appliedAt,
+                statedKeys: keys))
     }
 
     /// What the display unit falls back to when an update takes it back.
