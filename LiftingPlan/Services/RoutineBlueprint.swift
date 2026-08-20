@@ -128,17 +128,27 @@ extension RoutineBlueprint {
             catalogVersion: catalogVersion
         )
         plan.weeks = weeks.enumerated().map { index, week in
-            let trainingWeek = TrainingWeek(
-                ordinal: index + 1,
-                // The store holds an unnamed week as an empty label, which is
-                // what it already means there; no name is invented for it.
-                label: week.label ?? "",
-                isDeload: week.isDeload
-            )
-            trainingWeek.days = week.days.map(Self.makeWorkoutDay)
-            return trainingWeek
+            Self.makeTrainingWeek(week, ordinal: index + 1)
         }
         return plan
+    }
+
+    /// One block of the routine, built on its own.
+    ///
+    /// The whole-routine path builds every block through this, and so does the
+    /// import that adds next week's block to a routine already in the store —
+    /// which is what keeps a block written this week identical in the store to
+    /// one written as part of a longer plan.
+    static func makeTrainingWeek(_ week: BlockBlueprint, ordinal: Int) -> TrainingWeek {
+        let trainingWeek = TrainingWeek(
+            ordinal: ordinal,
+            // The store holds an unnamed week as an empty label, which is
+            // what it already means there; no name is invented for it.
+            label: week.label ?? "",
+            isDeload: week.isDeload
+        )
+        trainingWeek.days = week.days.map(Self.makeWorkoutDay)
+        return trainingWeek
     }
 
     /// One day's prescriptions, in the order they are to be trained, with a

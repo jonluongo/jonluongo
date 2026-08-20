@@ -469,6 +469,128 @@ struct PlanImporterTests {
         #expect(second.completedAt == nil)
     }
 
+    // MARK: - The routine grows a block at a time
+
+    /// A routine of `weeks` blocks under one identity, each block one Monday
+    /// push session, so a merge can be watched block by block.
+    private func routine(id: UUID, blocks: Int, load: Double = 225) -> PlanDocument {
+        PlanDocument(
+            id: id, catalogVersion: 5, generatedAt: Self.instant, title: "Autumn strength",
+            weeks: (1...blocks).map { ordinal in
+                PlanDocumentWeek(label: "Block \(ordinal)", days: [
+                    PlanDocumentDay(
+                        weekday: .monday, focus: "Push",
+                        exercises: [exercise(suggestedLoad: Mass(value: load, unit: .pounds))])
+                ])
+            })
+    }
+
+    @Test("Next week's block lands on the routine it belongs to, not beside it")
+    func aLaterBlockIsAppended() throws {
+        let context = try context()
+        let id = UUID()
+        let first = try PlanImporter.import(
+            routine(id: id, blocks: 1), into: context, catalog: try catalog())
+        let grown = try PlanImporter.import(
+            routine(id: id, blocks: 2), into: context, catalog: try catalog())
+
+        #expect(try plans(in: context).count == 1)
+        #expect(first === grown)
+        #expect(grown.orderedWeeks.map(\.ordinal) == [1, 2])
+        #expect(grown.orderedWeeks.map(\.label) == ["Block 1", "Block 2"])
+    }
+
+    @Test("A block he has not touched is the coach's to rewrite")
+    func anUntrainedBlockIsReplaced() throws {
+        let context = try context()
+        let id = UUID()
+        try PlanImporter.import(routine(id: id, blocks: 1), into: context, catalog: try catalog())
+        let revised = try PlanImporter.import(
+            routine(id: id, blocks: 1, load: 245), into: context, catalog: try catalog())
+
+        let exercise = try firstExercise(of: revised)
+        #expect(exercise.suggestedLoad == Mass(value: 245, unit: .pounds))
+        #expect(revised.orderedWeeks.count == 1)
+    }
+
+    @Test("A block with a set ticked against it cannot be rewritten")
+    func aTrainedBlockIsRefused() throws {
+        let context = try context()
+        let id = UUID()
+        let plan = try PlanImporter.import(
+            routine(id: id, blocks: 1), into: context, catalog: try catalog())
+        let exercise = try firstExercise(of: plan)
+        let set = LoggedSet(
+            setIndex: 0, load: Mass(value: 225, unit: .pounds), reps: 5, isCompleted: true)
+        context.insert(set)
+        set.exercise = exercise
+
+        #expect(throws: PlanImportError.trainedBlockChanged(1)) {
+            try PlanImporter.import(
+                routine(id: id, blocks: 1, load: 245), into: context, catalog: try catalog())
+        }
+        // Refused whole: the load he trained against is still what it was.
+        #expect(try firstExercise(of: plan).suggestedLoad == Mass(value: 225, unit: .pounds))
+    }
+
+    @Test("A trained block is no obstacle to the block after it arriving")
+    func aLaterBlockLandsBesideATrainedOne() throws {
+        let context = try context()
+        let id = UUID()
+        let plan = try PlanImporter.import(
+            routine(id: id, blocks: 1), into: context, catalog: try catalog())
+        let set = LoggedSet(setIndex: 0, reps: 5, isCompleted: true)
+        context.insert(set)
+        set.exercise = try firstExercise(of: plan)
+
+        let grown = try PlanImporter.import(
+            routine(id: id, blocks: 2), into: context, catalog: try catalog())
+
+        #expect(grown.orderedWeeks.count == 2)
+        #expect(try firstExercise(of: grown).loggedSets?.count == 1)
+    }
+
+    @Test("A block the coach dropped goes, as long as nothing was logged in it")
+    func anUntrainedBlockIsRemoved() throws {
+        let context = try context()
+        let id = UUID()
+        try PlanImporter.import(routine(id: id, blocks: 3), into: context, catalog: try catalog())
+        let shrunk = try PlanImporter.import(
+            routine(id: id, blocks: 2), into: context, catalog: try catalog())
+
+        #expect(shrunk.orderedWeeks.map(\.ordinal) == [1, 2])
+    }
+
+    @Test("The same document arriving again changes nothing and says so")
+    func anUnchangedDocumentIsNotAChange() throws {
+        let context = try context()
+        let id = UUID()
+        let document = routine(id: id, blocks: 2)
+        let plan = try PlanImporter.import(document, into: context, catalog: try catalog())
+        let set = LoggedSet(setIndex: 0, reps: 5, isCompleted: true)
+        context.insert(set)
+        set.exercise = try firstExercise(of: plan)
+
+        #expect(try !PlanImporter.wouldChange(document, in: context))
+        try PlanImporter.import(document, into: context, catalog: try catalog())
+
+        #expect(plan.orderedWeeks.count == 2)
+        #expect(try firstExercise(of: plan).loggedSets?.count == 1)
+    }
+
+    @Test("A routine that grows is running again, whatever superseded it")
+    func aGrownRoutineReopens() throws {
+        let context = try context()
+        let id = UUID()
+        let plan = try PlanImporter.import(
+            routine(id: id, blocks: 1), into: context, catalog: try catalog())
+        plan.completedAt = Self.instant
+
+        try PlanImporter.import(routine(id: id, blocks: 2), into: context, catalog: try catalog())
+
+        #expect(plan.completedAt == nil)
+    }
+
     @Test("Two documents with different identities both import")
     func differentDocumentsBothImport() throws {
         let context = try context()

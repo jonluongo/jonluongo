@@ -117,6 +117,13 @@ clamping, flooring, capping, or defaulting a prescribed value.
 one producer: `PlanImporter`, building it from a decoded `PlanDocument`. That is
 the only producer it may ever have. Do not add one that generates plans.
 
+**A plan document already in the store is merged, not ignored.** That is what
+lets the coach write a week at a time: he sends the routine's `id` with one more
+block on it, and `PlanImporter.merge` appends it. He may rewrite any block
+nothing has been logged against and may not touch one that has — a set the
+lifter ticked is the record of what happened, and a plan that rewrites it is
+refused by ordinal with nothing taken in. See *The loop* in `docs/decided.md`.
+
 **The way back out is the document itself.** `PlanDocument(reconstructing:)`
 reads a stored block into the document it was imported as, and
 `SnapshotExporter` sends that rather than a second description of it. A

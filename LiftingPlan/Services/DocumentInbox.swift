@@ -163,7 +163,7 @@ final class DocumentInbox {
         }
         do {
             if let document = try await Self.readPlan(from: transport) {
-                let isNew = try !PlanImporter.isImported(document, in: context)
+                let isNew = try PlanImporter.wouldChange(document, in: context)
                 try PlanImporter.import(document, into: context, catalog: catalog)
                 applied = applied || isNew
             }

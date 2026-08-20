@@ -18,6 +18,15 @@ enum PlanImportError: Error, LocalizedError, Equatable {
     /// value is the first offending name, in document order.
     case unknownIcon(SessionIcon)
 
+    /// The document rewrote a block the lifter has already trained. The
+    /// associated value is that block's ordinal, counting from one.
+    case trainedBlockChanged(Int)
+
+    /// A block in the store has sets logged against it and the store cannot be
+    /// read back as the document it came from, so there is no way to tell
+    /// whether the arriving document changes it. Refused rather than guessed.
+    case unreadableRoutine
+
     var errorDescription: String? {
         switch self {
         case .unknownExercise(let id):
@@ -26,6 +35,15 @@ enum PlanImportError: Error, LocalizedError, Equatable {
         case .unknownIcon(let icon):
             "This plan marks a session '\(icon.rawValue)', which is not one of the "
                 + "marks this app can draw. Nothing was imported."
+        case .trainedBlockChanged(let ordinal):
+            "This plan changes block \(ordinal), which has already been trained. Sets "
+                + "logged against it are the record of what happened and cannot be "
+                + "rewritten. Nothing was imported. Send the routine with block "
+                + "\(ordinal) exactly as it stands and the change in a later block."
+        case .unreadableRoutine:
+            "This routine has training logged against it but cannot be read back as the "
+                + "document it came from, so there is no way to tell what this plan "
+                + "changes. Nothing was imported."
         }
     }
 }
@@ -71,13 +89,18 @@ enum PlanImporter {
     /// start date and the moment the previous block stopped being current. It
     /// defaults to now and is injectable so tests can be explicit about order.
     ///
-    /// Re-importing a document already in the store returns the existing plan
-    /// untouched: nothing is inserted, nothing is superseded, and nothing that
-    /// was logged against it is disturbed.
+    /// **A document already in the store is merged, not ignored.** That is what
+    /// makes a week-at-a-time coach possible: he sends the routine again with
+    /// one more block on the end, and it lands beside the blocks already there
+    /// rather than becoming a second routine with the same name. A block he
+    /// revised replaces the stored one; a block that vanished from the document
+    /// is removed; a block already trained may not be touched at all — see
+    /// `merge`.
     ///
     /// Throws `PlanImportError.unknownExercise` when the document names an
-    /// exercise the catalog does not have, and `PersistenceError.saveFailed`
-    /// when the write fails.
+    /// exercise the catalog does not have, `PlanImportError.trainedBlockChanged`
+    /// when it rewrites a block with sets logged against it, and
+    /// `PersistenceError.saveFailed` when the write fails.
     @discardableResult
     static func `import`(
         _ document: PlanDocument,
@@ -85,10 +108,6 @@ enum PlanImporter {
         catalog: any ExerciseCatalogProviding,
         importedAt: Date = Date()
     ) throws -> TrainingPlan {
-        if let alreadyImported = try plan(forDocument: document.id, in: context) {
-            return alreadyImported
-        }
-
         // Validated in full before anything is built, so a document with one
         // bad ID cannot leave a partially-mapped plan behind.
         try confirmEveryExerciseExists(in: document, using: catalog)
@@ -99,6 +118,12 @@ enum PlanImporter {
         // Filled after the IDs are checked, so a wrong ID is reported as a wrong
         // ID rather than quietly acquiring a name.
         let document = document.named(using: catalog)
+
+        if let existing = try plan(forDocument: document.id, in: context) {
+            try merge(document, into: existing, in: context)
+            try context.saveOrThrow()
+            return existing
+        }
 
         let plan = RoutineBlueprint(document: document).makeWorkoutPlan(
             // The document states which catalog generation its IDs were chosen
@@ -113,6 +138,81 @@ enum PlanImporter {
         context.insert(plan)
         try context.saveOrThrow()
         return plan
+    }
+
+    /// Brings a routine already in the store up to what the document now says.
+    ///
+    /// **What he has not done is the coach's to change; what he has done is the
+    /// record.** Jon's rule, in his words: *"the coach can change anything
+    /// thats not checked off."* So a block with no completed set in it is
+    /// rebuilt from the document however it now reads, a block the document no
+    /// longer states is removed, and a block with any completed set is compared
+    /// against what the store holds and refused by ordinal if it differs. A set
+    /// he ticked is what happened; a plan that rewrites it is claiming he
+    /// trained something he did not.
+    ///
+    /// **Unchanged is a no-op.** The same document arriving twice — which is
+    /// ordinary, since the folder is re-read whenever it changes — compares
+    /// equal block for block and nothing is written. That comparison is
+    /// `PlanDocument(reconstructing:)`, the same round trip the export uses, so
+    /// there is one answer to *what does the store say this plan was* rather
+    /// than two that could drift.
+    private static func merge(
+        _ document: PlanDocument, into plan: TrainingPlan, in context: ModelContext
+    ) throws {
+        let stored = PlanDocument(reconstructing: plan)
+        let blueprint = RoutineBlueprint(document: document)
+        let storedWeeks = plan.orderedWeeks
+
+        for (index, week) in storedWeeks.enumerated() where isTrained(week) {
+            guard let asStored = stored?.weeks[safe: index] else {
+                throw PlanImportError.unreadableRoutine
+            }
+            guard document.weeks[safe: index] == asStored else {
+                throw PlanImportError.trainedBlockChanged(index + 1)
+            }
+        }
+
+        for (index, week) in storedWeeks.enumerated() where !isTrained(week) {
+            // Rebuilt rather than edited in place: a block is a tree of days,
+            // exercises and prescribed sets, and reconciling one tree into
+            // another field by field is where a half-applied plan comes from.
+            // Nothing is lost, because nothing in it was logged.
+            guard document.weeks[safe: index] != stored?.weeks[safe: index] else { continue }
+            context.delete(week)
+            plan.weeks?.removeAll { $0 === week }
+            if let arriving = blueprint.weeks[safe: index] {
+                let rebuilt = RoutineBlueprint.makeTrainingWeek(arriving, ordinal: index + 1)
+                context.insert(rebuilt)
+                rebuilt.plan = plan
+            }
+        }
+
+        // `stride` rather than a range: a document that states fewer blocks than
+        // the store holds is ordinary — the coach dropped one — and a reversed
+        // range is a crash rather than an empty loop.
+        for index in stride(from: storedWeeks.count, to: blueprint.weeks.count, by: 1) {
+            guard let arriving = blueprint.weeks[safe: index] else { continue }
+            let added = RoutineBlueprint.makeTrainingWeek(arriving, ordinal: index + 1)
+            context.insert(added)
+            added.plan = plan
+        }
+
+        // A routine that grew is running again: the coach writing next week's
+        // block is the plainest statement there is that the lifter is still on
+        // this routine.
+        if blueprint.weeks.count > storedWeeks.count { plan.completedAt = nil }
+    }
+
+    /// Whether anything in this block is in the record. A row seeded on screen
+    /// and never ticked is not — it is the app showing what was asked for, not
+    /// the lifter saying he did it.
+    private static func isTrained(_ week: TrainingWeek) -> Bool {
+        week.orderedDays.contains { day in
+            day.orderedExercises.contains { exercise in
+                (exercise.loggedSets ?? []).contains { $0.isCompleted }
+            }
+        }
     }
 
     /// The two checks. Both walk the document in order so the error names the
@@ -153,15 +253,21 @@ enum PlanImporter {
         }
     }
 
-    /// Whether this document's identity is already in the store.
+    /// Whether importing this document would change anything in the store.
     ///
     /// Asked by `DocumentInbox` *before* importing, so it can tell a plan that
-    /// landed from one that was merely announced again. `import` answers the
-    /// same question itself and returns the existing plan untouched; this is
-    /// the same query, so the two cannot disagree about what "already imported"
-    /// means.
-    static func isImported(_ document: PlanDocument, in context: ModelContext) throws -> Bool {
-        try plan(forDocument: document.id, in: context) != nil
+    /// landed from one that was merely announced again — the folder is re-read
+    /// whenever it changes, and the same file arriving twice is ordinary.
+    ///
+    /// It was *is this identity already stored*, which stopped being the same
+    /// question the day a routine could grow: next week's block arrives under
+    /// the identity of the routine it belongs to, and that is a change. The
+    /// answer comes from the same round trip `merge` compares with, so the two
+    /// cannot disagree about what changed.
+    static func wouldChange(_ document: PlanDocument, in context: ModelContext) throws -> Bool {
+        guard let stored = try plan(forDocument: document.id, in: context) else { return true }
+        guard let asStored = PlanDocument(reconstructing: stored) else { return true }
+        return asStored.weeks != document.weeks
     }
 
     /// The plan already imported from this document, if there is one.
@@ -175,5 +281,18 @@ enum PlanImporter {
     ) throws -> TrainingPlan? {
         try context.fetch(FetchDescriptor<TrainingPlan>())
             .first { $0.sourceDocumentID == id }
+    }
+}
+
+extension Array {
+
+    /// The element at `index`, or `nil` when the array is shorter than that.
+    ///
+    /// The merge compares two lists of blocks that are deliberately different
+    /// lengths — that is the whole point of a routine that grows — and reads
+    /// them position by position. Bounds-checking each read at the call site
+    /// three times over is what this replaces.
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

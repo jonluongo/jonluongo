@@ -41,6 +41,33 @@ reading `Store/`:
 The wire keys follow the store rather than the vocabulary for the same reason: a
 `weeks` key that Claude already writes is not worth a format version to rename.
 
+## The loop
+
+**The coach writes one block at a time, and the routine grows.** Jon: *"the
+coach (claude) should be using all of the info up until that point and make 1
+week at a time instead of making everything at once."* A plan document carries
+the routine's `id`; importing one already in the store now *merges* rather than
+being ignored. Next week's block lands on the routine he is training instead of
+becoming a second routine with the same name.
+
+**What he has not done is the coach's; what he has done is the record.** Jon's
+rule, in his words: *"the coach can change anything thats not checked off."* A
+block with no completed set is rebuilt from the arriving document however it
+now reads, a block the document no longer states is removed, and a block with
+any completed set is refused by ordinal if the document changes it. The
+comparison is `PlanDocument(reconstructing:)` — the same round trip the export
+uses — so an unchanged document arriving twice writes nothing.
+
+**Omitting `routineID` starts a new routine and closes the current one.** That
+is the difference between next week and a change of programme, and neither has
+to be guessed at. `nothingPrescribedBeyond` in the context resource is the cue
+that the next block is due; the routine page says the same thing to the lifter
+in words.
+
+**`write_plan` guides one block at a time and does not enforce it.** A four-week
+plan written in one go is still a plan somebody may want, and a schema that
+refused it would be the server making a training decision.
+
 ## Held open — finish the rename
 
 Two pieces of the routine/block rename are deliberately unfinished. They are not
