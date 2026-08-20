@@ -11,16 +11,13 @@ import SwiftUI
 /// **How it is used.** Give it a title, a symbol when it has one, and how much
 /// of the screen it is entitled to — see `Prominence`. There is no tint to pass.
 ///
-/// **Green was tried and was wrong.** Finishing a workout was tinted green on
-/// the grounds that green means done elsewhere in the app — and that is exactly
-/// why it does not belong here. Green marks a fact the record already holds: a
-/// set that was ticked, a session that was logged. This button is not that fact,
-/// it is the act that creates it, and colouring it as though it had already
-/// happened pre-empts the lifter's own decision. It also put a second saturated
-/// colour into a palette that is otherwise one accent and neutrals, and a
-/// full-width slab of system green beside the app's orange looked like two apps.
-/// The rule that replaced it is shorter: **the accent is what you can do, green
-/// is what the record says.**
+/// **Colour was tried twice and is gone.** Finishing was tinted green first, on
+/// the grounds that green means done elsewhere in the app — which is exactly why
+/// it did not belong: green marks a fact the record already holds, and this
+/// button is the act that creates that fact, not the fact. The theme replaced it
+/// and had the milder version of the same problem — the brightest thing on the
+/// screen was the one thing the lifter had not done yet. It is ink now, on Jon's
+/// call. **What the record holds is coloured; what you can do is simply legible.**
 ///
 /// **What it depends on.** `Spacing`, `TapTarget`, and SwiftUI's button styles.
 /// It performs no action of its own and knows nothing about what it starts or
@@ -34,8 +31,14 @@ struct PrimaryActionButton: View {
     /// cannot be corrected. What changes is how loudly the button asks to be
     /// pressed.
     enum Prominence {
-        /// The thing to do: the highlighter at full strength, with ink on it.
-        /// A screen gets one.
+        /// The thing to do: a slab of ink with the word inverted out of it. A
+        /// screen gets one.
+        ///
+        /// It was the highlighter, and Jon's call is that it is not: *"finish
+        /// workout button should be black not yellow."* The theme still marks
+        /// what the record holds — a ticked box, the wash under a session
+        /// trained — and the act that creates the record is now the plainest
+        /// thing on the screen rather than the brightest.
         case primary
         /// Available, but not what the screen is for yet — finishing a session
         /// with sets still unticked. The same shape, filled with the rule's own
@@ -87,19 +90,18 @@ struct PrimaryActionButton: View {
     /// it is the decision.
     private var fill: Color {
         switch prominence {
-        case .primary: Palette.accent
+        case .primary: Palette.ink
         case .tentative: Palette.rule
         case .quiet: .clear
         }
     }
 
-    /// What the word is written in. Ink for all three: the highlighter and the
-    /// rule are both lighter than the text that sits on them, in either
-    /// appearance, and `onAccent` is ink that does not follow the appearance
-    /// because its ground does not either.
+    /// What the word is written in. `onInk` is ink inverted, for the one fill
+    /// darker than the text that would otherwise sit on it; the rule is lighter
+    /// than ink in either appearance, and a quiet button has no ground at all.
     private var foreground: Color {
         switch prominence {
-        case .primary: Palette.onAccent
+        case .primary: Palette.onInk
         case .tentative, .quiet: Palette.ink
         }
     }

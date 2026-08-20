@@ -95,6 +95,12 @@ enum Palette {
     /// fill is lighter than white in one and than the panel in the other.
     static let onAccent = fixed(0x14150F)
 
+    /// What is written on `ink` — ink inverted, so a slab of it carries a word
+    /// in either appearance. The full-width action is the one thing filled this
+    /// way: on Jon's call, a session is finished by pressing something black,
+    /// not something highlighted.
+    static let onInk = dynamic(light: 0xF4F4F6, dark: 0x0F0F11)
+
     /// The ground a panel is written on once what it holds is in the record.
     ///
     /// The highlighter, thinned to a wash. A list of sessions used to read as
