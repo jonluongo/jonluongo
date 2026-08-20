@@ -184,11 +184,13 @@ struct SetRowView: View {
             // keeps a push-up honest: an exercise carrying no load has an empty
             // field on purpose, and `lb` beside it would be the app asking for
             // a number nobody prescribed.
-            if namesALoad {
-                Text(unit.rawValue)
-                    .font(.supersetSupport)
-                    .foregroundStyle(Palette.muted)
-            }
+            // Held rather than removed: a row with no load to name still keeps
+            // the slot, so the rep figure sits in the same column as the rep
+            // figure above it. Dropped from the stack, the warm-up's reps slid
+            // left under the weight column — Jon: *"the alignments off on the 7s
+            // when the lb label is gone."* A column is a column on every row of
+            // the table or it is not one.
+            marker(Text(unit.rawValue), shown: namesALoad)
             // The two figures are one statement — a hundred and thirty-five for
             // eight — and the sign says so. It replaces two column headings
             // redrawn above every exercise of every session, which said the
@@ -196,11 +198,7 @@ struct SetRowView: View {
             //
             // Drawn only where there are two figures to join. A plank carries no
             // load, and `× 45 s` is a sign multiplying nothing.
-            if joinsTwoFigures {
-                Text("×")
-                    .font(.supersetSupport)
-                    .foregroundStyle(Palette.muted)
-            }
+            marker(Text("×"), shown: joinsTwoFigures)
             // A distance can be a fraction of its unit; reps and seconds cannot.
             field(text: workText, placeholder: repTargetText, isDecimal: measuresDistance)
             // What the figure beside it is measured in, on the one row that
@@ -209,9 +207,7 @@ struct SetRowView: View {
             // nothing anywhere on screen saying seconds. Counted work needs no
             // suffix: the `×` has already said it.
             if let workUnit {
-                Text(workUnit)
-                    .font(.supersetSupport)
-                    .foregroundStyle(Palette.muted)
+                marker(Text(workUnit), shown: true)
             }
 
             Spacer(minLength: 0)
@@ -229,6 +225,18 @@ struct SetRowView: View {
                 .accessibilityAddTraits(set.isCompleted ? [.isSelected] : [])
             }
         }
+    }
+
+    /// A word beside a figure — the unit, the sign between two figures — kept
+    /// in the layout whether or not this row has anything for it to say. Reading
+    /// down a table is reading down columns, and a column that closes up on one
+    /// row moves every figure after it.
+    private func marker(_ text: Text, shown: Bool) -> some View {
+        text
+            .font(.supersetSupport)
+            .foregroundStyle(Palette.muted)
+            .opacity(shown ? 1 : 0)
+            .accessibilityHidden(!shown)
     }
 
     /// What the row is called, drawn the same whether or not it can be changed.
