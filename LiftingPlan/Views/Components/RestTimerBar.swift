@@ -30,8 +30,8 @@ struct RestTimerBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.snug) {
-            if let errorMessage = restTimer.errorMessage {
-                Button { restTimer.dismissError() } label: {
+            if let errorMessage = restTimer.cue.errorMessage {
+                Button { restTimer.cue.dismissError() } label: {
                     Label(errorMessage, systemImage: "bell.slash")
                         .font(.supersetSupport)
                         // Named for the reason the exercise menu's is: this sits

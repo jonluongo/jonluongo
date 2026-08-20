@@ -91,9 +91,9 @@ struct RestTimerNotificationTests {
     func refusedPermissionIsReported() async {
         let center = FakeNotificationCenter()
         center.authorizationAnswer = .success(false)
-        let timer = RestTimerModel(center: center)
+        let timer = ScreenLockedCue(center: center)
 
-        await timer.requestNotificationAuthorization()
+        await timer.requestAuthorization()
 
         let message = timer.errorMessage
         #expect(message?.contains("screen locks") == true)
@@ -101,9 +101,9 @@ struct RestTimerNotificationTests {
 
     @Test("A granted permission reports nothing")
     func grantedPermissionIsSilent() async {
-        let timer = RestTimerModel(center: FakeNotificationCenter())
+        let timer = ScreenLockedCue(center: FakeNotificationCenter())
 
-        await timer.requestNotificationAuthorization()
+        await timer.requestAuthorization()
 
         #expect(timer.errorMessage == nil)
     }
@@ -112,9 +112,9 @@ struct RestTimerNotificationTests {
     func authorizationErrorIsSurfaced() async {
         let center = FakeNotificationCenter()
         center.authorizationAnswer = .failure(NotificationsOff())
-        let timer = RestTimerModel(center: center)
+        let timer = ScreenLockedCue(center: center)
 
-        await timer.requestNotificationAuthorization()
+        await timer.requestAuthorization()
 
         #expect(timer.errorMessage?.contains("Notifications are not allowed") == true)
     }
@@ -123,11 +123,11 @@ struct RestTimerNotificationTests {
     func schedulingFailureIsReported() async throws {
         let center = FakeNotificationCenter()
         center.schedulingError = NotificationsOff()
-        let timer = RestTimerModel(center: center)
+        let timer = ScreenLockedCue(center: center)
 
-        timer.start(seconds: 90, context: "Bench — set 2")
+        timer.arm(after: 90, context: "Bench — set 2")
         try await Task.sleep(for: .milliseconds(50))
-        timer.stop()
+        timer.cancel()
 
         #expect(timer.errorMessage?.contains("Notifications are not allowed") == true)
         timer.dismissError()
@@ -138,13 +138,13 @@ struct RestTimerNotificationTests {
     func successClearsAStaleMessage() async throws {
         let center = FakeNotificationCenter()
         center.authorizationAnswer = .success(false)
-        let timer = RestTimerModel(center: center)
-        await timer.requestNotificationAuthorization()
+        let timer = ScreenLockedCue(center: center)
+        await timer.requestAuthorization()
         #expect(timer.errorMessage != nil)
 
-        timer.start(seconds: 90, context: "Squat")
+        timer.arm(after: 90, context: "Squat")
         try await Task.sleep(for: .milliseconds(50))
-        timer.stop()
+        timer.cancel()
 
         #expect(timer.errorMessage == nil)
         // Three, a few seconds apart: one short sound is one a phone
@@ -158,11 +158,11 @@ struct RestTimerNotificationTests {
         // first would leave two of them to fire against a countdown that no
         // longer exists.
         let center = FakeNotificationCenter()
-        let timer = RestTimerModel(center: center)
+        let timer = ScreenLockedCue(center: center)
 
-        timer.start(seconds: 90, context: "Squat")
+        timer.arm(after: 90, context: "Squat")
         try await Task.sleep(for: .milliseconds(50))
-        timer.stop()
+        timer.cancel()
 
         #expect(Set(center.removed).count == 3)
     }
@@ -178,7 +178,8 @@ struct RestTimerNotificationTests {
         let center = FakeNotificationCenter()
         var clock = Date(timeIntervalSince1970: 1_700_000_000)
         let alerts = AlertCounter()
-        let timer = RestTimerModel(center: center, now: { clock }, alert: alerts.fire)
+        let timer = RestTimerModel(
+            cue: ScreenLockedCue(center: center), now: { clock }, alert: alerts.fire)
 
         timer.start(seconds: 90, context: "Squat")
         clock.addTimeInterval(600)
@@ -194,7 +195,8 @@ struct RestTimerNotificationTests {
         let center = FakeNotificationCenter()
         var clock = Date(timeIntervalSince1970: 1_700_000_000)
         let alerts = AlertCounter()
-        let timer = RestTimerModel(center: center, now: { clock }, alert: alerts.fire)
+        let timer = RestTimerModel(
+            cue: ScreenLockedCue(center: center), now: { clock }, alert: alerts.fire)
 
         timer.start(seconds: 90, context: "Squat")
         clock.addTimeInterval(90)
@@ -209,7 +211,7 @@ struct RestTimerNotificationTests {
     func remainingFollowsTheClock() throws {
         let center = FakeNotificationCenter()
         var clock = Date(timeIntervalSince1970: 1_700_000_000)
-        let timer = RestTimerModel(center: center, now: { clock })
+        let timer = RestTimerModel(cue: ScreenLockedCue(center: center), now: { clock })
 
         timer.start(seconds: 180, context: "Bench")
         clock.addTimeInterval(60)
@@ -236,7 +238,7 @@ struct RestTimerNotificationTests {
         // run, in an app whose premise is that it asks him nothing. iOS gives
         // one chance at that question.
         let center = FakeNotificationCenter()
-        let timer = RestTimerModel(center: center, alert: {})
+        let timer = RestTimerModel(cue: ScreenLockedCue(center: center), alert: {})
 
         #expect(center.authorizationRequests == 0, "nothing has started yet")
 

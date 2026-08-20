@@ -283,7 +283,7 @@ struct TickPersistenceTests {
 
     /// A timer whose alerts go nowhere, so a test can watch it run and stop.
     private func silentTimer() -> RestTimerModel {
-        RestTimerModel(center: SilentCenter(), alert: {})
+        RestTimerModel(cue: ScreenLockedCue(center: SilentCenter()), alert: {})
     }
 
     @Test("Logging a set with no rest against it stops the rest still running")
