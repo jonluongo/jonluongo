@@ -540,3 +540,45 @@ struct WritePlanTrainedBlockTests {
             .entries.first?.exercises.first?.suggestedLoad == Mass(value: 245, unit: .pounds))
     }
 }
+/// What the coach is told about a file that has been written but may not be
+/// going anywhere.
+@Suite("Written is not delivered")
+struct WritePlanDeliveryTests {
+
+    private var plan: JSONValue {
+        ["blocks": [["days": [["weekday": 2, "focus": "Push", "exercises": [
+            ["exerciseID": "barbell-bench-press", "sets": 3, "repRange": "5"],
+        ]]]]]]
+    }
+
+    private func note(_ delivery: ToolRunner.DeliveryProspect) throws -> String {
+        let documents = InMemoryDocuments(snapshot: fixtureSnapshot())
+        let outcome = try makeRunner(documents: documents, delivery: delivery).writePlan(plan)
+        return try #require(outcome.report?["note"]?.stringValue)
+    }
+
+    @Test("A plan iCloud is carrying is reported as on its way")
+    func onItsWayReadsAsBefore() throws {
+        #expect(try note(.onItsWay).contains("imports it the next time"))
+    }
+
+    @Test("A plan iCloud will not take says so, with iCloud's reason")
+    func refusedNamesTheReason() throws {
+        // The production failure: 132 KB left in the account.
+        let note = try note(.refused("Quota exceeded"))
+
+        #expect(note.contains("will not see this plan"))
+        #expect(note.contains("Quota exceeded"))
+    }
+
+    @Test("A plan written where nothing syncs does not claim the phone will import it")
+    func aFolderNothingSyncsIsNamed() throws {
+        // The other production failure: the Mac has never synced the container,
+        // so the file sits in a folder that goes nowhere while the tool says
+        // the phone will pick it up.
+        let note = try note(.notShared)
+
+        #expect(note.contains("not syncing"))
+        #expect(!note.contains("imports it the next time"))
+    }
+}

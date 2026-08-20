@@ -35,6 +35,10 @@ public struct ToolRunner: Sendable {
     let documents: any TrainingDocuments
     let catalog: any ExerciseCatalogProviding
     let now: @Sendable () -> Date
+    /// Whether a file written to this path will actually reach the phone, and
+    /// why not when it will not. Injected so a test can be a folder on disk,
+    /// where iCloud has nothing to say.
+    let delivery: @Sendable (String) -> DeliveryProspect
 
     /// - Parameters:
     ///   - documents: the shared folder, or a stand-in.
@@ -44,11 +48,41 @@ public struct ToolRunner: Sendable {
     public init(
         documents: any TrainingDocuments,
         catalog: any ExerciseCatalogProviding,
-        now: @escaping @Sendable () -> Date = Date.init
+        now: @escaping @Sendable () -> Date = Date.init,
+        delivery: @escaping @Sendable (String) -> DeliveryProspect =
+            ToolRunner.systemDelivery
     ) {
         self.documents = documents
         self.catalog = catalog
         self.now = now
+        self.delivery = delivery
+    }
+
+    /// What iCloud will do with a file just written into the shared folder.
+    ///
+    /// **Written is not delivered**, which the phone learned the hard way: the
+    /// write is local and carrying it is iCloud's, so a plan can sit in a folder
+    /// nothing syncs while the tool reports it as on its way. The prospect is
+    /// read off the file itself and said plainly in the report.
+    public enum DeliveryProspect: Sendable, Equatable {
+        /// A ubiquity item iCloud has taken or is taking.
+        case onItsWay
+        /// A ubiquity item iCloud will not take, with its own reason.
+        case refused(String)
+        /// Not a ubiquity item at all: a plain folder, or a container this Mac
+        /// is not syncing. Nothing will carry it anywhere.
+        case notShared
+    }
+
+    /// The real answer, read off the file's own iCloud state.
+    @Sendable
+    public static func systemDelivery(at path: String) -> DeliveryProspect {
+        let url = URL(filePath: path)
+        guard let values = try? url.resourceValues(forKeys: [
+            .isUbiquitousItemKey, .ubiquitousItemUploadingErrorKey,
+        ]), values.isUbiquitousItem == true else { return .notShared }
+        guard let error = values.ubiquitousItemUploadingError else { return .onItsWay }
+        return .refused(error.localizedDescription)
     }
 
     /// Runs the named tool. An unknown name is a failure naming the tools that

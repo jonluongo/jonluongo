@@ -413,12 +413,14 @@ extension PlanDocument {
 
 func makeRunner(
     documents: any TrainingDocuments,
-    catalog: (any ExerciseCatalogProviding)? = nil
+    catalog: (any ExerciseCatalogProviding)? = nil,
+    delivery: ToolRunner.DeliveryProspect = .onItsWay
 ) throws -> ToolRunner {
     ToolRunner(
         documents: documents,
         catalog: try catalog ?? fixtureCatalog(),
-        now: { referenceNow }
+        now: { referenceNow },
+        delivery: { _ in delivery }
     )
 }
 

@@ -118,10 +118,33 @@ extension ToolRunner {
             "weekCount": .integer(document.blockCount),
             "dayCount": .integer(days.count),
             "exerciseCount": .integer(days.reduce(0) { $0 + $1.exercises.count }),
-            "note": "Written. The app imports it the next time it is opened or comes forward.",
+            "note": .string(Self.deliveryNote(delivery(documents.planLocation))),
             "plan": Self.reported(document),
             "unstatedWhenWritten": unstatedWhenWritten(),
         ])
+    }
+
+    /// What to say about a plan that has been written, given what iCloud will
+    /// do with it.
+    ///
+    /// **"Written" is not "arrived".** The file went into the folder; carrying
+    /// it to the phone is iCloud's, and on a Mac that is not syncing the
+    /// container — or an account with no room left — it never happens. Saying
+    /// the app will import it in that state is the tool reporting a success
+    /// nobody got.
+    static func deliveryNote(_ prospect: ToolRunner.DeliveryProspect) -> String {
+        switch prospect {
+        case .onItsWay:
+            "Written. The app imports it the next time it is opened or comes forward."
+        case .refused(let reason):
+            "Written, but iCloud will not take it, so the phone will not see this plan. "
+                + "iCloud says: \(reason)"
+        case .notShared:
+            "Written to a folder iCloud is not syncing, so the phone will not see this plan. "
+                + "Check that this Mac syncs the app's container — `brctl status` says "
+                + "\"SYNC DISABLED (app not installed)\" when it does not — and that the "
+                + "account has room left."
+        }
     }
 
     /// Why this plan will be turned away by the phone, if it will be.

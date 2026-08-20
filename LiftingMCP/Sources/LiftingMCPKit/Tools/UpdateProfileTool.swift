@@ -78,10 +78,13 @@ extension ToolRunner {
         return .report([
             "writtenTo": .string(documents.profileUpdateLocation),
             "updateID": .string(written.id.uuidString),
+            // The same question the plan's note answers: a file written into a
+            // folder nothing syncs is recorded here and nowhere else.
             "note": .string(
-                "Recorded. The app applies it the next time it is opened or comes forward, and "
-                    + "the next snapshot reports the merged result. Fields you did not name are "
-                    + "untouched."),
+                Self.deliveryNote(delivery(documents.profileUpdateLocation))
+                    .replacingOccurrences(of: "Written", with: "Recorded")
+                    .replacingOccurrences(of: "plan.", with: "update.")
+                    + " Fields you did not name are untouched."),
             "recorded": Self.reported(written),
         ])
     }
