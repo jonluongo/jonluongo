@@ -17,6 +17,23 @@ struct ExerciseTrendTests {
         )
     }
 
+    /// A hold, logged in seconds with no load and no reps.
+    private func heldSet(_ seconds: Int, at date: Date, setIndex: Int = 0) -> LoggedSet {
+        LoggedSet(
+            setIndex: setIndex, load: nil, reps: 0, durationSeconds: seconds,
+            isCompleted: true, isWarmup: false, completedAt: date)
+    }
+
+    /// A carry, logged over a distance in the unit it was prescribed in.
+    private func carriedSet(
+        _ metres: Double, at date: Date, setIndex: Int = 0
+    ) -> LoggedSet {
+        LoggedSet(
+            setIndex: setIndex, load: nil, reps: 0,
+            distance: Distance(value: metres, unit: .metres),
+            isCompleted: true, isWarmup: false, completedAt: date)
+    }
+
     private func exercise(
         id: ExerciseID, order: Int = 0, sets: [LoggedSet]
     ) -> PlannedExercise {
@@ -116,5 +133,74 @@ struct ExerciseTrendTests {
 
         let trends = ExerciseTrend.build(from: [plan(exercises: [neverLogged, onlyWarmedUp])])
         #expect(trends.isEmpty)
+    }
+
+    // MARK: - Work that is not counted in repetitions
+
+    /// **A hold has no load and no reps, so the first two terms of the ranking
+    /// are equal for every set of it.** Without the seconds term the "top set"
+    /// of a plank session is whichever set the ordering happened to leave last,
+    /// which is a figure with no meaning shown on a chart labelled *heaviest
+    /// set*.
+    @Test("The top set of a session of holds is the longest one")
+    func theLongestHoldIsTheTopSet() throws {
+        let plank = ExerciseID(rawValue: "front-plank")
+        let day = Date(timeIntervalSince1970: 1_700_000_000)
+        let trends = ExerciseTrend.build(from: [
+            plan(exercises: [
+                exercise(
+                    id: plank,
+                    sets: [
+                        heldSet(30, at: day, setIndex: 0),
+                        heldSet(75, at: day, setIndex: 1),
+                        heldSet(45, at: day, setIndex: 2),
+                    ])
+            ])
+        ])
+        let point = try #require(trends.first { $0.exerciseID == plank }?.points.first)
+
+        #expect(point.topDurationSeconds == 75)
+        #expect(point.topLoad == nil, "nothing was on the bar")
+        #expect(point.topReps == 0, "and nothing was counted")
+    }
+
+    @Test("The top set of a session of carries is the furthest one")
+    func theFurthestCarryIsTheTopSet() throws {
+        let carry = ExerciseID(rawValue: "kettlebell-farmers-carry")
+        let day = Date(timeIntervalSince1970: 1_700_000_000)
+        let trends = ExerciseTrend.build(from: [
+            plan(exercises: [
+                exercise(
+                    id: carry,
+                    sets: [
+                        carriedSet(40, at: day, setIndex: 0),
+                        carriedSet(38, at: day, setIndex: 1),
+                        carriedSet(52, at: day, setIndex: 2),
+                    ])
+            ])
+        ])
+        let point = try #require(trends.first { $0.exerciseID == carry }?.points.first)
+
+        #expect(point.topDistance?.value == 52)
+        #expect(point.topDistance?.unit == .metres, "in the unit it was logged in")
+        #expect(point.topDurationSeconds == nil, "it was not a hold")
+    }
+
+    @Test("A carry keeps the unit it was logged in rather than being converted")
+    func aCarriedDistanceIsNotConverted() throws {
+        let sled = ExerciseID(rawValue: "sled-push")
+        let day = Date(timeIntervalSince1970: 1_700_000_000)
+        let yards = LoggedSet(
+            setIndex: 0, load: nil, reps: 0,
+            distance: Distance(value: 20, unit: .yards),
+            isCompleted: true, isWarmup: false, completedAt: day)
+        let trends = ExerciseTrend.build(from: [
+            plan(exercises: [exercise(id: sled, sets: [yards])])
+        ])
+        let point = try #require(trends.first { $0.exerciseID == sled }?.points.first)
+
+        // Twenty yards is not eighteen point three metres here or anywhere:
+        // nothing in this project converts a distance.
+        #expect(point.topDistance == Distance(value: 20, unit: .yards))
     }
 }
