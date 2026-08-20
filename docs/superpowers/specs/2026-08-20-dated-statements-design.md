@@ -1,8 +1,9 @@
 # Dated statements
 
-**Status: proposed, waiting on the owner.** Nothing here is built. It exists so
-the decision is not re-derived from scratch, and so the day it is greenlit the
-work starts from a written shape rather than a conversation.
+**Status: steps 1–3 built and shipped on 2026-08-20. Step 4 is waiting on the
+owner.** What follows is the shape as designed; where it was built, the commits
+are named. Read it for the reasoning — particularly *What this is not*, which is
+what stopped three plausible versions of this from being built instead.
 
 ## The problem
 
@@ -66,24 +67,37 @@ of truth.
 
 ## What follows
 
-1. **Store.** A model for an applied profile update, holding the document and
-   the date it was generated. Named right the first time — the `@Model` rename
-   held open in `decided.md` is about `TrainingPlan`/`TrainingWeek`, and nothing
-   new should be added needing the same migration later.
-2. **Wire.** Each stated fact reports `statedAt` beside its value. Snapshot
-   format bump. `SnapshotProfile.updatedAt` goes in the same bump, since what
-   replaces it is per-fact and honest.
-3. **Tools.** `unstated_facts` gains the answer it cannot currently give: not
-   only *nobody has said*, but *said, long ago, and worth asking again*. What
-   counts as long ago is the coach's judgement, not the server's — the server
-   reports the date and says nothing about staleness.
+1. **Store.** ✅ `ce005d7`. `ProfileStatement` records which facts an arriving
+   update spoke to and when the coach wrote it, `ProfileUpdate.keysStated` names
+   them from the wire's own vocabulary, and `StatedFacts` reads them back. It
+   holds the keys and the dates, not the values: the profile already carries
+   what is true. Named right the first time, so it needs no part of the `@Model`
+   rename held open elsewhere in `decided.md`.
+2. **Wire.** ✅ `8edeac2`. `SnapshotProfile.statedAt` carries a date per fact and
+   the context resource reports it. `updatedAt` went in the same bump — it moved
+   whenever any fact changed and no tool ever read it. Snapshot version 4 → 5,
+   because the shape lost a field rather than gaining one; absence of `statedAt`
+   decodes as *no dates on record*, which is what every install predating this
+   has.
+3. **Tools.** ✅ `0b69ab7`, `c805d2c`, `077d2c4`. Every stated fact in
+   `unstated_facts` carries when he last said it, `null` where the record
+   predates the dates. The server passes no verdict — a test asserts the note
+   says nothing about staleness, because the temptation to add one later is
+   exactly what this server is built not to do. Both tool descriptions were
+   corrected to match: one had promised "empty fields and nothing more", and the
+   other never mentioned that it is where the dates come from.
 4. **Screens.** The account page qualifies each fact inline, the way Bodyweight
    already carries its date. That also answers the baseline rows, which read
    `205 lb × 5` with nothing saying it was a starting point rather than a
    current best — the question that started this.
 
 Step 4 is where two designs are defensible and the owner's call is needed. Steps
-1–3 are not visible to the lifter and can land first.
+1–3 were not visible to the lifter and landed first. They were also driven end
+to end through the real files — two hand-written `profile-update.json`
+documents, a March one and an August one, taken in by the app and read back by
+the release binary — and the March constraint kept its March date while the
+August goal took August. Under `updatedAt` both would have read August. See
+*Settled by investigation* in `decided.md`.
 
 ## The one it does not fix
 
@@ -97,3 +111,10 @@ The fix is making `reps` optional, matching `durationSeconds` and `distance`,
 which are optional for exactly this reason. It is a store change and a format
 bump, so it belongs in the same piece of work — but it is a separate decision
 and should be taken separately.
+
+Until it is taken, the wire is at least honest about the shape: `bff347a`
+changed `exercise_history`'s description from claiming a hold or a carry reports
+"no reps" to stating that `reps` is 0 there and that the 0 means *not counted in
+reps*. That does not make `0` a good answer for a set he ticked without typing —
+it makes the ambiguity visible instead of hidden, which is the most that can be
+done without the store change.
