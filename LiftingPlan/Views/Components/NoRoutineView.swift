@@ -17,7 +17,7 @@ struct NoRoutineView: View {
         ContentUnavailableView {
             Label("No routine yet", systemImage: "dumbbell.fill")
         } description: {
-            Text("Ask Claude for one.")
+            Text("Ask your coach for one.")
         }
     }
 }

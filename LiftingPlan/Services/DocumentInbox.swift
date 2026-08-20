@@ -199,9 +199,10 @@ final class DocumentInbox {
             return (error as? any LocalizedError)?.errorDescription ?? error.localizedDescription
         }
         return """
-            Claude sent a plan this app could not read whole, so none of it was taken in. \
-            Nothing you have already logged has changed. Ask him to send it again — showing \
-            him what it says below is the quickest fix, and he will know what to do with it.
+            A plan arrived that this app could not read whole, so none of it was taken in. \
+            Nothing you have already logged has changed. Ask your coach to send it again — \
+            showing what it says below is the quickest fix, and it will be clear from there \
+            what to change.
 
             \(addressedToTheAuthor)
             """

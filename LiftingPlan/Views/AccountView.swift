@@ -81,7 +81,7 @@ struct AccountView: View {
             Button("Delete Routines", role: .destructive) { deleteAllPlans() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("The sets you logged go with them and don't come back. The routine itself will import again the next time Claude's plan document arrives, without them.")
+            Text("The sets you logged go with them and don't come back. The routine itself will import again the next time a plan document arrives, without them.")
         }
         .alert("Couldn't Save", isPresented: errorAlertBinding) {
             Button("OK", role: .cancel) {}

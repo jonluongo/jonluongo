@@ -82,13 +82,13 @@ struct RefusalMessageTests {
     func refusalIsAddressedToTheLifter() async throws {
         let message = try await messageAfterReading(Self.planFromAnEarlierBuild)
 
-        #expect(message.contains("Ask him to send it again"))
+        #expect(message.contains("Ask your coach to send it again"))
         #expect(
             message.contains("Nothing you have already logged has changed"),
             "the first thing he will wonder is whether his log survived")
     }
 
-    @Test("The sentence written for Claude is kept, so relaying it is the fix")
+    @Test("The sentence written for the plan's author is kept, so relaying it is the fix")
     func authorsSentenceSurvives() async throws {
         let message = try await messageAfterReading(Self.planFromAnEarlierBuild)
 
@@ -107,7 +107,7 @@ struct RefusalMessageTests {
             """)
 
         #expect(message.contains("'dropSets'"))
-        #expect(message.contains("Ask him to send it again"))
+        #expect(message.contains("Ask your coach to send it again"))
     }
 
     @Test("An exercise the catalog does not have reads the same way")
@@ -123,7 +123,7 @@ struct RefusalMessageTests {
             """)
 
         #expect(message.contains("moon-press"))
-        #expect(message.contains("Ask him to send it again"))
+        #expect(message.contains("Ask your coach to send it again"))
     }
 
     @Test("A document from a later format keeps its own remedy, which he can act on himself")
@@ -136,7 +136,7 @@ struct RefusalMessageTests {
             """)
 
         #expect(message.contains("update the app"))
-        #expect(message.contains("Ask him to send it again"))
+        #expect(message.contains("Ask your coach to send it again"))
     }
 
     // MARK: - Everything else is left alone
@@ -146,7 +146,7 @@ struct RefusalMessageTests {
         let message = try await messageAfterReading("{ this is not JSON at all")
 
         #expect(
-            !message.contains("Ask him to send it again"),
-            "a malformed file is not a plan Claude can be shown and asked to fix")
+            !message.contains("Ask your coach to send it again"),
+            "a malformed file is not a plan a coach can be shown and asked to fix")
     }
 }

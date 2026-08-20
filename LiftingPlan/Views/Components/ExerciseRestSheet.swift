@@ -137,12 +137,12 @@ struct ExerciseRestSheet: View {
     private var prescriptionSentence: String {
         guard let prescribedSeconds else {
             return """
-                Claude prescribed no rest here. A timer you set is your own — \
+                No rest was prescribed here. A timer you set is your own — \
                 it doesn't change the block.
                 """
         }
         return """
-            Claude prescribed \(RestPrescription.durationText(prescribedSeconds)) here. \
+            Your coach prescribed \(RestPrescription.durationText(prescribedSeconds)) here. \
             Changing the timer doesn't change the block.
             """
     }
