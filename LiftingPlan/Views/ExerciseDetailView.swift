@@ -132,13 +132,16 @@ struct ExerciseDetailView: View {
                         Text(point.date, format: .dateTime.month().day())
                             .foregroundStyle(Palette.muted)
                         Spacer()
-                        if let load = point.topLoad {
-                            let converted = load.converted(to: unit)
-                            Text("\(converted.value.compactString) \(unit.rawValue) × \(point.topReps)")
-                                .foregroundStyle(Palette.ink)
-                        } else {
-                            Text("\(point.topReps) reps")
-                                .foregroundStyle(Palette.ink)
+                        // What the set actually was: `185 lb × 8`, `70 lb ×
+                        // 40 m`, `45 s`. It read `× 0` for a carry and `0 reps`
+                        // for a hold, because reps was the only measure this
+                        // row knew how to say.
+                        if let line = LoggedWorkSummary.text(
+                            load: point.topLoad, reps: point.topReps,
+                            durationSeconds: point.topDurationSeconds,
+                            distance: point.topDistance, unit: unit)
+                        {
+                            Text(line).foregroundStyle(Palette.ink)
                         }
                     }
                     .font(.supersetSupport)

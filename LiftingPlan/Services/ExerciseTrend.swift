@@ -6,7 +6,8 @@ import LiftingKit
 ///
 /// Built as part of `ExerciseTrend.build(from:)` and consumed by
 /// `ExerciseDetailView`'s chart and session list. It carries what was lifted
-/// and for how many, and nothing derived from them — no estimated one-rep max, because
+/// and what he did with it — reps, seconds or a distance, whichever the set was
+/// performed in — and nothing derived from them: no estimated one-rep max, because
 /// which formula turns a set into an estimate is a training opinion and this
 /// app holds none. Depends on: `Mass` from Domain.
 struct TrendPoint: Identifiable {
@@ -14,6 +15,11 @@ struct TrendPoint: Identifiable {
     let date: Date
     let topLoad: Mass?
     let topReps: Int
+    /// What the top set held, when it was a hold rather than a count.
+    let topDurationSeconds: Int?
+    /// What it carried, in the unit it was logged in — never converted, for the
+    /// same reason `Mass` is not.
+    let topDistance: Distance?
 }
 
 /// All logged sessions for one exercise, oldest → newest, with a best-set
@@ -62,13 +68,22 @@ struct ExerciseTrend: Identifiable {
             // The "top set" is the heaviest; ties fall back to most reps.
             // Comparing `.kilograms` (not `.value` or `Mass` equality) is what
             // makes this correct when a session mixes lb- and kg-logged sets.
+            // The "top set" is the heaviest; ties fall back to the most work
+            // done, whichever measure that set was performed in — a plank
+            // carries no load at all, so without the seconds every set of one
+            // ties and the answer is whichever the sort happened to leave last.
             let topSet = logs.max { lhs, rhs in
-                (lhs.load?.kilograms ?? 0, lhs.reps) < (rhs.load?.kilograms ?? 0, rhs.reps)
+                (lhs.load?.kilograms ?? 0, lhs.reps, lhs.durationSeconds ?? 0,
+                 lhs.distance?.value ?? 0)
+                    < (rhs.load?.kilograms ?? 0, rhs.reps, rhs.durationSeconds ?? 0,
+                       rhs.distance?.value ?? 0)
             }
             let point = TrendPoint(
                 date: date,
                 topLoad: topSet?.load,
-                topReps: topSet?.reps ?? 0
+                topReps: topSet?.reps ?? 0,
+                topDurationSeconds: topSet?.durationSeconds,
+                topDistance: topSet?.distance
             )
             byID[exercise.exerciseID, default: (exercise.displayName, [])].points.append(point)
         }
