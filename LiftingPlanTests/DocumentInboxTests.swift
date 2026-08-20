@@ -133,6 +133,52 @@ struct DocumentInboxTests {
         #expect(sent == 1, "only the arrival that changed the record sends")
     }
 
+    @Test("Next week's block landing on a routine counts as an arrival")
+    func agrownRoutineIsAnArrival() async throws {
+        // The failure this closes is the one the whole loop rests on. A routine
+        // grows by arriving again under its own identity, and the inbox used to
+        // ask *is this identity already stored* — which is true of every block
+        // after the first. The coach would have written next week and read back
+        // a snapshot that predated it.
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        let watcher = ManualArrivalWatcher()
+        let context = try context()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: context)
+        var sent = 0
+        inbox.onApplied = { sent += 1 }
+        let id = UUID()
+        try folder.writePlan(routine(id: id, blocks: 1))
+
+        inbox.start()
+        await watcher.announceArrival()
+        try folder.writePlan(routine(id: id, blocks: 2))
+        await watcher.announceArrival()
+
+        #expect(sent == 2, "the block that arrived is a change and has to go back out")
+        #expect(try storedPlans(in: context).count == 1, "one routine, two blocks")
+        #expect(try storedPlans(in: context).first?.orderedWeeks.count == 2)
+    }
+
+    /// A routine of `blocks` blocks under one identity, each one Monday push
+    /// session — the shape a week-at-a-time coach writes.
+    private func routine(id: UUID, blocks: Int) -> PlanDocument {
+        PlanDocument(
+            id: id, catalogVersion: 5, generatedAt: Self.instant, title: "Strength block",
+            weeks: (1...blocks).map { ordinal in
+                PlanDocumentWeek(label: "Block \(ordinal)", days: [
+                    PlanDocumentDay(
+                        weekday: .monday, focus: "Push",
+                        exercises: [
+                            PlanDocumentExercise(
+                                exerciseID: Self.benchPress, displayName: "Barbell Bench Press",
+                                sets: 3, repRange: "5", restSeconds: 180,
+                                suggestedLoad: Mass(value: 225, unit: .pounds))
+                        ])
+                ])
+            })
+    }
+
     @Test("An empty folder sends nothing")
     func nothingWaitingSendsNothing() async throws {
         let folder = try temporaryFolder()
