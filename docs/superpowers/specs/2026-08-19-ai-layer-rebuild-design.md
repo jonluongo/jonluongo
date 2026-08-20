@@ -1,6 +1,9 @@
 # The AI layer, rebuilt — design
 
-**Status.** Approved by Jon on 2026-08-19. Phase 0 is shipped; phase 1 is next.
+**Status.** Phases 0, 1 and 2 are shipped — the read and write layer is done.
+Phase 3 is **not** approved: it was raised as "think about it", it is the one
+part that would put a form in front of the lifter, and the app's founding rule
+is that it asks him nothing. See the note under it before building any of it.
 
 **Goal.** One vocabulary for a prescription, one shape for the log, and reads
 that are never quietly stale.
@@ -94,7 +97,15 @@ costing their own version bump — `inCatalog` (a literal `true`), `SnapshotPlan
 generatedAt` (nothing reads it), `displayName` on `write_plan` (the server links
 the catalog that owns the name), `weekCount` (derivable, and can disagree).
 
-**Phase 3 — the account, if wanted.** Two editable facts, not eight:
+**Phase 3 — the account. Not built, and not to be built unasked.** The rule it
+runs into is the app's first one: *there is no setup screen and no settings form
+for a training question*. An editable box is defensible — a box that shows and
+lets you correct is not a form that asks — but it is a reversal of a stated
+decision and needs to be made deliberately, not inferred from a maybe.
+`bfb3caa` shipped the half of it that has no such problem: the lifter writes his
+own note on an exercise, in a field of its own, and it reaches the coach.
+
+If it is wanted: two editable facts, not eight —
 **bodyweight** (a number he knows, a dated series, an edit is an append) and
 **injuries/constraints** (the one fact where waiting for a conversation actually
 harms training). Everything else stays Claude's. The real work is provenance:
