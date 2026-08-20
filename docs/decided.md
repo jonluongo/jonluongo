@@ -216,6 +216,25 @@ and does not silently omit an empty week. A truncated snapshot is a stale
 `snapshot.json`: the phone writes it, and a phone that has not opened the app
 since the block changed has not rewritten it.
 
+**Driven end to end on 2026-08-20, with figures rather than reasoning.** A plan
+was written by the release server, imported by the app from the shared folder,
+logged against in the simulator — three weeks of bench at 185, 195 and 205 lb
+for five — exported by backgrounding the app, and then read back by driving the
+same release binary against the file the phone wrote. Every number agreed:
+twelve completed working sets and sixty repetitions on both sides, 205 lb the
+heaviest on both, `volume_by_muscle` counting the same twelve sets and sixty
+reps under chest, and eight sessions reported where eight were logged. The read
+path does not lie.
+
+Worth knowing for anyone probing this again: **killing the app does not export.**
+`simctl terminate` — and a lifter swiping the app away — ends the process without
+`scenePhase` reaching `.background`, so the export never runs and the file on
+disk stays exactly as stale as it was. Backgrounding it properly (launch another
+app) is what triggers the write. A probe that terminates and then reads the file
+is measuring the previous export, which is the same mistake as reading a stale
+snapshot in the first place — it cost an hour here before the timestamps were
+checked.
+
 ## Settled by asking
 
 These were put to the owner as two defensible designs and answered. They are his,
