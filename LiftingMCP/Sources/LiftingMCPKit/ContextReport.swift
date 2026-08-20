@@ -37,6 +37,12 @@ struct ContextReport {
             "catalogVersion": .integer(snapshot.catalogVersion),
             "lifter": lifter,
             "currentBlock": currentBlock,
+            // How many sessions the record holds, beside the handful carried.
+            // Five entries and no total reads as *he has trained five times*,
+            // which is the summary being mistaken for the record — the same
+            // silent cap `recent_sessions` avoids by reporting `totalSessions`
+            // next to what it returned.
+            "sessionsLogged": .integer(TrainingLog.sessions(in: snapshot).count),
             "recentSessions": recentSessions,
             "workingWeights": workingWeights,
             "note": .string(note),
@@ -159,6 +165,11 @@ struct ContextReport {
 
     // MARK: - What he did lately
 
+    /// The last few sessions, in full enough detail to be worth carrying.
+    ///
+    /// Capped at `carriedSessions`, which is what `sessionsLogged` beside it is
+    /// for: a reader can see at a glance whether he is looking at the record or
+    /// at the end of it.
     private var recentSessions: JSONValue {
         .array(
             TrainingLog.sessions(in: snapshot).prefix(Self.carriedSessions).map { session in

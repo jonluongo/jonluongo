@@ -90,6 +90,44 @@ struct ContextResourceTests {
         #expect(try context()["currentBlock"]?["nothingPrescribedBeyond"] == false)
     }
 
+    @Test("It says how many sessions the record holds, not just the ones it carries")
+    func theCarriedSessionsAreCountedAgainstTheWhole() throws {
+        let report = try #require(try context())
+
+        // The fixture holds three: two in the block he is on and one in the
+        // block before it. Five entries and no total would read as the record
+        // itself rather than as the end of it.
+        #expect(report["sessionsLogged"] == 3)
+        #expect(try #require(report["recentSessions"]?.arrayValue).count == 3)
+    }
+
+    @Test("A record longer than the summary says so rather than ending quietly")
+    func aTruncatedSummaryStatesTheWhole() throws {
+        // Eight sessions, five carried. Without the total this reads as a
+        // lifter who has trained five times — the summary mistaken for the
+        // record, which is the failure the cap creates and the count closes.
+        let days = (0..<8).map { index in
+            fixtureDay(
+                weekday: Weekday.displayOrder[index % Weekday.displayOrder.count],
+                focus: "Push", completedAt: daysAgo(index + 1),
+                exercises: [
+                    prescribed(
+                        "barbell-bench-press", "Barbell Bench Press",
+                        sets: 1, reps: "5", load: 185, rest: 120,
+                        logged: [set(0, 185, 5, at: daysAgo(index + 1))])
+                ])
+        }
+        let long = fixtureRoutine(
+            title: "Long block", startDate: daysAgo(60),
+            blocks: [(label: "Accumulation", isDeload: false, days: days)])
+        let documents = InMemoryDocuments(snapshot: fixtureSnapshot(blocks: [long]))
+        let report = try #require(try makeRunner(documents: documents).contextResource().report)
+
+        #expect(report["sessionsLogged"] == 8)
+        #expect(try #require(report["recentSessions"]?.arrayValue).count
+            == ContextReport.carriedSessions)
+    }
+
     @Test("It says what he did lately, compactly")
     func recentSessions() throws {
         let sessions = try #require(try context()["recentSessions"]?.arrayValue)
