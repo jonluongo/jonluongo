@@ -75,39 +75,26 @@ struct RestSheet: View {
         }
     }
 
-    /// The figure he is waiting on.
+    /// The figure he is waiting on, in the same ring the bar draws.
     ///
     /// **The ring says how long and nothing else.** It carried the name of the
     /// movement the rest belongs to as well, which is the movement he has just
     /// finished — and the row below names the one he is about to do. Rendered,
     /// the two were the same words twice on the same sheet, and the wrong one
     /// was the larger.
+    ///
+    /// It was drawn here by hand for one build, which is how the bar came to
+    /// fill while this drained: the same clock, two behaviours. `TimerRing`
+    /// takes a size, a stroke and a type role, so there is one ring.
     private var clock: some View {
-        ZStack {
-            Circle()
-                .stroke(Palette.rule, lineWidth: Self.ringWidth)
-            // **It drains rather than fills.** `progress` is how much of the
-            // rest has gone, so drawing it directly left a countdown that starts
-            // as an empty ring with a stub at twelve o'clock — under the sheet's
-            // own grabber — and is at its fullest the moment it stops mattering.
-            // A rest is a thing running out, and the ring says so: whole at the
-            // start, gone at the end.
-            Circle()
-                .trim(from: 0, to: 1 - restTimer.progress)
-                .stroke(
-                    Palette.ink,
-                    style: StrokeStyle(lineWidth: Self.ringWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(.linear(duration: 0.25), value: restTimer.progress)
-            Text(restTimer.formattedRemaining)
-                .font(.supersetClock)
-                .foregroundStyle(Palette.ink)
-                .contentTransition(.numericText())
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .padding(.horizontal, Spacing.major)
-        }
-        .frame(width: Self.ringSize, height: Self.ringSize)
+        TimerRing(
+            progress: restTimer.progress,
+            timeText: restTimer.formattedRemaining,
+            isRunning: restTimer.isRunning,
+            size: Self.ringSize,
+            lineWidth: Self.ringWidth,
+            showsLabel: false,
+            font: .supersetClock)
     }
 
     /// The same three things the bar does, at the size of a thing pressed with
@@ -164,10 +151,7 @@ struct RestSheet: View {
     }
 
     /// Read at arm's length with a phone on the floor, which is what makes this
-    /// worth a sheet of its own. The ring is drawn here rather than through
-    /// `TimerRing` because that one is built for the 52pt bar — it puts the
-    /// figure in support type and hides it behind a `READY` label — and this
-    /// screen exists for the figure.
+    /// worth a sheet of its own.
     private static let ringSize: CGFloat = 200
     private static let ringWidth: CGFloat = 8
 }

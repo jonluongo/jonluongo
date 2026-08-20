@@ -127,11 +127,12 @@ struct ActiveWorkoutView: View {
                     // to look at, with the next set under it. Rest is the one
                     // moment in a session with nothing else to do, which is why
                     // it is worth a surface of its own.
-                    Button { showingRest = true } label: {
-                        RestTimerBar(restTimer: restTimer)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Opens the rest clock and the next set")
+                    //
+                    // The bar owns which part of itself opens it: wrapping the
+                    // whole thing in a button put `−15`, `+15` and skip inside
+                    // another button, and a tap on one of those is then a tap
+                    // whose meaning depends on which the system decides it hit.
+                    RestTimerBar(restTimer: restTimer) { showingRest = true }
                 }
             }
             .sheet(isPresented: $showingRest) {

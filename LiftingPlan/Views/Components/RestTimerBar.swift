@@ -10,6 +10,11 @@ import SwiftUI
 /// the whole point of the notification is that the lifter is not looking.
 struct RestTimerBar: View {
     var restTimer: RestTimerModel
+    /// Opens the clock at full size. Only the ring and the word carry it: the
+    /// three controls beside them are buttons of their own, and a button inside
+    /// a button is a tap whose meaning depends on which one the system decides
+    /// it hit.
+    var onOpen: () -> Void = {}
 
     /// How far the bar sits from the edge of the screen.
     private static let barInset = Spacing.standard
@@ -36,12 +41,31 @@ struct RestTimerBar: View {
                 .buttonStyle(.plain)
                 .padding(.horizontal, Self.errorInset)
             }
-            controls
+            bar
         }
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
-    private var controls: some View {
+    private var bar: some View {
+        HStack(spacing: Spacing.standard) {
+            glance
+            controls
+        }
+        // **The bar is a panel like every other.** It was a material with a
+        // hairline of its own and a sixteen-point shadow at eighteen per cent —
+        // three times the weight of every panel on the screen behind it, and the
+        // only surface in the app that was not `Palette.panel`. A floating thing
+        // is still a thing that sits on the surface.
+        .padding(.horizontal, Self.contentInset)
+        .padding(.vertical, Spacing.snug)
+        .panelSurface()
+        .padding(.horizontal, Self.barInset)
+        .padding(.bottom, Spacing.tight)
+    }
+
+    /// The clock at a glance: how long is left, and that a rest is what is
+    /// happening.
+    private var glance: some View {
         HStack(spacing: Spacing.standard) {
             TimerRing(
                 progress: restTimer.progress,
@@ -70,34 +94,35 @@ struct RestTimerBar: View {
             // point — `Next up: Barbell Bench Press`.
             Text("Resting")
                 .font(.supersetTitle)
+                .foregroundStyle(Palette.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        // The glance is what opens the clock; the controls beside it are not
+        // part of that tap.
+        .contentShape(.rect)
+        .onTapGesture(perform: onOpen)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("Opens the rest clock and the next set")
+    }
 
+    private var controls: some View {
+        HStack(spacing: Spacing.snug) {
             Button("−15") { restTimer.addTime(-15) }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
-
             Button("+15") { restTimer.addTime(15) }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
-
             Button {
                 restTimer.skip()
             } label: {
-                Image(systemName: "forward.end.fill")
+                Label("Skip rest", systemImage: "forward.end.fill")
+                    .labelStyle(.iconOnly)
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
+            .tint(Palette.accent)
+            .foregroundStyle(Palette.onAccent)
         }
         .font(.supersetSupport)
-        .padding(.horizontal, Self.contentInset)
-        .padding(.vertical, Spacing.snug)
-        .background(.regularMaterial, in: .rect(cornerRadius: Radius.panel))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.panel)
-                .strokeBorder(Color.primary.opacity(0.06))
-        )
-        .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
-        .padding(.horizontal, Self.barInset)
-        .padding(.bottom, Spacing.tight)
+        .fontWeight(.semibold)
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.capsule)
+        .tint(Palette.rule)
+        .foregroundStyle(Palette.ink)
     }
 }

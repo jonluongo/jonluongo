@@ -42,8 +42,12 @@ struct TimerRing: View {
         ZStack {
             Circle()
                 .stroke(Palette.rule, lineWidth: lineWidth * textScale)
+            // **It drains rather than fills.** `progress` is how much of the
+            // rest has gone, so drawing it directly starts the countdown as an
+            // empty ring and finishes it whole — fullest at the moment it stops
+            // mattering. A rest is a thing running out, and the ring says so.
             Circle()
-                .trim(from: 0, to: progress)
+                .trim(from: 0, to: 1 - progress)
                 .stroke(
                     // Running is the app pointing at something; ready is not,
                     // and a second hue for it would be the only other colour on
