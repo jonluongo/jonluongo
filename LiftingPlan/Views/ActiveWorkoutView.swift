@@ -143,6 +143,15 @@ struct ActiveWorkoutView: View {
                     })
             }
             .animation(.snappy, value: restTimer.isRunning)
+            // **Leaving the session ends the rest.** The clock and the three
+            // alerts it arms belong to this screen — the bar, the ±15 and the
+            // skip are all on it — so a rest left running after the screen
+            // closes is an alarm the lifter has no way to reach: it fires
+            // minutes later against a session he already left, with nothing on
+            // screen tying the sound to anything. On disappearing rather than on
+            // the X, because there is one way out today and there is no reason
+            // for the next one to have to remember this.
+            .onDisappear { restTimer.stop() }
             .alert("Couldn't Save", isPresented: errorAlertBinding) {
                 Button("OK", role: .cancel) {}
             } message: {

@@ -192,7 +192,13 @@ final class RestTimerModel {
         content.title = "Rest complete"
         content.body = context.isEmpty ? "Time for your next set." : "Next up: \(context)"
         content.sound = .default
-        content.interruptionLevel = .timeSensitive
+        // Asks to break through a Focus. **The app is not entitled to it**, so
+        // iOS files it as an ordinary active alert: Time Sensitive Notifications
+        // is a capability granted per App ID in the developer portal, and a
+        // build that claims the entitlement without it is refused at signing —
+        // checked, not assumed. Left stated because it is what this alert is,
+        // and the day the capability is turned on it starts being honoured with
+        // no code change.
         Task {
             do {
                 // **It insists rather than pings.** One notification is a single
