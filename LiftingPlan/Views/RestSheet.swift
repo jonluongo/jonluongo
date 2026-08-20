@@ -39,16 +39,45 @@ struct RestSheet: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    /// The row being drawn, once it has stopped being the next one. See
+    /// `shown`.
+    @State private var heldID: PersistentIdentifier?
+
     /// The row he is about to do, or `nil` when every row is ticked.
     private var next: TrainingSlot? { SessionOrder.next(in: day) }
+
+    /// The row on screen: the one he just ticked while the tick is still being
+    /// shown, and the next one after that.
+    ///
+    /// **A tick has to land before the sheet moves on.** Advancing the moment
+    /// the box was ticked meant the box he pressed was gone before it filled —
+    /// Jon: *"I still want to see the check before we move on it should register
+    /// as completed."* The write itself is immediate; only the row's departure
+    /// waits, so the record and the clock are never held up by an animation.
+    private var shown: TrainingSlot? {
+        guard let heldID,
+            let held = SessionOrder.trainingOrder(of: day).first(where: { $0.id == heldID })
+        else { return next }
+        return held
+    }
 
     var body: some View {
         VStack(spacing: Spacing.major) {
             clock
             controls
             Spacer(minLength: 0)
-            if let next {
-                row(next)
+            if let shown {
+                row(shown)
+                    // The row is identified by the set it draws, so ticking one
+                    // replaces the view rather than editing it in place — which
+                    // is what makes the change visible at all. Without this the
+                    // same row simply lost its tick and gained a new number, and
+                    // Jon read that as nothing having happened: *"it just looks
+                    // like its staying on the same set."*
+                    .id(shown.id)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)))
             } else {
                 // Every row is ticked, so the only thing left to say is that
                 // the clock is running for nothing in particular.
@@ -144,13 +173,40 @@ struct RestSheet: View {
                     for: prescribed, in: slot.exercise),
                 measure: reading.measure,
                 unit: profile.displayUnit,
-                onCompletionChanged: { onCompletionChanged(slot.exercise, slot.set, $0) }
+                // Animated from here rather than by the caller: the set the
+                // sheet is showing changes as a result of this write, and the
+                // slide out and in is the whole of the answer to *did that
+                // land?* The rest of the session's writes are the table's, and
+                // a table does not move.
+                onCompletionChanged: { completed in
+                    onCompletionChanged(slot.exercise, slot.set, completed)
+                    advance(after: slot, ticked: completed)
+                }
             )
         }
         .padding(PanelMetrics.edge)
         .panelSurface()
         .padding(.horizontal, PanelMetrics.inset)
     }
+
+    /// Holds the ticked row on screen long enough to see the mark fill, then
+    /// slides it away and brings the next one in.
+    ///
+    /// Untick and nothing moves: he is correcting the row he is looking at, and
+    /// taking it off the screen mid-correction is the same fault in reverse.
+    private func advance(after slot: TrainingSlot, ticked: Bool) {
+        guard ticked else { return }
+        heldID = slot.id
+        Task {
+            try? await Task.sleep(for: .seconds(Self.markLingers))
+            withAnimation(.snappy) { heldID = nil }
+        }
+    }
+
+    /// How long the ticked row stays before it leaves. Long enough that the mark
+    /// filling is something he saw happen, short enough that the sheet is not
+    /// waiting on him between sets.
+    private static let markLingers = 0.45
 
     /// Read at arm's length with a phone on the floor, which is what makes this
     /// worth a sheet of its own.
