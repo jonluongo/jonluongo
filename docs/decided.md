@@ -304,6 +304,15 @@ of five, a completed-row background left on the group table after deletion from
 the exercise table, a `Done` button left on one sheet of three. Rendering the
 screen being worked on is not verification. See *Verification* in `CLAUDE.md`.
 
+**How to get a screen on screen is written down.** `docs/rendering-the-app.md`
+holds the four scaffolding patches, how to drive the simulator, and the six
+things that each cost an hour to learn — the `SIMCTL_CHILD_` prefix, that
+terminating is not backgrounding, that there is no way to tap, that the
+permission dialog is SpringBoard's and outlives the app, that the store outlives
+the build, and that a colour is judged by measuring a pixel rather than by
+looking. It was re-derived from scratch a dozen times in one week before anyone
+wrote it down.
+
 ## Waiting on the owner
 
 Open questions and blocked work, with what each needs. **Not decisions** — this
