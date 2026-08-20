@@ -27,6 +27,29 @@ struct ContextResourceTests {
         #expect(lifter["preferredDurationMinutes"] == 60)
     }
 
+    @Test("Free text nobody has given is null, like every other fact he has not stated")
+    func unstatedFreeTextIsNull() throws {
+        // The store spells absent free text as an empty string. Carrying that
+        // spelling onto the wire made `goal` say "" while `experience` said
+        // null — two ways of saying "he has not said" in one object, with
+        // unstated_facts listing the goal it appeared to have.
+        let lifter = try #require(
+            try context(profile: fixtureProfile(experience: nil, goal: "", constraints: ""))
+                .objectValue?["lifter"])
+
+        #expect(lifter.objectValue?["goal"] == .null)
+        #expect(lifter.objectValue?["constraints"] == .null)
+        #expect(lifter.objectValue?["experience"] == .null, "the one that was always right")
+    }
+
+    @Test("Free text he has given is reported as he gave it")
+    func statedFreeTextSurvives() throws {
+        let lifter = try #require(try context()["lifter"])
+
+        #expect(lifter["goal"]?.stringValue == "Add 20 lb to the bench")
+        #expect(lifter["constraints"]?.stringValue == "Left shoulder is touchy overhead")
+    }
+
     @Test("It says what he has to train with and what he will not train")
     func equipmentAndConstraints() throws {
         let lifter = try #require(try context(

@@ -77,14 +77,16 @@ func fixtureProfile(
     ],
     avoidedPatterns: [MovementPattern] = [],
     avoidedExercises: [ExerciseID] = [],
+    goal: String = "Add 20 lb to the bench",
+    constraints: String = "Left shoulder is touchy overhead",
     appliedProfileUpdateID: UUID? = nil
 ) -> SnapshotProfile {
     SnapshotProfile(
         displayUnit: .pounds,
         experience: experience,
         availableEquipment: availableEquipment,
-        goal: "Add 20 lb to the bench",
-        constraints: "Left shoulder is touchy overhead",
+        goal: goal,
+        constraints: constraints,
         bodyweight: Mass(value: 182, unit: .pounds),
         avoidedPatterns: avoidedPatterns,
         avoidedExercises: avoidedExercises,

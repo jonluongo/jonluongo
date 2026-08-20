@@ -62,8 +62,15 @@ struct ContextReport {
         guard let profile = snapshot.profile else { return .null }
         return [
             "experience": .string(profile.experience?.rawValue),
-            "goal": .string(profile.goal),
-            "constraints": .string(profile.constraints),
+            // **Empty is not a fact, it is an absence, and it is spelled the
+            // same way as every other one here.** The store writes free text he
+            // has not given as an empty string, because SwiftData has nowhere
+            // to put an absent one — but on the wire that made *goal* say `""`
+            // while *experience* said `null`, two spellings of "he has not
+            // said" in one object, and `unstated_facts` listing the goal it
+            // appeared to have.
+            "goal": .string(profile.goal.nilWhenEmpty),
+            "constraints": .string(profile.constraints.nilWhenEmpty),
             "availableEquipment": profile.availableEquipment.map { .taxonomy($0) } ?? .null,
             "avoidedPatterns": .taxonomy(profile.avoidedPatterns),
             "avoidedExercises": .array(profile.avoidedExercises.map { .string($0.rawValue) }),
@@ -250,4 +257,13 @@ struct ContextReport {
             + "\(ToolCatalog.unstatedFacts) says what each of them holds. Record what he tells "
             + "you with \(ToolCatalog.updateProfile). "
     }
+}
+
+/// Free text the lifter has not given.
+///
+/// The store writes it as an empty string because SwiftData has nowhere to put
+/// an absent one; the wire says `null`, like every other fact nobody has
+/// stated. One spelling for one meaning.
+extension String {
+    fileprivate var nilWhenEmpty: String? { isEmpty ? nil : self }
 }
