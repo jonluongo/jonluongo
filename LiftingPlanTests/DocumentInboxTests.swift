@@ -266,6 +266,27 @@ struct DocumentInboxTests {
         #expect(watcher.isWatching)
     }
 
+    @Test("A plan already in the folder is read even if nothing ever announces")
+    func startingReadsWhatIsWaiting() async throws {
+        // The watcher's first event is an NSMetadataQuery gather, and a phone
+        // whose iCloud is not working never gets one. The plan was on disk,
+        // readable, and the app said "No routine yet".
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        try folder.writePlan(document())
+        let watcher = ManualArrivalWatcher()
+        let context = try context()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: context)
+
+        inbox.start()
+        // Nothing announced: no arrival, no gather, no iCloud at all. Awaited
+        // rather than slept past, so a busy machine cannot make this pass or
+        // fail for reasons that have nothing to do with the code.
+        await inbox.initialRead?.value
+
+        #expect(try storedPlans(in: context).count == 1, "it was right there")
+    }
+
     @Test("Stopping the inbox stops the watch")
     func stoppingEndsWatching() async throws {
         let folder = try temporaryFolder()

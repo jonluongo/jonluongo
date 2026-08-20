@@ -108,21 +108,37 @@ final class DocumentInbox {
         self.catalog = catalog
     }
 
-    /// Starts watching for documents.
+    /// Starts watching for documents, and reads what is already waiting.
     ///
-    /// No read happens here. The watcher announces what is already in the
-    /// folder as its first event, so anything waiting at launch is taken in the
-    /// same way as something that lands mid-session — and resolving the iCloud
-    /// container, which can block, stays off the launch path.
+    /// **The watcher is not the only way in any more.** It used to be: its
+    /// first event announces whatever is already in the folder, so a read here
+    /// looked like duplicated work. But that event comes from an
+    /// `NSMetadataQuery` over the ubiquitous scope, and a phone whose iCloud is
+    /// not working — signed out, out of space, a container the system is not
+    /// syncing — never gets one. A plan sitting in the folder, already
+    /// downloaded and perfectly readable, was then never read at all, and the
+    /// app showed *No routine yet* with the routine on disk beside it.
+    ///
+    /// Both paths run the same idempotent import, so the healthy case reads
+    /// twice and applies once. The read is a task rather than inline: resolving
+    /// the iCloud container can block, and the launch path is exactly where it
+    /// must not.
     func start() {
         watcher.start { [weak self] in
             guard let self else { return }
             await self.importWaitingDocuments()
         }
+        initialRead = Task { [weak self] in await self?.importWaitingDocuments() }
     }
+
+    /// The read `start()` kicks off, held so it can be cancelled with the watch
+    /// and awaited by a test rather than slept past.
+    private(set) var initialRead: Task<Void, Never>?
 
     /// Stops watching. The store keeps whatever was already applied.
     func stop() {
+        initialRead?.cancel()
+        initialRead = nil
         watcher.stop()
     }
 
