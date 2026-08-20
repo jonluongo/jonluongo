@@ -470,6 +470,39 @@ struct PlanImporterTests {
         #expect(second.completedAt == nil)
     }
 
+    // MARK: - What was written before the rename
+
+    @Test("A plan written before version 5 says 'weeks' and still imports whole")
+    func aLegacyDocumentImports() throws {
+        // What is sitting in the shared folder right now was written by the
+        // build before the rename. The decoder's own suite proves it reads;
+        // this proves it lands — importer, blueprint and store mapping, which
+        // is the path a lifter's plan actually takes.
+        let context = try context()
+        let document = try PlanDocument.makeDecoder().decode(
+            PlanDocument.self,
+            from: Data("""
+                {"version": 4, "id": "00000000-0000-0000-0000-00000000AAAA",
+                 "catalogVersion": 5, "generatedAt": "2026-08-01T10:00:00Z",
+                 "title": "Older Plan", "goal": "Squat 315",
+                 "weeks": [{"label": "Base", "days": [{"weekday": 6, "focus": "Legs",
+                   "exercises": [{"exerciseID": "barbell-squat",
+                                  "displayName": "Barbell Squat", "sets": 5,
+                                  "repRange": "5", "restSeconds": 180}]}]}]}
+                """.utf8))
+
+        let plan = try PlanImporter.import(document, into: context, catalog: try catalog())
+
+        #expect(plan.title == "Older Plan")
+        #expect(plan.goal == "Squat 315")
+        #expect(plan.orderedWeeks.count == 1)
+        #expect(plan.orderedWeeks.first?.label == "Base")
+        let day = try #require(plan.orderedWeeks.first?.orderedDays.first)
+        #expect(day.weekday == .friday)
+        #expect(day.orderedExercises.first?.targetSets == 5)
+        #expect(day.orderedExercises.first?.restSeconds == 180)
+    }
+
     // MARK: - The routine grows a block at a time
 
     /// A routine of `weeks` blocks under one identity, each block one Monday
