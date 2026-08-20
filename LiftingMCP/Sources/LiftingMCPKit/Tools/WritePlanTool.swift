@@ -99,6 +99,10 @@ extension ToolRunner {
                     + " — or omit `icon`, which leaves the session unmarked.")
         }
 
+        if let refusal = Self.refusalForARewrittenBlock(in: document, documents: documents) {
+            return .failure(refusal)
+        }
+
         do {
             try documents.writePlan(document)
         } catch {
@@ -118,6 +122,51 @@ extension ToolRunner {
             "plan": Self.reported(document),
             "unstatedWhenWritten": unstatedWhenWritten(),
         ])
+    }
+
+    /// Why this plan will be turned away by the phone, if it will be.
+    ///
+    /// **The refusal belongs where the coach can see it.** The app refuses a
+    /// plan that rewrites a block already trained, and it is right to: a set he
+    /// ticked is the record of what happened. But that refusal reaches the
+    /// lifter's screen, not this conversation — the tool would answer
+    /// "Written." and the plan would land nowhere, which is the one failure
+    /// this project refuses everywhere else. So the same question is asked here,
+    /// against the record the snapshot carries, and answered in the same turn
+    /// the plan was written in.
+    ///
+    /// **The phone stays the authority.** The snapshot can be older than the
+    /// store — a block trained since it was written looks untrained here — so
+    /// this catches earlier, never instead. Anything it misses the app still
+    /// refuses.
+    static func refusalForARewrittenBlock(
+        in document: PlanDocument, documents: any TrainingDocuments
+    ) -> String? {
+        guard let snapshot = try? documents.readSnapshot(),
+            let stored = snapshot.routines.first(where: { $0.document.id == document.id })
+        else { return nil }
+
+        let trainedOrdinals = Set(
+            stored.sessions.filter { $0.completedAt != nil }.map(\.blockOrdinal)
+        ).union(snapshot.log.filter { $0.routineID == document.id && $0.isCompleted }
+            .map(\.blockOrdinal))
+
+        for ordinal in trainedOrdinals.sorted() {
+            let index = ordinal - 1
+            let asStored = stored.document.blocks.indices.contains(index)
+                ? stored.document.blocks[index] : nil
+            let arriving = document.blocks.indices.contains(index)
+                ? document.blocks[index] : nil
+            guard arriving != asStored else { continue }
+            return """
+                This plan changes block \(ordinal), which he has already trained. A set he \
+                ticked, or a session he marked finished, is the record of what happened and a \
+                plan may not rewrite it — the app would refuse this one on arrival, so nothing \
+                was written here either. Send block \(ordinal) exactly as it stands and put the \
+                change in a later block.
+                """
+        }
+        return nil
     }
 
     /// The first mark this build cannot draw, in document order.

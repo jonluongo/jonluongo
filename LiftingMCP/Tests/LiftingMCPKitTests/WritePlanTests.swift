@@ -452,3 +452,91 @@ struct WritePlanRoutineIdentityTests {
         }
     }
 }
+/// The refusal that used to happen only on the phone, where the coach who wrote
+/// the plan could not see it.
+@Suite("A block already trained")
+struct WritePlanTrainedBlockTests {
+
+    private static let bench = "barbell-bench-press"
+
+    /// A routine of one block, one Monday push session at `load`, trained or
+    /// not as `trained` says.
+    private func stored(id: UUID, load: Double, trained: Bool)
+        -> (routine: SnapshotRoutine, log: [LoggedSetRecord])
+    {
+        fixtureRoutine(
+            id: id, title: "Autumn strength", startDate: daysAgo(14),
+            blocks: [(label: "Accumulation", isDeload: false, days: [
+                fixtureDay(
+                    weekday: .monday, focus: "Push",
+                    completedAt: trained ? daysAgo(2) : nil,
+                    exercises: [
+                        prescribed(
+                            Self.bench, "Barbell Bench Press", sets: 3, reps: "5",
+                            load: load, rest: 180,
+                            logged: trained ? [set(0, load, 5, at: daysAgo(2))] : [])
+                    ])
+            ])])
+    }
+
+    private func arguments(id: UUID, load: Double, blocks: Int) -> JSONValue {
+        var written: [JSONValue] = []
+        for index in 0..<blocks {
+            written.append([
+                "label": index == 0 ? "Accumulation" : "Intensification",
+                "days": [["weekday": 2, "focus": "Push", "exercises": [
+                    ["exerciseID": .string(Self.bench), "displayName": "Barbell Bench Press",
+                     "sets": 3, "repRange": "5", "restSeconds": 180,
+                     "suggestedLoad": ["value": JSONValue.number(load), "unit": "lb"]],
+                ]]],
+            ])
+        }
+        return ["routineID": .string(id.uuidString), "title": "Autumn strength",
+                "blocks": .array(written)]
+    }
+
+    @Test("Rewriting a block he has trained fails the call rather than the import")
+    func aTrainedBlockIsRefusedHere() throws {
+        // It was refused on his phone, quietly, after this tool had already
+        // answered "Written." — the coach believing a plan landed when none of
+        // it did.
+        let id = UUID()
+        let documents = InMemoryDocuments(
+            snapshot: fixtureSnapshot(blocks: [stored(id: id, load: 185, trained: true)]))
+        let outcome = try makeRunner(documents: documents).writePlan(
+            arguments(id: id, load: 245, blocks: 1))
+
+        #expect(documents.lastWrittenPlan == nil, "nothing written, as the message says")
+        if case .failure(let message) = outcome {
+            #expect(message.contains("block 1"))
+            #expect(message.contains("already trained"))
+        } else {
+            Issue.record("rewriting a trained block has to fail the call")
+        }
+    }
+
+    @Test("Adding a block beside one he has trained is the ordinary week and goes through")
+    func aLaterBlockIsFine() throws {
+        let id = UUID()
+        let documents = InMemoryDocuments(
+            snapshot: fixtureSnapshot(blocks: [stored(id: id, load: 185, trained: true)]))
+        let outcome = try makeRunner(documents: documents).writePlan(
+            arguments(id: id, load: 185, blocks: 2))
+
+        #expect(outcome.failureMessage == nil)
+        #expect(documents.lastWrittenPlan?.blocks.count == 2)
+    }
+
+    @Test("A block nobody has trained is the coach's to rewrite")
+    func anUntrainedBlockIsFine() throws {
+        let id = UUID()
+        let documents = InMemoryDocuments(
+            snapshot: fixtureSnapshot(blocks: [stored(id: id, load: 185, trained: false)]))
+        let outcome = try makeRunner(documents: documents).writePlan(
+            arguments(id: id, load: 245, blocks: 1))
+
+        #expect(outcome.failureMessage == nil)
+        #expect(documents.lastWrittenPlan?.blocks.first?.days.first?
+            .entries.first?.exercises.first?.suggestedLoad == Mass(value: 245, unit: .pounds))
+    }
+}
