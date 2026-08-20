@@ -113,6 +113,10 @@ public struct PlanDocumentDay: Codable, Hashable, Sendable {
 public struct PlanDocumentExercise: Codable, Hashable, Sendable {
     public let exerciseID: ExerciseID
     /// For display only. Never an identity or a join key.
+    ///
+    /// A document may leave it out: the catalog owns the name and both clients
+    /// link the catalog, so a blank one is filled in when the document is taken
+    /// in — by `write_plan` on the way out and by `PlanImporter` on the way in.
     public let displayName: String
     /// Prescribed working sets, exactly as written. When the plan listed its
     /// sets one at a time, this is how many it listed — a separately stated
@@ -209,7 +213,14 @@ public struct PlanDocumentExercise: Codable, Hashable, Sendable {
         try decoder.refuseUnknownKeys(besides: Set(CodingKeys.allCases.map(\.stringValue)))
         let container = try decoder.container(keyedBy: CodingKeys.self)
         exerciseID = try container.decode(ExerciseID.self, forKey: .exerciseID)
-        displayName = try container.decode(String.self, forKey: .displayName)
+        // **Absent is allowed, and means "the catalog's name".** The name is
+        // display only — it is never an identity or a join key — and the
+        // catalog that owns it is linked by both the server writing this and
+        // the app reading it. Asking the coach to send a string that must match
+        // one both ends already hold was a key per exercise whose only possible
+        // failure was disagreeing with the catalog. Whoever takes the document
+        // in fills a blank one; nothing downstream sees an unnamed movement.
+        displayName = try container.decodeIfPresent(String.self, forKey: .displayName) ?? ""
         switch try container.decode(StatedSets.self, forKey: .sets) {
         case .count(let count):
             sets = count

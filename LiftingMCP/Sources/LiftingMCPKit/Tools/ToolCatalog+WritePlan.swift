@@ -125,7 +125,10 @@ extension ToolCatalog {
     private static let exerciseSchema = object(
         [
             "exerciseID": string("A real ID from list_exercises."),
-            "displayName": string("The catalog's name for it, for display."),
+            "displayName": string(
+                "Optional. The catalog's name is used when this is left out, which is "
+                    + "the ordinary case — the name is display only, and both this server "
+                    + "and the app read it from the same catalog."),
             "sets": [
                 "description": .string(
                     "How many sets, or which ones. Write a number when every set is "
@@ -166,7 +169,7 @@ extension ToolCatalog {
             "tempo": string("Rep tempo such as '3-0-1-0'."),
             "notes": string("Anything specific to this movement."),
         ],
-        required: ["exerciseID", "displayName", "sets"]
+        required: ["exerciseID", "sets"]
     )
 
     /// The distance units this build can read out of a prescription and log,

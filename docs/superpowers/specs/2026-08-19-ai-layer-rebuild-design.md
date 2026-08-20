@@ -85,7 +85,8 @@ five; `SnapshotExporter` becomes *reconstruct each routine's document, stamp
 what the store knows, append the log*; MCP's `TrainingLog` reads `snapshot.log`
 directly and `records(in:)` disappears.
 
-**Phase 2 — the tools.** `exercise_history` is a filter, `recent_sessions` a
+**Phase 2 — the tools. Shipped** with phase 1, except `displayName`, which
+landed after (`PlanDocument.named(using:)`). `exercise_history` is a filter, `recent_sessions` a
 group-and-sort, `volume_by_muscle` a windowed join against the catalog. The
 context resource keeps its exact shape: it is the contract Claude already reads.
 The four field removals from the 2026-08-19 audit fold in here rather than

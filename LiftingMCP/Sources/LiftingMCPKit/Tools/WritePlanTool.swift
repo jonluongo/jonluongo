@@ -53,9 +53,9 @@ extension ToolRunner {
         fields["catalogVersion"] = .integer(catalog.version)
         fields["generatedAt"] = .date(now())
 
-        let document: PlanDocument
+        let decoded: PlanDocument
         do {
-            document = try JSONValue.object(fields)
+            decoded = try JSONValue.object(fields)
                 .decoded(as: PlanDocument.self, using: PlanDocument.makeDecoder())
         } catch let refusal as DocumentRefusal {
             return .failure(refusal.errorDescription ?? "\(refusal)")
@@ -63,7 +63,7 @@ extension ToolRunner {
             return .failure(Self.describe(decodingFailure: error))
         }
 
-        if let unknown = Self.firstUnknownExercise(in: document, using: catalog) {
+        if let unknown = Self.firstUnknownExercise(in: decoded, using: catalog) {
             return .failure(
                 "This plan prescribes '\(unknown.rawValue)', which is not in the exercise "
                     + "catalog (version \(catalog.version)). Nothing was written. Find the real "
@@ -71,6 +71,10 @@ extension ToolRunner {
                     + "is keyed on exercise identity, so an invented ID would fragment a lift's "
                     + "history irreparably.")
         }
+
+        // Named after the IDs are checked, so a movement whose ID is wrong is
+        // reported as a wrong ID rather than quietly acquiring a name.
+        let document = decoded.named(using: catalog)
 
         if let unknown = Self.firstUnknownIcon(in: document) {
             return .failure(

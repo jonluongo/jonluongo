@@ -160,7 +160,7 @@ extension ToolRunner {
             detail = "\(error)"
         }
         return "That plan could not be read, so nothing was written: \(detail) Every exercise "
-            + "needs 'exerciseID', 'displayName' and 'sets'; every day needs 'weekday'; every "
+            + "needs 'exerciseID' and 'sets'; every day needs 'weekday'; every "
             + "week needs 'days'."
     }
 

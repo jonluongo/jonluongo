@@ -94,6 +94,12 @@ enum PlanImporter {
         try confirmEveryExerciseExists(in: document, using: catalog)
         try confirmEveryIconExists(in: document)
 
+        // A document may leave a movement's name out — the catalog owns it, and
+        // both this app and the server that writes plans link the same catalog.
+        // Filled after the IDs are checked, so a wrong ID is reported as a wrong
+        // ID rather than quietly acquiring a name.
+        let document = document.named(using: catalog)
+
         let plan = RoutineBlueprint(document: document).makeWorkoutPlan(
             // The document states which catalog generation its IDs were chosen
             // from, which is the honest stamp even if this build has a newer

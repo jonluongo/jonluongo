@@ -342,4 +342,62 @@ struct WritePlanTests {
 
         #expect(try #require(outcome.failureMessage).contains(documents.planLocation))
     }
+
+    // MARK: - The name is the catalog's
+
+    @Test("A plan that states no display name is written with the catalog's")
+    func nameIsFilledFromTheCatalog() throws {
+        // The name is display only and both ends link the same catalog, so
+        // asking for it was a key per exercise whose only outcomes were
+        // agreeing with the catalog or disagreeing with it.
+        let documents = InMemoryDocuments()
+        let outcome = try makeRunner(documents: documents).call(
+            ToolCatalog.writePlan,
+            arguments: [
+                "title": "Autumn",
+                "days": [["weekday": "monday", "exercises": [
+                    ["exerciseID": "barbell-bench-press", "sets": 3, "repRange": "5"]
+                ]]],
+            ])
+
+        #expect(outcome.report != nil)
+        let written = try #require(documents.lastWrittenPlan)
+        let exercise = try #require(
+            written.weeks.first?.days.first?.entries.first?.exercises.first)
+        #expect(exercise.displayName == "Barbell Bench Press")
+    }
+
+    @Test("A name he did state is written as he stated it")
+    func statedNameIsKept() throws {
+        let documents = InMemoryDocuments()
+        _ = try makeRunner(documents: documents).call(
+            ToolCatalog.writePlan,
+            arguments: [
+                "title": "Autumn",
+                "days": [["weekday": "monday", "exercises": [
+                    ["exerciseID": "barbell-bench-press", "displayName": "Comp Bench",
+                     "sets": 3]
+                ]]],
+            ])
+
+        let written = try #require(documents.lastWrittenPlan)
+        #expect(written.weeks.first?.days.first?.entries.first?
+            .exercises.first?.displayName == "Comp Bench")
+    }
+
+    @Test("An unknown ID is still refused as an unknown ID, not named")
+    func unknownIDIsStillRefused() throws {
+        let documents = InMemoryDocuments()
+        let outcome = try makeRunner(documents: documents).call(
+            ToolCatalog.writePlan,
+            arguments: [
+                "title": "Autumn",
+                "days": [["weekday": "monday", "exercises": [
+                    ["exerciseID": "not-an-exercise", "sets": 3]
+                ]]],
+            ])
+
+        #expect(outcome.failureMessage?.contains("not-an-exercise") == true)
+        #expect(documents.lastWrittenPlan == nil)
+    }
 }
