@@ -234,4 +234,28 @@ struct SnapshotOutboxTests {
             uploadFailure: { _ in state.failure }
         )
     }
+
+    // MARK: - The real answer, on files iCloud knows nothing about
+
+    @Test("A file iCloud has no opinion about is not reported as a failure")
+    func aPlainFileIsNotAFailure() throws {
+        // The check reads `ubiquitousItemUploadingError` off the file. On a
+        // plain folder — a simulator, a test, a server pointed somewhere with
+        // `--documents` — the key is simply absent, and reading absence as a
+        // failure would put "iCloud has not taken it" in front of a lifter
+        // whose record is exactly where it belongs.
+        let url = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).json")
+        try Data("{}".utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        #expect(ICloudDocumentTransport.systemUploadFailure(for: url) == nil)
+    }
+
+    @Test("A file that is not there is not reported as a failure either")
+    func aMissingFileIsNotAFailure() {
+        // Asked before the first export has written anything.
+        let url = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).json")
+
+        #expect(ICloudDocumentTransport.systemUploadFailure(for: url) == nil)
+    }
 }
