@@ -173,18 +173,23 @@ enum PlanImporter {
             }
         }
 
-        for (index, week) in storedWeeks.enumerated() where !isTrained(week) {
+        for (index, block) in storedWeeks.enumerated() where !isTrained(block) {
             // Rebuilt rather than edited in place: a block is a tree of days,
             // exercises and prescribed sets, and reconciling one tree into
             // another field by field is where a half-applied plan comes from.
-            // Nothing is lost, because nothing in it was logged.
             guard document.blocks[safe: index] != stored?.blocks[safe: index] else { continue }
-            context.delete(week)
-            plan.weeks?.removeAll { $0 === week }
+            // Nothing in it was logged, but something in it may still be his:
+            // a note is the lifter's own words, not a prescription, and it is
+            // not covered by *the coach can change anything that is not checked
+            // off*. Kept across the rebuild and put back where it belongs.
+            let notes = lifterNotes(in: block)
+            context.delete(block)
+            plan.weeks?.removeAll { $0 === block }
             if let arriving = blueprint.blocks[safe: index] {
                 let rebuilt = RoutineBlueprint.makeTrainingWeek(arriving, ordinal: index + 1)
                 context.insert(rebuilt)
                 rebuilt.plan = plan
+                restore(notes, in: rebuilt)
             }
         }
 
@@ -202,6 +207,42 @@ enum PlanImporter {
         // block is the plainest statement there is that the lifter is still on
         // this routine.
         if blueprint.blocks.count > storedWeeks.count { plan.completedAt = nil }
+    }
+
+    /// Where a note sits: which session of the block, which position in it, and
+    /// which movement was there. All three, because a note carried to a
+    /// different movement is worse than a note lost — *my elbow ached* filed
+    /// under a squat he has never done is a sentence about something that never
+    /// happened.
+    private struct NotePlace: Hashable {
+        let weekday: Weekday
+        let order: Int
+        let exerciseID: ExerciseID
+    }
+
+    private static func lifterNotes(in block: TrainingWeek) -> [NotePlace: String] {
+        var notes: [NotePlace: String] = [:]
+        for day in block.orderedDays {
+            for (order, exercise) in day.orderedExercises.enumerated() {
+                guard let note = exercise.lifterNote, !note.isEmpty else { continue }
+                notes[NotePlace(
+                    weekday: day.weekday, order: order,
+                    exerciseID: exercise.exerciseID)] = note
+            }
+        }
+        return notes
+    }
+
+    private static func restore(_ notes: [NotePlace: String], in block: TrainingWeek) {
+        guard !notes.isEmpty else { return }
+        for day in block.orderedDays {
+            for (order, exercise) in day.orderedExercises.enumerated() {
+                let place = NotePlace(
+                    weekday: day.weekday, order: order, exerciseID: exercise.exerciseID)
+                guard let note = notes[place] else { continue }
+                exercise.lifterNote = note
+            }
+        }
     }
 
     /// Whether anything in this block is in the record. A row seeded on screen

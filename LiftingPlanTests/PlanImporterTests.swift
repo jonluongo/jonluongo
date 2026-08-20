@@ -551,6 +551,50 @@ struct PlanImporterTests {
         #expect(try firstExercise(of: grown).loggedSets?.count == 1)
     }
 
+    @Test("A note the lifter wrote survives the coach rewriting that block")
+    func aLifterNoteOutlivesARewrite() throws {
+        let context = try context()
+        let id = UUID()
+        let plan = try PlanImporter.import(
+            routine(id: id, blocks: 1), into: context, catalog: try catalog())
+        try firstExercise(of: plan).lifterNote = "Right elbow ached on the last set."
+
+        // Nothing was ticked, so the block is the coach's to rewrite — but the
+        // note is the lifter's own words about the movement, not a prescription,
+        // and it is about the same movement at the same place in the same
+        // session after the rewrite as before it.
+        let revised = try PlanImporter.import(
+            routine(id: id, blocks: 1, load: 245), into: context, catalog: try catalog())
+
+        #expect(try firstExercise(of: revised).suggestedLoad == Mass(value: 245, unit: .pounds))
+        #expect(try firstExercise(of: revised).lifterNote == "Right elbow ached on the last set.")
+    }
+
+    @Test("A note does not follow a rewrite that put a different movement there")
+    func aLifterNoteDoesNotFollowADifferentMovement() throws {
+        let context = try context()
+        let id = UUID()
+        let plan = try PlanImporter.import(
+            routine(id: id, blocks: 1), into: context, catalog: try catalog())
+        try firstExercise(of: plan).lifterNote = "Right elbow ached on the last set."
+
+        let swapped = PlanDocument(
+            id: id, catalogVersion: 5, generatedAt: Self.instant, title: "Autumn strength",
+            blocks: [
+                PlanDocumentBlock(label: "Block 1", days: [
+                    PlanDocumentDay(
+                        weekday: .monday, focus: "Push",
+                        exercises: [exercise(exerciseID: Self.squat)])
+                ])
+            ])
+        let revised = try PlanImporter.import(swapped, into: context, catalog: try catalog())
+
+        // Carrying it here would file *my elbow ached* under a squat he has
+        // never done, which is worse than losing a sentence.
+        #expect(try firstExercise(of: revised).exerciseID == Self.squat)
+        #expect(try firstExercise(of: revised).lifterNote == nil)
+    }
+
     @Test("A block the coach dropped goes, as long as nothing was logged in it")
     func anUntrainedBlockIsRemoved() throws {
         let context = try context()
