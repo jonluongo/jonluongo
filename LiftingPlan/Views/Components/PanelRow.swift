@@ -1,89 +1,38 @@
 import SwiftUI
 
-/// Where a row sits in the panel it belongs to.
+/// Several rows drawn as one panel.
 ///
-/// A panel is drawn by its rows rather than around them — a `List` gives each
-/// row its own background and no way to put one shape behind a whole section —
-/// so each row has to know whether it is the top of the panel, the bottom, both,
-/// or neither. Nothing infers it: the view that lays the rows out is the only
-/// thing that knows how many there are.
-enum PanelPosition {
-    case first
-    case middle
-    case last
-    /// The only row in its panel, so both ends are rounded.
-    case only
-
-    /// Where the row at `index` sits among `count` of them.
-    static func at(_ index: Int, of count: Int) -> PanelPosition {
-        if count <= 1 { return .only }
-        if index == 0 { return .first }
-        return index == count - 1 ? .last : .middle
-    }
-
-    fileprivate var topRadius: CGFloat {
-        switch self {
-        case .first, .only: Radius.panel
-        case .middle, .last: 0
-        }
-    }
-
-    fileprivate var bottomRadius: CGFloat {
-        switch self {
-        case .last, .only: Radius.panel
-        case .first, .middle: 0
-        }
-    }
-
-    /// Whether the panel actually ends at this row's top edge, and at its
-    /// bottom. A row in the middle of a table ends at neither, and drawing a
-    /// line there would rule the table into bands.
-    fileprivate var endsAtTop: Bool {
-        switch self {
-        case .first, .only: true
-        case .middle, .last: false
-        }
-    }
-
-    fileprivate var endsAtBottom: Bool {
-        switch self {
-        case .last, .only: true
-        case .first, .middle: false
-        }
-    }
-}
-
-/// The line around a panel, drawn only where the panel actually ends.
+/// **What it does.** Stacks what it is given inside a single list row and draws
+/// the panel around the stack, so a table of facts is one object on the screen
+/// rather than a run of rows that happen to touch.
 ///
-/// **Why a shape and not `strokeBorder`.** A panel is drawn by its rows, so a
-/// stroked rectangle on an interior row would put a line across the middle of a
-/// set table at every seam — the same fault that limits the shadow to panels of
-/// one row. This returns the panel's own path in a rect extended past whichever
-/// end the panel does not stop at, so the horizontal edge falls outside the row
-/// and the caller's `.clipped()` removes it. The corners come from
-/// `UnevenRoundedRectangle` itself rather than from arcs of my own, so the line
-/// follows exactly the continuous curve the fill is drawn with.
-private struct PanelEdgeShape: Shape {
+/// **Why it exists.** A `List` gives every row its own layer, so a panel spread
+/// over five rows could not be lifted: a shadow cast by an interior row lands on
+/// its neighbours rather than behind them. The app had both kinds — the session's
+/// exercise panels drawn as one row and lifted, the account and routine facts
+/// drawn as five and flat — and Jon read the difference straight off the screen:
+/// *"Why aren't these panels the same with the same shadows?"* They are one thing
+/// now, and there is one panel style rather than a lifted one and a flat one.
+///
+/// **How it is used.** Wrap the rows. The spacing between them is `Spacing.major`
+/// rather than the `Spacing.section` two `PanelMetrics.rowInsets` add up to,
+/// because a `List` also gave every row a 44pt floor: stacked at the insets
+/// alone, a table of facts came out a third tighter than the same table had been
+/// the day before. Give it `isRecorded` where what it holds is in the record,
+/// and `recessed` where it is not due yet.
+///
+/// **What it depends on.** `panelRow`, which draws it, and `Spacing`.
+struct Panel<Content: View>: View {
 
-    let position: PanelPosition
+    var isRecorded = false
+    var recessed = false
+    @ViewBuilder var content: Content
 
-    func path(in rect: CGRect) -> Path {
-        // Far enough that the whole corner curve clears the row.
-        let overshoot = Radius.panel * 2
-        let top = position.endsAtTop ? rect.minY : rect.minY - overshoot
-        let bottom = position.endsAtBottom ? rect.maxY : rect.maxY + overshoot
-        let extended = CGRect(
-            x: rect.minX, y: top, width: rect.width, height: bottom - top
-        )
-        .insetBy(dx: Palette.hairline / 2, dy: Palette.hairline / 2)
-        return UnevenRoundedRectangle(
-            topLeadingRadius: Radius.panel,
-            bottomLeadingRadius: Radius.panel,
-            bottomTrailingRadius: Radius.panel,
-            topTrailingRadius: Radius.panel,
-            style: .continuous
-        )
-        .path(in: extended)
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.major) { content }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .panelRow(isRecorded: isRecorded, recessed: recessed)
+            .listRowSeparator(.hidden)
     }
 }
 
@@ -99,14 +48,13 @@ extension View {
     func panelSurface() -> some View {
         let shape = RoundedRectangle(cornerRadius: Radius.panel, style: .continuous)
         return background(Palette.panel, in: shape)
-            .overlay { shape.stroke(Palette.panelEdge, lineWidth: Palette.hairline) }
+            .overlay { shape.strokeBorder(Palette.panelEdge, lineWidth: Palette.hairline) }
             .shadow(
                 color: Palette.panelShadow,
                 radius: PanelMetrics.shadowRadius, y: PanelMetrics.shadowY)
     }
 
-    /// Draws this row as part of an inset panel, rounded at whichever end of it
-    /// this row is.
+    /// Draws this row as a panel of its own.
     ///
     /// **Why this rather than `.insetGrouped`.** That style draws the panel for
     /// you and fixes its corner radius at the system's figure, which is rounder
@@ -115,10 +63,15 @@ extension View {
     /// is stated in one place, so the whole app cannot disagree with itself
     /// about how round a panel is.
     ///
-    /// **How it is used.** On every row of a panel, with the position that row
-    /// occupies. Pair it with `.listRowInsets` so the row's content sits inside
-    /// the inset the background draws to, and use it in a `.plain` list — an
-    /// inset-grouped one would draw its own panel underneath this one.
+    /// **One row is one panel.** There is no first, middle or last: a panel of
+    /// several things is `Panel`, which stacks them into a single row. Rows that
+    /// each knew where they sat in a shared panel were the reason half the app's
+    /// panels could not cast a shadow — see `Panel` — and the position they
+    /// carried is what let two panels of the same kind come out looking
+    /// different.
+    ///
+    /// **How it is used.** In a `.plain` list — an inset-grouped one would draw
+    /// its own panel underneath this one.
     ///
     /// **`fillsPanel` is for a row that is a button.** The row's content is
     /// normally inset from the panel's edge, which leaves a band of panel that
@@ -134,26 +87,14 @@ extension View {
     /// due yet still opens — the record has to take a session he actually
     /// trained, whenever he trained it — so a later week is drawn flat and
     /// quiet rather than greyed out or gated.
-    /// The ground a panel is written on.
-    ///
-    /// A week he has not reached is drawn on the *surface*, so it reads as an
-    /// outline waiting to be filled rather than as a panel that happens to have
-    /// no shadow. Muted type and a missing lift were both absences, and an
-    /// absence is invisible unless two of them are side by side — the same
-    /// lesson the superset rule taught.
-    private func fill(isRecorded: Bool, recessed: Bool) -> Color {
-        if recessed { return Palette.surface }
-        return isRecorded ? Palette.recordedPanel : Palette.panel
-    }
-
     func panelRow(
-        _ position: PanelPosition, insets: EdgeInsets = PanelMetrics.rowInsets,
+        insets: EdgeInsets = PanelMetrics.rowInsets,
         paired: Bool = false, fillsPanel: Bool = false, isRecorded: Bool = false,
         recessed: Bool = false
     ) -> some View {
-        // A panel's outer edges get more room than its inner rows, which is what
-        // separates one panel from the next. Without it two panels sat flush and
-        // read as a single surface with a seam across it.
+        // A panel's edges get more room than the row's own content, which is
+        // what separates one panel from the next. Without it two panels sat
+        // flush and read as a single surface with a seam across it.
         var spaced = fillsPanel
             ? EdgeInsets(
                 top: 0, leading: PanelMetrics.inset,
@@ -163,23 +104,13 @@ extension View {
         // content's — except when the content fills the panel, where the inside
         // room is its own padding instead.
         let closing = fillsPanel ? 0 : PanelMetrics.closing
-        if position == .first || position == .only {
-            spaced.top += PanelMetrics.edge + closing
-        }
-        if position == .last || position == .only {
-            spaced.bottom += PanelMetrics.edge + closing
-        }
-        let shape = UnevenRoundedRectangle(
-            topLeadingRadius: position.topRadius,
-            bottomLeadingRadius: position.bottomRadius,
-            bottomTrailingRadius: position.bottomRadius,
-            topTrailingRadius: position.topRadius,
-            style: .continuous
-        )
+        spaced.top += PanelMetrics.edge + closing
+        spaced.bottom += PanelMetrics.edge + closing
+        let shape = RoundedRectangle(cornerRadius: Radius.panel, style: .continuous)
         return listRowInsets(spaced)
         .listRowBackground(
             shape
-            .fill(fill(isRecorded: isRecorded, recessed: recessed))
+            .fill(panelFill(isRecorded: isRecorded, recessed: recessed))
             .overlay(alignment: .leading) {
                 // The mark that two movements are one superset.
                 //
@@ -205,33 +136,20 @@ extension View {
             // bounding box, and a superset's panel had two sharp corners that no
             // other panel had.
             .clipShape(shape)
-            // The edge, drawn only where the panel ends — see `PanelEdgeShape`.
-            // A week he has not reached takes the rule's own weight instead: it
-            // is an outline on the surface rather than a panel above it, which
-            // is the whole difference between what is due and what is not.
+            // A week he has not reached takes the rule's own weight instead of
+            // the panel edge: it is an outline on the surface rather than a
+            // panel above it, which is the whole difference between what is due
+            // and what is not.
             .overlay {
-                PanelEdgeShape(position: position)
-                    .stroke(
-                        recessed ? Palette.rule : Palette.panelEdge,
-                        lineWidth: Palette.hairline)
+                shape.strokeBorder(
+                    recessed ? Palette.rule : Palette.panelEdge,
+                    lineWidth: Palette.hairline)
             }
-            // What keeps the extended ends of that shape off the neighbouring
-            // rows.
-            .clipped()
-            // **A panel of one row casts a shadow; a table of sets does not.**
-            // A `List` gives every row its own layer, so a blur cast by an
-            // interior row lands on its neighbours rather than behind them, and
-            // casting it instead from the panel's own extended shape — the
-            // geometry the edge is drawn from — paints that shape's fill over
-            // the rows above and below. Rendered, the set table came out as
-            // three white slabs stacked over each other. There is no way to lift
-            // a panel drawn by its rows without leaving `List`.
-            //
-            // So the panels being chosen from are lifted, the tables are not,
-            // and the hairline is what every panel has in common: a shadow says
-            // a panel is off the ground and says nothing about where it stops.
+            // Every panel is lifted the same way, because every panel is one
+            // row. What is not due yet is the one exception: it sits on the
+            // surface rather than above it.
             .shadow(
-                color: position == .only && !recessed ? Palette.panelShadow : .clear,
+                color: recessed ? .clear : Palette.panelShadow,
                 radius: PanelMetrics.shadowRadius,
                 y: PanelMetrics.shadowY)
             .padding(.horizontal, PanelMetrics.inset)
@@ -241,8 +159,20 @@ extension View {
             // still filled the whole row, so the panels stayed flush and read as
             // one white column with faint seams. Space between objects has to
             // come off the object.
-            .padding(.top, position == .first || position == .only ? PanelMetrics.edge : 0)
-            .padding(.bottom, position == .last || position == .only ? PanelMetrics.edge : 0)
+            .padding(.vertical, PanelMetrics.edge)
         )
     }
+
+}
+
+/// The ground a panel is written on.
+///
+/// A week he has not reached is drawn on the *surface*, so it reads as an
+/// outline waiting to be filled rather than as a panel that happens to have no
+/// shadow. Muted type and a missing lift were both absences, and an absence is
+/// invisible unless two of them are side by side — the same lesson the superset
+/// rule taught.
+private func panelFill(isRecorded: Bool, recessed: Bool) -> Color {
+    if recessed { return Palette.surface }
+    return isRecorded ? Palette.recordedPanel : Palette.panel
 }

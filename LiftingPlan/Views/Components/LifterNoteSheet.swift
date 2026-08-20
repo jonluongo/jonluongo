@@ -44,7 +44,7 @@ struct LifterNoteSheet: View {
                         .tint(Palette.ink)
                         .lineLimit(3...8)
                         .focused($isWriting)
-                        .panelRow(.only)
+                        .panelRow()
                         .listRowSeparator(.hidden)
                 }
             }

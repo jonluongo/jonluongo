@@ -73,7 +73,7 @@ struct ExerciseDetailView: View {
                     Text("Nothing logged yet. Sets you log against this exercise show up here.")
                         .font(.supersetBody)
                         .foregroundStyle(Palette.muted)
-                        .panelRow(.only)
+                        .panelRow()
                         .listRowSeparator(.hidden)
                 }
             }
@@ -115,7 +115,7 @@ struct ExerciseDetailView: View {
                     .foregroundStyle(Palette.ink)
                 }
                 .frame(height: 200)
-                .panelRow(.only)
+                .panelRow()
                 .listRowSeparator(.hidden)
                 .padding(.vertical, Spacing.snug)
             }
@@ -126,23 +126,23 @@ struct ExerciseDetailView: View {
         let points = Array(trend.points.reversed())
         return Section {
             SectionHeading("Sessions")
-            ForEach(Array(points.enumerated()), id: \.element.id) { index, point in
-                HStack {
-                    Text(point.date, format: .dateTime.month().day())
-                        .foregroundStyle(Palette.muted)
-                    Spacer()
-                    if let load = point.topLoad {
-                        let converted = load.converted(to: unit)
-                        Text("\(converted.value.compactString) \(unit.rawValue) × \(point.topReps)")
-                            .foregroundStyle(Palette.ink)
-                    } else {
-                        Text("\(point.topReps) reps")
-                            .foregroundStyle(Palette.ink)
+            Panel {
+                ForEach(points) { point in
+                    HStack {
+                        Text(point.date, format: .dateTime.month().day())
+                            .foregroundStyle(Palette.muted)
+                        Spacer()
+                        if let load = point.topLoad {
+                            let converted = load.converted(to: unit)
+                            Text("\(converted.value.compactString) \(unit.rawValue) × \(point.topReps)")
+                                .foregroundStyle(Palette.ink)
+                        } else {
+                            Text("\(point.topReps) reps")
+                                .foregroundStyle(Palette.ink)
+                        }
                     }
+                    .font(.supersetSupport)
                 }
-                .font(.supersetSupport)
-                .panelRow(.at(index, of: points.count))
-                .listRowSeparator(.hidden)
             }
         }
     }

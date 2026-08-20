@@ -53,7 +53,7 @@ struct RoutinesView: View {
                         // block screen. One panel holding every block made the
                         // one he is training and the ones behind him a single
                         // object with several names in it.
-                        .panelRow(.only, fillsPanel: true)
+                        .panelRow(fillsPanel: true)
                         .listRowSeparator(.hidden)
                     }
                 }

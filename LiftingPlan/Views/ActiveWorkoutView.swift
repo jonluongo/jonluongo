@@ -282,7 +282,6 @@ struct ActiveWorkoutView: View {
         // padded from there. Handing the row no insets at all put the content
         // outside the painted panel entirely.
         .panelRow(
-            .only,
             insets: EdgeInsets(
                 top: 0, leading: PanelMetrics.inset, bottom: 0, trailing: PanelMetrics.inset),
             paired: paired, isRecorded: exercise.isFullyLogged)

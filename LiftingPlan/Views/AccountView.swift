@@ -104,16 +104,15 @@ struct AccountView: View {
     private var record: some View {
         let rows = facts + baselines
         Section {
-            if rows.isEmpty {
-                Text("Nothing yet.")
-                    .font(.supersetBody)
-                    .foregroundStyle(Palette.muted)
-                    .panelRow(.only)
-            } else {
-                ForEach(Array(rows.enumerated()), id: \.element.id) { index, fact in
-                    FactRow(label: fact.label, value: fact.value)
-                        .panelRow(.at(index, of: rows.count))
-                        .listRowSeparator(.hidden)
+            Panel {
+                if rows.isEmpty {
+                    Text("Nothing yet.")
+                        .font(.supersetBody)
+                        .foregroundStyle(Palette.muted)
+                } else {
+                    ForEach(rows) { fact in
+                        FactRow(label: fact.label, value: fact.value)
+                    }
                 }
             }
 
@@ -141,7 +140,7 @@ struct AccountView: View {
                 Text("Delete All Routines")
                     .font(.supersetBody)
             }
-            .panelRow(.only)
+            .panelRow()
             .listRowSeparator(.hidden)
         }
     }

@@ -61,7 +61,7 @@ struct RoutineView: View {
                             // a session is the thing being chosen, and the
                             // week is what it sits under.
                             .panelRow(
-                                .only, fillsPanel: true,
+                                fillsPanel: true,
                                 isRecorded: day.completedAt != nil,
                                 recessed: later)
                             .listRowSeparator(.hidden)

@@ -35,29 +35,29 @@ struct ExerciseAboutSections: View {
         if let entry {
             Section {
                 let facts = ExerciseAbout.facts(for: entry)
-                ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
-                    FactRow(label: fact.label, value: fact.value)
-                        .panelRow(.at(index, of: facts.count))
-                        .listRowSeparator(.hidden)
+                Panel {
+                    ForEach(facts) { fact in
+                        FactRow(label: fact.label, value: fact.value)
+                    }
                 }
             }
 
             if !entry.instructions.isEmpty {
                 Section {
                     SectionHeading("How to perform it")
-                    ForEach(Array(entry.instructions.enumerated()), id: \.offset) { index, step in
-                        HStack(alignment: .firstTextBaseline, spacing: Spacing.standard) {
-                            Text("\(index + 1)")
-                                .font(.supersetSupport)
-                                .foregroundStyle(Palette.muted)
-                            Text(step)
-                                .font(.supersetBody)
-                                .foregroundStyle(Palette.ink)
+                    Panel {
+                        ForEach(Array(entry.instructions.enumerated()), id: \.offset) { index, step in
+                            HStack(alignment: .firstTextBaseline, spacing: Spacing.standard) {
+                                Text("\(index + 1)")
+                                    .font(.supersetSupport)
+                                    .foregroundStyle(Palette.muted)
+                                Text(step)
+                                    .font(.supersetBody)
+                                    .foregroundStyle(Palette.ink)
+                            }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Step \(index + 1). \(step)")
                         }
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel("Step \(index + 1). \(step)")
-                        .panelRow(.at(index, of: entry.instructions.count))
-                        .listRowSeparator(.hidden)
                     }
                 }
             }

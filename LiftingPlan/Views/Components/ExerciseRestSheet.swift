@@ -71,26 +71,24 @@ struct ExerciseRestSheet: View {
         NavigationStack {
             List {
                 Section {
-                    Toggle("Rest timer", isOn: switchBinding)
-                        .accessibilityHint("Turns the countdown on or off everywhere")
-                        .font(.supersetBody)
-                        // The one switch in the app, and it came up in the
-                        // system's green — the second saturated colour in a
-                        // one-accent palette, which is what a green Finish
-                        // button was killed for. A switch on is a filled
-                        // shape, which is exactly what the theme is for.
-                        .tint(Palette.accent)
-                        .panelRow(isOn ? .first : .only)
-                        .listRowSeparator(.hidden)
-                    if isOn {
-                        HStack(spacing: 0) {
-                            wheel(selection: $minutes, unit: "min")
-                            wheel(selection: $seconds, unit: "s")
+                    Panel {
+                        Toggle("Rest timer", isOn: switchBinding)
+                            .accessibilityHint("Turns the countdown on or off everywhere")
+                            .font(.supersetBody)
+                            // The one switch in the app, and it came up in the
+                            // system's green — the second saturated colour in a
+                            // one-accent palette, which is what a green Finish
+                            // button was killed for. A switch on is a filled
+                            // shape, which is exactly what the theme is for.
+                            .tint(Palette.accent)
+                        if isOn {
+                            HStack(spacing: 0) {
+                                wheel(selection: $minutes, unit: "min")
+                                wheel(selection: $seconds, unit: "s")
+                            }
+                            .frame(maxHeight: 160)
+                            .onChange(of: total) { _, newTotal in choose(newTotal) }
                         }
-                        .frame(maxHeight: 160)
-                        .onChange(of: total) { _, newTotal in choose(newTotal) }
-                        .panelRow(.last)
-                        .listRowSeparator(.hidden)
                     }
                     // What Claude asked for, under the control rather than
                     // wrapped in a panel of its own: it is a note about the
@@ -100,10 +98,21 @@ struct ExerciseRestSheet: View {
 
                 if isOverridden {
                     Section {
-                        Button("Use Prescribed Rest") { usePrescribed() }
-                            .font(.supersetBody)
-                            .panelRow(.only)
-                            .listRowSeparator(.hidden)
+                        // A word, not a slab. It was a full panel reading "Use
+                        // Prescribed Rest" — a heading-length instruction on a
+                        // white card, for the least consequential control in the
+                        // app — and Jon asked for the opposite: *"maybe just
+                        // make it a reset text no background."* The sentence
+                        // above it already says what Claude prescribed, so this
+                        // only has to say put it back.
+                        PrimaryActionButton(title: "Reset", prominence: .quiet) {
+                            usePrescribed()
+                        }
+                        .listRowInsets(EdgeInsets(
+                            top: 0, leading: PanelMetrics.inset,
+                            bottom: 0, trailing: PanelMetrics.inset))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                     }
                 }
             }

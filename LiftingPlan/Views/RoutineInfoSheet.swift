@@ -37,17 +37,15 @@ struct RoutineInfoSheet: View {
         InfoSheet(RoutineListing.title(of: plan)) {
             if !plan.goal.isEmpty || note != nil {
                 Section {
-                    if !plan.goal.isEmpty {
-                        Text(plan.goal)
-                            .font(.supersetTitle)
-                            .foregroundStyle(Palette.ink)
-                            .panelRow(note == nil ? .only : .first)
-                            .listRowSeparator(.hidden)
-                    }
-                    if let note {
-                        CoachNoteView(note: note)
-                            .panelRow(plan.goal.isEmpty ? .only : .last)
-                            .listRowSeparator(.hidden)
+                    Panel {
+                        if !plan.goal.isEmpty {
+                            Text(plan.goal)
+                                .font(.supersetTitle)
+                                .foregroundStyle(Palette.ink)
+                        }
+                        if let note {
+                            CoachNoteView(note: note)
+                        }
                     }
                 }
             }
@@ -56,10 +54,10 @@ struct RoutineInfoSheet: View {
             if !facts.isEmpty {
                 Section {
                     SectionHeading("The routine")
-                    ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
-                        FactRow(label: fact.label, value: fact.value)
-                            .panelRow(.at(index, of: facts.count))
-                            .listRowSeparator(.hidden)
+                    Panel {
+                        ForEach(facts) { fact in
+                            FactRow(label: fact.label, value: fact.value)
+                        }
                     }
                 }
             }
