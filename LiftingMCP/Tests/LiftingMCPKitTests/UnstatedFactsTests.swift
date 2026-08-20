@@ -86,6 +86,26 @@ struct UnstatedFactsTests {
         #expect(!stated.isEmpty, "and they are still stated facts")
     }
 
+    @Test("What the tool advertises matches what it returns")
+    func theDescriptionNamesTheDates() throws {
+        // The description said it reports "empty fields and nothing more" for
+        // as long as that was true, and a description that understates a tool
+        // is a field the reader never looks at. It is the only text the coach
+        // sees before deciding whether to call.
+        let described = ToolCatalog.unstatedFactsDefinition.description.lowercased()
+        let report = try facts(in: fixtureSnapshot())
+        let carriesDates = try #require(report["stated"]?.arrayValue)
+            .contains { $0.objectValue?["statedAt"] != .null }
+
+        #expect(carriesDates, "the report carries dates")
+        #expect(described.contains("date"), "and the description says so")
+        // The specific claim that stopped being true, named rather than left to
+        // a word count: "empty fields and nothing more" was accurate until the
+        // dates arrived, and checking only that *some* sentence says "date"
+        // does not catch a description that promises less than it returns.
+        #expect(!described.contains("nothing more"))
+    }
+
     @Test("Nothing in the report calls a date old")
     func theServerPassesNoJudgementOnADate() throws {
         // Whether eighteen months is stale is a training judgement, and the one

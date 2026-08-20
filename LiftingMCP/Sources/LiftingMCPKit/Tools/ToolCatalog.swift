@@ -163,9 +163,14 @@ public enum ToolCatalog {
             of it, so an unstated fact is a conversation that has not happened \
             rather than an answer of 'none' — and nothing else in this server will \
             volunteer that a field is empty. Call it when you want to know what is \
-            not known. It reports empty fields and nothing more: which of them \
-            matter for what you are about to write, and whether to ask at all, is \
-            yours to judge. \(updateProfile) is what closes one.
+            not known. A fact he has stated comes back with the date he last said \
+            it, so a constraint mentioned this week and one mentioned before the \
+            last two blocks can be told apart — null where the record predates \
+            those dates being kept. Which of these matter for what you are about \
+            to write, whether an old date is worth revisiting, and whether to ask \
+            at all, is yours to judge; this reports fields and dates and passes no \
+            verdict on either. \(updateProfile) is what closes one, and stating a \
+            fact again records that he said it again.
             """,
         inputSchema: object([:])
     )
