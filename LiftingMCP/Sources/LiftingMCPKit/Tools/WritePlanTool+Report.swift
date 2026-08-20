@@ -83,7 +83,7 @@ extension ToolRunner {
                 document.blocks.enumerated().map { ordinal, block in
                     [
                         "ordinal": .integer(ordinal + 1),
-                        "label": .string(block.label),
+                        "label": .text(block.label),
                         "isDeload": .bool(block.isDeload),
                         "days": .array(block.days.map(reported(day:))),
                     ]
@@ -94,7 +94,7 @@ extension ToolRunner {
     private static func reported(day: PlanDocumentDay) -> JSONValue {
         [
             "weekday": .string(day.weekday.fullName),
-            "focus": .string(day.focus),
+            "focus": .text(day.focus),
             "durationMinutes": .integer(day.durationMinutes),
             "exercises": .array(day.entries.map(reported(entry:))),
         ]

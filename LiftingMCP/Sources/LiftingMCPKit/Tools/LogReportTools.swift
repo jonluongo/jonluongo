@@ -66,10 +66,10 @@ extension ToolRunner {
             "isWarmup": .bool(record.isWarmup),
             "plan": .string(routine?.document.title ?? ""),
             "block": .integer(record.blockOrdinal),
-            "blockLabel": .string(block?.label ?? ""),
+            "blockLabel": .text(block?.label),
             "isDeload": .bool(block?.isDeload ?? false),
             "weekday": .string(record.weekday.fullName),
-            "focus": .string(day?.focus ?? ""),
+            "focus": .text(day?.focus),
             // The prescription is looked up in the document the coach wrote
             // rather than carried beside the set. `null` when the block it names
             // no longer holds that position — reported as unknown rather than
@@ -137,12 +137,12 @@ extension ToolRunner {
         [
             "date": session.date.map { .date($0) } ?? .null,
             "completedAt": session.completedAt.map { .date($0) } ?? .null,
-            "plan": .string(session.planTitle),
+            "plan": .text(session.planTitle),
             "block": .integer(session.blockOrdinal),
-            "blockLabel": .string(session.blockLabel),
+            "blockLabel": .text(session.blockLabel),
             "isDeload": .bool(session.isDeload),
             "weekday": .string(session.weekday.fullName),
-            "focus": .string(session.focus),
+            "focus": .text(session.focus),
             "durationMinutes": .integer(session.durationMinutes),
             "exercises": .array(exercises(of: session)),
         ]

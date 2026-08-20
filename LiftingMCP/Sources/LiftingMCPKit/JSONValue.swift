@@ -233,6 +233,20 @@ extension JSONValue {
         value.map { JSONValue.string($0) } ?? .null
     }
 
+    /// Free text, where empty means nobody said.
+    ///
+    /// **Absence has one spelling in these reports, and it is `null`.** The
+    /// store and the document format both write free text nobody has given as
+    /// an empty string, because neither has anywhere to put an absent one —
+    /// and carrying that spelling onto the wire put `""` beside `null` for the
+    /// same fact, leaving a reader to guess whether a session's focus was left
+    /// blank or deliberately made empty. Use this for anything a person types;
+    /// `string(_:)` stays for values that are genuinely optional already.
+    public static func text(_ value: String?) -> JSONValue {
+        guard let value, !value.isEmpty else { return .null }
+        return .string(value)
+    }
+
     /// An optional whole number.
     public static func integer(_ value: Int?) -> JSONValue {
         value.map { JSONValue.integer($0) } ?? .null

@@ -69,8 +69,8 @@ struct ContextReport {
             // while *experience* said `null`, two spellings of "he has not
             // said" in one object, and `unstated_facts` listing the goal it
             // appeared to have.
-            "goal": .string(profile.goal.nilWhenEmpty),
-            "constraints": .string(profile.constraints.nilWhenEmpty),
+            "goal": .text(profile.goal),
+            "constraints": .text(profile.constraints),
             "availableEquipment": profile.availableEquipment.map { .taxonomy($0) } ?? .null,
             "avoidedPatterns": .taxonomy(profile.avoidedPatterns),
             "avoidedExercises": .array(profile.avoidedExercises.map { .string($0.rawValue) }),
@@ -123,8 +123,8 @@ struct ContextReport {
             // What `write_plan` needs in order to add a block to this routine
             // rather than replace it.
             "routineID": .string(plan.id.uuidString),
-            "title": .string(plan.title),
-            "goal": .string(plan.goal),
+            "title": .text(plan.title),
+            "goal": .text(plan.goal),
             "startDate": .date(routine.startDate),
             "weekdays": .array(
                 Set(plan.blocks.flatMap(\.days).map(\.weekday))
@@ -135,7 +135,7 @@ struct ContextReport {
             "blocksPrescribed": .integer(plan.blocks.count),
             "blocksLogged": .integer(loggedBlocks.count),
             "currentBlockOrdinal": .integer(ordinal),
-            "currentBlockLabel": .string(block?.label ?? ""),
+            "currentBlockLabel": .text(block?.label),
             "currentBlockIsDeload": .bool(block?.isDeload ?? false),
             // The fact a weekly loop turns on: he is on the last block that was
             // written and every session in it is finished, so there is nothing
@@ -146,7 +146,7 @@ struct ContextReport {
                 (block?.days ?? []).map {
                     [
                         "weekday": .string($0.weekday.fullName),
-                        "focus": .string($0.focus),
+                        "focus": .text($0.focus),
                         "exercises": .array(
                             $0.entries.flatMap(\.exercises).map { .string($0.displayName) }),
                     ]
@@ -182,10 +182,10 @@ struct ContextReport {
             TrainingLog.sessions(in: snapshot).prefix(Self.carriedSessions).map { session in
                 [
                     "date": session.date.map { .date($0) } ?? .null,
-                    "plan": .string(session.planTitle),
+                    "plan": .text(session.planTitle),
                     "block": .integer(session.blockOrdinal),
                     "weekday": .string(session.weekday.fullName),
-                    "focus": .string(session.focus),
+                    "focus": .text(session.focus),
                     "exercises": .array(
                         session.exercises.enumerated().map { order, exercise in
                             let done = session.sets.count {
@@ -257,13 +257,4 @@ struct ContextReport {
             + "\(ToolCatalog.unstatedFacts) says what each of them holds. Record what he tells "
             + "you with \(ToolCatalog.updateProfile). "
     }
-}
-
-/// Free text the lifter has not given.
-///
-/// The store writes it as an empty string because SwiftData has nowhere to put
-/// an absent one; the wire says `null`, like every other fact nobody has
-/// stated. One spelling for one meaning.
-extension String {
-    fileprivate var nilWhenEmpty: String? { isEmpty ? nil : self }
 }

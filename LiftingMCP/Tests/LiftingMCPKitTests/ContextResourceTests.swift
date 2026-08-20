@@ -151,6 +151,36 @@ struct ContextResourceTests {
             == ContextReport.carriedSessions)
     }
 
+    @Test("A session nobody named, in a block nobody labelled, says so with null")
+    func unnamedTrainingIsNull() throws {
+        // Same rule as the lifter's goal, one object over: the document format
+        // writes an unnamed focus as an empty string because it has nowhere to
+        // put an absent one, and `""` beside `null` for the same fact leaves a
+        // reader guessing whether it was left blank or made empty on purpose.
+        let bare = fixtureRoutine(
+            title: "", startDate: daysAgo(7),
+            blocks: [(label: nil, isDeload: false, days: [
+                fixtureDay(
+                    weekday: .monday, completedAt: daysAgo(1),
+                    exercises: [
+                        prescribed(
+                            "barbell-bench-press", "Barbell Bench Press", sets: 1, reps: "5",
+                            load: 185, rest: 120,
+                            logged: [set(0, 185, 5, at: daysAgo(1))])
+                    ])
+            ])])
+        let documents = InMemoryDocuments(snapshot: fixtureSnapshot(blocks: [bare]))
+        let report = try #require(try makeRunner(documents: documents).contextResource().report)
+        let block = try #require(report.objectValue?["currentBlock"])
+        let session = try #require(report["recentSessions"]?[0])
+
+        #expect(block.objectValue?["title"] == .null)
+        #expect(block.objectValue?["goal"] == .null)
+        #expect(block.objectValue?["currentBlockLabel"] == .null)
+        #expect(session.objectValue?["focus"] == .null)
+        #expect(session.objectValue?["plan"] == .null)
+    }
+
     @Test("It says what he did lately, compactly")
     func recentSessions() throws {
         let sessions = try #require(try context()["recentSessions"]?.arrayValue)
