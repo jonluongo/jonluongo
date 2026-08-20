@@ -497,18 +497,6 @@ enum PanelMetrics {
     static let shadowRadius: CGFloat = 3
     static let shadowY: CGFloat = 1
 
-    /// What surrounds Claude's note about an exercise, which closes the panel.
-    ///
-    /// Open above and tight below: it wants clearing from the last set row, and
-    /// the panel's own `closing` already holds the bottom. The note sat between
-    /// the name and the table first, hugging the name — right about what it
-    /// belongs to, wrong about what it costs, since an optional element there
-    /// moved the sets down on the exercises that had one and left two panels in
-    /// a session with their first row in different places.
-    static let noteInsets = EdgeInsets(
-        top: Spacing.standard, leading: contentInset,
-        bottom: Spacing.tight, trailing: contentInset)
-
     /// What a row that *is* a button pads itself by, having been given the
     /// panel's whole area to be tappable in.
     ///
