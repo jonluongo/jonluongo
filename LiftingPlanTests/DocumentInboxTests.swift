@@ -160,11 +160,33 @@ struct DocumentInboxTests {
         #expect(try storedPlans(in: context).first?.orderedWeeks.count == 2)
     }
 
+    @Test("A goal the coach revised counts as an arrival, though no block moved")
+    func aRevisedGoalIsAnArrival() async throws {
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        let watcher = ManualArrivalWatcher()
+        let context = try context()
+        let inbox = try inbox(transport: folder, watcher: watcher, context: context)
+        var sent = 0
+        inbox.onApplied = { sent += 1 }
+        let id = UUID()
+        try folder.writePlan(routine(id: id, blocks: 1))
+
+        inbox.start()
+        await watcher.announceArrival()
+        try folder.writePlan(routine(id: id, blocks: 1, goal: "Bench 245"))
+        await watcher.announceArrival()
+
+        #expect(sent == 2, "the record has to go back out saying what it is for now")
+        #expect(try storedPlans(in: context).first?.goal == "Bench 245")
+    }
+
     /// A routine of `blocks` blocks under one identity, each one Monday push
     /// session — the shape a week-at-a-time coach writes.
-    private func routine(id: UUID, blocks: Int) -> PlanDocument {
+    private func routine(id: UUID, blocks: Int, goal: String = "") -> PlanDocument {
         PlanDocument(
             id: id, catalogVersion: 5, generatedAt: Self.instant, title: "Strength block",
+            goal: goal,
             blocks: (1...blocks).map { ordinal in
                 PlanDocumentBlock(label: "Block \(ordinal)", days: [
                     PlanDocumentDay(

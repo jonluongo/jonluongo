@@ -152,6 +152,11 @@ enum PlanImporter {
     /// he ticked is what happened; a plan that rewrites it is claiming he
     /// trained something he did not.
     ///
+    /// **The routine's own facts are not the record and always follow.** Title,
+    /// goal, notes, session length, the days it trains and the catalog it was
+    /// written against are restated from the document on every merge; only what
+    /// happened is protected.
+    ///
     /// **Unchanged is a no-op.** The same document arriving twice — which is
     /// ordinary, since the folder is re-read whenever it changes — compares
     /// equal block for block and nothing is written. That comparison is
@@ -164,6 +169,20 @@ enum PlanImporter {
         let stored = PlanDocument(reconstructing: plan)
         let blueprint = RoutineBlueprint(document: document)
         let storedWeeks = plan.orderedWeeks
+
+        // What the routine is *for* follows the document every time, because
+        // none of it is the record: a goal met and replaced, a longer session, a
+        // note about the next month. Dropping them was the app taking a document
+        // in and quietly keeping half of it, which is the failure this format
+        // refuses everywhere else. When it arrived is the exception — a later
+        // document does not get to restate that.
+        plan.title = blueprint.title
+        plan.goal = blueprint.goal
+        plan.notes = blueprint.notes
+        plan.durationMinutes = blueprint.durationMinutes
+        plan.generatedAt = blueprint.generatedAt
+        plan.catalogVersion = document.catalogVersion
+        plan.weekdays = Set(blueprint.days.map(\.weekday))
 
         for (index, week) in storedWeeks.enumerated() where isTrained(week) {
             guard let asStored = stored?.blocks[safe: index] else {
@@ -318,7 +337,16 @@ enum PlanImporter {
     static func wouldChange(_ document: PlanDocument, in context: ModelContext) throws -> Bool {
         guard let stored = try plan(forDocument: document.id, in: context) else { return true }
         guard let asStored = PlanDocument(reconstructing: stored) else { return true }
+        // Everything the merge takes from the document, and nothing else. Not
+        // `generatedAt`, which `write_plan` stamps fresh on every call — a
+        // re-sent identical plan would otherwise report as a change and send the
+        // record back out for nothing. Not `version` either: a document from an
+        // older format still says what it says.
         return asStored.blocks != document.blocks
+            || asStored.title != document.title
+            || asStored.goal != document.goal
+            || asStored.notes != document.notes
+            || asStored.durationMinutes != document.durationMinutes
     }
 
     /// The plan already imported from this document, if there is one.

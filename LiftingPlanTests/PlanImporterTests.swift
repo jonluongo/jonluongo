@@ -613,6 +613,45 @@ struct PlanImporterTests {
         #expect(day.completedAt == Self.instant)
     }
 
+    @Test("What the routine is for follows the document that says it")
+    func routineFactsFollowTheDocument() throws {
+        let context = try context()
+        let id = UUID()
+        let first = PlanDocument(
+            id: id, catalogVersion: 5, generatedAt: Self.instant,
+            title: "Autumn strength", goal: "Bench 225", durationMinutes: 60,
+            notes: "Three days a week.",
+            blocks: [PlanDocumentBlock(label: "Block 1", days: [
+                PlanDocumentDay(weekday: .monday, focus: "Push", exercises: [exercise()])
+            ])])
+        let plan = try PlanImporter.import(first, into: context, catalog: try catalog())
+        let arrived = plan.startDate
+
+        // Next week, with the goal met and the routine going somewhere else.
+        let revised = PlanDocument(
+            id: id, catalogVersion: 5, generatedAt: Self.instant.addingTimeInterval(604_800),
+            title: "Autumn strength II", goal: "Bench 245", durationMinutes: 75,
+            notes: "Four days a week now.",
+            blocks: [
+                PlanDocumentBlock(label: "Block 1", days: [
+                    PlanDocumentDay(weekday: .monday, focus: "Push", exercises: [exercise()])
+                ]),
+                PlanDocumentBlock(label: "Block 2", days: [
+                    PlanDocumentDay(weekday: .thursday, focus: "Pull", exercises: [exercise()])
+                ]),
+            ])
+        try PlanImporter.import(revised, into: context, catalog: try catalog())
+
+        #expect(plan.title == "Autumn strength II")
+        #expect(plan.goal == "Bench 245")
+        #expect(plan.notes == "Four days a week now.")
+        #expect(plan.durationMinutes == 75)
+        // Derived from the sessions that are actually in it now.
+        #expect(plan.weekdays == Set<Weekday>([.monday, .thursday]))
+        // When it arrived is not something a later document gets to restate.
+        #expect(plan.startDate == arrived)
+    }
+
     @Test("A block the coach dropped goes, as long as nothing was logged in it")
     func anUntrainedBlockIsRemoved() throws {
         let context = try context()
