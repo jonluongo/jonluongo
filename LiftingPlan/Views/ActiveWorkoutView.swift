@@ -26,6 +26,8 @@ struct ActiveWorkoutView: View {
     @State private var infoExercise: PlannedExercise?
     /// The exercise whose own note the lifter is writing.
     @State private var noteExercise: PlannedExercise?
+    /// Whether the rest clock has been opened to its full size.
+    @State private var showingRest = false
     /// The set to bring into view, set when a group's round moves on.
     @State private var scrollTarget: PersistentIdentifier?
     @State private var errorMessage: String?
@@ -121,8 +123,23 @@ struct ActiveWorkoutView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 if restTimer.isRunning {
-                    RestTimerBar(restTimer: restTimer)
+                    // The bar is the clock in a glance; tapping it is the clock
+                    // to look at, with the next set under it. Rest is the one
+                    // moment in a session with nothing else to do, which is why
+                    // it is worth a surface of its own.
+                    Button { showingRest = true } label: {
+                        RestTimerBar(restTimer: restTimer)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Opens the rest clock and the next set")
                 }
+            }
+            .sheet(isPresented: $showingRest) {
+                RestSheet(
+                    day: day, profile: profile, plans: plans, restTimer: restTimer,
+                    onCompletionChanged: { exercise, set, completed in
+                        completionChanged(for: exercise, set: set, completed: completed)
+                    })
             }
             .animation(.snappy, value: restTimer.isRunning)
             .alert("Couldn't Save", isPresented: errorAlertBinding) {
@@ -253,16 +270,8 @@ struct ActiveWorkoutView: View {
                 profile: profile,
                 plans: plans,
                 onCompletionChanged: { exercise, set, completed in
-                    // A tick inside a group closes the round; on its own it
-                    // closes only the exercise. And only a group scrolls: an
-                    // ungrouped exercise has its next set on the row below,
-                    // already on screen and already under his thumb.
-                    if let group {
-                        write { try log.roundCompletionChanged(group, completed: completed) }
-                        showNext(after: set, of: exercise, in: group, ticked: completed)
-                    } else {
-                        write { try log.completionChanged(for: exercise, isCompleted: completed) }
-                    }
+                    completionChanged(for: exercise, set: set, completed: completed, in: group)
+                    showNext(after: set, of: exercise, in: group, ticked: completed)
                 },
                 paired: paired,
                 isLocked: isLogged
@@ -277,6 +286,24 @@ struct ActiveWorkoutView: View {
                 top: 0, leading: PanelMetrics.inset, bottom: 0, trailing: PanelMetrics.inset),
             paired: paired, isRecorded: exercise.isFullyLogged)
         .listRowSeparator(.hidden)
+    }
+
+    /// Records a tick and starts whatever rest follows it.
+    ///
+    /// **One path, whether the tick came from the table or from the rest
+    /// sheet.** A set logged in one place and the same set logged in the other
+    /// must mean the same thing — including which clock starts, which is the one
+    /// behavioural difference a group makes.
+    private func completionChanged(
+        for exercise: PlannedExercise, set: LoggedSet, completed: Bool,
+        in group: ExerciseGroup? = nil
+    ) {
+        let group = group ?? day.entries.compactMap { $0.groupContaining(exercise) }.first
+        if let group {
+            write { try log.roundCompletionChanged(group, completed: completed) }
+        } else {
+            write { try log.completionChanged(for: exercise, isCompleted: completed) }
+        }
     }
 
     /// Brings the next set of a group into view when one is ticked.
@@ -295,9 +322,11 @@ struct ActiveWorkoutView: View {
     /// leaves him where he is.
     private func showNext(
         after set: LoggedSet, of member: PlannedExercise,
-        in group: ExerciseGroup, ticked: Bool
+        in group: ExerciseGroup?, ticked: Bool
     ) {
-        guard ticked, let next = group.setAfter(set, of: member) else { return }
+        // An ungrouped exercise has its next set on the row below, already on
+        // screen and already under his thumb.
+        guard let group, ticked, let next = group.setAfter(set, of: member) else { return }
         withAnimation(.snappy) { scrollTarget = next.persistentModelID }
     }
 

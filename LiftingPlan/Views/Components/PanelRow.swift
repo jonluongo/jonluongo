@@ -89,6 +89,22 @@ private struct PanelEdgeShape: Shape {
 
 extension View {
 
+    /// Draws this view as a panel, outside a `List`.
+    ///
+    /// **The same fill, hairline, radius and shadow `panelRow` gives a row**,
+    /// for the one place a panel is not a list row: the rest sheet. The two draw
+    /// from the same tokens, so a panel there and a panel on the logging screen
+    /// cannot come to look different — which is the whole reason this is a
+    /// modifier rather than a shape written out a second time.
+    func panelSurface() -> some View {
+        let shape = RoundedRectangle(cornerRadius: Radius.panel, style: .continuous)
+        return background(Palette.panel, in: shape)
+            .overlay { shape.stroke(Palette.panelEdge, lineWidth: Palette.hairline) }
+            .shadow(
+                color: Palette.panelShadow,
+                radius: PanelMetrics.shadowRadius, y: PanelMetrics.shadowY)
+    }
+
     /// Draws this row as part of an inset panel, rounded at whichever end of it
     /// this row is.
     ///

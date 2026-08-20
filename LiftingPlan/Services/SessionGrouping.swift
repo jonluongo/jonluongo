@@ -18,6 +18,19 @@ enum SessionEntry: Identifiable {
     case exercise(PlannedExercise)
     case group(ExerciseGroup)
 
+    /// The group this entry is, when it holds `exercise`. `nil` otherwise —
+    /// including when this entry *is* that exercise, performed on its own.
+    ///
+    /// Asked by a caller holding a movement and no context: the rest sheet logs
+    /// a set without knowing which entry it came from, and which clock starts
+    /// depends on whether it was performed in rounds.
+    func groupContaining(_ exercise: PlannedExercise) -> ExerciseGroup? {
+        guard case .group(let group) = self,
+            group.members.contains(where: { $0 === exercise })
+        else { return nil }
+        return group
+    }
+
     var id: String {
         switch self {
         case .exercise(let exercise): "exercise-\(exercise.persistentModelID)"
