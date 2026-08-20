@@ -29,11 +29,14 @@ extension ToolRunner {
     /// the lifter never sees the prescription, which is worse than a refusal
     /// that can be read and corrected.
     ///
-    /// The document's identity, catalog version and timestamp are supplied
-    /// here rather than asked for: they are facts about the write, and this is
-    /// the code that knows them. `id` is fresh on every call, so two plans
-    /// written in a row are two plans on the phone rather than one silently
-    /// re-imported.
+    /// The catalog version and timestamp are supplied here rather than asked
+    /// for: they are facts about the write, and this is the code that knows
+    /// them. **`routineID` is the exception, and it is what makes a routine
+    /// grow.** Send the id the context resource reports and the blocks land on
+    /// the routine the lifter is already on; omit it and the id is fresh, which
+    /// starts a new routine and closes the one before it. Writing next week's
+    /// block is the first; changing programme is the second, and nothing has to
+    /// guess which was meant.
     func writePlan(_ arguments: JSONValue) -> ToolOutcome {
         guard arguments["weeks"] != nil || arguments["days"] != nil else {
             return .failure(
@@ -49,7 +52,17 @@ extension ToolRunner {
         case .refused(let message): return .failure(message)
         }
         fields["version"] = .integer(PlanDocument.currentVersion)
-        fields["id"] = .string(UUID().uuidString)
+        // A stated routine has to be a routine: a malformed id silently
+        // becoming a fresh one would start a new routine and supersede the one
+        // he is training, which is the opposite of what was asked for.
+        let stated = fields.removeValue(forKey: "routineID")?.stringValue
+        if let stated, UUID(uuidString: stated) == nil {
+            return .failure(
+                "'routineID' must be the routine's id exactly as the context resource reports "
+                    + "it. '\(stated)' is not one, and nothing was written. Leave it out "
+                    + "entirely to start a new routine.")
+        }
+        fields["id"] = .string(stated ?? UUID().uuidString)
         fields["catalogVersion"] = .integer(catalog.version)
         fields["generatedAt"] = .date(now())
 

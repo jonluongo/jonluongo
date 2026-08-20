@@ -401,3 +401,54 @@ struct WritePlanTests {
         #expect(documents.lastWrittenPlan == nil)
     }
 }
+
+/// The identity that lets a routine grow a week at a time.
+@Suite("A routine that grows")
+struct WritePlanRoutineIdentityTests {
+
+    private func write(_ arguments: JSONValue) throws -> (PlanDocument?, ToolOutcome) {
+        let documents = InMemoryDocuments(snapshot: fixtureSnapshot())
+        let outcome = try makeRunner(documents: documents).writePlan(arguments)
+        return (documents.lastWrittenPlan, outcome)
+    }
+
+    private var oneWeek: JSONValue {
+        ["weeks": [["days": [["weekday": 2, "focus": "Push", "exercises": [
+            ["exerciseID": "barbell-bench-press", "sets": 3, "repRange": "5"]
+        ]]]]]]
+    }
+
+    @Test("A stated routine id is the document's, so the block lands on that routine")
+    func statedIdentityIsKept() throws {
+        let id = UUID()
+        var arguments = oneWeek.objectValue ?? [:]
+        arguments["routineID"] = .string(id.uuidString)
+
+        let (written, _) = try write(.object(arguments))
+
+        #expect(written?.id == id)
+    }
+
+    @Test("No routine id means a new routine, with an identity of its own")
+    func omittedIdentityIsFresh() throws {
+        let (first, _) = try write(oneWeek)
+        let (second, _) = try write(oneWeek)
+
+        #expect(first?.id != second?.id)
+    }
+
+    @Test("Something that is not an id is refused rather than quietly replaced")
+    func malformedIdentityIsRefused() throws {
+        var arguments = oneWeek.objectValue ?? [:]
+        arguments["routineID"] = .string("the autumn one")
+
+        let (written, outcome) = try write(.object(arguments))
+
+        #expect(written == nil)
+        if case .failure(let message) = outcome {
+            #expect(message.contains("the autumn one"))
+        } else {
+            Issue.record("a routineID that is not an id must fail the call")
+        }
+    }
+}

@@ -107,6 +107,9 @@ struct ContextReport {
         let ordinal = Self.currentOrdinal(of: routine)
         let week = plan.weeks.indices.contains(ordinal - 1) ? plan.weeks[ordinal - 1] : nil
         return [
+            // What `write_plan` needs in order to add a week to this routine
+            // rather than replace it.
+            "routineID": .string(plan.id.uuidString),
             "title": .string(plan.title),
             "goal": .string(plan.goal),
             "startDate": .date(routine.startDate),

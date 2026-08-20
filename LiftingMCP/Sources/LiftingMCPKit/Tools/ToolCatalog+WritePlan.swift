@@ -18,7 +18,18 @@ extension ToolCatalog {
             there, and returns the plan as it was written. Send one entry in \
             'weeks' for every week of the block — weeks may differ, which is \
             how a ramp, a wave, or a deload is written; nothing here repeats or \
-            fills in a week you did not send. Every exerciseID is checked \
+            fills in a week you did not send. Prefer writing one week at a \
+            time: send 'routineID' — the id the context resource reports for \
+            the routine he is on — together with every week already in it plus \
+            the new one, and the routine grows rather than being replaced. \
+            Weeks he has not trained yet are yours to rewrite freely; a week \
+            with a set ticked against it is the record of what he did, and a \
+            plan that changes one is refused by the app naming that week. Leave \
+            'routineID' out to start a new routine, which closes the one he is \
+            on — that is a change of programme, not the next week of this one. \
+            The context resource says 'nothingPrescribedBeyond' when he has \
+            finished everything written so far, which is when the next week is \
+            due. Every exerciseID is checked \
             against the catalog first; one bad ID fails the whole call with \
             that ID named and writes nothing. A key this format does not have \
             also fails the call, with the key named, rather than being dropped. \
@@ -42,6 +53,11 @@ extension ToolCatalog {
             """,
         inputSchema: object(
             [
+                "routineID": string(
+                    "The routine to add these weeks to, as the context resource "
+                        + "reports it. Send every week the routine already holds "
+                        + "along with the new one. Leave it out to start a new "
+                        + "routine, which closes the one he is on."),
                 "title": string("Short name for the block, e.g. 'Autumn strength'."),
                 "goal": string("What the block is for, in your words."),
                 "durationMinutes": integer("How long a session in this block runs."),
