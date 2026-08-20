@@ -146,4 +146,92 @@ struct SnapshotOutboxTests {
 
         #expect(outbox.errorMessage == nil)
     }
+
+    // MARK: - The same failure, every launch
+
+    @Test("A failure he has closed is not raised again by the next export")
+    func aDismissedFailureStaysDismissed() async throws {
+        // A full iCloud account does not fix itself between sessions, so every
+        // export says the same thing. Meeting him with it at every launch is
+        // the alert nagging rather than informing.
+        let directory = URL.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let context = try context()
+        let outbox = try outbox(
+            transport: iCloudTransport(at: directory, uploadFailure: "Quota exceeded"),
+            context: context)
+
+        await outbox.exportSnapshot()
+        #expect(outbox.errorMessage != nil, "the first one has to reach him")
+        outbox.dismissError()
+        await outbox.exportSnapshot()
+
+        #expect(outbox.errorMessage == nil, "the same sentence, already read and closed")
+    }
+
+    @Test("A different failure after that one is still heard")
+    func aNewFailureIsRaised() async throws {
+        let directory = URL.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let iCloud = UploadState("Quota exceeded")
+        let outbox = try outbox(
+            transport: iCloudTransport(at: directory, state: iCloud), context: try context())
+
+        await outbox.exportSnapshot()
+        outbox.dismissError()
+        // The account has room now, and the phone is signed out instead.
+        iCloud.failure = "Not signed in"
+        await outbox.exportSnapshot()
+
+        #expect(try #require(outbox.errorMessage).contains("Not signed in"))
+    }
+
+    @Test("An export that goes through forgets the dismissal")
+    func aGoodExportForgetsIt() async throws {
+        let directory = URL.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let iCloud = UploadState("Quota exceeded")
+        let outbox = try outbox(
+            transport: iCloudTransport(at: directory, state: iCloud), context: try context())
+
+        await outbox.exportSnapshot()
+        outbox.dismissError()
+        iCloud.failure = nil
+        await outbox.exportSnapshot()
+        #expect(outbox.errorMessage == nil)
+
+        // The same failure again, after a clean one: nothing is suppressed for
+        // the life of the process.
+        iCloud.failure = "Quota exceeded"
+        await outbox.exportSnapshot()
+
+        #expect(outbox.errorMessage != nil)
+    }
+
+    /// What iCloud is saying about the file this time, changeable between
+    /// exports so one outbox can live through a failure, a fix and a relapse.
+    private final class UploadState: @unchecked Sendable {
+        private let lock = NSLock()
+        private var stored: String?
+
+        init(_ failure: String?) { stored = failure }
+
+        var failure: String? {
+            get { lock.withLock { stored } }
+            set { lock.withLock { stored = newValue } }
+        }
+    }
+
+    private func iCloudTransport(at directory: URL, state: UploadState)
+        -> ICloudDocumentTransport
+    {
+        ICloudDocumentTransport(
+            containerIdentifier: "iCloud.test",
+            resolveContainer: { _ in directory },
+            uploadFailure: { _ in state.failure }
+        )
+    }
 }

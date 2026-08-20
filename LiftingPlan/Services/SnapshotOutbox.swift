@@ -61,9 +61,27 @@ final class SnapshotOutbox {
             + "your coach is reading an older one. iCloud says: \(reason)"
     }
 
+    /// What the lifter has already been shown and closed, so a failure that has
+    /// not changed does not meet him at every launch.
+    private var dismissed: String?
+
     /// Clears a reported failure, after the lifter has been shown it.
     func dismissError() {
+        dismissed = errorMessage
         errorMessage = nil
+    }
+
+    /// Reports a failure unless it is the one he has already read and closed.
+    ///
+    /// **A permanent failure is the ordinary case here.** A full iCloud account
+    /// does not fix itself between sessions, so every export says the same
+    /// thing, and raising it again each time he opens the app is the alert
+    /// nagging rather than informing. Anything *different* is new and is shown;
+    /// an export that goes through forgets what was closed, so the next problem
+    /// is heard. The same rule `DocumentInbox` follows, for the same reason.
+    private func report(_ failure: String?) {
+        errorMessage = failure == dismissed ? nil : failure
+        if failure == nil { dismissed = nil }
     }
 
     /// Writes the current state of the store where Claude can read it.
@@ -85,10 +103,11 @@ final class SnapshotOutbox {
             // and it can fail permanently — a full account is the ordinary
             // case. Nothing threw, the app looked fine, and the coach read
             // nothing. So the file is asked about rather than assumed.
-            errorMessage = try uploads?.snapshotUploadFailure().map(Self.notDelivered)
+            report(try uploads?.snapshotUploadFailure().map(Self.notDelivered))
         } catch {
-            errorMessage = (error as? any LocalizedError)?.errorDescription
-                ?? error.localizedDescription
+            report(
+                (error as? any LocalizedError)?.errorDescription
+                    ?? error.localizedDescription)
         }
     }
 
