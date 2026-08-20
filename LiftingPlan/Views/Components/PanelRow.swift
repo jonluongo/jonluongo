@@ -83,10 +83,10 @@ extension View {
     /// holds being in the record is a state that varies down a list, which is
     /// exactly what a panel's own ground can say without spending a line or a
     /// slot on it.
-    /// **`recessed` puts a panel further back without closing it.** What is not
-    /// due yet still opens — the record has to take a session he actually
-    /// trained, whenever he trained it — so a later week is drawn flat and
-    /// quiet rather than greyed out or gated.
+    /// **`recessed` puts a panel further back.** What is not due yet is drawn
+    /// flat and quiet on the surface rather than lifted above it. Whether it
+    /// also opens is the caller's business and not this modifier's — a later
+    /// week's sessions are shut, and `RoutineView` is where that is said.
     func panelRow(
         insets: EdgeInsets = PanelMetrics.rowInsets,
         paired: Bool = false, fillsPanel: Bool = false, isRecorded: Bool = false,

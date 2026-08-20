@@ -50,12 +50,23 @@ struct RoutineView: View {
                         SectionHeading(
                             BlockSelection.title(for: week), recessed: later)
                         ForEach(days) { day in
-                            Button {
-                                openSession = day
-                            } label: {
-                                DayRow(day: day, isLater: later)
+                            // A locked session is drawn, not offered. Wrapping
+                            // it in a button that declines to act would leave a
+                            // row that highlights under a thumb and then does
+                            // nothing, which reads as the app having missed the
+                            // tap rather than as the session being shut.
+                            Group {
+                                if later {
+                                    DayRow(day: day, isLater: true)
+                                } else {
+                                    Button {
+                                        openSession = day
+                                    } label: {
+                                        DayRow(day: day)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
-                            .buttonStyle(.plain)
                             // Each day its own panel. Sharing one per week made
                             // a week a single object with three names in it;
                             // a session is the thing being chosen, and the
@@ -115,10 +126,13 @@ struct RoutineView: View {
     /// does not move him on, and a session skipped in week one keeps week one
     /// current until he logs it or trains past it.
     ///
-    /// **Nothing is closed by this.** A later week is drawn quieter and flatter;
-    /// every row still opens. Refusing to open one would mean refusing to record
-    /// a session he actually trained, which is the one thing this app may not
-    /// do — the same reason Finish greys and asks but is never disabled.
+    /// **A later week is shut.** On Jon's call — *"I want them completely locked
+    /// to the user"* — its sessions are drawn and cannot be opened. The cost is
+    /// stated where it lands: a session trained ahead of schedule cannot be
+    /// logged on the day it happened, and reaches the record when the week it
+    /// belongs to becomes current. The lock is on the block a week sits in, not
+    /// on the calendar, so finishing the week he is on opens the next one
+    /// immediately.
     private func isLater(_ week: TrainingWeek) -> Bool {
         guard let current = BlockSelection.currentWeekOrdinal(in: plan.orderedWeeks)
         else { return false }
@@ -148,8 +162,8 @@ struct RoutineView: View {
 private struct DayRow: View {
 
     let day: WorkoutDay
-    /// Whether this session is in a week he has not reached. Drawn quieter; it
-    /// opens exactly as any other does.
+    /// Whether this session is in a week he has not reached. Drawn quieter, and
+    /// shut: it carries a lock where an open row carries a chevron.
     var isLater: Bool = false
 
     private var title: String {
@@ -170,16 +184,26 @@ private struct DayRow: View {
             Spacer()
             // Two marks doing two jobs. The check appears only where it is true
             // — a column of empty boxes beside every unlogged day would say
-            // nothing — and the chevron on every row, because every row opens
-            // something. The panel's own ground carries it a third time, which
-            // is the one that reads without looking at the row.
+            // nothing — and the end of the row says what pressing it does: a
+            // chevron where it opens, a lock where it does not. One glyph in
+            // that slot, varying along one axis, which is the whole of the rule
+            // for a mark inside a list.
             RecordedMark(isRecorded: day.completedAt != nil, showsEmpty: false)
-            DisclosureChevron()
+            if isLater {
+                Image(systemName: "lock.fill")
+                    .font(.supersetSupport)
+                    .foregroundStyle(Palette.muted)
+            } else {
+                DisclosureChevron()
+            }
         }
         .padding(PanelMetrics.buttonInsets)
         // The panel's whole area, not the text's.
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
+        // A shut row is not a button and must not be announced as one; what it
+        // is instead is said in words, since the lock is a glyph.
+        .accessibilityAddTraits(isLater ? [] : .isButton)
+        .accessibilityHint(isLater ? "Locked until you reach this block" : "")
     }
 }
