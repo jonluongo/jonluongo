@@ -595,6 +595,24 @@ struct PlanImporterTests {
         #expect(try firstExercise(of: revised).lifterNote == nil)
     }
 
+    @Test("A session he marked finished holds the block against a rewrite")
+    func aFinishedSessionCountsAsTrained() throws {
+        let context = try context()
+        let id = UUID()
+        let plan = try PlanImporter.import(
+            routine(id: id, blocks: 1), into: context, catalog: try catalog())
+        // Finished with nothing ticked, which the app allows on purpose:
+        // whether he is done is his to say, and Finish is never disabled.
+        let day = try #require(plan.orderedWeeks.first?.orderedDays.first)
+        day.completedAt = Self.instant
+
+        #expect(throws: PlanImportError.trainedBlockChanged(1)) {
+            try PlanImporter.import(
+                routine(id: id, blocks: 1, load: 245), into: context, catalog: try catalog())
+        }
+        #expect(day.completedAt == Self.instant)
+    }
+
     @Test("A block the coach dropped goes, as long as nothing was logged in it")
     func anUntrainedBlockIsRemoved() throws {
         let context = try context()

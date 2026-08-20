@@ -23,9 +23,9 @@ extension ToolCatalog {
             the id the context resource reports for the routine he is on — \
             together with every block already in it plus the new one, and the \
             routine grows rather than being replaced. Blocks he has not trained \
-            yet are yours to rewrite freely; a block with a set ticked against \
-            it is the record of what he did, and a plan that changes one is \
-            refused by the app naming that block. Leave 'routineID' out to \
+            yet are yours to rewrite freely; a block holding a set he ticked or \
+            a session he marked finished is the record of what he did, and a \
+            plan that changes one is refused by the app naming that block. Leave 'routineID' out to \
             start a new routine, which closes the one he is on — that is a \
             change of programme, not the next block of this one. The context \
             resource says 'nothingPrescribedBeyond' when he has finished \

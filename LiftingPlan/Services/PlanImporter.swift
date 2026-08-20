@@ -36,10 +36,11 @@ enum PlanImportError: Error, LocalizedError, Equatable {
             "This plan marks a session '\(icon.rawValue)', which is not one of the "
                 + "marks this app can draw. Nothing was imported."
         case .trainedBlockChanged(let ordinal):
-            "This plan changes block \(ordinal), which has already been trained. Sets "
-                + "logged against it are the record of what happened and cannot be "
-                + "rewritten. Nothing was imported. Send the routine with block "
-                + "\(ordinal) exactly as it stands and the change in a later block."
+            "This plan changes block \(ordinal), which has already been trained. A set "
+                + "logged against it, or a session marked finished in it, is the record of "
+                + "what happened and cannot be rewritten. Nothing was imported. Send the "
+                + "routine with block \(ordinal) exactly as it stands and the change in a "
+                + "later block."
         case .unreadableRoutine:
             "This routine has training logged against it but cannot be read back as the "
                 + "document it came from, so there is no way to tell what this plan "
@@ -245,14 +246,23 @@ enum PlanImporter {
         }
     }
 
-    /// Whether anything in this block is in the record. A row seeded on screen
-    /// and never ticked is not — it is the app showing what was asked for, not
-    /// the lifter saying he did it.
+    /// Whether anything in this block is in the record.
+    ///
+    /// Two ways it can be, and both are the lifter speaking. A set he ticked is
+    /// the obvious one. **A session he marked finished is the other**, even with
+    /// nothing ticked in it — the app allows that on purpose, since whether he
+    /// is done is his to say and Finish is never disabled, and `TrainingLog`
+    /// reports such a day as a session for the same reason. Counting only the
+    /// ticks let a rewrite delete the day and take his *I did this* with it.
+    ///
+    /// A row seeded on screen and never ticked is neither: it is the app showing
+    /// what was asked for, not the lifter saying he did it.
     private static func isTrained(_ block: TrainingWeek) -> Bool {
         block.orderedDays.contains { day in
-            day.orderedExercises.contains { exercise in
-                (exercise.loggedSets ?? []).contains { $0.isCompleted }
-            }
+            day.completedAt != nil
+                || day.orderedExercises.contains { exercise in
+                    (exercise.loggedSets ?? []).contains { $0.isCompleted }
+                }
         }
     }
 
