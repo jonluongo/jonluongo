@@ -57,14 +57,14 @@ extension PlanDocument {
 
 extension PlanDocumentBlock {
 
-    /// A week's label is `nil` in the document and empty in the store, because
+    /// A block's label is `nil` in the document and empty in the store, because
     /// SwiftData has nowhere to put an absent string. They mean the same thing:
-    /// the plan did not name this week.
-    init(reconstructing week: TrainingWeek) {
+    /// the plan did not name this block.
+    init(reconstructing block: TrainingWeek) {
         self.init(
-            label: week.label.isEmpty ? nil : week.label,
-            isDeload: week.isDeload,
-            days: week.orderedDays.map(PlanDocumentDay.init(reconstructing:))
+            label: block.label.isEmpty ? nil : block.label,
+            isDeload: block.isDeload,
+            days: block.orderedDays.map(PlanDocumentDay.init(reconstructing:))
         )
     }
 }

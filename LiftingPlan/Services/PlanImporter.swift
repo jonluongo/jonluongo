@@ -207,8 +207,8 @@ enum PlanImporter {
     /// Whether anything in this block is in the record. A row seeded on screen
     /// and never ticked is not — it is the app showing what was asked for, not
     /// the lifter saying he did it.
-    private static func isTrained(_ week: TrainingWeek) -> Bool {
-        week.orderedDays.contains { day in
+    private static func isTrained(_ block: TrainingWeek) -> Bool {
+        block.orderedDays.contains { day in
             day.orderedExercises.contains { exercise in
                 (exercise.loggedSets ?? []).contains { $0.isCompleted }
             }

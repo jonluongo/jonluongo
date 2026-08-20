@@ -158,11 +158,11 @@ enum RoutineListing {
     /// list says nothing about him.
     static func progress(of plan: TrainingPlan) -> String {
         var parts: [String] = []
-        let weeks = plan.orderedWeeks
-        if let ordinal = BlockSelection.currentWeekOrdinal(in: weeks) {
-            parts.append("Block \(ordinal) of \(weeks.count)")
+        let blocks = plan.orderedWeeks
+        if let ordinal = BlockSelection.currentBlockOrdinal(in: blocks) {
+            parts.append("Block \(ordinal) of \(blocks.count)")
         }
-        let days = weeks.flatMap(\.orderedDays)
+        let days = blocks.flatMap(\.orderedDays)
         let logged = days.count { $0.completedAt != nil }
         if days.isEmpty {
             parts.append("No sessions yet")

@@ -317,13 +317,13 @@ struct PlanImporterTests {
             into: context, catalog: try catalog()
         )
 
-        #expect(BlockSelection.currentWeekOrdinal(in: plan.orderedWeeks) == 1)
+        #expect(BlockSelection.currentBlockOrdinal(in: plan.orderedWeeks) == 1)
 
         // Finish every session of week 1.
         for day in plan.orderedWeeks[0].orderedDays { day.completedAt = Self.instant }
         try context.saveOrThrow()
 
-        #expect(BlockSelection.currentWeekOrdinal(in: plan.orderedWeeks) == 2)
+        #expect(BlockSelection.currentBlockOrdinal(in: plan.orderedWeeks) == 2)
         #expect(plan.orderedWeeks.map(BlockSelection.title(for:))
             == ["Block 1 · Accumulation", "Block 2 · Intensification", "Block 3 · Deload"])
     }

@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 import LiftingKit
 
-/// One block, week by week: the middle of the app and where it opens.
+/// One routine, block by block: the middle of the app and where it opens.
 ///
 /// **What it does.** Lists every training day the block prescribes, grouped
 /// under the week it belongs to, and opens the session when one is tapped. The
@@ -153,15 +153,15 @@ struct RoutineView: View {
     /// belongs to becomes current. The lock is on the block a week sits in, not
     /// on the calendar, so finishing the week he is on opens the next one
     /// immediately.
-    private func isLater(_ week: TrainingWeek) -> Bool {
-        guard let current = BlockSelection.currentWeekOrdinal(in: plan.orderedWeeks)
+    private func isLater(_ block: TrainingWeek) -> Bool {
+        guard let current = BlockSelection.currentBlockOrdinal(in: plan.orderedWeeks)
         else { return false }
-        return week.ordinal > current
+        return block.ordinal > current
     }
 
     /// The days of a week that prescribe work, in order.
-    static func trainingDays(of week: TrainingWeek) -> [WorkoutDay] {
-        week.orderedDays.filter { !$0.orderedExercises.isEmpty }
+    static func trainingDays(of block: TrainingWeek) -> [WorkoutDay] {
+        block.orderedDays.filter { !$0.orderedExercises.isEmpty }
     }
 }
 

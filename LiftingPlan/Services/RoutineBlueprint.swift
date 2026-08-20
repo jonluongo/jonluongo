@@ -139,15 +139,15 @@ extension RoutineBlueprint {
     /// import that adds next week's block to a routine already in the store —
     /// which is what keeps a block written this week identical in the store to
     /// one written as part of a longer plan.
-    static func makeTrainingWeek(_ week: BlockBlueprint, ordinal: Int) -> TrainingWeek {
+    static func makeTrainingWeek(_ block: BlockBlueprint, ordinal: Int) -> TrainingWeek {
         let trainingWeek = TrainingWeek(
             ordinal: ordinal,
             // The store holds an unnamed week as an empty label, which is
             // what it already means there; no name is invented for it.
-            label: week.label ?? "",
-            isDeload: week.isDeload
+            label: block.label ?? "",
+            isDeload: block.isDeload
         )
-        trainingWeek.days = week.days.map(Self.makeWorkoutDay)
+        trainingWeek.days = block.days.map(Self.makeWorkoutDay)
         return trainingWeek
     }
 
