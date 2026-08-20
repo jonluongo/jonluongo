@@ -130,4 +130,45 @@ struct SupersetOrderTests {
         #expect(next.isWarmup == false)
         #expect(next === working(member)[0])
     }
+
+    // MARK: - Warm-ups, where he put them
+
+    @Test("A warm-up written before the working sets comes before the rounds")
+    func aLeadingWarmupLeads() throws {
+        let group = try group()
+        let member = group.members[0]
+        // Written first, as a plan that prescribes one would have it.
+        let sets = (member.loggedSets ?? []).sorted { $0.setIndex < $1.setIndex }
+        for set in sets { set.setIndex += 1 }
+        let warmup = LoggedSet(setIndex: 0, reps: 0, isWarmup: true)
+        member.loggedSets?.append(warmup)
+
+        let day = try #require(member.day)
+        #expect(SessionOrder.next(in: day)?.set === warmup)
+    }
+
+    @Test("A warm-up added mid-session does not send him back to the start")
+    func aLateWarmupStaysWhereHePutIt() throws {
+        // The menu offers "Add Warmup Set" at any point. Every warm-up used to
+        // be hoisted in front of the rounds, so a lifter halfway through round
+        // three was told his next set was a warm-up he had just asked for on
+        // the movement he was already past.
+        let group = try group()
+        let member = group.members[0]
+        let partner = group.members[1]
+        // Round one, both movements, done.
+        working(member)[0].isCompleted = true
+        working(partner)[0].isCompleted = true
+
+        let context = try #require(member.modelContext)
+        SetSeeding.addSet(to: member, warmup: true, in: context)
+        let warmup = try #require((member.loggedSets ?? []).first { $0.isWarmup })
+
+        let day = try #require(member.day)
+        let next = try #require(SessionOrder.next(in: day))
+        #expect(next.set !== warmup, "he is mid-superset, not starting one")
+        #expect(next.set === working(member)[1], "round two, where he actually is")
+        // It is still in the order — last, where the table draws it.
+        #expect(SessionOrder.trainingOrder(of: day).last?.set === warmup)
+    }
 }

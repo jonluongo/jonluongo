@@ -82,28 +82,43 @@ enum SessionOrder {
     /// they are rounds of one, which is what the lifter is actually doing by
     /// then.
     private static func slots(of group: ExerciseGroup) -> [TrainingSlot] {
-        var slots: [TrainingSlot] = []
+        var leading: [TrainingSlot] = []
+        var trailing: [TrainingSlot] = []
         var working: [[LoggedSet]] = []
         for member in group.members {
             let sets = ordered(member)
+            let firstWorking = sets.firstIndex { !$0.isWarmup }
             for (index, set) in sets.enumerated() where set.isWarmup {
-                slots.append(TrainingSlot(
+                let slot = TrainingSlot(
                     exercise: member, set: set,
                     identity: identity(of: set, at: index, in: member),
-                    workingNumber: workingNumber(of: set, at: index, in: member)))
+                    workingNumber: workingNumber(of: set, at: index, in: member))
+                // **A warm-up goes where he put it.** The ones written before
+                // the working sets come before the rounds, which is what warming
+                // up is. One added afterwards — the menu allows it at any point
+                // — used to be hoisted to the front with them, so a lifter
+                // halfway through round three was told his next set was a
+                // warm-up. It stays after the rounds, which is both where the
+                // table draws it and where he asked for it.
+                if let firstWorking, index > firstWorking {
+                    trailing.append(slot)
+                } else {
+                    leading.append(slot)
+                }
             }
             working.append(sets.filter { !$0.isWarmup })
         }
 
-        let rounds = working.map(\.count).max() ?? 0
-        for round in 0..<rounds {
+        var rounds: [TrainingSlot] = []
+        let count = working.map(\.count).max() ?? 0
+        for round in 0..<count {
             for (position, sets) in working.enumerated() where round < sets.count {
-                slots.append(TrainingSlot(
+                rounds.append(TrainingSlot(
                     exercise: group.members[position], set: sets[round],
                     identity: .working(round + 1), workingNumber: round + 1))
             }
         }
-        return slots
+        return leading + rounds + trailing
     }
 
     private static func ordered(_ exercise: PlannedExercise) -> [LoggedSet] {
