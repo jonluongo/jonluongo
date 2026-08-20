@@ -109,13 +109,23 @@ it does not live in `Views/`.**
 
 `Services/` answers questions and maps data. It does not conclude anything about
 training. `PerformanceHistory` and `ExerciseTrend` report what happened;
-`RestTimerModel` counts down what was prescribed; `PlanBlueprint` is the single
-place a plan enters the store — and it records what it was handed, never
+`RestTimerModel` counts down what was prescribed; `RoutineBlueprint` is the
+single place a plan enters the store — and it records what it was handed, never
 clamping, flooring, capping, or defaulting a prescribed value.
 
-`PlanBlueprint` is the seam where Claude's plans arrive, and it now has exactly
+`RoutineBlueprint` is the seam where Claude's plans arrive, and it has exactly
 one producer: `PlanImporter`, building it from a decoded `PlanDocument`. That is
 the only producer it may ever have. Do not add one that generates plans.
+
+**The way back out is the document itself.** `PlanDocument(reconstructing:)`
+reads a stored block into the document it was imported as, and
+`SnapshotExporter` sends that rather than a second description of it. A
+prescription used to exist in three vocabularies — the document, the `@Model`s,
+and a tree of snapshot types — and the first and third disagreed about how a
+superset is written. There are two now, and the round-trip suite is what says
+the store holds everything the document stated. Do not add a third: a type that
+restates a prescription for a reader is the shape this cost a rewrite to
+remove.
 
 `Catalog/` holds bundled reference data, never SwiftData: it ships inside the
 package, is never written at runtime, and every file in it carries a `version`.
@@ -216,7 +226,7 @@ unknown key is exactly what a later format is made of. Bump the version when a
 reader would have to behave differently, never for an additive field.
 
 **An icon does one of three jobs, or it does not exist.** Either it *names an
-action* where a word will not fit — a toolbar control, a menu item, a swipe —
+action* where a word will not fit — a toolbar control, a menu item —
 or it *marks a state that varies* within a list, where the variation is the
 information: a logged day beside an unlogged one, a superset beside a plain
 exercise — or it is *a mark Claude chose*, from a closed set the app publishes

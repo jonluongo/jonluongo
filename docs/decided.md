@@ -58,11 +58,16 @@ and a test that opens a store written under the old schema and finds the logged
 sets intact. **Verify against the real phone, not a fixture** — the failure mode
 is CloudKit's, and an in-memory container cannot show it.
 
-**2. The `weeks` key in `plan.json` and `snapshot.json`.** Under the vocabulary
-it should be `blocks`. Both formats are versioned, so the mechanism exists:
-bump `PlanDocument.currentVersion`, accept `weeks` from any earlier version and
-`blocks` from the new one, and refuse a newer version whole as both readers
-already do.
+**2. The `weeks` key in `plan.json`.** Under the vocabulary it should be
+`blocks`. The format is versioned, so the mechanism exists: bump
+`PlanDocument.currentVersion`, accept `weeks` from any earlier version and
+`blocks` from the new one, and refuse a newer version whole as the reader
+already does.
+
+*This got smaller.* It was two files. The snapshot carries the plan document
+itself since version 3, so there is one `weeks` key on the wire rather than two
+spellings of the same word in two formats — and renaming it is now a change to
+one reader.
 
 *What it needs:* the version bump, the reader's two-key path, wire tests for
 both spellings, and the MCP schema and tool description updated in the same
