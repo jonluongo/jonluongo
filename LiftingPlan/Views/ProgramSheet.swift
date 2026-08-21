@@ -27,9 +27,7 @@ struct ProgramSheet: View {
             .navigationTitle("The programme")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
+                CloseToolbarItem("Close the programme") { dismiss() }
             }
         }
     }

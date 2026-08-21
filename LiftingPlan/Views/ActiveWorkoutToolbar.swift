@@ -21,6 +21,12 @@ struct ActiveWorkoutToolbar: ToolbarContent {
         // A number pad has no return key, so without this the only way out of a
         // weight field is to scroll the list — which is a poor thing to require
         // of someone holding the phone in one hand between sets.
+        //
+        // **This one stays a word, and is the only one that does.** Every
+        // presented screen closes with `CloseToolbarItem`'s `xmark`; this
+        // dismisses a keyboard rather than a screen, which is a different act
+        // and one iOS has already taught with this exact word in this exact
+        // place. An `xmark` above the keys would read as *discard what I typed*.
         ToolbarItemGroup(placement: .keyboard) {
             Spacer()
             Button("Done") { Self.dismissKeyboard() }

@@ -31,9 +31,7 @@ struct AccountView: View {
             .navigationTitle("The lifter")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
+                CloseToolbarItem("Close the lifter's page") { dismiss() }
             }
         }
     }

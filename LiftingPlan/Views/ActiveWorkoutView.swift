@@ -142,10 +142,7 @@ struct ActiveWorkoutView: View {
                 // and only dismiss now: Finish lives under the last set, so the
                 // corner that once marked an untouched session as trained can
                 // safely hold the thing everyone reads it as.
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { dismiss() } label: { Image(systemName: "xmark") }
-                        .accessibilityLabel("Close workout")
-                }
+                CloseToolbarItem("Close workout") { dismiss() }
                 // How long he has been training, counting from the first ticked
                 // set. It lived in the header of a screen that no longer exists,
                 // and went with it — another thing the restructure dropped

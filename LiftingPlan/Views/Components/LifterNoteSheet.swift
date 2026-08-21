@@ -12,10 +12,13 @@ import SwiftUI
 /// plan. They are drawn the same way at the foot of the panel and stored apart,
 /// because whichever of them wrote last would otherwise erase the other.
 ///
-/// **How it is used.** Presented from the exercise's menu with whatever he
-/// wrote last, and `onSave` is called with the text he leaves — trimmed, and
-/// `nil` when he has cleared it, so a note emptied is a note gone rather than
-/// an empty one kept.
+/// **How it is used.** Presented from the note line at the foot of the
+/// exercise's panel with whatever he wrote last. `onSave` is called with the
+/// text he leaves — trimmed, and `nil` when he has cleared it, so a note emptied
+/// is a note gone rather than an empty one kept.
+///
+/// **It saves on the way out rather than behind a button**, so the corner can
+/// hold the same `xmark` every other presented screen holds. See `onDisappear`.
 ///
 /// **What it depends on.** `Palette`, `Spacing` and the type ramp. It reads no
 /// model and writes nothing itself.
@@ -54,13 +57,19 @@ struct LifterNoteSheet: View {
             .navigationTitle(exerciseName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                        onSave(trimmed.isEmpty ? nil : trimmed)
-                        dismiss()
-                    }
-                }
+                CloseToolbarItem("Close note") { dismiss() }
+            }
+            // **The note is written on the way out, however he leaves.**
+            // *Done* used to be the only thing that saved it, and the grabber
+            // above it dismissed without saving — so the gesture iOS teaches for
+            // closing a sheet silently threw away what he had typed. Committing
+            // here catches the button, the grabber and the swipe with one path,
+            // and it is what every other field in the app already does: a set
+            // row writes when it loses focus, and nothing in this app has a
+            // Save button.
+            .onDisappear {
+                let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                onSave(trimmed.isEmpty ? nil : trimmed)
             }
             // Straight into the field: he opened this to write, and a keyboard
             // he has to summon is a tap between him and the thing he came for.
