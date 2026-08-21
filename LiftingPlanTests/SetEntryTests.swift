@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import SwiftData
 @testable import LiftingPlan
 import LiftingKit
 
@@ -125,5 +126,69 @@ struct SetEntryTests {
     func carryTakesAComma() {
         #expect(SetEntry.distance(from: "12,5", in: .metres)
             == Distance(value: 12.5, unit: .metres))
+    }
+}
+
+/// What an added row shows before he types into it.
+///
+/// **A control that works and cannot be found.** An added set has no
+/// prescription, so it had neither a value nor a placeholder — two empty boxes
+/// that looked like blank space. Editing a recorded row *does* commit, so he
+/// could have typed into it; nothing on screen said so.
+@MainActor
+@Suite("An added row's placeholders")
+struct AddedRowPlaceholderTests {
+
+    private func session() throws -> (ModelContext, Session, PlannedExercise) {
+        let context = try StoreFixture.imported(StoreFixture.plan(sessions: 1))
+        let session = try #require(try StoreFixture.sessions(in: context).first)
+        return (context, session, try #require(session.orderedExercises.first))
+    }
+
+    private func log(_ context: ModelContext, _ session: Session) -> SessionLog {
+        SessionLog(
+            session: session, context: context,
+            restTimer: RestTimerModel(), restPreferences: RestPreferences())
+    }
+
+    @Test("It hints the set he just did, since an extra set is usually that again")
+    func itHintsTheSetBefore() throws {
+        let (context, session, exercise) = try session()
+        let log = log(context, session)
+        let first = try #require(SessionOrder.trainingOrder(of: session).first)
+        try log.record(first, load: Mass(value: 245, unit: .pounds), reps: 3,
+                       durationSeconds: nil, distance: nil as Distance?)
+
+        try log.addSet(to: exercise, warmup: false,
+                       at: Date().addingTimeInterval(120))
+
+        let added = try #require(SessionOrder.trainingOrder(of: session).last)
+        let shown = SetRowPrescription(slot: added, previous: nil)
+        #expect(added.planned == nil)
+        #expect(shown.loadPlaceholder == "245")
+        #expect(shown.workPlaceholder == "3")
+    }
+
+    @Test("A prescribed row still shows what was prescribed")
+    func thePrescriptionStillWins() throws {
+        // The hint fills a field that would otherwise be blank. It must never
+        // stand in front of a figure the coach wrote.
+        let (_, session, _) = try session()
+        let slot = try #require(SessionOrder.trainingOrder(of: session).first)
+        let shown = SetRowPrescription(slot: slot, previous: nil)
+
+        #expect(shown.loadPlaceholder == "100", "the prescription's own load")
+        #expect(shown.workPlaceholder == "5")
+    }
+
+    @Test("With nothing recorded yet, an added row hints nothing rather than zero")
+    func nothingRecordedHintsNothing() throws {
+        let (context, session, exercise) = try session()
+        try log(context, session).addSet(to: exercise, warmup: false)
+
+        let added = try #require(SessionOrder.trainingOrder(of: session).last)
+        let shown = SetRowPrescription(slot: added, previous: nil)
+        #expect(shown.loadPlaceholder == "")
+        #expect(shown.workPlaceholder == "")
     }
 }

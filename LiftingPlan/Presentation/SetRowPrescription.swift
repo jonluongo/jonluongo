@@ -46,13 +46,45 @@ struct SetRowPrescription {
     /// a dash hints at nothing while making a fresh table look broken.
     var loadPlaceholder: String {
         if let load = slot.planned?.load { return load.value.compactString }
+        if let hint = lastLoadThisSession { return hint }
         return previousLoad
     }
 
     /// What the empty work field shows: the target as the coach wrote it —
     /// `8-12`, `45s`, `40m`, `AMRAP`.
     var workPlaceholder: String {
-        slot.planned?.target?.shorthand ?? ""
+        if let target = slot.planned?.target { return target.shorthand }
+        return lastRepsThisSession
+    }
+
+    /// What he last put on the bar for this movement *today*, for a row nobody
+    /// prescribed.
+    ///
+    /// **An added row had no value and no placeholder, so it read as blank space
+    /// rather than as a field.** He could type into it — editing a recorded row
+    /// commits — but nothing on screen said so, which is a control that works
+    /// and cannot be found.
+    ///
+    /// The last set of the same movement is the number he would have looked up:
+    /// an extra set is nearly always the set he just did again. It is a hint and
+    /// never a value — nothing is written until he types — which is the same
+    /// rule `previousLoad` follows for a prescription that named no load.
+    private var lastRecordedThisSession: PerformedSet? {
+        (slot.exercise.performed ?? [])
+            .flatMap { $0.sets ?? [] }
+            .filter { $0.completedAt < (slot.record?.completedAt ?? .distantFuture) }
+            .max { $0.completedAt < $1.completedAt }
+    }
+
+    private var lastLoadThisSession: String? {
+        guard slot.planned == nil, let load = lastRecordedThisSession?.load, load.value > 0
+        else { return nil }
+        return load.value.compactString
+    }
+
+    private var lastRepsThisSession: String {
+        guard slot.planned == nil, let last = lastRecordedThisSession else { return "" }
+        return SetEntry.workText(of: last, measure: .repetitions)
     }
 
     /// What he put on the bar for this set last time, where the coach named no
