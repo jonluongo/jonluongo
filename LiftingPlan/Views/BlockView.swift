@@ -46,7 +46,7 @@ struct BlockView: View {
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button { showingProgram = true } label: {
-                    Label("The programme", systemImage: "text.document")
+                    Label("The programme", systemImage: "clipboard")
                 }
                 Button { showingAccount = true } label: {
                     Label("The lifter", systemImage: "person.crop.circle")
