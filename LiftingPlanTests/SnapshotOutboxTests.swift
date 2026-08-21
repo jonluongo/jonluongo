@@ -51,7 +51,7 @@ struct SnapshotOutboxTests {
     func unreachableContainerIsShownToTheLifter() async throws {
         // Exactly the state of a phone with iCloud Drive turned off, which is
         // the failure that otherwise breaks the outbound half forever with no
-        // sign of it anywhere the lifter looks.
+        // sign of it anywhere the user looks.
         let transport = ICloudDocumentTransport(
             containerIdentifier: ICloudDocumentTransport.defaultContainerIdentifier,
             resolveContainer: { _ in nil }
@@ -242,7 +242,7 @@ struct SnapshotOutboxTests {
         // The check reads `ubiquitousItemUploadingError` off the file. On a
         // plain folder — a simulator, a test, a server pointed somewhere with
         // `--documents` — the key is simply absent, and reading absence as a
-        // failure would put "iCloud has not taken it" in front of a lifter
+        // failure would put "iCloud has not taken it" in front of a user
         // whose record is exactly where it belongs.
         let url = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).json")
         try Data("{}".utf8).write(to: url)

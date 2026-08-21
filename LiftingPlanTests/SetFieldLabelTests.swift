@@ -9,7 +9,7 @@ import LiftingKit
 /// row the placeholder is the prescription — so the weight field of a set
 /// prescribed at 185 announced itself as "185", next to a work field announcing
 /// "8-12". Neither said which of the two it was, on the one screen where a
-/// lifter enters numbers he may not be able to see.
+/// user enters numbers he may not be able to see.
 ///
 /// Every label here names the field *and* the set, because a row is one of
 /// several and "repetitions" alone does not say which.

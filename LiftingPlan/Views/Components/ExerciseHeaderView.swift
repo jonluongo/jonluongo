@@ -19,7 +19,7 @@ import LiftingKit
 /// full-width tappable row above the column headers, which gave the most
 /// prominent place on the card to the one thing on it nobody came to read; it
 /// moved into this line, and then off the screen entirely. What it prescribes is
-/// stated on Home beside the sets and the reps, before the lifter decides to
+/// stated on Home beside the sets and the reps, before the user decides to
 /// train; under the bar it arrives as a countdown when a set is ticked, which is
 /// the form it is actually used in. A third statement of it, on the card, was
 /// crowding the sets to repeat something already said and already running. The
@@ -36,7 +36,7 @@ import LiftingKit
 /// the foot of the menu: it adds work the plan did not ask for.
 ///
 /// **There is no icon.** Every exercise drew the same dumbbell in the same
-/// circle, so the glyph told a lifter nothing about which exercise he was
+/// circle, so the glyph told a user nothing about which exercise he was
 /// looking at while indenting every name by forty-eight points. A mark
 /// identical everywhere it appears is decoration.
 ///
@@ -55,7 +55,7 @@ struct ExerciseHeaderView: View {
     /// Records a set past the ones prescribed — the fifth he actually did.
     var onAddSet: () -> Void
     var onAddWarmup: () -> Void
-    /// Opens the lifter's own note about performing this movement today.
+    /// Opens the user's own note about performing this movement today.
     /// Whether the session has been marked finished. Adding work to a session
     /// that is over is an edit to the record, so those two items go; reading
     /// about the movement, setting the clock and writing what happened are not,
@@ -77,7 +77,7 @@ struct ExerciseHeaderView: View {
     /// three rows whose rep fields each read `10-12`. The count is the number of
     /// rows and the target is in every one of them; only the effort was not
     /// anywhere else on the card.
-    /// Named where a lifter reads it, above the movement it belongs to.
+    /// Named where a user reads it, above the movement it belongs to.
     ///
     /// The word is back and the code is not. `Superset A` was a letter
     /// distinguishing a group from a B that usually does not exist, plus an
@@ -106,22 +106,22 @@ struct ExerciseHeaderView: View {
         CardHeaderRow(title: name, subtitle: subtitle, eyebrow: eyebrow) {
             Menu {
                 Button { onShowInfo() } label: {
-                    Label("About This Exercise", systemImage: "info")
+                    Label("About this exercise", systemImage: "info")
                 }
                 Button { onEditRest() } label: {
-                    Label("Rest Timer", systemImage: "timer")
+                    Label("Rest timer", systemImage: "timer")
                 }
                 // Warm-up first, extra set last, and the extra set says
-                // *extra*: "Add Set" beside "Add Warmup Set" read as though one
+                // *extra*: "Add set" beside "Add warm-up set" read as though one
                 // of them were the ordinary way to add a set, when both are
                 // additions past what was prescribed. The one at the foot is the
                 // one that adds work the plan did not ask for.
                 if !isLocked {
                     Button { onAddWarmup() } label: {
-                        Label("Add Warmup Set", systemImage: "flame")
+                        Label("Add warm-up set", systemImage: "flame")
                     }
                     Button { onAddSet() } label: {
-                        Label("Add Extra Set", systemImage: "plus")
+                        Label("Add extra set", systemImage: "plus")
                     }
                 }
             } label: {

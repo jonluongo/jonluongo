@@ -9,7 +9,7 @@ import LiftingKit
 /// **The report that started this.** The coach was told a block held four
 /// sessions when it held nine — Push weeks one to three, Pull missing entirely.
 /// A snapshot that under-reports is the one failure that arrives looking like a
-/// fact: it does not look like an error, it looks like a lifter who has trained
+/// fact: it does not look like an error, it looks like a user who has trained
 /// less than he has, and the next plan is written against it.
 ///
 /// So the first thing here builds more than fits in one fetch batch and counts

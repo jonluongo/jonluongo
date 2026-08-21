@@ -75,7 +75,7 @@ struct ExerciseGroup: Identifiable {
     /// The rest taken after each round, or `nil` when the plan prescribed none.
     var restSeconds: Int? { members.last?.restSeconds }
 
-    /// The exercise whose clock this group follows. The lifter's own rest is
+    /// The exercise whose clock this group follows. The user's own rest is
     /// kept per exercise, and the group's rest is the one after its last
     /// movement, so that is the exercise a choice about this group is recorded
     /// against.
@@ -96,7 +96,7 @@ struct ExerciseGroup: Identifiable {
     ///
     /// `nil` when every set of the group has been performed, or when the
     /// position has no answer — a movement prescribed fewer sets than its
-    /// partner simply has none to offer, and the lifter is left where he is
+    /// partner simply has none to offer, and the user is left where he is
     /// rather than sent somewhere arbitrary.
     func setAfter(_ set: PlannedSet, of member: PlannedExercise) -> PlannedSet? {
         guard let memberIndex = members.firstIndex(where: { $0 === member }) else { return nil }

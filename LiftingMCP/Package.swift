@@ -2,7 +2,7 @@
 import PackageDescription
 
 // The Mac's half of the loop: a command-line executable that speaks MCP over
-// stdio so Claude can read the lifter's training snapshot and write him a plan.
+// stdio so Claude can read the user's training snapshot and write him a plan.
 //
 // It links `LiftingKit` and nothing else — no third-party packages at all. The
 // MCP surface a local stdio server needs is six JSON-RPC methods, which is less

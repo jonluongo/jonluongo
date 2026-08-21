@@ -1,7 +1,7 @@
 import Foundation
 import LiftingKit
 
-/// What one row of a set table shows besides the two numbers the lifter types.
+/// What one row of a set table shows besides the two numbers the user types.
 ///
 /// **What it does.** Turns a row's prescription into the two placeholders in
 /// front of him: what to put on the bar, and what to do with it.
@@ -14,7 +14,7 @@ import LiftingKit
 ///
 /// **Nothing is converted.** A load is drawn in the unit it was prescribed in,
 /// exactly as `Mass` keeps it — the display unit that used to convert here was a
-/// fact about the lifter, and it lives in `ACCOUNT.md` with the rest of him.
+/// fact about the user, and it lives in `ACCOUNT.md` with the rest of him.
 ///
 /// **A placeholder is never a value.** The prescription reaches him without the
 /// app claiming he lifted it, and nothing is logged until he types.
@@ -56,7 +56,7 @@ struct SetRowPrescription {
     /// load.
     ///
     /// **The prescription always wins.** This fills a field that would otherwise
-    /// be blank, with the one number a lifter would have looked up anyway. It is
+    /// be blank, with the one number a user would have looked up anyway. It is
     /// asked only where nothing was prescribed, so it never stands in front of a
     /// figure the coach wrote.
     private var previousLoad: String {

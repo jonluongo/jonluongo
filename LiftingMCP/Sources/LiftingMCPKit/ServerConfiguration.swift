@@ -5,7 +5,7 @@ import Foundation
 /// Build one with `resolve(arguments:environment:home:)` at launch and hand its
 /// `documentsDirectory` to a `DocumentFolder`. The path is deliberately
 /// overridable — the shared iCloud folder only exists on a Mac signed into the
-/// lifter's Apple ID with the app installed on a device, so a fixture folder
+/// user's Apple ID with the app installed on a device, so a fixture folder
 /// has to be reachable for testing and for a dry run before the phone has ever
 /// backgrounded.
 ///

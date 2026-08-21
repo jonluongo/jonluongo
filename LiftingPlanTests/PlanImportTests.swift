@@ -14,7 +14,7 @@ import LiftingKit
 ///
 /// **And the merge rule is what lets the coach write a week at a time.** He may
 /// rewrite a session nothing has been logged against and may not touch one the
-/// lifter has been through: a set he ticked is the record of what happened.
+/// user has been through: a set he ticked is the record of what happened.
 @Suite("Taking a plan in")
 struct PlanImportTests {
 

@@ -8,7 +8,7 @@ import SwiftUI
 /// beside the way to take that back.
 ///
 /// **A session with sets left greys the button and asks once.** It is never
-/// disabled: whether he is finished is the lifter's to say, and a screen that
+/// disabled: whether he is finished is the user's to say, and a screen that
 /// refuses to record three good sets because the plan wrote four is the app
 /// making a training decision. So the colour says "not yet, surely?", the dialog
 /// counts exactly what is left, and pressing through is one tap away.
@@ -17,12 +17,12 @@ import SwiftUI
 /// the button that dismisses a sheet, and a `Finish` there was pressed as a way
 /// out — marking a session with nothing filled in as trained. Finishing is not a
 /// way out; it is a claim about what happened, and it belongs past the last set,
-/// where a lifter arrives having made it. Leaving is the chevron, and leaving
+/// where a user arrives having made it. Leaving is the chevron, and leaving
 /// changes nothing.
 ///
 /// **It is the same button as Start.** Both are the one thing to do at their
 /// point in the session, so they are drawn by `PrimaryActionButton` — the type
-/// that exists because "Start Workout", "Finish Workout" and "Start 2min" had
+/// that exists because "Start workout", "Finish workout" and "Start 2min" had
 /// once drifted into three buttons of different heights and colours. This
 /// section first drew a hand-rolled one, which was that drift happening again.
 /// It carries the accent, not green: green marks what the record already holds
@@ -51,7 +51,7 @@ struct SessionFinishSection: View {
     @State private var asking = false
 
     /// What the dialog asks, counting what is actually left rather than saying
-    /// "some". A lifter who stopped one set short and one who stopped nine sets
+    /// "some". A user who stopped one set short and one who stopped nine sets
     /// short are being asked different questions.
     private static func question(_ unlogged: Int) -> String {
         "\(unlogged) set\(unlogged == 1 ? "" : "s") not logged. Finish anyway?"
@@ -67,7 +67,7 @@ struct SessionFinishSection: View {
             // session is logged is said by the record and by the panels above,
             // which are already on the recorded ground.
             PrimaryActionButton(
-                title: isLogged ? "Mark as Unfinished" : "Finish Workout",
+                title: isLogged ? "Mark as Unfinished" : "Finish workout",
                 systemImage: isLogged ? "arrow.uturn.backward" : "checkmark",
                 // Taking a session back is a correction, not an action the
                 // screen is for, so it carries no fill at all. Finishing one
@@ -85,8 +85,8 @@ struct SessionFinishSection: View {
                 Self.question(unloggedSetCount), isPresented: $asking,
                 titleVisibility: .visible
             ) {
-                Button("Finish Workout") { onFinish() }
-                Button("Keep Going", role: .cancel) {}
+                Button("Finish workout") { onFinish() }
+                Button("Keep going", role: .cancel) {}
             }
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)

@@ -52,8 +52,8 @@ struct SnapshotWireShapeTests {
                                       "sessions", "performances"])
     }
 
-    @Test("Nothing about the lifter is written, ever")
-    func theLifterIsNotOnThisWire() throws {
+    @Test("Nothing about the user is written, ever")
+    func theUserIsNotOnThisWire() throws {
         // Who he is, what he owns, what he avoids and what he weighs are prose
         // in `ACCOUNT.md`. A field here would be a second place to say them, and
         // the two would drift.
@@ -109,7 +109,7 @@ struct SnapshotWireShapeTests {
         ]))
         let performance = try #require((written["performances"] as? [[String: Any]])?.first)
 
-        #expect(performance["lifterNote"] == nil)
+        #expect(performance["userNote"] == nil)
         #expect(performance["blockOrdinal"] == nil, "a stated baseline has no session")
 
         let set = try #require((performance["sets"] as? [[String: Any]])?.first)
@@ -143,7 +143,7 @@ struct SnapshotWireShapeTests {
     func aHandWrittenSnapshotReads() throws {
         let data = Data("""
             {
-              "version": 6,
+              "version": 7,
               "exportedAt": "2023-11-14T22:13:20Z",
               "catalogVersion": 5,
               "sessions": [{
@@ -180,7 +180,7 @@ struct SnapshotWireShapeTests {
     @Test("An unknown key inside a performance is refused, naming it")
     func anUnknownKeyInsideAPerformanceIsRefused() throws {
         let data = Data("""
-            {"version": 6, "exportedAt": "2023-11-14T22:13:20Z", "catalogVersion": 5,
+            {"version": 7, "exportedAt": "2023-11-14T22:13:20Z", "catalogVersion": 5,
              "performances": [{"exerciseID": "barbell-bench-press",
                                "occurredAt": "2023-11-14T22:13:20Z",
                                "weekday": 2, "sets": []}]}

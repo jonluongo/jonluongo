@@ -219,7 +219,7 @@ extension JSONValue {
         date.map(Self.date) ?? .null
     }
 
-    /// A weight as the lifter entered it, never converted. `nil` stays `null`,
+    /// A weight as the user entered it, never converted. `nil` stays `null`,
     /// which is how a bodyweight movement is told apart from an empty bar.
     public static func mass(_ mass: Mass?) -> JSONValue {
         guard let mass else { return .null }

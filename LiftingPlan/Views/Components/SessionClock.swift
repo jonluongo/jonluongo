@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// How long the lifter trained.
+/// How long the user trained.
 ///
 /// **What it does.** Counts from the first ticked set, second by second, and
 /// stops when the session is finished — at the moment Finish was pressed, or at

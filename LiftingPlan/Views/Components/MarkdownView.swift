@@ -98,7 +98,7 @@ struct MarkdownView: View {
     /// the panel it names share a line, plus `listRow` insets, background and
     /// separator. Inside this scroll view the list modifiers did nothing and the
     /// inset stacked on top of the container's own padding — so every heading on
-    /// the lifter's page and the programme's sat indented from the prose beneath
+    /// the user's page and the programme's sat indented from the prose beneath
     /// it, and nothing on either screen shared a left edge. One component, two
     /// screens, one defect.
     @ViewBuilder

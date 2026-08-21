@@ -9,7 +9,7 @@ import LiftingKit
 /// nothing on the exercise to inherit — which is what removed the second code
 /// path and the place a prescription could drift from what was written.
 ///
-/// **`nil` means he did not say.** An absent load is the lifter picking the bar,
+/// **`nil` means he did not say.** An absent load is the user picking the bar,
 /// which is what `intensity` is for; an absent target is a set defined entirely
 /// by its load. Nothing here is ever filled in with a number the app chose.
 ///
@@ -27,11 +27,11 @@ final class PlannedSet {
     /// Whether the coach prescribed this as a warm-up.
     ///
     /// He could not say this before: everything prescribed was hardcoded as
-    /// work, and only a set the lifter added himself was ever marked, so
+    /// work, and only a set the user added himself was ever marked, so
     /// *"ramp three sets to your top set"* had no way of being written down.
     var isWarmup: Bool = false
     /// The external load. `nil` for a bodyweight movement, and `nil` when the
-    /// coach left the bar to the lifter.
+    /// coach left the bar to the user.
     var load: Mass?
     /// How hard this set should be. `nil` when the coach stated none — never a
     /// zero, and never inferred from the load.

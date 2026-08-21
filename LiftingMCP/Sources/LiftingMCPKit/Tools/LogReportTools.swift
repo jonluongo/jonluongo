@@ -59,7 +59,7 @@ extension ToolRunner {
             "source": .string(performed.source.rawValue),
             "blockOrdinal": performed.blockOrdinal.map { .integer($0) } ?? .null,
             "sessionOrdinal": performed.sessionOrdinal.map { .integer($0) } ?? .null,
-            "lifterNote": .text(performed.lifterNote),
+            "userNote": .text(performed.userNote),
             // Beside what he did rather than restated on every set: one
             // prescription, one performance, read together.
             "prescribed": prescribed[coordinates].map(prescription) ?? .null,
@@ -141,7 +141,7 @@ extension ToolRunner {
             "performances": .array(record.performances.map { performed in
                 .object([
                     "exerciseID": .string(performed.exerciseID.rawValue),
-                    "lifterNote": .text(performed.lifterNote),
+                    "userNote": .text(performed.userNote),
                     "sets": .array(performed.sets.map(Self.performedSet)),
                 ])
             }),

@@ -3,7 +3,7 @@ import LiftingKit
 
 /// What each field of a set row is called aloud.
 ///
-/// **What it does.** Names the two fields a lifter types into — the load, and
+/// **What it does.** Names the two fields a user types into — the load, and
 /// whatever this exercise measures its work in — so each says what it is and
 /// which set it belongs to.
 ///
@@ -11,7 +11,7 @@ import LiftingKit
 /// placeholder, and here the placeholder is the *prescription*: the weight field
 /// of a set prescribed at 185 announced itself as "185", and the work field of
 /// one prescribed 8-12 announced itself as "8-12". Two adjacent fields, both
-/// naming a figure and neither naming itself, on the one screen where a lifter
+/// naming a figure and neither naming itself, on the one screen where a user
 /// is entering numbers he cannot see. The badge beside them and the check at the
 /// end were both labelled; these were not.
 ///

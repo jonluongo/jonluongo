@@ -15,9 +15,9 @@ import SwiftUI
 /// **What it depends on.** SwiftUI only — it holds no timer and knows nothing
 /// about rest; `RestTimerModel` does the counting.
 ///
-/// The ring scales with the lifter's text size. It used to draw its countdown
+/// The ring scales with the user's text size. It used to draw its countdown
 /// at `.system(size: size * 0.22)`, which at the bar's 52pt ring is 11.4pt,
-/// fixed: the one number a lifter reads from under a loaded bar was the only
+/// fixed: the one number a user reads from under a loaded bar was the only
 /// text in the app that did not answer Dynamic Type, and everything around it
 /// grew while it stayed put.
 struct TimerRing: View {
@@ -26,14 +26,14 @@ struct TimerRing: View {
     var timeText: String
     var isRunning: Bool
     /// The ring's diameter at the default text size. It is multiplied by the
-    /// lifter's text scale, so the ring and the time inside it grow together.
+    /// user's text scale, so the ring and the time inside it grow together.
     var size: CGFloat = 200
     var lineWidth: CGFloat = 14
     /// The countdown's type role. Metric by default, which is what a ring drawn
     /// at full size shows.
     var font: Font = .supersetMetric
 
-    /// The lifter's text scale, expressed as a multiplier so the ring's own
+    /// The user's text scale, expressed as a multiplier so the ring's own
     /// geometry can follow the type inside it.
     @ScaledMetric(relativeTo: .body) private var textScale: CGFloat = 1
 

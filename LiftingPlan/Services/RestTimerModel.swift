@@ -6,9 +6,9 @@ import UIKit
 #endif
 
 /// The between-sets pace timer. It counts down from an exercise's prescribed
-/// rest so a casual lifter keeps a tight tempo instead of drifting. It is
+/// rest so a casual user keeps a tight tempo instead of drifting. It is
 /// date-based, so it is accurate across backgrounding, and it fires a haptic and
-/// a sound at zero for the lifter who is looking at the screen.
+/// a sound at zero for the user who is looking at the screen.
 ///
 /// **The half that has to reach a pocketed phone is `ScreenLockedCue`.** This
 /// type owned that too — the notifications, the permission flow and the report
@@ -29,7 +29,7 @@ final class RestTimerModel {
     /// The rest length the current countdown started from, for the progress ring.
     private(set) var total: Int = 0
     private(set) var isRunning = false
-    /// What the lifter just finished, carried into the screen-locked cue —
+    /// What the user just finished, carried into the screen-locked cue —
     /// `Next up: Barbell Bench Press` — so the one moment he is not looking at
     /// the bar is the one moment he is told. The bar itself does not draw it:
     /// there is no room beside the controls, and on screen he already knows.
@@ -74,7 +74,7 @@ final class RestTimerModel {
         return String(format: "%d:%02d", minutes, seconds)
     }
 
-    /// Begin (or restart) a countdown of `seconds`, tied to a set the lifter just
+    /// Begin (or restart) a countdown of `seconds`, tied to a set the user just
     /// logged. The cue is armed for the same moment, and asks for permission
     /// itself the first time it is.
     func start(seconds: Int, context: String) {
@@ -170,7 +170,7 @@ final class RestTimerModel {
     // MARK: - Alerts
 
     /// Vibrate and play the standard alert sound, so the end of a rest is felt
-    /// and heard by a lifter looking at the phone.
+    /// and heard by a user looking at the phone.
     @MainActor
     static func playInHandAlert() {
         AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)

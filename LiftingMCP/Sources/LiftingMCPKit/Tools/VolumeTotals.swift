@@ -76,7 +76,7 @@ struct MuscleVolume {
 /// as something other than resistance training, and reads it back once as
 /// `excluded`. It exists because the alternative — counting those sets and
 /// counting them nowhere — are both wrong: the first reports a bike ride as
-/// quadriceps training, and the second tells a reader a lifter did nothing on a
+/// quadriceps training, and the second tells a reader a user did nothing on a
 /// day he trained for forty minutes.
 ///
 /// It totals and names; it does not rank. Nothing here decides what an hour of
@@ -133,7 +133,7 @@ struct ExcludedWork {
         return "\(sets) completed working \(sets == 1 ? "set was" : "sets were") logged as "
             + "\(namedCategories), which the muscle totals above do not count — they count "
             + "resistance training only. The work happened; it is stated here in the units it "
-            + "was performed in, so a lifter who trained is never reported as a lifter who did "
+            + "was performed in, so a user who trained is never reported as a user who did "
             + "nothing. What it is worth beside a set of squats is not this server's to say."
     }
 

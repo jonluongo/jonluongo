@@ -1,7 +1,7 @@
 import Foundation
 
 extension Double {
-    /// The number as the lifter would write it on a whiteboard: `135`, not
+    /// The number as the user would write it on a whiteboard: `135`, not
     /// `135.0`, but `62.5` kept intact.
     ///
     /// Used wherever a weight or a distance is rendered — the set table, the

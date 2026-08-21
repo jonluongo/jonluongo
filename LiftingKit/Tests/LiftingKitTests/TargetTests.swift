@@ -59,7 +59,7 @@ struct TargetTests {
     @Test("As many as possible is a prescription, not an unreadable one")
     func toFailureIsItsOwnCase() throws {
         // Before this type, `"AMRAP"` read as `.repetitions` with an empty
-        // range and was shown to the lifter verbatim. A strictly typed target
+        // range and was shown to the user verbatim. A strictly typed target
         // that refused it would take a prescription coaches actually write out
         // of the vocabulary, so it is stated rather than lost.
         for text in ["AMRAP", "amrap", "to failure", "max reps"] {
@@ -143,7 +143,7 @@ struct TargetTests {
     @Test("A typed object missing what its measure needs is refused")
     func anIncompleteTypedTargetIsRefused() {
         // `distance` without a unit is a number nobody can act on: forty of
-        // what? Refusing beats defaulting to metres for a lifter who trains in
+        // what? Refusing beats defaulting to metres for a user who trains in
         // yards.
         let cases = [
             #"{"measure":"distance","low":40}"#,

@@ -1,7 +1,7 @@
 import Foundation
 import LiftingKit
 
-/// What a set row's two fields show, and what a lifter's typing means.
+/// What a set row's two fields show, and what a user's typing means.
 ///
 /// **What it does.** Translates between a `PerformedSet`'s stored values and the
 /// strings in the row's weight and work fields — both directions, for all four
@@ -28,7 +28,7 @@ enum SetEntry {
 
     // MARK: - The weight field
 
-    /// What the weight field shows: the load in the lifter's own unit, or
+    /// What the weight field shows: the load in the user's own unit, or
     /// nothing at all when no load was recorded. A set logged without one shows
     /// an empty field rather than a zero he did not lift.
     static func text(for load: Mass?, in unit: MassUnit) -> String {
@@ -37,7 +37,7 @@ enum SetEntry {
 
     /// The load a typed string means, or `nil` when it means none.
     ///
-    /// A comma is read as a decimal point, because a lifter typing `2,5` on a
+    /// A comma is read as a decimal point, because a user typing `2,5` on a
     /// keyboard that offers one has typed two and a half. Anything else that is
     /// not a number — a stray letter, a half-typed entry — clears the load
     /// rather than keeping the last good value, so the field and the record

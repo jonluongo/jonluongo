@@ -34,7 +34,7 @@ enum ICloudTransportError: Error, LocalizedError, Equatable {
 /// no server and no account to manage.
 ///
 /// The container is resolved on every call rather than once at launch, because
-/// iCloud can become available after the app has started — a lifter who signs
+/// iCloud can become available after the app has started — a user who signs
 /// in should not have to relaunch. Resolution that fails throws
 /// `ICloudTransportError.containerUnavailable`; it never falls back to a local
 /// folder, which would look like a working export while the Mac saw nothing.

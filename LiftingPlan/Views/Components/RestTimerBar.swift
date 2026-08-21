@@ -7,7 +7,7 @@ import SwiftUI
 /// cue could not be armed, the reason is shown here rather than logged and
 /// forgotten. Tapping it dismisses it. An alert would be wrong — this is mid-set
 /// and the countdown itself is working fine — but silence would be worse, since
-/// the whole point of the notification is that the lifter is not looking.
+/// the whole point of the notification is that the user is not looking.
 struct RestTimerBar: View {
     var restTimer: RestTimerModel
     /// Opens the clock at full size. Only the ring and the word carry it: the
@@ -80,14 +80,14 @@ struct RestTimerBar: View {
                 // 52pt ring, and "59:59" at Metric does not. Raising it is the
                 // logging screen's own work, which is where the bar's shape is
                 // decided; what matters here is that it is a text style at all,
-                // so it grows when the lifter's type does.
+                // so it grows when the user's type does.
                 font: .supersetSupport
             )
 
             // **The movement is not named here.** The ring, `−15`, `+15` and
             // skip take most of the bar, so the name arrived as
             // `Barbell Benc…` — a label naming nothing, in the one place the
-            // lifter already knows the answer, because he ticked the set a
+            // user already knows the answer, because he ticked the set a
             // second ago. Inside a group it would be worse than useless: the
             // rest belongs to the round, not to whichever movement closed it.
             //

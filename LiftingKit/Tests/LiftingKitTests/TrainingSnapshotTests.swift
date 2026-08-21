@@ -4,7 +4,7 @@ import Foundation
 
 /// What the record carries to the coach, and what it refuses.
 ///
-/// **The suite this replaced was mostly about the lifter.** It asserted a
+/// **The suite this replaced was mostly about the user.** It asserted a
 /// profile's goal, experience, constraints, equipment, avoid lists, bodyweight
 /// series and strength baselines survived the wire — nine fields that were
 /// display-only in the app and are now prose in `ACCOUNT.md`, where he can be
@@ -35,7 +35,7 @@ struct TrainingSnapshotTests {
     ) -> SnapshotPerformedExercise {
         SnapshotPerformedExercise(
             exerciseID: bench, occurredAt: Self.instant, source: source,
-            blockOrdinal: block, sessionOrdinal: ordinal, lifterNote: "Felt heavy.",
+            blockOrdinal: block, sessionOrdinal: ordinal, userNote: "Felt heavy.",
             sets: [SnapshotPerformedSet(
                 setIndex: 0, load: Mass(value: 225, unit: .pounds), reps: 5,
                 completedAt: Self.instant)])
@@ -67,7 +67,7 @@ struct TrainingSnapshotTests {
         // stop the export going stale; it stops a stale read being convincing.
         let read = try roundTrip(snapshot())
         #expect(read.exportedAt == Self.later)
-        #expect(read.version == 6)
+        #expect(read.version == 7)
         #expect(read.catalogVersion == 5)
     }
 
@@ -123,7 +123,7 @@ struct TrainingSnapshotTests {
         #expect(performed.exerciseID == bench)
         #expect(performed.sets.count == 1)
         #expect(performed.sets.first?.reps == 5)
-        #expect(performed.lifterNote == "Felt heavy.")
+        #expect(performed.userNote == "Felt heavy.")
     }
 
     @Test("A performance says which session it belongs to")
@@ -229,8 +229,8 @@ struct TrainingSnapshotTests {
         // A plan is an archive and an older one must read forever. A snapshot is
         // a cache the phone rewrites whenever the record changes, so an old one
         // is a stale file rather than history — and reading it half-way would
-        // report a lifter who has trained less than he has.
-        for stated in [5, 7] {
+        // report a user who has trained less than he has.
+        for stated in [6, 8] {
             let error = #expect(throws: DocumentRefusal.self, "\(stated)") {
                 try decoded("""
                     {"version": \(stated), "exportedAt": "2023-11-14T22:13:20Z",
@@ -239,7 +239,7 @@ struct TrainingSnapshotTests {
             }
             let message = try #require(error?.errorDescription)
             #expect(message.contains("\(stated)"))
-            #expect(message.contains("6"))
+            #expect(message.contains("7"))
         }
     }
 
@@ -247,7 +247,7 @@ struct TrainingSnapshotTests {
     func anUnknownKeyIsRefused() throws {
         let error = #expect(throws: DocumentRefusal.self) {
             try decoded("""
-                {"version": 6, "exportedAt": "2023-11-14T22:13:20Z",
+                {"version": 7, "exportedAt": "2023-11-14T22:13:20Z",
                  "catalogVersion": 5, "profile": {"goal": "Get strong"}}
                 """)
         }

@@ -61,7 +61,7 @@ enum SnapshotExporter {
             source: performed.source,
             blockOrdinal: performed.session?.blockOrdinal,
             sessionOrdinal: performed.session?.ordinal,
-            lifterNote: performed.lifterNote,
+            userNote: performed.userNote,
             sets: performed.orderedSets.map(snapshot(of:)))
     }
 

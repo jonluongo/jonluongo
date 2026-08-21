@@ -14,7 +14,7 @@ import LiftingKit
 /// from LiftingKit. It reports and concludes nothing.
 struct SessionRecord: Sendable {
 
-    /// What the coach prescribed, and whether the lifter finished it.
+    /// What the coach prescribed, and whether the user finished it.
     let session: SnapshotSession
     /// What he actually did in it, one entry per movement.
     let performances: [SnapshotPerformedExercise]
@@ -75,7 +75,7 @@ enum TrainingLog {
     /// The sessions that actually happened, most recent first.
     ///
     /// **A session prescribed and never trained is not a session.** Reporting it
-    /// as one would tell the coach a lifter trained on a day he did not.
+    /// as one would tell the coach a user trained on a day he did not.
     static func trained(in snapshot: TrainingSnapshot) -> [SessionRecord] {
         sessions(in: snapshot)
             .filter(\.wasTrained)

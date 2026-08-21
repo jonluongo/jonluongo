@@ -8,7 +8,7 @@ import LiftingKit
 ///
 /// iOS delivers a notification that fires in the foreground to the delegate and
 /// nowhere else; with no delegate it is filed silently. The rest timer's whole
-/// job is to interrupt a lifter who is looking at the screen, so this says to
+/// job is to interrupt a user who is looking at the screen, so this says to
 /// present it as a banner, with its sound, exactly as it would on the lock
 /// screen. It decides nothing else and holds no state.
 private final class ForegroundAlerts: NSObject, UNUserNotificationCenterDelegate {
@@ -36,7 +36,7 @@ struct LiftingPlanApp: App {
     /// exercise reads the same data, stamped with the same version.
     private let catalog: ExerciseCatalog
     @State private var restTimer = RestTimerModel()
-    /// What the lifter has said about his own clock — on or off, and how long
+    /// What the user has said about his own clock — on or off, and how long
     /// on each exercise. One instance for the app, like the timer it feeds.
     @State private var restPreferences = RestPreferences()
     /// The coach's two markdown notes, mirrored locally so the account screen
@@ -106,7 +106,7 @@ struct LiftingPlanApp: App {
                     UNUserNotificationCenter.current().delegate = Self.foregroundAlerts
                 }
                 // Started once, for the life of the app: anything arriving
-                // from the Mac is taken in wherever the lifter happens to be.
+                // from the Mac is taken in wherever the user happens to be.
                 // The snapshot goes back out the moment something lands, so the
                 // coach is never reading a record written before the plan he
                 // just sent — see `DocumentInbox.onApplied`.
@@ -121,7 +121,7 @@ struct LiftingPlanApp: App {
         // Exporting on background, rather than behind a button, is what keeps
         // the snapshot honest: a coach reading a stale document is confidently
         // wrong, which is worse than one reading nothing, because stale data
-        // does not look like absence. Backgrounding is the moment the lifter
+        // does not look like absence. Backgrounding is the moment the user
         // has finished with the app and the log is complete.
         .onChange(of: scenePhase) { _, phase in
             guard phase == .background else { return }
@@ -137,7 +137,7 @@ struct LiftingPlanApp: App {
     /// task assertion holds it awake until the file has landed. What went wrong
     /// is not shown here — nothing can be presented from a scene that is
     /// leaving — but `SnapshotOutbox` keeps it, and `RootView` shows it the
-    /// next time the lifter opens the app.
+    /// next time the user opens the app.
     @MainActor
     private func exportSnapshot() {
         let assertion = BackgroundExportAssertion()

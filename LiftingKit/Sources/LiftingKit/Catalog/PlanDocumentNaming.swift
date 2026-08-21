@@ -14,7 +14,7 @@ import Foundation
 /// string both ends already hold was a key per exercise whose only possible
 /// outcomes were agreeing with the catalog or disagreeing with it. He may still
 /// send one — a plan written before this, or a name he has a reason for, reaches
-/// the lifter unchanged.
+/// the user unchanged.
 ///
 /// **How it is used.** `write_plan` names a document before writing it, and
 /// `PlanImporter` names one before taking it in — so a document that arrives

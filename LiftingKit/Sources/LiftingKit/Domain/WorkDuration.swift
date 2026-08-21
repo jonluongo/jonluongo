@@ -33,7 +33,7 @@ public struct WorkDuration: Hashable, Sendable, CustomStringConvertible {
     /// Whether the target is measured in time rather than in repetitions.
     ///
     /// True when the text names a time unit or writes a clock. This is what
-    /// decides which field the lifter is given, so it deliberately answers for
+    /// decides which field the user is given, so it deliberately answers for
     /// text whose number cannot be read: a hold with an unreadable duration is
     /// still a hold.
     public let isTimed: Bool

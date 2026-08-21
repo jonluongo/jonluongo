@@ -41,7 +41,7 @@ struct InfoSheet<Content: View>: View {
         .navigationBarTitleDisplayMode(.inline)
         // **The grabber was the only way out, and a grabber is a gesture.**
         // Every other presented screen states its exit in the corner; this one
-        // left the lifter to discover a drag. It is the same `xmark`, doing the
+        // left the user to discover a drag. It is the same `xmark`, doing the
         // same one job.
         .toolbar {
             CloseToolbarItem("Close \(title)") { dismiss() }

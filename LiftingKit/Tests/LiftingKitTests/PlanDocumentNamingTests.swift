@@ -38,7 +38,7 @@ struct PlanDocumentNamingTests {
         #expect(try named(written).first?.displayName == "Barbell Bench Press")
     }
 
-    @Test("A name the coach did state reaches the lifter unchanged")
+    @Test("A name the coach did state reaches the user unchanged")
     func statedNameIsKept() throws {
         // He may have a reason for it, and it is his document.
         let written = document([PlanDocumentExercise(

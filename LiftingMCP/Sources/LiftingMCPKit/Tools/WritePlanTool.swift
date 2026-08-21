@@ -26,14 +26,14 @@ extension ToolRunner {
     ///
     /// **A key this format does not have fails the call with the key named**,
     /// rather than being dropped. A dropped key is reported as "Written" while
-    /// the lifter never sees the prescription, which is worse than a refusal
+    /// the user never sees the prescription, which is worse than a refusal
     /// that can be read and corrected.
     ///
     /// The catalog version and timestamp are supplied here rather than asked
     /// for: they are facts about the write, and this is the code that knows
     /// them. **`routineID` is the exception, and it is what makes a routine
     /// grow.** Send the id the context resource reports and the blocks land on
-    /// the routine the lifter is already on; omit it and the id is fresh, which
+    /// the routine the user is already on; omit it and the id is fresh, which
     /// starts a new routine and closes the one before it. Writing next week's
     /// block is the first; changing programme is the second, and nothing has to
     /// guess which was meant.
@@ -102,7 +102,7 @@ extension ToolRunner {
         } catch {
             return .failure(
                 "The plan could not be written to \(documents.planLocation): "
-                    + "\(error.localizedDescription) Nothing was saved, so the lifter's phone "
+                    + "\(error.localizedDescription) Nothing was saved, so the user's phone "
                     + "will not see this plan.")
         }
 
@@ -145,7 +145,7 @@ extension ToolRunner {
     /// **The refusal belongs where the coach can see it.** The app refuses a
     /// plan that rewrites a block already trained, and it is right to: a set he
     /// ticked is the record of what happened. But that refusal reaches the
-    /// lifter's screen, not this conversation — the tool would answer
+    /// user's screen, not this conversation — the tool would answer
     /// "Written." and the plan would land nowhere, which is the one failure
     /// this project refuses everywhere else. So the same question is asked here,
     /// against the record the snapshot carries, and answered in the same turn

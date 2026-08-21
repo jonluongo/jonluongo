@@ -1,7 +1,7 @@
 import SwiftUI
 import LiftingKit
 
-/// Everything on record about the lifter, in his coach's words.
+/// Everything on record about the user, in his coach's words.
 ///
 /// **What it does.** Renders `ACCOUNT.md`. That is the whole of it.
 ///
@@ -15,7 +15,7 @@ import LiftingKit
 /// extracted, because the moment one has to be, it belongs in a table.
 ///
 /// **What it depends on.** `NotesStore` and `MarkdownView`. It writes nothing:
-/// the coach owns this file, and the app asks the lifter nothing.
+/// the coach owns this file, and the app asks the user nothing.
 struct AccountView: View {
 
     @Environment(NotesStore.self) private var notes: NotesStore?

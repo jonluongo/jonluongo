@@ -43,7 +43,7 @@ extension ToolRunner {
     /// `unattributed`, and sets whose exercise is conditioning or mobility come
     /// back under `excluded`, by category and in the units they were performed
     /// in. "The catalog cannot place this" and "this is not lifting volume" are
-    /// different facts, and a reader deciding whether a lifter is doing too much
+    /// different facts, and a reader deciding whether a user is doing too much
     /// needs both — forty minutes on a bike is absent from every number above
     /// and present in the log.
     func volumeByMuscle(_ arguments: JSONValue, in snapshot: TrainingSnapshot) -> ToolOutcome {

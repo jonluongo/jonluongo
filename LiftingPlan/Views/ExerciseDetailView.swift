@@ -46,7 +46,7 @@ struct ExerciseDetailView: View {
     let exerciseID: ExerciseID
     /// What to call it at the top. Display only; the record is keyed by id.
     let displayName: String
-    /// The lifter's display unit, so a logged load reads in the unit he reads
+    /// The user's display unit, so a logged load reads in the unit he reads
 
     @Environment(\.exerciseCatalog) private var catalog
     /// Every performance there has ever been, newest last.
@@ -154,7 +154,7 @@ struct ExerciseDetailView: View {
 
     /// The heaviest working set of one performance, as a plain value.
     ///
-    /// Heaviest rather than last: it is the one figure a lifter looks for, and
+    /// Heaviest rather than last: it is the one figure a user looks for, and
     /// the order sets were performed in does not say which that is. A
     /// performance with no load at all has none, which is an absence and not a
     /// zero.

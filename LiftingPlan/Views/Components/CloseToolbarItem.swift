@@ -11,11 +11,11 @@ import SwiftUI
 /// with a label naming what is being closed for anyone who cannot see the glyph.
 ///
 /// **Why one component rather than the word "Done".** Five presented screens had
-/// four different answers: the session drew an `xmark`, the lifter's page, the
+/// four different answers: the session drew an `xmark`, the user's page, the
 /// programme and the note sheet each drew their own *Done*, and the exercise
 /// page drew nothing at all and left the grabber to do it. *Done* is a claim
 /// about the work — it reads as *I have finished writing this* — which on a
-/// screen that only displays is a question the lifter never asked, and on a
+/// screen that only displays is a question the user never asked, and on a
 /// screen that does save is a second control competing with the real one. An
 /// `xmark` says close and says nothing else, which is true of every one of them.
 ///

@@ -12,25 +12,25 @@ import LiftingKit
 ///
 /// **How it is used.** Presented from the rest line at the top of an exercise's
 /// card on the logging screen, and from that exercise's menu. It is handed what
-/// the plan prescribed and what the lifter has chosen so far, and calls
+/// the plan prescribed and what the user has chosen so far, and calls
 /// `onChange` with each new choice — saved as it is made, like the unit picker,
 /// because there is no Done button to wait for.
 ///
-/// **What it depends on.** `LifterRest` from Services and `RestPrescription`
+/// **What it depends on.** `UserRest` from Services and `RestPrescription`
 /// for the words. It holds no model and writes nothing itself.
 struct ExerciseRestSheet: View {
 
-    /// The exercise being edited, named so the lifter can see which of them
+    /// The exercise being edited, named so the user can see which of them
     /// this is — they are all different, which is why the control moved here.
     let exerciseName: String
     /// What the plan prescribed, in seconds. Read-only, and shown as Claude's.
     let prescribedSeconds: Int?
-    /// What the lifter has chosen for this exercise up to now.
-    let rest: LifterRest
+    /// What the user has chosen for this exercise up to now.
+    let rest: UserRest
     /// Whether the clock runs at all — one answer for the whole app, not for
     /// this exercise. See `RestPreferences.isClockOn`.
     let isClockOn: Bool
-    var onChange: (LifterRest) -> Void
+    var onChange: (UserRest) -> Void
     var onClockSwitched: (Bool) -> Void
 
     @State private var minutes: Int
@@ -39,8 +39,8 @@ struct ExerciseRestSheet: View {
 
     init(
         exerciseName: String, prescribedSeconds: Int?,
-        rest: LifterRest, isClockOn: Bool,
-        onChange: @escaping (LifterRest) -> Void,
+        rest: UserRest, isClockOn: Bool,
+        onChange: @escaping (UserRest) -> Void,
         onClockSwitched: @escaping (Bool) -> Void
     ) {
         self.exerciseName = exerciseName
@@ -50,7 +50,7 @@ struct ExerciseRestSheet: View {
         self.onChange = onChange
         self.onClockSwitched = onClockSwitched
         // The wheels open on whatever the clock would run right now — the
-        // lifter's length if he set one, otherwise the prescribed one, and zero
+        // user's length if he set one, otherwise the prescribed one, and zero
         // when neither exists. Nothing is suggested: an app that opened this on
         // "90s" for an exercise nobody prescribed rest for would be making a
         // training decision with a wheel.
@@ -63,7 +63,7 @@ struct ExerciseRestSheet: View {
 
     private var total: Int { minutes * 60 + seconds }
 
-    /// Whether the lifter's clock differs from the plan — the only condition
+    /// Whether the user's clock differs from the plan — the only condition
     /// under which there is anything to put back.
     private var isOverridden: Bool { prescribedSeconds != nil && rest != .asPrescribed }
 
@@ -133,7 +133,7 @@ struct ExerciseRestSheet: View {
     }
 
     /// What Claude asked for, said plainly, together with the one thing the
-    /// lifter needs to know about editing it: he is not editing it.
+    /// user needs to know about editing it: he is not editing it.
     private var prescriptionSentence: String {
         guard let prescribedSeconds else {
             return """
@@ -147,7 +147,7 @@ struct ExerciseRestSheet: View {
             """
     }
 
-    /// **The switch is the app's, not this exercise's.** A lifter reaching for
+    /// **The switch is the app's, not this exercise's.** A user reaching for
     /// it is not saying *not on the bench press*, he is saying *not today* —
     /// and having to say it again on the next movement is the app making him
     /// repeat himself. The wheels below it stay per exercise, because a length
@@ -164,7 +164,7 @@ struct ExerciseRestSheet: View {
 
     /// Records a length as what it means: the plan's own number is following
     /// the plan, not a choice that happens to match it, so a later change by
-    /// Claude still reaches the lifter.
+    /// Claude still reaches the user.
     private func choose(_ seconds: Int) {
         onChange(seconds == prescribedSeconds ? .asPrescribed : .seconds(seconds))
     }

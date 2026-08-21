@@ -123,7 +123,7 @@ struct DocumentRoundTripTests {
 
         #expect(exercise.restSeconds == nil)
         #expect(exercise.coachNote == nil)
-        #expect(exercise.sets.first?.load == nil, "the lifter picks the bar")
+        #expect(exercise.sets.first?.load == nil, "the user picks the bar")
         #expect(exercise.sets.first?.target == nil)
         #expect(exercise.sets.first?.intensity?.value == "8")
     }

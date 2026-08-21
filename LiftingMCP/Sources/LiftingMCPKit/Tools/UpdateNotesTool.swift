@@ -71,7 +71,7 @@ extension ToolRunner {
             "replaced": .integer(oldText.count),
             "note": .string(
                 "Written. The app renders this file; nothing is parsed out of it, so what you "
-                    + "wrote is what the lifter reads."),
+                    + "wrote is what the user reads."),
         ])
     }
 }

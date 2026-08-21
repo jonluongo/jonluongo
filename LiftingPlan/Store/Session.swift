@@ -6,7 +6,7 @@ import LiftingKit
 ///
 /// **What it does.** Holds where a session sits — which block, and which session
 /// of that block — what the coach called it, the mark he chose, and when the
-/// lifter pressed Finish. Its two relationships are the seam the whole store is
+/// user pressed Finish. Its two relationships are the seam the whole store is
 /// built on: what was asked for, and what happened.
 ///
 /// **It has no date.** *When* he trained is a fact about the record, carried by
@@ -18,7 +18,7 @@ import LiftingKit
 /// session can be finished with nothing ticked, so it cannot be derived from the
 /// performed rows, and it is load-bearing: the merge rule treats a session as
 /// trained if it was finished *or* anything was logged, which is what stops the
-/// coach rewriting a session the lifter has already been through.
+/// coach rewriting a session the user has already been through.
 ///
 /// **What it depends on.** `SessionIcon` from LiftingKit. Read `orderedExercises`
 /// rather than `plannedExercises` — SwiftData does not guarantee relationship
@@ -42,7 +42,7 @@ final class Session {
     /// The raw name rather than a drawn symbol: which glyph a name resolves to
     /// is the app's business and may change, while what the coach wrote must not.
     private var iconRawValue: String = ""
-    /// When the lifter pressed Finish. `nil` while he has not.
+    /// When the user pressed Finish. `nil` while he has not.
     var finishedAt: Date?
     /// When the coach wrote this session — his date, not the day the phone took
     /// it in. A plan can be written long before it is imported, and reporting
@@ -117,7 +117,7 @@ final class Session {
 
     /// Whether this session has been trained, by the rule the merge uses.
     ///
-    /// Finished *or* anything performed. A session the lifter finished without
+    /// Finished *or* anything performed. A session the user finished without
     /// ticking a thing still counts: he went through it, and a plan that
     /// rewrites it would be rewriting what happened.
     var hasBeenTrained: Bool {

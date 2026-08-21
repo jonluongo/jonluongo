@@ -14,7 +14,7 @@ import LiftingKit
 /// row's existence is the fact.
 ///
 /// **Its link to the prescription is nullable, and that is meaningful.** A set
-/// the lifter added, and a baseline he stated in conversation, have no
+/// the user added, and a baseline he stated in conversation, have no
 /// prescription behind them. `source` says which of the two ways this came to be
 /// known — a stated baseline is a performance with one set, not a second table
 /// saying the same thing in the same shape.
@@ -36,19 +36,19 @@ final class PerformedExercise {
     var exerciseID: ExerciseID = ExerciseID(rawValue: "")
     /// When this was performed. For a stated baseline, when he says he did it.
     var occurredAt: Date = Date()
-    /// What the lifter said about it, in his own words. `nil` when he said
+    /// What the user said about it, in his own words. `nil` when he said
     /// nothing.
     ///
     /// It lives on the record rather than on the prescription because it is
     /// his: a note on a `PlannedExercise` would be governed by the coach's
     /// rewrite rules, and a note on a session neither finished nor logged would
     /// go when the coach rewrote the block.
-    var lifterNote: String?
+    var userNote: String?
     /// How this came to be known — ticked in the app, or told to the coach.
     private var sourceRawValue: String = PerformanceSource.logged.rawValue
 
     var session: Session?
-    /// What was prescribed for this, or `nil` for a set the lifter added and for
+    /// What was prescribed for this, or `nil` for a set the user added and for
     /// a baseline he stated.
     var planned: PlannedExercise?
 
@@ -57,11 +57,11 @@ final class PerformedExercise {
 
     init(
         exerciseID: ExerciseID = ExerciseID(rawValue: ""), occurredAt: Date = Date(),
-        lifterNote: String? = nil, source: PerformanceSource = .logged
+        userNote: String? = nil, source: PerformanceSource = .logged
     ) {
         self.exerciseID = exerciseID
         self.occurredAt = occurredAt
-        self.lifterNote = lifterNote
+        self.userNote = userNote
         self.sourceRawValue = source.rawValue
     }
 

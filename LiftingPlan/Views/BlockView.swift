@@ -5,7 +5,7 @@ import LiftingKit
 /// The training, block by block — the screen the app opens on.
 ///
 /// **What it does.** Lists every block the coach has written, each as a
-/// subheading over its sessions, with the session the lifter is on first among
+/// subheading over its sessions, with the session the user is on first among
 /// the unfinished. Tapping one opens it.
 ///
 /// **It is the root, and there is nothing above it.** There used to be a list of
@@ -62,7 +62,7 @@ struct BlockView: View {
         }
         // **The stack is what gives the session a bar to hang its X on.**
         // A `fullScreenCover` presents no navigation of its own, so without this
-        // the toolbar is defined and never drawn — and the lifter has no way out
+        // the toolbar is defined and never drawn — and the user has no way out
         // of the session at all.
         .fullScreenCover(item: $openSession) { session in
             NavigationStack { ActiveWorkoutView(session: session) }

@@ -101,7 +101,7 @@ struct DesignSystemTests {
 
     // MARK: - Set table
 
-    @Test("The row spends its width on the two things a lifter has to hit")
+    @Test("The row spends its width on the two things a user has to hit")
     func setTableColumns() {
         // These were literals in two files that had to agree or the header
         // stopped sitting over its column, with nothing enforcing it.

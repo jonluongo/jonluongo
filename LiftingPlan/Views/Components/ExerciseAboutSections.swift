@@ -23,7 +23,7 @@ import LiftingKit
 ///
 /// **There is no demonstration well.** A four-by-three placeholder stood at the
 /// top of this screen reading "Demonstration coming soon" — the largest element
-/// on the page, promising a feature that does not exist and telling a lifter
+/// on the page, promising a feature that does not exist and telling a user
 /// nothing about the movement he opened it to read. It comes back when there is
 /// an animation to put in it.
 struct ExerciseAboutSections: View {

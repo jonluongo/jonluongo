@@ -12,7 +12,7 @@ import UserNotifications
 /// **How it is used.** `RestTimerModel` owns one and calls `arm(after:context:)`
 /// when a countdown starts or changes length, and `cancel()` when it stops.
 /// `RestTimerBar` reads `errorMessage` and calls `dismissError()` once the
-/// lifter has seen it.
+/// user has seen it.
 ///
 /// **Why it is not part of the timer.** They fail independently and for
 /// different reasons. The countdown on screen cannot fail; this can, permanently
@@ -91,9 +91,9 @@ final class ScreenLockedCue {
                 }
                 // **Scheduling succeeding is not the cue being able to fire.**
                 // iOS accepts these requests from an app it will never display
-                // one for, so clearing the message here told a lifter with
+                // one for, so clearing the message here told a user with
                 // notifications off that all was well from his second rest
-                // onward. Asked rather than assumed — which also means a lifter
+                // onward. Asked rather than assumed — which also means a user
                 // who fixed it in Settings stops being told, and one who turned
                 // them off months ago starts being told again.
                 errorMessage = await center.allowsAlerts() ? nil : Self.refusedMessage
@@ -114,7 +114,7 @@ final class ScreenLockedCue {
     /// background.
     ///
     /// Both answers are kept. A thrown error is a failure to report; a plain
-    /// refusal is the lifter's choice and not an error, but it does mean the
+    /// refusal is the user's choice and not an error, but it does mean the
     /// cue will not arrive, and letting him believe it will is the worse of the
     /// two. Either way the on-screen countdown is unaffected.
     func requestAuthorization() async {
@@ -126,7 +126,7 @@ final class ScreenLockedCue {
         }
     }
 
-    /// Clears a reported failure, after the lifter has been shown it.
+    /// Clears a reported failure, after the user has been shown it.
     func dismissError() {
         errorMessage = nil
     }

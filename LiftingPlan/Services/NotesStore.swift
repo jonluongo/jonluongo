@@ -11,7 +11,7 @@ import LiftingKit
 /// **Local copy, iCloud mirror.** The container is the sync channel, not the
 /// source. Reading straight from it would leave the account screen blank
 /// whenever iCloud is unreachable — which is a state this phone is actually in —
-/// and a screen that describes the lifter should not depend on the network.
+/// and a screen that describes the user should not depend on the network.
 /// Same arrangement as the store itself.
 ///
 /// **A file nobody has written yet reads as its template**, not as nothing —
@@ -45,7 +45,7 @@ final class NotesStore {
     /// Takes a copy of what arrived in the shared folder.
     ///
     /// Throwing rather than silent: a note that failed to mirror leaves the
-    /// screen showing an older one, and the lifter should be told rather than
+    /// screen showing an older one, and the user should be told rather than
     /// shown stale prose as though it were current.
     func mirror(_ text: String, as note: NoteFile) throws {
         try FileManager.default.createDirectory(

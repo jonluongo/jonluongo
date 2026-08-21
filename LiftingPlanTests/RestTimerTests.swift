@@ -161,7 +161,7 @@ struct RestTimerNotificationTests {
     func armingDoesNotClearARealRefusal() async throws {
         // iOS accepts a notification request from an app it will never display
         // one for, so a successful `add` says nothing about whether the cue can
-        // fire. Clearing the message on that success told a lifter with
+        // fire. Clearing the message on that success told a user with
         // notifications off that everything was fine, from his second rest
         // onward — the one failure this message exists to report.
         let center = FakeNotificationCenter()

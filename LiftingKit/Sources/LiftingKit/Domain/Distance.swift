@@ -38,7 +38,7 @@ public struct DistanceUnit: ExtensibleTaxonomy {
 /// sled pushed 40 metres and one pushed 40 yards are different work, and a
 /// number without its unit cannot tell them apart.
 ///
-/// **How it is used.** Construct one with the number the lifter actually
+/// **How it is used.** Construct one with the number the user actually
 /// entered, in the unit the plan prescribed. `LoggedSet.distance` stores it,
 /// `SnapshotLoggedSet.distance` reports it, and `volume_by_muscle` totals it
 /// per unit.

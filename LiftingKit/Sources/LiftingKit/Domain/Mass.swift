@@ -11,7 +11,7 @@ public enum MassUnit: String, Codable, Hashable, Sendable, CaseIterable {
 
 /// A weight that always knows its unit.
 ///
-/// Construct one with the value the lifter actually entered, in the unit they
+/// Construct one with the value the user actually entered, in the unit they
 /// entered it. `Mass` never canonicalizes on storage: someone who logged
 /// 135 lb sees 135 forever, not 61.23 kg rendered back as 134.99. Use
 /// `kilograms` when comparing across units — charts, estimated 1RM,

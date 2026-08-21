@@ -14,7 +14,7 @@ import LiftingKit
 /// container being unreachable, breaks the outbound half permanently — the Mac
 /// keeps reading a snapshot that is weeks stale, which is worse than reading
 /// nothing because stale data does not look like absence. So the failure is
-/// held here and surfaced the next time the lifter is looking at the app,
+/// held here and surfaced the next time the user is looking at the app,
 /// exactly as an unreadable plan is.
 ///
 /// **The store is read on the main actor; iCloud is not touched there.**
@@ -53,7 +53,7 @@ final class SnapshotOutbox {
         self.catalog = catalog
     }
 
-    /// What the lifter is told when the file was written but iCloud will not
+    /// What the user is told when the file was written but iCloud will not
     /// take it. It names iCloud's own reason rather than paraphrasing: *Quota
     /// exceeded* is the sentence that tells him what to do.
     private static func notDelivered(_ reason: String) -> String {
@@ -61,11 +61,11 @@ final class SnapshotOutbox {
             + "your coach is reading an older one. iCloud says: \(reason)"
     }
 
-    /// What the lifter has already been shown and closed, so a failure that has
+    /// What the user has already been shown and closed, so a failure that has
     /// not changed does not meet him at every launch.
     private var dismissed: String?
 
-    /// Clears a reported failure, after the lifter has been shown it.
+    /// Clears a reported failure, after the user has been shown it.
     func dismissError() {
         dismissed = errorMessage
         errorMessage = nil
@@ -88,7 +88,7 @@ final class SnapshotOutbox {
     ///
     /// The failure is held rather than thrown because the caller is a scene
     /// transition with nowhere to return an error to. It is not discarded:
-    /// `errorMessage` is what the UI puts in front of the lifter, and the store
+    /// `errorMessage` is what the UI puts in front of the user, and the store
     /// is still the record, so the next export writes the snapshot again.
     func exportSnapshot() async {
         do {

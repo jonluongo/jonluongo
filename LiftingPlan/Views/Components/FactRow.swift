@@ -16,7 +16,7 @@ import SwiftUI
 ///
 /// **How it is used.** Give it a `StatedFact`'s two strings.
 /// `ExerciseAboutSections` states what the catalog holds about a movement,
-/// `AccountView` what Claude has been told about the lifter, and
+/// `AccountView` what Claude has been told about the user, and
 /// `RoutineInfoSheet` the shape a routine was given; they are the same kind of
 /// statement and were three designs, so they are one now.
 ///

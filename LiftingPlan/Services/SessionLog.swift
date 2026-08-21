@@ -13,15 +13,15 @@ import LiftingKit
 /// flip `isCompleted` on a row seeded the moment the screen opened, which is why
 /// the store held a set for everything the coach asked for whether or not it
 /// ever happened, and why `reps` defaulted to zero. A performed row exists only
-/// if the lifter performed it.
+/// if the user performed it.
 ///
 /// **How it is used.** `ActiveWorkoutView` builds one per redraw from the
 /// context and the two environment objects it already holds, then calls it.
-/// Every write is `throws`: a failed save is shown to the lifter by the view
+/// Every write is `throws`: a failed save is shown to the user by the view
 /// that can show it, rather than being handled by a type with no way to say so.
 ///
 /// **It decides nothing about training.** How long to rest is Claude's to
-/// prescribe and the lifter's to override, in that order, and this only asks
+/// prescribe and the user's to override, in that order, and this only asks
 /// `RestPreferences` which of the two answers applies. Where neither has said
 /// anything, no clock starts: the app does not invent one.
 ///
@@ -41,12 +41,12 @@ struct SessionLog {
     /// Records a set as performed, then runs the rest it asks for.
     ///
     /// **The write is the point.** A recorded set is the one irreversible thing
-    /// a lifter does in this app — it is the claim that the work happened — so
+    /// a user does in this app — it is the claim that the work happened — so
     /// it is saved here rather than left to SwiftData's autosave, which does run
     /// but on no schedule anyone can promise.
     ///
     /// Which measure is written is decided by what was prescribed, never by what
-    /// was typed: a hold cannot land in the rep column by a lifter tapping the
+    /// was typed: a hold cannot land in the rep column by a user tapping the
     /// wrong field.
     func record(
         _ slot: TrainingSlot, load: Mass? = nil, reps: Int? = nil,
@@ -76,7 +76,7 @@ struct SessionLog {
         context.delete(performed)
         // An exercise with nothing left performed against it is not a
         // performance. Leaving an empty one would put a session in the coach's
-        // history that the lifter did not train.
+        // history that the user did not train.
         if let exercise, (exercise.sets ?? []).allSatisfy({ $0 === performed }) {
             context.delete(exercise)
         }
@@ -84,7 +84,7 @@ struct SessionLog {
         try context.saveOrThrow()
     }
 
-    /// A set the lifter did that nobody prescribed.
+    /// A set the user did that nobody prescribed.
     ///
     /// It has no `PlannedSet` behind it, which is exactly what the nullable link
     /// is for. Nothing is invented for it: no load, no count, no target.
@@ -99,7 +99,7 @@ struct SessionLog {
         try context.saveOrThrow()
     }
 
-    /// Writes what the lifter has to say about a movement today.
+    /// Writes what the user has to say about a movement today.
     ///
     /// **It creates the performance if he has not logged a set yet.** His words
     /// are a record of the session as much as a ticked box is, and a note he
@@ -113,9 +113,9 @@ struct SessionLog {
 
         if let text, !text.isEmpty {
             let performance = existing ?? performedExercise(for: exercise, at: Date())
-            performance.lifterNote = text
+            performance.userNote = text
         } else if let existing {
-            existing.lifterNote = nil
+            existing.userNote = nil
             if (existing.sets ?? []).isEmpty { context.delete(existing) }
         }
         try context.saveOrThrow()
@@ -142,7 +142,7 @@ struct SessionLog {
     /// Turns the countdown on or off everywhere, and stops the one running.
     ///
     /// **The switch has to silence the clock that is already going.** It only
-    /// wrote the preference, so a lifter reaching for it mid-rest — which is
+    /// wrote the preference, so a user reaching for it mid-rest — which is
     /// when anyone reaches for it — kept the bar counting and kept the alerts
     /// armed. Off means off now, not from the next set.
     func clockSwitched(_ isOn: Bool) {
@@ -161,7 +161,7 @@ struct SessionLog {
     private func restStarted(after slot: TrainingSlot) {
         // **Rest is the gap between two pieces of work, so the last set has no
         // rest after it.** Recording the last box used to start a countdown for
-        // nothing — a bar telling a lifter who has finished to wait three
+        // nothing — a bar telling a user who has finished to wait three
         // minutes for the set that does not exist.
         guard hasWorkLeft else { return restTimer.stop() }
 

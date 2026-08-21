@@ -198,7 +198,7 @@ extension UIColor {
 ///
 /// **How it is used.** `.font(.supersetSupport)` and so on. Pick by role:
 ///
-/// - **Metric** — a number the lifter reads mid-set, at arm's length: a
+/// - **Metric** — a number the user reads mid-set, at arm's length: a
 ///   countdown, a weight, a rep count. These are the content of the logging
 ///   screen and they get bigger, not smaller.
 /// - **Heading** — the name of a section that owns the panel beneath it: the
@@ -242,7 +242,7 @@ extension Font {
     /// Monospaced like every other figure in the app, so `2:54` and `2:04` are
     /// the same width and the ring around it does not appear to twitch once a
     /// second. It is a text style rather than a size, so it grows with the
-    /// lifter's own type — a countdown that ignored Dynamic Type would be the
+    /// user's own type — a countdown that ignored Dynamic Type would be the
     /// one number here nobody could enlarge.
     static let supersetClock: Font =
         .system(.largeTitle, design: .monospaced).weight(.semibold)
@@ -408,7 +408,7 @@ enum SetTableMetrics {
     /// open a menu that changed whether the set counted as working volume; the
     /// coach prescribes that now, so this states and does not switch. The width
     /// it gives up goes into the fields, which are the only things on the row a
-    /// lifter actually has to hit.
+    /// user actually has to hit.
     static let setColumnWidth: CGFloat = 28
 
     /// The same, so the table's two ends match.

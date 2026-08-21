@@ -29,7 +29,7 @@ enum ExerciseAbout {
     /// says, so it is printed rather than dropped.
     static func facts(for exercise: Exercise) -> [StatedFact] {
         [
-            // One row, not two. "Primary" and "Secondary" split what a lifter
+            // One row, not two. "Primary" and "Secondary" split what a user
             // reads as a single answer to a single question — what does this
             // work? — across two rows, and the split is a ranking he cannot act
             // on: nothing about how he benches changes because the triceps are

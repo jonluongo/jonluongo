@@ -19,7 +19,7 @@ import Foundation
 /// **What it depends on.** `RepRange`, `WorkDuration` and `WorkDistance`, which
 /// share one unit vocabulary in `TargetUnits`. It reads and never decides: a
 /// target says what it measures, and an exercise is never timed or carried
-/// because of anything the lifter did.
+/// because of anything the user did.
 ///
 /// A target that names nothing this build can read — `"AMRAP"`, `""`, a unit
 /// nobody here has heard of — is `.repetitions`, which is what the field has

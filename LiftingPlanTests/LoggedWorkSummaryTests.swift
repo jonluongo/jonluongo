@@ -52,7 +52,7 @@ struct LoggedWorkSummaryTests {
     @Test("Nothing converts: a load and a distance are both read as recorded")
     func nothingIsConverted() {
         // **The load used to convert into a display unit.** That unit was a fact
-        // about how the lifter thinks, and it lives in `user.md` with the rest
+        // about how the user thinks, and it lives in `user.md` with the rest
         // of him — so a hundred kilos is a hundred kilos here, and fifty yards
         // was never anything else. `Mass` compares exactly on representation,
         // and a record that canonicalized would misreport what was lifted.

@@ -24,11 +24,11 @@ a plan, the app shows an empty state. If you find yourself adding code that
 decides what someone should train, stop: that is the one thing this app does not
 do.
 
-**The app also asks the lifter nothing.** No onboarding, no setup screen, no
+**The app also asks the user nothing.** No onboarding, no setup screen, no
 settings form for a training question. Days, session length, goal, equipment,
 experience and injuries are things Claude asks better in conversation, and he
 writes them into `ACCOUNT.md`. The one preference the app owns is whether the rest
-clock runs at all — that is about this phone, not about the lifter, so it lives
+clock runs at all — that is about this phone, not about the user, so it lives
 in `UserDefaults` and never syncs.
 
 **The single thing the app insists on is data integrity — real `ExerciseID`s.**
@@ -154,7 +154,7 @@ Session
 - **`PlannedSet`** → PlannedExercise — `setIndex`, `isWarmup`, `load`,
   `intensity`, `target`.
 - **`PerformedExercise`** → Session, → PlannedExercise *(nullable)* —
-  `exerciseID`, `occurredAt`, `lifterNote`, `source` (logged | stated).
+  `exerciseID`, `occurredAt`, `userNote`, `source` (logged | stated).
 - **`PerformedSet`** → PerformedExercise, → PlannedSet *(nullable)* —
   `setIndex`, `isWarmup`, `load`, `reps`, `durationSeconds`, `distance`,
   `completedAt`.
@@ -170,7 +170,7 @@ did not write.
 **A performed row exists only if it happened.** No seeding, so no `isCompleted`:
 the row's existence is the fact.
 
-**Both nullable links are meaningful.** A stated baseline or a set the lifter
+**Both nullable links are meaningful.** A stated baseline or a set the user
 added has no prescription behind it.
 
 **Prescriptions are permanent.** The prescribed-versus-performed comparison *is*
@@ -197,7 +197,7 @@ floors, caps or defaults a prescribed value.
 
 **A plan already in the store is merged, not ignored**, which is what lets the
 coach write a week at a time. He may rewrite any block nothing has been logged
-against and may not touch one that has — a set the lifter ticked is the record of
+against and may not touch one that has — a set the user ticked is the record of
 what happened, and a plan that rewrites it is refused by ordinal with nothing
 taken in.
 
@@ -318,6 +318,29 @@ suites in the project, because they are the guard on data integrity.
 **Every public type answers three questions** in its doc comment: what it does,
 how it is used, what it depends on. If a type cannot be understood without
 reading its internals, the boundary is wrong.
+
+**Two people, and they have one name each.** The person holding the phone is
+the **user**. The AI writing the plans is the **coach**. *User* is not a word
+this project uses — not in a doc comment, not in a type name, not on screen —
+because a codebase with two words for the same person invites a third. `Session`
+is a workout, a `block` is a phase, `ACCOUNT.md` is the person and `PROGRAM.md`
+is the routine.
+
+**Copy is sentence case, everywhere, with one standard.** Buttons, menu items,
+alert titles, navigation titles, empty states: *Add warm-up set*, not *Add Warmup
+Set*; *Couldn't read what arrived*, not *Couldn't Read What Arrived*. Only the
+app's own name is capitalised. This is Apple's rule and it is not a preference —
+mixed casing on one screen reads as two authors.
+
+A label names its control in the words the user would use, and **an action keeps
+the same name through the whole flow**: the button that says *Finish workout*
+produces a screen that says the workout is finished. A section heading is a plain
+noun phrase — no article, no pronoun, no sentence.
+
+**An error names what happened and what to do, in that order, and stops.** It
+does not apologise, restate itself, or explain the format to somebody who cannot
+act on it. A refusal written for the coach is relayed to the user verbatim
+underneath one line of his own, because relaying it *is* the fix.
 
 **Warnings are errors.** Swift 6 language mode, strict concurrency.
 

@@ -58,7 +58,7 @@ public enum ToolCatalog {
         title: "List exercises",
         description: """
             Catalog entries with their real exercise IDs, narrowed to what this \
-            lifter can actually perform with the equipment he has. Every entry \
+            user can actually perform with the equipment he has. Every entry \
             carries the name, movement pattern, equipment, and primary and \
             secondary muscles, so you can choose a movement without a second \
             call. Always pick exercise IDs from here — write_plan rejects an ID \
@@ -75,7 +75,7 @@ public enum ToolCatalog {
                 "Equipment to include, e.g. 'barbell', 'dumbbell', 'cable', 'bodyweight'."),
             "limit": integer("How many entries to return. Defaults to 50."),
             "includeUnavailable": boolean(
-                "Include exercises the lifter's equipment, avoided patterns, or "
+                "Include exercises the user's equipment, avoided patterns, or "
                     + "avoided exercises rule out. Defaults to false."),
         ])
     )
@@ -137,7 +137,7 @@ public enum ToolCatalog {
             volume, so they are reported apart under 'excluded' — by category, \
             with the sets, seconds and distance they were performed in — rather \
             than counted as muscle volume. Read 'excluded' before concluding \
-            anything about how much a lifter is doing; an hour of conditioning \
+            anything about how much a user is doing; an hour of conditioning \
             is there and in none of the totals above.
             """,
         inputSchema: object(
@@ -159,7 +159,7 @@ public enum ToolCatalog {
         name: updateNotes,
         title: "Update notes",
         description: """
-            Edits one of the two markdown notes the lifter's app renders.
+            Edits one of the two markdown notes the user's app renders.
 
             'ACCOUNT.md' is who he is: what he trains for, his background, his \
             injuries and limits, what he avoids and why, his equipment, and his \

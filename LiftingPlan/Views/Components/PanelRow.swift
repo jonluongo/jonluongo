@@ -118,7 +118,7 @@ extension View {
                 // panel with no gap, where every other pair has one. Rendered,
                 // that read as three separate exercises — a missing gap is
                 // invisible unless you are comparing two gaps side by side, and
-                // a lifter mid-set is looking at one exercise. A signal has to
+                // a user mid-set is looking at one exercise. A signal has to
                 // be present, not withheld.
                 //
                 // It is a rule rather than a word because "Superset A" was a

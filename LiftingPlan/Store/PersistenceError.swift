@@ -23,7 +23,7 @@ extension ModelContext {
     /// Saves pending changes, wrapping any failure in a `PersistenceError`.
     ///
     /// Use this instead of `try? save()`. The whole point is that the failure
-    /// cannot be discarded silently: a dropped save means a lifter's logged
+    /// cannot be discarded silently: a dropped save means a user's logged
     /// set disappears with no indication anything went wrong.
     func saveOrThrow() throws {
         do {

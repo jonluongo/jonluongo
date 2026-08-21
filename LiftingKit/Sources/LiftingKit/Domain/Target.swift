@@ -24,7 +24,7 @@ import Foundation
 ///
 /// **A target it cannot read is refused**, with the text quoted, rather than
 /// kept as prose to be interpreted later. That is the difference between a
-/// target and a note: a note is for the lifter to read, a target is for the app
+/// target and a note: a note is for the user to read, a target is for the app
 /// to act on, and something the app cannot act on must not be stored where it
 /// will be acted on anyway.
 public enum Target: Hashable, Sendable {
@@ -34,7 +34,7 @@ public enum Target: Hashable, Sendable {
     /// nobody stated.
     case repetitions(low: Int, high: Int?)
 
-    /// Counted, with no number: as many as the lifter can manage. Still
+    /// Counted, with no number: as many as the user can manage. Still
     /// `.repetitions` as a measure, and still logged in `reps` — this says what
     /// was asked for, not what it is measured in.
     case repetitionsToFailure

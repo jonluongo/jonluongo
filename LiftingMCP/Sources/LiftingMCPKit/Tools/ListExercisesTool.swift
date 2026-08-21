@@ -5,7 +5,7 @@ extension ToolRunner {
 
     /// The catalog, so a plan can be written in IDs the app will accept.
     ///
-    /// **It subtracts nothing.** It used to remove what the lifter avoided,
+    /// **It subtracts nothing.** It used to remove what the user avoided,
     /// which is prose in `ACCOUNT.md` now — and hiding a movement was the wrong
     /// answer anyway. A coach who reads *left knee, since June* and sees the
     /// squat still listed has more to work with than one handed a shorter list

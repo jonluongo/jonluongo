@@ -14,7 +14,7 @@ import LiftingKit
 /// one thing nobody came to read: the sets are the subject and the rest is a
 /// detail of them.
 ///
-/// **Every per-set statement reaches the lifter on the row it describes.** This
+/// **Every per-set statement reaches the user on the row it describes.** This
 /// used to draw the whole prescription again as a numbered block above the
 /// table, so the sentence about set four was off the top of the screen by the
 /// time he reached set four.
@@ -32,7 +32,7 @@ struct ExerciseLogSection: View {
     /// This exercise's rows, in the order they are trained.
     let slots: [TrainingSlot]
     /// What has been performed of this movement today, or `nil` before anything
-    /// has. It is where the lifter's own note lives.
+    /// has. It is where the user's own note lives.
     let performed: PerformedExercise?
     /// What he did on this movement last time, for the load field a
     /// prescription may leave blank.
@@ -79,7 +79,7 @@ struct ExerciseLogSection: View {
             // it held anything about notes. The line he reads his note on is the
             // line he writes it from, and when he has not written one it says so
             // rather than being absent.
-            lifterNote
+            userNote
         }
     }
 
@@ -89,8 +89,8 @@ struct ExerciseLogSection: View {
     /// is his, and finishing is a statement about the training rather than about
     /// his account of it.
     @ViewBuilder
-    private var lifterNote: some View {
-        let mine = performed?.lifterNote
+    private var userNote: some View {
+        let mine = performed?.userNote
         Button(action: onWriteNote) {
             note(mine?.isEmpty == false ? mine ?? "" : "Add a note",
                  isLifters: true,

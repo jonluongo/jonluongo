@@ -20,7 +20,7 @@ enum PlanImportError: Error, LocalizedError, Equatable {
     /// value is the first offending name, in document order.
     case unknownIcon(SessionIcon)
 
-    /// The document rewrote a session the lifter has already been through.
+    /// The document rewrote a session the user has already been through.
     ///
     /// It names the session rather than the block, which the old shape could not
     /// do: a plan is a flat list of sessions now, so a change to one of them does
@@ -37,7 +37,7 @@ enum PlanImportError: Error, LocalizedError, Equatable {
                 + "marks this app can draw. Nothing was imported."
         case .trainedSessionChanged(let block, let ordinal):
             "This plan changes session \(ordinal) of block \(block), which has already "
-                + "been trained. A set the lifter ticked, or a session he marked finished, "
+                + "been trained. A set the user ticked, or a session he marked finished, "
                 + "is the record of what happened and cannot be rewritten. Nothing was "
                 + "imported. Send that session exactly as it stands, and the change in one "
                 + "he has not reached."
@@ -48,7 +48,7 @@ enum PlanImportError: Error, LocalizedError, Equatable {
 /// The one place a prescription enters the store.
 ///
 /// **What it does.** Takes a decoded `PlanDocument` and writes its sessions into
-/// the store, creating what is new and rewriting what the lifter has not trained.
+/// the store, creating what is new and rewriting what the user has not trained.
 /// It records what it was handed and never clamps, floors, caps or defaults a
 /// prescribed value.
 ///
@@ -64,7 +64,7 @@ enum PlanImportError: Error, LocalizedError, Equatable {
 ///
 /// **What he has not done is the coach's; what he has done is the record.** A
 /// session with nothing performed and no Finish is rebuilt from whatever the
-/// document now says. One the lifter has been through is refused by ordinal,
+/// document now says. One the user has been through is refused by ordinal,
 /// with nothing taken in.
 ///
 /// **What it depends on.** `PlanDocument` and `DocumentRefusal` from LiftingKit,
@@ -149,7 +149,7 @@ enum PlanImporter {
 
     /// Replaces a session's prescription with what the document states.
     ///
-    /// **There are no notes to preserve here, and that is new.** The lifter's
+    /// **There are no notes to preserve here, and that is new.** The user's
     /// note used to live on the prescription, so rewriting a block meant lifting
     /// his words out and putting them back. It lives on `PerformedExercise` now
     /// — the record side — and a session that may be rewritten is by definition

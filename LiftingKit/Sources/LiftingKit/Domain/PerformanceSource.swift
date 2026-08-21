@@ -2,7 +2,7 @@ import Foundation
 
 /// How a performed set came to be known.
 ///
-/// **What it does.** Distinguishes a set the lifter ticked in the app from one
+/// **What it does.** Distinguishes a set the user ticked in the app from one
 /// he told the coach about — a starting point stated in conversation, a lift he
 /// did before any of this existed.
 ///

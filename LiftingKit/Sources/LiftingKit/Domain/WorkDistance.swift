@@ -41,14 +41,14 @@ public struct WorkDistance: Hashable, Sendable, CustomStringConvertible {
     ///
     /// True when the text names a distance unit, no rep count could be read out
     /// of it, and the clock has not already claimed it. This is what decides
-    /// which field the lifter is given, so it deliberately answers for text
+    /// which field the user is given, so it deliberately answers for text
     /// whose number cannot be read.
     public let isDistance: Bool
 
     /// The unit the target is measured in — the first one it names. `nil` when
     /// the target is not a distance at all. A target naming two units states no
     /// one distance, but it is still measured in the unit it opens in, which is
-    /// what the field the lifter types into has to be labelled with.
+    /// what the field the user types into has to be labelled with.
     public let unit: DistanceUnit?
 
     /// The shorter of the two bounds, in `unit` (0 when none was read).

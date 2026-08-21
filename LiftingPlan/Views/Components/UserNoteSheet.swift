@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// Where the lifter writes what happened, in his own words.
+/// Where the user writes what happened, in his own words.
 ///
 /// **What it does.** Takes one free-text note about performing one movement
 /// today — *knee hurt at the end*, *bar felt light* — and hands it back. It is
-/// the only place in the app the lifter types prose, and the only thing he
+/// the only place in the app the user types prose, and the only thing he
 /// tells the record that is not a number.
 ///
 /// **It is not the coach's note.** That one is part of the prescription and
@@ -22,7 +22,7 @@ import SwiftUI
 ///
 /// **What it depends on.** `Palette`, `Spacing` and the type ramp. It reads no
 /// model and writes nothing itself.
-struct LifterNoteSheet: View {
+struct UserNoteSheet: View {
 
     let exerciseName: String
     var onSave: (String?) -> Void

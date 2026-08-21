@@ -2,12 +2,12 @@ import Foundation
 import LiftingKit
 
 /// The Mac's half of the loop: read the snapshot, write the plan, and record
-/// what has been learned about the lifter.
+/// what has been learned about the user.
 ///
 /// Hand one to a `ToolRunner`. `DocumentFolder` from `LiftingKit` conforms, so
 /// in production this is the shared iCloud folder and nothing here reimplements
 /// a path, a file name, or an encoder. Tests supply an in-memory stand-in and
-/// so can cover the case that matters most — a lifter whose app has never
+/// so can cover the case that matters most — a user whose app has never
 /// backgrounded — without an iCloud account.
 ///
 /// The two `location` strings exist so an error can name the folder it looked

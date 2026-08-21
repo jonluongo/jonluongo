@@ -12,7 +12,7 @@ import LiftingKit
 /// be the other way round: a row was a stored `LoggedSet` seeded the moment the
 /// screen opened, carrying `isCompleted` to say whether it meant anything, and
 /// `reps` defaulting to zero. A row is now the `PlannedSet` the coach wrote,
-/// with `record` present only once the lifter has actually done it.
+/// with `record` present only once the user has actually done it.
 ///
 /// **What it depends on.** `PlannedExercise` and `PlannedSet` from Store, and
 /// `SetIdentity` for what the row is called.
@@ -27,7 +27,7 @@ struct TrainingSlot: Identifiable {
     /// third prescription.
     let workingNumber: Int
 
-    /// What the lifter actually did here, or `nil` while he has not.
+    /// What the user actually did here, or `nil` while he has not.
     var record: PerformedSet? { planned.record }
     /// Whether this row is in the record.
     var isDone: Bool { planned.hasBeenPerformed }
@@ -37,7 +37,7 @@ struct TrainingSlot: Identifiable {
 
 /// The order a session is actually trained in.
 ///
-/// **What it does.** Flattens a session into the sequence of rows the lifter
+/// **What it does.** Flattens a session into the sequence of rows the user
 /// works through: each exercise's sets in order, and a group's rows *across* its
 /// movements, round by round, which is what a superset is. It answers one
 /// further question — what is next — as the first row nobody has done.
@@ -58,7 +58,7 @@ enum SessionOrder {
 
     /// The next row nobody has done, or `nil` when the session is filled in.
     ///
-    /// "Next" is by the order the work is done in rather than by time: a lifter
+    /// "Next" is by the order the work is done in rather than by time: a user
     /// who skipped a row and came back to it is looking at the row he skipped.
     static func next(in session: Session) -> TrainingSlot? {
         trainingOrder(of: session).first { !$0.isDone }

@@ -12,7 +12,7 @@ struct ActiveWorkoutView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.exerciseCatalog) private var catalog
     @Environment(RestTimerModel.self) private var restTimer
-    /// The lifter's own clock: whether it runs at all, and how long on each
+    /// The user's own clock: whether it runs at all, and how long on each
     /// exercise. Not the prescription, and not in the store.
     @Environment(RestPreferences.self) private var restPreferences
     /// The outbox the finished session is sent through. Optional so a preview
@@ -27,7 +27,7 @@ struct ActiveWorkoutView: View {
     /// being read about.
     @State private var restEditing: RestTarget?
     @State private var infoExercise: PlannedExercise?
-    /// The exercise whose own note the lifter is writing.
+    /// The exercise whose own note the user is writing.
     @State private var noteExercise: PlannedExercise?
     /// Whether the rest clock has been opened to its full size.
     @State private var showingRest = false
@@ -60,7 +60,7 @@ struct ActiveWorkoutView: View {
     private var entries: [SessionEntry] { SessionGrouping.entries(of: exercises) }
 
     /// Whether this session has been marked done. Not derived from how much of
-    /// it is filled in: a lifter who stops at three sets of four has finished,
+    /// it is filled in: a user who stops at three sets of four has finished,
     /// and one resting between sets has not, and nothing in the record can tell
     /// those apart. Only he can, which is what the button is for.
     private var isLogged: Bool { session.finishedAt != nil }
@@ -72,7 +72,7 @@ struct ActiveWorkoutView: View {
     }
 
     /// What has been performed of one movement today, or `nil` before anything
-    /// has. It is where the lifter's own note lives.
+    /// has. It is where the user's own note lives.
     private func performed(for exercise: PlannedExercise) -> PerformedExercise? {
         (session.performedExercises ?? []).first { $0.planned === exercise }
     }
@@ -102,7 +102,7 @@ struct ActiveWorkoutView: View {
                         case .group(let group): section(for: group)
                         }
                     }
-                    // Past the last set, which is where a lifter who has
+                    // Past the last set, which is where a user who has
                     // finished arrives. It used to be top right, where it was
                     // pressed as a way out of the screen.
                     SessionFinishSection(
@@ -121,7 +121,7 @@ struct ActiveWorkoutView: View {
             .background(Palette.surface)
             .scrollDismissesKeyboard(.interactively)
             // No title. It was the session's name, large, filling the band this
-            // screen used to waste — but the name is on the card the lifter
+            // screen used to waste — but the name is on the card the user
             // came from and on every screen that led here, and a heading over a
             // session he is already inside answers a question nobody has. An
             // inline bar with nothing in the middle collapses to its own height,
@@ -189,13 +189,13 @@ struct ActiveWorkoutView: View {
             // **Leaving the session ends the rest.** The clock and the three
             // alerts it arms belong to this screen — the bar, the ±15 and the
             // skip are all on it — so a rest left running after the screen
-            // closes is an alarm the lifter has no way to reach: it fires
+            // closes is an alarm the user has no way to reach: it fires
             // minutes later against a session he already left, with nothing on
             // screen tying the sound to anything. On disappearing rather than on
             // the X, because there is one way out today and there is no reason
             // for the next one to have to remember this.
             .onDisappear { restTimer.stop() }
-            .alert("Couldn't Save", isPresented: errorAlertBinding) {
+            .alert("Couldn't save", isPresented: errorAlertBinding) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(errorMessage ?? "")
@@ -220,10 +220,10 @@ struct ActiveWorkoutView: View {
             // What he wants to remember about performing it: his words, kept
             // apart from the coach's and sent on to him.
             .sheet(item: $noteExercise) { exercise in
-                LifterNoteSheet(
+                UserNoteSheet(
                     exerciseName: catalog.exercise(id: exercise.exerciseID)?.displayName
                         ?? exercise.exerciseID.rawValue,
-                    note: performed(for: exercise)?.lifterNote
+                    note: performed(for: exercise)?.userNote
                 ) { note in
                     write { try log.writeNote(note, for: exercise) }
                 }
@@ -347,7 +347,7 @@ struct ActiveWorkoutView: View {
     ///
     /// **Only inside a group, and only on the way in.** A superset is trained
     /// across its movements and drawn down them — each has its own panel — so
-    /// the next thing to do is on a panel the lifter cannot see, two rows past
+    /// the next thing to do is on a panel the user cannot see, two rows past
     /// the bottom of the one he just tapped. Ticking is the moment he is about
     /// to move, so it is the moment worth answering.
     ///
@@ -379,7 +379,7 @@ struct ActiveWorkoutView: View {
     /// Runs a write and sends the record back out to the coach.
     ///
     /// **Finishing is the moment the snapshot goes stale.** Until this, the
-    /// only thing that wrote it was the app being backgrounded, so a lifter who
+    /// only thing that wrote it was the app being backgrounded, so a user who
     /// trained four sessions without ever leaving the app left Claude reading a
     /// document that knew about none of them — which is exactly the shape of
     /// the report that the snapshot held four sessions where the block
@@ -389,7 +389,7 @@ struct ActiveWorkoutView: View {
     ///
     /// Only finishing, not every tick. A snapshot is the whole store
     /// serialized and written to iCloud, and doing that between sets would
-    /// spend the lifter's battery to tell the coach something he is not
+    /// spend the user's battery to tell the coach something he is not
     /// reading yet. A failure is held by the outbox and shown the next time the
     /// app opens, exactly as a background export's is.
     private func writeAndShare(_ change: () throws -> Void) {
@@ -398,7 +398,7 @@ struct ActiveWorkoutView: View {
         Task { await snapshotOutbox.exportSnapshot() }
     }
 
-    /// Runs a write and shows the lifter when it fails, rather than discarding
+    /// Runs a write and shows the user when it fails, rather than discarding
     /// the error. With CloudKit sync a save conflict is expected, not
     /// exceptional.
     private func write(_ change: () throws -> Void) {

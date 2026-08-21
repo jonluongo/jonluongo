@@ -5,7 +5,7 @@ import Foundation
 /// **What it does.** Carries the record the other way from `PlanDocument`: the
 /// app writes one, the coach reads it and decides what to prescribe next. It
 /// holds what was asked for, what was done, and when it was exported — and
-/// nothing about the lifter himself, which lives in `ACCOUNT.md` where he can be
+/// nothing about the user himself, which lives in `ACCOUNT.md` where he can be
 /// described in words rather than fields.
 ///
 /// **`exportedAt` is the honest half of a cache.** The phone is the only writer
@@ -26,7 +26,7 @@ import Foundation
 /// by design — the macOS server links this package and must never link
 /// SwiftData, so the mapping from the stored models lives in the app.
 ///
-/// Every weight is carried as the lifter entered it. Nothing here converts a
+/// Every weight is carried as the user entered it. Nothing here converts a
 /// load into a common unit: `Mass` compares exactly on representation, and a
 /// snapshot that canonicalized would misreport what was actually lifted.
 public struct TrainingSnapshot: Codable, Hashable, Sendable {
@@ -39,12 +39,18 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// every one of them display-only in the app, and all of them better said
     /// in prose the coach writes and reads. `routines` and their weekday-keyed
     /// sessions are replaced by a flat `sessions` list, each stating which block
-    /// it belongs to; the weekday-keyed `log` and the separate `lifterNotes` are
+    /// it belongs to; the weekday-keyed `log` and the separate `userNotes` are
     /// replaced by `performances`, one per exercise per day, each holding its
     /// own sets. That grain is the point: *how has bench gone* is a series of
     /// performances, and this format used to answer it with a flat array of sets
     /// that restated the plan, block, weekday and focus on every row.
-    public static let currentVersion = 6
+    /// Version 7 renamed one key: `lifterNote` became `userNote`. **The word
+    /// *user* is not one this project uses** — the person is the user and the
+    /// AI is the coach — and a wire key is prose the server has to type, so it
+    /// was the one place the old word could not simply be edited out of a
+    /// comment. Bumped rather than renamed quietly, because a reader handed the
+    /// old key would refuse it as unknown and report the wrong problem.
+    public static let currentVersion = 7
 
     /// The format version of this document, as written.
     public let version: Int
@@ -82,7 +88,7 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// an archive: the coach wrote it and it is the only copy. A snapshot is a
     /// cache the phone rewrites whenever the record changes, so an old one is
     /// not history — it is a stale file that will be replaced the moment the app
-    /// opens. Reading one half-way would report a lifter who has trained less
+    /// opens. Reading one half-way would report a user who has trained less
     /// than he has, which is the one failure that arrives looking like a fact.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)

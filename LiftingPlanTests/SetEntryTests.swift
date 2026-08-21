@@ -3,7 +3,7 @@ import Foundation
 @testable import LiftingPlan
 import LiftingKit
 
-/// What a lifter's typing means.
+/// What a user's typing means.
 ///
 /// These rules were the least covered in the app until this suite: they lived
 /// inside `SetRowView`'s bindings, and a `Binding` is not a thing a test can
@@ -15,7 +15,7 @@ struct SetEntryTests {
 
     // MARK: - The weight field
 
-    @Test("A load is shown in the lifter's own unit")
+    @Test("A load is shown in the user's own unit")
     func loadIsShownConverted() {
         let hundredKilos = Mass(value: 100, unit: .kilograms)
         #expect(SetEntry.text(for: hundredKilos, in: .kilograms) == "100")

@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import LiftingKit
 
-/// What the lifter has asked his own clock to do between sets of one exercise.
+/// What the user has asked his own clock to do between sets of one exercise.
 ///
 /// **What it does.** Names the three answers there are — follow the plan, run a
 /// length of his own, or run nothing — as one value, so nothing downstream has
@@ -20,12 +20,12 @@ import LiftingKit
 /// **What it depends on.** Foundation. Deliberately *not* in LiftingKit: a
 /// timer preference is not part of the vocabulary the phone and the coach
 /// share, and nothing that leaves this device may carry it.
-enum LifterRest: Equatable, Sendable {
+enum UserRest: Equatable, Sendable {
 
     /// Whatever the plan prescribed, including nothing.
     case asPrescribed
 
-    /// A length of the lifter's own, in seconds.
+    /// A length of the user's own, in seconds.
     case seconds(Int)
 
     /// What the clock actually runs, given what the plan prescribed for this
@@ -43,7 +43,7 @@ enum LifterRest: Equatable, Sendable {
     }
 
     /// How the choice is written down, or `nil` for `.asPrescribed`, which is
-    /// stored as nothing at all — the lifter having said nothing and the lifter
+    /// stored as nothing at all — the user having said nothing and the user
     /// having said "as prescribed" are the same state and must not become two.
     var storedValue: String? {
         switch self {
@@ -64,23 +64,23 @@ enum LifterRest: Equatable, Sendable {
     }
 }
 
-/// Where a lifter's rest choices are kept between sessions.
+/// Where a user's rest choices are kept between sessions.
 ///
 /// **What it does.** Loads and saves the per-exercise choices, and nothing else
-/// — every question about what those choices *mean* belongs to `LifterRest`.
+/// — every question about what those choices *mean* belongs to `UserRest`.
 ///
 /// **How it is used.** `RestPreferences` holds one. `UserDefaultsRestStore` is
 /// the real one; a dictionary-backed fake stands in for it in tests, which is
 /// what lets the persistence rules be checked without a simulator's defaults
 /// database leaking between runs.
 ///
-/// **What it depends on.** `ExerciseID` from LiftingKit, and `LifterRest`.
+/// **What it depends on.** `ExerciseID` from LiftingKit, and `UserRest`.
 @MainActor
 protocol RestPreferenceStoring {
-    func loadRests() -> [ExerciseID: LifterRest]
-    func save(_ rest: LifterRest, for id: ExerciseID)
+    func loadRests() -> [ExerciseID: UserRest]
+    func save(_ rest: UserRest, for id: ExerciseID)
     /// Whether the clock runs at all, or `nil` when nobody has said. Absent
-    /// means on: a lifter who has never touched the switch has a working timer.
+    /// means on: a user who has never touched the switch has a working timer.
     func loadClockIsOn() -> Bool?
     func saveClockIsOn(_ isOn: Bool)
     /// Every exercise the retired per-exercise *off* was stored against, so the
@@ -115,14 +115,14 @@ struct UserDefaultsRestStore: RestPreferenceStoring {
         self.defaults = defaults
     }
 
-    func loadRests() -> [ExerciseID: LifterRest] {
-        var rests: [ExerciseID: LifterRest] = [:]
+    func loadRests() -> [ExerciseID: UserRest] {
+        var rests: [ExerciseID: UserRest] = [:]
         for (key, value) in defaults.dictionaryRepresentation()
         where key.hasPrefix(Self.restPrefix) {
             guard let stored = value as? String else { continue }
             guard stored != Self.retiredOffValue else { continue }
             let slug = String(key.dropFirst(Self.restPrefix.count))
-            rests[ExerciseID(rawValue: slug)] = LifterRest(storedValue: stored)
+            rests[ExerciseID(rawValue: slug)] = UserRest(storedValue: stored)
         }
         return rests
     }
@@ -141,7 +141,7 @@ struct UserDefaultsRestStore: RestPreferenceStoring {
             .map { ExerciseID(rawValue: String($0.key.dropFirst(Self.restPrefix.count))) }
     }
 
-    func save(_ rest: LifterRest, for id: ExerciseID) {
+    func save(_ rest: UserRest, for id: ExerciseID) {
         let key = Self.restPrefix + id.rawValue
         guard let stored = rest.storedValue else {
             defaults.removeObject(forKey: key)
@@ -151,19 +151,19 @@ struct UserDefaultsRestStore: RestPreferenceStoring {
     }
 }
 
-/// The lifter's own rest clock: how long it runs on each exercise.
+/// The user's own rest clock: how long it runs on each exercise.
 ///
 /// **What it does.** Holds the one thing the prescription cannot hold — what
-/// the lifter wants his clock to do — and answers the logging screen's only
+/// the user wants his clock to do — and answers the logging screen's only
 /// question about it: how many seconds to run when a set is ticked. It is kept
 /// per exercise because rest is prescribed per exercise, and persisted because
-/// a lifter who wants two minutes on bench wants two minutes on bench next
+/// a user who wants two minutes on bench wants two minutes on bench next
 /// Tuesday as well; making him dial it again every session is the annoyance
 /// that produced this screen's redesign.
 ///
 /// **The switch is one switch, and it is the only preference in the app.**
 /// Silencing was per exercise once, on the reasoning that rest is prescribed per
-/// exercise — but a lifter reaching for the switch is not saying *not on the
+/// exercise — but a user reaching for the switch is not saying *not on the
 /// bench press*, he is saying *not today*, and having to say it again on the
 /// next movement is the app making him repeat himself. `isClockOn` is app-wide;
 /// what stays per exercise is the *length*, which is the thing that genuinely
@@ -182,7 +182,7 @@ final class RestPreferences {
 
     /// Only the exercises he has said something about. An absent entry is
     /// `.asPrescribed`.
-    private(set) var rests: [ExerciseID: LifterRest]
+    private(set) var rests: [ExerciseID: UserRest]
 
     /// Whether the countdown runs at all. On until he says otherwise.
     private(set) var isClockOn: Bool
@@ -192,7 +192,7 @@ final class RestPreferences {
     init(store: any RestPreferenceStoring = UserDefaultsRestStore()) {
         self.store = store
         rests = store.loadRests()
-        // A lifter who silenced any exercise under the older build was saying
+        // A user who silenced any exercise under the older build was saying
         // the clock should not run; the switch starts where he left it rather
         // than coming back on and going off in his pocket.
         isClockOn = store.loadClockIsOn()
@@ -207,13 +207,13 @@ final class RestPreferences {
 
     /// What this exercise's clock has been told to do — `.asPrescribed` when
     /// nobody has told it anything.
-    func rest(for id: ExerciseID) -> LifterRest {
+    func rest(for id: ExerciseID) -> UserRest {
         rests[id] ?? .asPrescribed
     }
 
     /// Records a choice, and drops the entry entirely when it goes back to
     /// following the plan.
-    func setRest(_ rest: LifterRest, for id: ExerciseID) {
+    func setRest(_ rest: UserRest, for id: ExerciseID) {
         if case .asPrescribed = rest {
             rests.removeValue(forKey: id)
         } else {

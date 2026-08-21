@@ -59,7 +59,7 @@ struct ExerciseCatalogTests {
         #expect(catalog.search("bench", limit: 1).count == 1)
     }
 
-    @Test("Filtering by available equipment excludes what the lifter lacks")
+    @Test("Filtering by available equipment excludes what the user lacks")
     func filterByEquipment() {
         let filter = ExerciseFilter(equipment: [.bodyweight, .dumbbell])
         let results = catalog.exercises(matching: filter)

@@ -7,7 +7,7 @@ import Foundation
 ///
 /// `CatalogIntegrityTests` already guards *over*-correction — that running and
 /// hiking stay `.bodyweight` when the cycling and swimming entries are fixed.
-/// These guard *under*-correction: that an exercise a lifter cannot perform
+/// These guard *under*-correction: that an exercise a user cannot perform
 /// empty-handed never ships as `.bodyweight`, and that the cardio entries
 /// carry a mechanic derived from one rule rather than per-row patches.
 /// Depends on: the bundled `ExerciseCatalog` only.
@@ -25,11 +25,11 @@ struct CatalogAuditCorrectionsTests {
     /// the movement needs anything.
     ///
     /// The line drawn here: an exercise is `.bodyweight` only if it needs
-    /// nothing but the lifter's body, the ground or a wall, and a bar to hang
+    /// nothing but the user's body, the ground or a wall, and a bar to hang
     /// from. The bar is existing precedent, not a new concession —
     /// `bodyweightCoverage` requires a `.bodyweight` option for
     /// `.verticalPull`, so unloaded pull-ups and chin-ups are already modeled
-    /// that way. What fails the line is a discrete object the lifter must
+    /// that way. What fails the line is a discrete object the user must
     /// have to hand: added load, a rope, a box, a bench, or a step at bench
     /// height. That is why `weighted-pull-ups` is listed while `pull-ups` is
     /// not, and why `bulgarian-split-squat` (rear foot at bench height) is

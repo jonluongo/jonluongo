@@ -90,7 +90,7 @@ struct PlanArchiveTests {
         // The archive is what `sourceDocumentID` points at, so it holds every
         // document that produced sessions and nothing else. A plan naming an
         // exercise the catalog does not have produced none, and keeping it
-        // would put prescriptions in the record the lifter was never given.
+        // would put prescriptions in the record the user was never given.
         let plan = PlanDocument(
             id: UUID(), catalogVersion: 5, generatedAt: StoreFixture.instant,
             sessions: [PlanDocumentSession(
@@ -101,7 +101,7 @@ struct PlanArchiveTests {
 
         let (folder, inbox) = try await afterImporting(plan)
 
-        #expect(inbox.errorMessage != nil, "the lifter is told")
+        #expect(inbox.errorMessage != nil, "the user is told")
         #expect(try folder.archivedPlans().isEmpty)
     }
 

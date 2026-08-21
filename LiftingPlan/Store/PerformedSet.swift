@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import LiftingKit
 
-/// One set the lifter actually did.
+/// One set the user actually did.
 ///
 /// **A row exists only if it happened.** Nothing seeds these, so there is no
 /// `isCompleted` to distinguish a row that means something from one that does
@@ -31,7 +31,7 @@ final class PerformedSet {
     /// Whether this was performed as a warm-up.
     ///
     /// Stated here as well as on the prescription, and the two may honestly
-    /// disagree: a lifter treats a prescribed working set as a warm-up often
+    /// disagree: a user treats a prescribed working set as a warm-up often
     /// enough, and a set he added has no prescription to inherit from.
     var isWarmup: Bool = false
     /// What was on the bar. `nil` for bodyweight, and `nil` when he did not say.
@@ -49,7 +49,7 @@ final class PerformedSet {
     var completedAt: Date = Date()
 
     var exercise: PerformedExercise?
-    /// The set this fulfils, or `nil` for one the lifter added and for a stated
+    /// The set this fulfils, or `nil` for one the user added and for a stated
     /// baseline.
     var planned: PlannedSet?
 

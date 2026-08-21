@@ -8,11 +8,11 @@ import LiftingKit
 @MainActor
 private final class InMemoryRestStore: RestPreferenceStoring {
 
-    var rests: [ExerciseID: LifterRest] = [:]
+    var rests: [ExerciseID: UserRest] = [:]
 
-    func loadRests() -> [ExerciseID: LifterRest] { rests }
+    func loadRests() -> [ExerciseID: UserRest] { rests }
 
-    func save(_ rest: LifterRest, for id: ExerciseID) {
+    func save(_ rest: UserRest, for id: ExerciseID) {
         if case .asPrescribed = rest {
             rests.removeValue(forKey: id)
         } else {
@@ -32,30 +32,30 @@ private final class InMemoryRestStore: RestPreferenceStoring {
 private let bench = ExerciseID(rawValue: "barbell-bench-press")
 private let squat = ExerciseID(rawValue: "barbell-back-squat")
 
-/// What the clock runs is the lifter's to say; what the plan prescribed is
+/// What the clock runs is the user's to say; what the plan prescribed is
 /// Claude's, and the two are never the same number by accident.
 @MainActor
-@Suite("Lifter rest")
-struct LifterRestTests {
+@Suite("User rest")
+struct UserRestTests {
 
     @Test("Saying nothing runs exactly what the plan prescribed")
     func silenceFollowsThePlan() {
-        #expect(LifterRest.asPrescribed.runningSeconds(prescribed: 180) == 180)
-        #expect(LifterRest.asPrescribed.runningSeconds(prescribed: nil) == nil)
+        #expect(UserRest.asPrescribed.runningSeconds(prescribed: 180) == 180)
+        #expect(UserRest.asPrescribed.runningSeconds(prescribed: nil) == nil)
     }
 
     @Test("A length of his own runs instead of the prescribed one")
     func ownLengthRuns() {
-        #expect(LifterRest.seconds(120).runningSeconds(prescribed: 180) == 120)
-        #expect(LifterRest.seconds(120).runningSeconds(prescribed: nil) == 120)
+        #expect(UserRest.seconds(120).runningSeconds(prescribed: 180) == 120)
+        #expect(UserRest.seconds(120).runningSeconds(prescribed: nil) == 120)
     }
 
     @Test("A clock dialled to zero runs nothing, and a prescribed zero is passed through")
     func zeroes() {
         // Nothing can count down from zero. A zero Claude wrote is still his to
         // write, and it is `RestTimerModel` that declines to run it.
-        #expect(LifterRest.seconds(0).runningSeconds(prescribed: 180) == nil)
-        #expect(LifterRest.asPrescribed.runningSeconds(prescribed: 0) == 0)
+        #expect(UserRest.seconds(0).runningSeconds(prescribed: 180) == nil)
+        #expect(UserRest.asPrescribed.runningSeconds(prescribed: 0) == 0)
     }
 }
 
@@ -93,7 +93,7 @@ struct RestPreferenceTests {
     @Test("The switch is one switch: turning it off stops every countdown")
     func theSwitchIsUniversal() {
         // Jon: turning it off on one exercise should do it universally. A
-        // lifter reaching for it is not saying *not on the bench press*, he is
+        // user reaching for it is not saying *not on the bench press*, he is
         // saying *not today*.
         let preferences = RestPreferences(store: InMemoryRestStore())
         preferences.setRest(.seconds(120), for: bench)
@@ -106,7 +106,7 @@ struct RestPreferenceTests {
 
     @Test("Switching it back on gives every exercise its own length again")
     func lengthsSurviveTheSwitch() {
-        // The switch silences; it does not forget. A lifter who turns the clock
+        // The switch silences; it does not forget. A user who turns the clock
         // off for a session and back on the next one should not have to dial
         // two minutes on the bench press again.
         let preferences = RestPreferences(store: InMemoryRestStore())
@@ -119,12 +119,12 @@ struct RestPreferenceTests {
         #expect(preferences.runningSeconds(prescribed: 180, for: squat) == 180)
     }
 
-    @Test("A lifter who has never touched the switch has a working clock")
+    @Test("A user who has never touched the switch has a working clock")
     func theClockStartsOn() {
         #expect(RestPreferences(store: InMemoryRestStore()).isClockOn)
     }
 
-    @Test("A lifter who silenced an exercise under the older build opens with it off")
+    @Test("A user who silenced an exercise under the older build opens with it off")
     func silenceCarriesAcross() {
         // The old build said *off* one exercise at a time. He meant the clock
         // should not run; the switch starts where he left it rather than coming
@@ -156,8 +156,8 @@ struct RestPreferenceTests {
         // whatever Claude prescribed rather than to a number nobody chose. An
         // `off` written by the older build reads the same way — it has become
         // the switch, and is not a length.
-        #expect(LifterRest(storedValue: "forever") == .asPrescribed)
-        #expect(LifterRest(storedValue: "off") == .asPrescribed)
-        #expect(LifterRest(storedValue: "90") == .seconds(90))
+        #expect(UserRest(storedValue: "forever") == .asPrescribed)
+        #expect(UserRest(storedValue: "off") == .asPrescribed)
+        #expect(UserRest(storedValue: "90") == .seconds(90))
     }
 }

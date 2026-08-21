@@ -5,7 +5,7 @@ import Foundation
 /// **What it does.** States which block and which session within it, what the
 /// coach called the day, the mark he chose for it, and the movements in order.
 ///
-/// **It has no date and no weekday.** When the lifter trains is not something
+/// **It has no date and no weekday.** When the user trains is not something
 /// the plan decides — the app hands him the session and he does it when he does
 /// it. A session is *session 2 of block 3*, and when it actually happened is a
 /// fact about the record, carried by `PerformedExercise.occurredAt`.
@@ -128,7 +128,7 @@ public struct PlanDocumentExercise: Codable, Hashable, Sendable {
 /// One prescribed set: what to do, with what, how hard, and whether it counts.
 ///
 /// **Every field is what the coach stated, and nothing is inherited.** A set
-/// that states no load has no load — the lifter picks the bar, which is what
+/// that states no load has no load — the user picks the bar, which is what
 /// `intensity` is for. Nothing here is filled in from the exercise, because
 /// there is nothing on the exercise to fill it in from: the exercise states its
 /// sets, and a set states itself.
@@ -144,7 +144,7 @@ public struct PlanDocumentSet: Codable, Hashable, Sendable {
     /// which is a set defined entirely by its load and its intensity.
     public let target: Target?
     /// The external load. `nil` for a bodyweight movement, and `nil` when the
-    /// coach left the bar to the lifter.
+    /// coach left the bar to the user.
     public let load: Mass?
     /// How hard this set should be. `nil` when the coach stated none — never a
     /// zero, and never inferred from the load.
@@ -153,9 +153,9 @@ public struct PlanDocumentSet: Codable, Hashable, Sendable {
     ///
     /// **The coach could not say this before.** It appeared nowhere in the plan
     /// document: everything prescribed was hardcoded as work, and only a set
-    /// the lifter added himself was ever marked — so *"ramp three sets to your
+    /// the user added himself was ever marked — so *"ramp three sets to your
     /// top set"* could not be written down, and the app's answer was that the
-    /// lifter adds his own. That was the app owning part of the prescription.
+    /// user adds his own. That was the app owning part of the prescription.
     ///
     /// Stated per set, because an exercise is not a warm-up — some of its sets
     /// are, and a ramp is exactly a list of sets that disagree about it.

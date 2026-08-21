@@ -2,7 +2,7 @@ import Foundation
 import LiftingKit
 
 /// The compact context that rides along on every turn: when the record was
-/// written, where the lifter is in it, and what he did lately.
+/// written, where the user is in it, and what he did lately.
 ///
 /// **Who he is is not in here any more.** It used to carry his goal, experience,
 /// constraints, equipment, avoid lists, bodyweight and every strength baseline —
@@ -40,7 +40,7 @@ struct ContextReport {
             "exportedAt": .date(snapshot.exportedAt),
             "recordAgeDays": .integer(ageInDays),
             "catalogVersion": .integer(snapshot.catalogVersion),
-            "lifter": .object([
+            "user": .object([
                 "note": .string(
                     "Who he is, what he trains for, his injuries, his equipment and his "
                         + "bodyweight are in ACCOUNT.md. Read it as a resource; write to it with "

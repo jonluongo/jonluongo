@@ -6,7 +6,7 @@ import Foundation
 /// `TrainingSnapshot` when it backgrounds and reads a `PlanDocument` or a
 /// `ProfileUpdate` when one arrives — and hand a fake to it in tests. There are
 /// two inbound documents because Claude does two things with what he learns:
-/// he prescribes training, and he records standing facts about the lifter, who
+/// he prescribes training, and he records standing facts about the user, who
 /// is never asked for them by the app. Nothing above this protocol knows
 /// about files, URLs, or iCloud, which is the point: when the loop stops being
 /// two machines on one Apple ID and becomes a hosted relay, a second
@@ -14,7 +14,7 @@ import Foundation
 /// exporter, the importer, and the MCP tools are already transport-agnostic.
 ///
 /// **`nil` and "broken" are different answers.** `readPlan()` returns `nil`
-/// when no plan has been written yet, which is the ordinary state of a lifter
+/// when no plan has been written yet, which is the ordinary state of a user
 /// who has not been given one, and throws when a plan is there but cannot be
 /// read. A conformance that swallowed a decoding failure into `nil` would make
 /// a corrupt file look exactly like an empty transport.
@@ -75,7 +75,7 @@ public protocol DocumentTransport: Sendable {
 /// a file name, so neither can disagree about one.
 ///
 /// Writes are atomic, so a reader never sees half a document — a truncated
-/// snapshot would decode as a lifter with less history than he has. Reads
+/// snapshot would decode as a user with less history than he has. Reads
 /// return `nil` only for a file that is not there; a file that is there and
 /// malformed throws.
 ///
@@ -228,7 +228,7 @@ public struct DocumentFolder: DocumentTransport {
     ///
     /// A missing containing folder counts: a transport pointed at a folder
     /// iCloud has not created yet holds no plan, which is exactly the state of
-    /// a lifter who has not been sent one.
+    /// a user who has not been sent one.
     private static func meansNotThere(_ error: CocoaError) -> Bool {
         error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile
     }

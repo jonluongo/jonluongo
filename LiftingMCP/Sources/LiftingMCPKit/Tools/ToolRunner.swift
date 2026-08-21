@@ -20,12 +20,12 @@ public enum ToolOutcome: Sendable, Hashable {
 /// call `call(_:arguments:)`. Every tool here *reports*: it says what the
 /// catalog contains, what was logged, and what was written. **None of them
 /// concludes anything about training** — there is deliberately no tool that
-/// suggests a progression or returns a verdict on a lifter's balance, because
+/// suggests a progression or returns a verdict on a user's balance, because
 /// deciding what to do about the data is Claude's job and the reason this
 /// server exists.
 ///
 /// The snapshot is read fresh on every call and never cached. A cached snapshot
-/// would go stale exactly when the lifter has just trained, which is the moment
+/// would go stale exactly when the user has just trained, which is the moment
 /// it matters most.
 ///
 /// Depends on: `TrainingDocuments`, `ExerciseCatalogProviding` from
@@ -105,7 +105,7 @@ public struct ToolRunner: Sendable {
         }
     }
 
-    /// The always-present context resource: who the lifter is, what he has to
+    /// The always-present context resource: who the user is, what he has to
     /// train with, what block he is on, what he did lately, and what he is
     /// currently working with on each lift.
     public func contextResource() -> ToolOutcome {
@@ -118,7 +118,7 @@ public struct ToolRunner: Sendable {
     /// not.
     ///
     /// This is where the owner's first run lands. A snapshot that is not there
-    /// must never read as a lifter with no history — an empty answer looks like
+    /// must never read as a user with no history — an empty answer looks like
     /// data, and a coach given empty data will confidently plan for a beginner.
     func withSnapshot(_ body: (TrainingSnapshot) -> ToolOutcome) -> ToolOutcome {
         do {
@@ -130,7 +130,7 @@ public struct ToolRunner: Sendable {
             return .failure(
                 "The snapshot at \(documents.snapshotLocation) could not be read: "
                     + "\(error.localizedDescription) It is there but unreadable, which is "
-                    + "different from missing — do not treat this as a lifter with no history."
+                    + "different from missing — do not treat this as a user with no history."
             )
         }
     }
@@ -151,7 +151,7 @@ public struct ToolRunner: Sendable {
     static func noSnapshotYet(at location: String) -> String {
         """
         No training snapshot yet, so there is nothing to report on. This is not \
-        a lifter with no history — it is a file that has not arrived.
+        a user with no history — it is a file that has not arrived.
 
         Superset writes snapshot.json whenever the record changes: when a \
         session is finished or taken back, when a plan you sent lands, and when \

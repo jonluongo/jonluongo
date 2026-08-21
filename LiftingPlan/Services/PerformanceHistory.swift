@@ -33,7 +33,7 @@ enum PerformanceHistory {
     ///
     /// A stated baseline is included and sits at the date it was said to have
     /// happened: he did it, nobody watched, and leaving it out would report a
-    /// lifter starting from nothing.
+    /// user starting from nothing.
     static func performances(
         of exerciseID: ExerciseID, in context: ModelContext
     ) throws -> [SnapshotPerformedExercise] {
@@ -56,7 +56,7 @@ enum PerformanceHistory {
     /// `PlanDocumentSession` is for a prescription — and a screen and a coach
     /// asking the same question deserve the same answer. A private `SetRecord`
     /// here was a second shape for one idea, and it carried a word this domain
-    /// has already spoken for: to a lifter, a record is a PR.
+    /// has already spoken for: to a user, a record is a PR.
     static func value(of performed: PerformedExercise) -> SnapshotPerformedExercise {
         SnapshotPerformedExercise(
             exerciseID: performed.exerciseID,
@@ -64,7 +64,7 @@ enum PerformanceHistory {
             source: performed.source,
             blockOrdinal: performed.session?.blockOrdinal,
             sessionOrdinal: performed.session?.ordinal,
-            lifterNote: performed.lifterNote,
+            userNote: performed.userNote,
             sets: performed.orderedSets.map(value(of:)))
     }
 

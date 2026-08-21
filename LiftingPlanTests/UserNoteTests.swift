@@ -4,7 +4,7 @@ import SwiftData
 @testable import LiftingPlan
 import LiftingKit
 
-/// What the lifter says about a movement, and where it lives.
+/// What the user says about a movement, and where it lives.
 ///
 /// **His note moved to the record.** It used to sit on `PlannedExercise`, which
 /// put his words under the coach's rewrite rules: a note on a session he had not
@@ -12,8 +12,8 @@ import LiftingKit
 /// so it lives on `PerformedExercise` — and writing one has to create that
 /// performance, because a note written before his first set would otherwise have
 /// nowhere to go.
-@Suite("The lifter's own note")
-struct LifterNoteTests {
+@Suite("The user's own note")
+struct UserNoteTests {
 
     @MainActor
     private func log(_ context: ModelContext, _ session: Session) -> SessionLog {
@@ -39,7 +39,7 @@ struct LifterNoteTests {
         try log(context, session).writeNote("Shoulder felt fine.", for: exercise)
 
         let performed = try #require((session.performedExercises ?? []).first)
-        #expect(performed.lifterNote == "Shoulder felt fine.")
+        #expect(performed.userNote == "Shoulder felt fine.")
         #expect((performed.sets ?? []).isEmpty, "he wrote before he lifted")
     }
 
@@ -47,7 +47,7 @@ struct LifterNoteTests {
     @Test("Clearing a note he wrote before lifting leaves nothing behind")
     func clearingRemovesAnEmptyPerformance() throws {
         // An empty performance would put a session in the coach's history that
-        // the lifter never trained.
+        // the user never trained.
         let (context, session, exercise) = try self.session()
         let log = log(context, session)
 
@@ -69,7 +69,7 @@ struct LifterNoteTests {
         try log.writeNote(nil, for: exercise)
 
         let performed = try #require((session.performedExercises ?? []).first)
-        #expect(performed.lifterNote == nil)
+        #expect(performed.userNote == nil)
         #expect((performed.sets ?? []).count == 1, "the work happened whatever he said about it")
     }
 
@@ -82,7 +82,7 @@ struct LifterNoteTests {
         let snapshot = try SnapshotExporter.export(
             from: context, catalogVersion: 5, exportedAt: StoreFixture.instant)
 
-        #expect(snapshot.performances.first?.lifterNote == "Left elbow ached on the last set.")
+        #expect(snapshot.performances.first?.userNote == "Left elbow ached on the last set.")
     }
 
     @MainActor
@@ -101,6 +101,6 @@ struct LifterNoteTests {
                 ]),
                 into: context, catalog: try StoreFixture.catalog())
         }
-        #expect((session.performedExercises ?? []).first?.lifterNote == "Felt strong.")
+        #expect((session.performedExercises ?? []).first?.userNote == "Felt strong.")
     }
 }

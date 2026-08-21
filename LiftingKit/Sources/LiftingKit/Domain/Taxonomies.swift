@@ -33,7 +33,7 @@ public struct MuscleGroup: ExtensibleTaxonomy {
     ]
 }
 
-/// What the lifter needs to hand to perform an exercise.
+/// What the user needs to hand to perform an exercise.
 ///
 /// Read it from an `Exercise`, or filter the catalog by it through
 /// `ExerciseFilter`. Depends on: `ExtensibleTaxonomy`.
@@ -55,7 +55,7 @@ public struct EquipmentType: ExtensibleTaxonomy {
     public static let suspension = EquipmentType(rawValue: "suspension")
     public static let sled = EquipmentType(rawValue: "sled")
     public static let cardioMachine = EquipmentType(rawValue: "cardio machine")
-    /// A swimming pool. What the lifter has access to is prose in `ACCOUNT.md`,
+    /// A swimming pool. What the user has access to is prose in `ACCOUNT.md`,
     /// so nothing here has to guess whether "full gym" means there is a pool in
     /// the building.
     public static let pool = EquipmentType(rawValue: "pool")
@@ -71,7 +71,7 @@ public struct EquipmentType: ExtensibleTaxonomy {
 /// The movement pattern an exercise trains.
 ///
 /// It is what makes two exercises comparable — `ExerciseCatalog.substitutes`
-/// searches within a pattern, and a lifter's avoided patterns are recorded
+/// searches within a pattern, and a user's avoided patterns are recorded
 /// against it. Depends on: `ExtensibleTaxonomy`.
 public struct MovementPattern: ExtensibleTaxonomy {
     public let rawValue: String
@@ -133,7 +133,7 @@ public struct Mechanic: ExtensibleTaxonomy {
 /// Roughly how much training experience a movement asks for.
 ///
 /// Reported alongside an exercise so whoever chooses it can weigh that against
-/// the lifter's stated experience. Derived from mechanic and equipment when the
+/// the user's stated experience. Derived from mechanic and equipment when the
 /// source data does not state it. Depends on: `ExtensibleTaxonomy`.
 public struct Difficulty: ExtensibleTaxonomy {
     public let rawValue: String

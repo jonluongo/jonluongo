@@ -24,7 +24,7 @@ enum SessionListing {
     /// Where a session stands.
     enum Standing {
 
-        /// The session the lifter is on — the first he has not finished. There
+        /// The session the user is on — the first he has not finished. There
         /// is at most one.
         case current
 
@@ -61,7 +61,7 @@ enum SessionListing {
     /// What a session is called: what the coach named it, or where it sits.
     ///
     /// The fallback says the position rather than inventing a name. It used to
-    /// say the weekday, which was the app deciding when the lifter trains from a
+    /// say the weekday, which was the app deciding when the user trains from a
     /// field the plan no longer has.
     static func sessionTitle(_ session: Session) -> String {
         session.focus.isEmpty ? "Session \(session.ordinal)" : session.focus
@@ -74,13 +74,13 @@ enum SessionListing {
     /// first unfinished session there is. Asking a list of sessions to work it
     /// out makes it a fact about *that* list — so a screen drawing block 1 and
     /// block 2 separately would mark a current session in each of them, and the
-    /// lifter would be told he is in two places.
+    /// user would be told he is in two places.
     static func standing(of session: Session, current: Session?) -> Standing {
         if session.finishedAt != nil { return .finished }
         return session === current ? .current : .upcoming
     }
 
-    /// The session the lifter is on: the first he has not finished.
+    /// The session the user is on: the first he has not finished.
     ///
     /// `nil` once he has finished every session prescribed, which is the
     /// truthful answer on that day rather than a gap to be filled. It is also

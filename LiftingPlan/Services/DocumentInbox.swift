@@ -30,7 +30,7 @@ protocol DocumentArrivalWatching: AnyObject {
     func stop()
 }
 
-/// Takes in everything Claude sends the moment it arrives, so the lifter never
+/// Takes in everything Claude sends the moment it arrives, so the user never
 /// hunts for a refresh button.
 ///
 /// Build one with the app's transport, a watcher, the `ModelContext`, and the
@@ -40,16 +40,16 @@ protocol DocumentArrivalWatching: AnyObject {
 /// the Mac, iCloud carries it, this notices and applies it.
 ///
 /// **Two documents, one path.** A plan says what to train; a profile update says
-/// what has been learned about the lifter, which matters because the app asks
+/// what has been learned about the user, which matters because the app asks
 /// him nothing. They arrive the same way and are read together on every
 /// announcement, so a folder holding both settles in one pass rather than
 /// needing two.
 ///
 /// **Absence and corruption are told apart.** A transport with nothing in it is
-/// the ordinary state of a lifter at the start, and passes in silence. A
+/// the ordinary state of a user at the start, and passes in silence. A
 /// document that is there but unreadable — malformed, or naming an exercise the
 /// catalog does not have — sets `errorMessage` and changes nothing, because a
-/// corrupt document that read as an empty one would leave the lifter staring at
+/// corrupt document that read as an empty one would leave the user staring at
 /// an empty screen with no idea why.
 ///
 /// **A plan taken in is kept**, under its own ID in `plans/`, because
@@ -79,7 +79,7 @@ final class DocumentInbox {
     /// **It exists so the snapshot cannot be older than the plan it describes.**
     /// The record changes the moment Claude's plan lands, and until this the
     /// only thing that wrote the snapshot back out was the app being
-    /// backgrounded. A lifter who received a block, trained it, and never left
+    /// backgrounded. A user who received a block, trained it, and never left
     /// the app left the coach reading a document written before the block
     /// existed — which is the shape of the report that the snapshot held four
     /// sessions when the block prescribed nine.
@@ -152,8 +152,8 @@ final class DocumentInbox {
         watcher.stop()
     }
 
-    /// Clears a reported failure, after the lifter has been shown it.
-    /// What the lifter has already been shown and closed, so the same refusal
+    /// Clears a reported failure, after the user has been shown it.
+    /// What the user has already been shown and closed, so the same refusal
     /// does not chase him around the app.
     private var dismissed: String?
 
@@ -166,7 +166,7 @@ final class DocumentInbox {
     ///
     /// The failures are held rather than thrown because the caller is an
     /// arrival announcement with nowhere to return an error to. Nothing is
-    /// discarded: `errorMessage` is what the UI puts in front of the lifter, and
+    /// discarded: `errorMessage` is what the UI puts in front of the user, and
     /// the documents stay in the folder, so a fixed one applies on its next
     /// announcement.
     ///
@@ -185,7 +185,7 @@ final class DocumentInbox {
         do {
             // The coach's notes are copied down on every pass. **The container is
             // the sync channel and the local copy is what the screen reads**, so
-            // a note that arrives and is never mirrored is a note the lifter can
+            // a note that arrives and is never mirrored is a note the user can
             // never see — which is exactly what happened until a render caught
             // it: the account screen drew its template while `ACCOUNT.md` sat in
             // the folder beside the plan.
@@ -208,7 +208,7 @@ final class DocumentInbox {
                 // refused by the importer — one rewriting a block already
                 // trained, or naming an exercise the catalog lacks — produced
                 // none, and archiving it would put prescriptions in the record
-                // that the lifter was never given.
+                // that the user was never given.
                 try await Self.archive(document, in: transport)
                 applied = applied || isNew
             }
@@ -234,9 +234,9 @@ final class DocumentInbox {
         if applied { await onApplied?() }
     }
 
-    /// What to put in front of the lifter when something could not be taken in.
+    /// What to put in front of the user when something could not be taken in.
     ///
-    /// **A refusal is written to whoever wrote the document, and the lifter is
+    /// **A refusal is written to whoever wrote the document, and the user is
     /// not him.** "Send it under a key the format has" is exactly right for
     /// Claude and useless in an alert on a phone: the person reading it cannot
     /// rewrite the plan.

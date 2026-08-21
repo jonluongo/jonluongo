@@ -127,7 +127,7 @@ func fixturePerformance(
 ) -> SnapshotPerformedExercise {
     SnapshotPerformedExercise(
         exerciseID: ExerciseID(rawValue: id), occurredAt: when, source: source,
-        blockOrdinal: block, sessionOrdinal: ordinal, lifterNote: note, sets: sets)
+        blockOrdinal: block, sessionOrdinal: ordinal, userNote: note, sets: sets)
 }
 
 func fixtureSnapshot(
@@ -161,7 +161,7 @@ final class InMemoryDocuments: TrainingDocuments, @unchecked Sendable {
     /// Set to make reading the record fail, which is a different thing from
     /// there being no record: one is a folder nobody has written to yet, and the
     /// other is a folder that cannot be reached. A tool that reported them the
-    /// same way would tell a coach the lifter has never trained.
+    /// same way would tell a coach the user has never trained.
     var readFailure: (any Error)?
 
     init(snapshot: TrainingSnapshot? = nil, notes: [NoteFile: String] = [:]) {
@@ -222,7 +222,7 @@ func makeRunner(
 ///
 /// **Both are optional and exactly one is ever non-nil**, which is the assertion
 /// most of these suites are really making: a tool that fails must not also
-/// report, because an empty report reads as a lifter with no history rather than
+/// report, because an empty report reads as a user with no history rather than
 /// as a question that could not be answered.
 extension ToolOutcome {
 

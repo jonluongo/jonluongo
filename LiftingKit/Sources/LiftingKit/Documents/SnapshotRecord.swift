@@ -3,12 +3,12 @@ import Foundation
 /// One session as the coach wrote it, and what the record has of it since.
 ///
 /// **What it does.** Pairs a prescription with the two facts the store adds:
-/// whether the lifter finished it, and which import it came from. The
+/// whether the user finished it, and which import it came from. The
 /// prescription is the plan document's own `PlanDocumentSession` rather than a
 /// restatement — one description of a session, written once, by the format that
 /// prescribed it.
 ///
-/// **`finishedAt` is the only event on it.** Everything else the lifter did is a
+/// **`finishedAt` is the only event on it.** Everything else the user did is a
 /// `SnapshotPerformedExercise`, which is a fact about the record rather than about the
 /// prescription. A session can be finished with nothing performed, which is why
 /// it cannot be derived.
@@ -18,7 +18,7 @@ public struct SnapshotSession: Codable, Hashable, Sendable {
 
     /// The session exactly as the coach wrote it.
     public let prescription: PlanDocumentSession
-    /// When the lifter pressed Finish, or `nil` while he has not.
+    /// When the user pressed Finish, or `nil` while he has not.
     public let finishedAt: Date?
     /// When the coach wrote it — his date, not the day the phone took it in.
     public let generatedAt: Date
@@ -52,7 +52,7 @@ public struct SnapshotSession: Codable, Hashable, Sendable {
     public var blockOrdinal: Int { prescription.blockOrdinal }
     /// Where it sits in that block.
     public var ordinal: Int { prescription.ordinal }
-    /// Whether the lifter has been through it.
+    /// Whether the user has been through it.
     public var isFinished: Bool { finishedAt != nil }
 }
 
@@ -90,27 +90,27 @@ public struct SnapshotPerformedExercise: Codable, Hashable, Sendable {
     public let blockOrdinal: Int?
     /// Where the session sits in that block, or `nil` for a stated baseline.
     public let sessionOrdinal: Int?
-    /// What the lifter said about it, in his own words.
-    public let lifterNote: String?
+    /// What the user said about it, in his own words.
+    public let userNote: String?
     /// The sets performed, in the order they happened.
     public let sets: [SnapshotPerformedSet]
 
     public init(
         exerciseID: ExerciseID, occurredAt: Date, source: PerformanceSource = .logged,
         blockOrdinal: Int? = nil, sessionOrdinal: Int? = nil,
-        lifterNote: String? = nil, sets: [SnapshotPerformedSet] = []
+        userNote: String? = nil, sets: [SnapshotPerformedSet] = []
     ) {
         self.exerciseID = exerciseID
         self.occurredAt = occurredAt
         self.source = source
         self.blockOrdinal = blockOrdinal
         self.sessionOrdinal = sessionOrdinal
-        self.lifterNote = lifterNote
+        self.userNote = userNote
         self.sets = sets
     }
 
     private enum CodingKeys: String, CodingKey, CaseIterable {
-        case exerciseID, occurredAt, source, blockOrdinal, sessionOrdinal, lifterNote, sets
+        case exerciseID, occurredAt, source, blockOrdinal, sessionOrdinal, userNote, sets
     }
 
     public init(from decoder: any Decoder) throws {
@@ -121,7 +121,7 @@ public struct SnapshotPerformedExercise: Codable, Hashable, Sendable {
         source = try container.decodeIfPresent(PerformanceSource.self, forKey: .source) ?? .logged
         blockOrdinal = try container.decodeIfPresent(Int.self, forKey: .blockOrdinal)
         sessionOrdinal = try container.decodeIfPresent(Int.self, forKey: .sessionOrdinal)
-        lifterNote = try container.decodeIfPresent(String.self, forKey: .lifterNote)
+        userNote = try container.decodeIfPresent(String.self, forKey: .userNote)
         sets = try container.decodeIfPresent([SnapshotPerformedSet].self, forKey: .sets) ?? []
     }
 
@@ -129,7 +129,7 @@ public struct SnapshotPerformedExercise: Codable, Hashable, Sendable {
     public var workingSets: [SnapshotPerformedSet] { sets.filter { !$0.isWarmup } }
 }
 
-/// One set the lifter actually did.
+/// One set the user actually did.
 ///
 /// **Every measure is optional, and they never mix.** `nil` is *he did not say*;
 /// a number is *he did that much*. A hold is seconds and a carry is a distance

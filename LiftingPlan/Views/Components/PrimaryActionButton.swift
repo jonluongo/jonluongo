@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The one full-width button this app draws.
 ///
-/// **What it does.** "Start Workout", "Finish Workout" and "Start 2min" were
+/// **What it does.** "Start workout", "Finish workout" and "Start 2min" were
 /// three copies of `.fontWeight(.semibold)` + `.frame(maxWidth: .infinity)` +
 /// `.borderedProminent`, and the one on the most-used screen had a different
 /// height and a different colour from the other two. This is that button, once,
@@ -16,7 +16,7 @@ import SwiftUI
 /// it did not belong: green marks a fact the record already holds, and this
 /// button is the act that creates that fact, not the fact. The theme replaced it
 /// and had the milder version of the same problem — the brightest thing on the
-/// screen was the one thing the lifter had not done yet. It is ink now, on Jon's
+/// screen was the one thing the user had not done yet. It is ink now, on Jon's
 /// call. **What the record holds is coloured; what you can do is simply legible.**
 ///
 /// **What it depends on.** `Spacing`, `TapTarget`, and SwiftUI's button styles.
@@ -124,10 +124,10 @@ struct PrimaryActionButton: View {
 
 #Preview("Primary action") {
     VStack(spacing: Spacing.section) {
-        PrimaryActionButton(title: "Start Workout", systemImage: "play.fill") {}
-        PrimaryActionButton(title: "Finish Workout", systemImage: "checkmark") {}
+        PrimaryActionButton(title: "Start workout", systemImage: "play.fill") {}
+        PrimaryActionButton(title: "Finish workout", systemImage: "checkmark") {}
         PrimaryActionButton(
-            title: "Finish Workout", systemImage: "checkmark", prominence: .tentative) {}
+            title: "Finish workout", systemImage: "checkmark", prominence: .tentative) {}
         PrimaryActionButton(
             title: "Mark as Unfinished", systemImage: "arrow.uturn.backward",
             prominence: .quiet) {}

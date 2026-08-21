@@ -7,7 +7,7 @@ import Foundation
 /// words — `label` names the fact, `value` is the fact — and identifies itself
 /// by the label, because a list never states the same fact twice.
 ///
-/// **How it is used.** `AccountRecord` builds them from the lifter's record,
+/// **How it is used.** `AccountRecord` builds them from the user's record,
 /// `ExerciseAbout` from the catalog's entry for a movement, and `RoutineFacts`
 /// from the shape a plan was given. All three draw through `FactRow`, which is
 /// why they are one type: three structs with the same two strings, drawn by the
@@ -23,7 +23,7 @@ import Foundation
 /// **What it depends on.** Foundation, and nothing else. It holds no model and
 /// no id of one.
 /// **It survived the account page it was written for.** That screen listed the
-/// lifter as nine labelled fields; it renders `ACCOUNT.md` now, and nothing about
+/// user as nine labelled fields; it renders `ACCOUNT.md` now, and nothing about
 /// him is a row any more. This still has a caller: `ExerciseAbout` draws what
 /// the *catalog* knows about a movement — its target, its equipment, its
 /// pattern — and those are facts with labels in the same way. It was deleted

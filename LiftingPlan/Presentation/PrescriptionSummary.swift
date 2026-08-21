@@ -27,7 +27,7 @@ enum PrescriptionSummary {
     /// What one prescribed set asks that the row has not already shown.
     ///
     /// The load and the target are left out on purpose: they are already in
-    /// front of the lifter as the placeholders in that row's two fields, and a
+    /// front of the user as the placeholders in that row's two fields, and a
     /// line repeating them would be the screen saying the same thing twice.
     ///
     /// **A set with a load prescribed is not shown its intensity.** The
@@ -35,7 +35,7 @@ enum PrescriptionSummary {
     /// writes 100 kg for five has done the reasoning an RPE is shorthand for,
     /// and printing both under every row is showing his working. Where no load
     /// was prescribed the intensity *is* the prescription: "work up to a top
-    /// single at RPE 8" leaves the lifter nothing else to go on.
+    /// single at RPE 8" leaves the user nothing else to go on.
     ///
     /// It is left out again when every set asks the same effort, because the
     /// line above the table stated it once for all of them.
@@ -59,7 +59,7 @@ enum PrescriptionSummary {
         }
     }
 
-    /// How long to rest, written for the lifter — `2:00`, `90s`.
+    /// How long to rest, written for the user — `2:00`, `90s`.
     ///
     /// `nil` when the coach prescribed none, which is why the line appears on
     /// some exercises and not others rather than reading `Rest —`.

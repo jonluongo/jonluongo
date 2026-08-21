@@ -14,7 +14,7 @@ import Foundation
 /// result, which is the only place the writer will read it.
 ///
 /// **Why refuse at all.** A key that is quietly dropped tells the writer the
-/// value landed when nothing of it survived — the lifter never sees the
+/// value landed when nothing of it survived — the user never sees the
 /// prescription and nothing anywhere reports a problem. A refusal naming the
 /// key is strictly better than a success that cannot be corrected.
 ///
@@ -51,7 +51,7 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
     /// is a cache — the phone regenerates the whole thing whenever the record
     /// changes — so an old one is not history, it is a stale file that will be
     /// replaced the moment the app opens. Reading it half-way would report a
-    /// lifter who has trained less than he has, which is the one failure that
+    /// user who has trained less than he has, which is the one failure that
     /// arrives looking like a fact.
     ///
     /// It carries its own sentence rather than reusing `versionMismatch` because
@@ -85,7 +85,7 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
                 + "Send it under a key the format has, or leave it out and say it in a note."
         case .versionMismatch(let stated, let understood):
             // Both remedies in one line, because only one of them is the
-            // lifter's: he can update the app, and he can ask for the plan
+            // user's: he can update the app, and he can ask for the plan
             // again. Which applies is obvious from the two numbers.
             "This plan is written in format version \(stated) and this build reads version "
                 + "\(understood). Nothing was taken in. Update the app, or write the plan "
@@ -93,7 +93,7 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
         case .snapshotVersionMismatch(let stated, let understood):
             "The training log on disk is written in snapshot format version \(stated), and "
                 + "this server reads version \(understood). Nothing was read, because taking "
-                + "in only the parts this build recognizes would report a lifter who has "
+                + "in only the parts this build recognizes would report a user who has "
                 + "trained less than he has — which reads as a fact rather than as a failure. "
                 + (stated > understood
                     ? "Rebuild the MCP server from the current source."

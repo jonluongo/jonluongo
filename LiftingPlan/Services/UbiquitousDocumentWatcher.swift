@@ -114,7 +114,7 @@ final class UbiquitousDocumentWatcher: DocumentArrivalWatching {
     /// Asks iCloud for the contents of an item it has only advertised.
     ///
     /// The failure is logged rather than propagated because there is no caller
-    /// to propagate to and nothing for the lifter to do: iCloud retries, and
+    /// to propagate to and nothing for the user to do: iCloud retries, and
     /// the query announces again when the contents land. Nothing is lost — the
     /// document stays in the folder until it can be read.
     private func requestDownload(of item: NSMetadataItem) {

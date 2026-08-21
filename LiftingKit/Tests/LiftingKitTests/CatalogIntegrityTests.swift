@@ -28,7 +28,7 @@ struct CatalogIntegrityTests {
     /// stopped shipping. That turned out to be the argument against it: nothing
     /// ever put it in front of him either, so its only delivery mechanism was
     /// somebody opening it by hand. `PROGRAM.md` does the job properly — the
-    /// same material, written by the coach for this lifter and editable, rather
+    /// same material, written by the coach for this user and editable, rather
     /// than frozen at build time. The file is gone; the catalog stays.
     @Test("The bundled catalog resolves from the package bundle")
     func bundledResourcesResolve() throws {
@@ -173,7 +173,7 @@ struct CatalogIntegrityTests {
     /// unrelated tokens. A handful of slugs still need explicit exclusion
     /// because the token means something other than the target muscle there:
     /// "trap-bar-deadlift" names its equipment (a hex bar), not the traps;
-    /// the "chest-supported" rows describe what a lifter leans against, not
+    /// the "chest-supported" rows describe what a user leans against, not
     /// what the row trains; "behind-the-neck-press" is a shoulder press
     /// performed behind the neck, not a neck exercise. Scoped to these
     /// unambiguous cases rather than every substring so the check stays
@@ -213,7 +213,7 @@ struct CatalogIntegrityTests {
                 "compound exercises with no secondary muscles: \(missing.map(\.id.rawValue).sorted())")
     }
 
-    @Test("Known exercises name the specific muscles a lifter would expect")
+    @Test("Known exercises name the specific muscles a user would expect")
     func secondaryMusclesAreCorrect() throws {
         let catalog = try ExerciseCatalog.bundled()
 
@@ -252,7 +252,7 @@ struct CatalogIntegrityTests {
         }
     }
 
-    @Test("Difficulty matches what a lifter would expect for known movements")
+    @Test("Difficulty matches what a user would expect for known movements")
     func difficultyIsSensible() throws {
         let catalog = try ExerciseCatalog.bundled()
         func difficulty(_ id: String) throws -> Difficulty {
@@ -421,7 +421,7 @@ struct CatalogIntegrityTests {
     }
 
     /// Swimming requires a pool. These entries must never ship as
-    /// `.bodyweight`, which would tell a reader that a lifter with nothing can
+    /// `.bodyweight`, which would tell a reader that a user with nothing can
     /// do them. What he actually has access to is prose in `ACCOUNT.md` and the
     /// coach reads it; the catalog's job is only to state what a movement needs.
     @Test("No swimming entry is tagged bodyweight")

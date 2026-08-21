@@ -6,7 +6,7 @@ import LiftingKit
 @Suite("Server configuration")
 struct ServerConfigurationTests {
 
-    private let home = URL(filePath: "/Users/lifter")
+    private let home = URL(filePath: "/Users/user")
 
     private func resolve(
         _ arguments: [String] = ["lifting-mcp"], _ environment: [String: String] = [:]
@@ -20,7 +20,7 @@ struct ServerConfigurationTests {
         let configuration = try resolve()
 
         #expect(configuration.documentsDirectory.path(percentEncoded: false)
-            == "/Users/lifter/Library/Mobile Documents/"
+            == "/Users/user/Library/Mobile Documents/"
             + "iCloud~com~jonluongo~LiftingPlan/Documents")
         #expect(configuration.isDefaultLocation)
     }
@@ -61,7 +61,7 @@ struct ServerConfigurationTests {
         #expect(throws: ConfigurationError.missingArgumentValue("--documents")) {
             try ServerConfiguration.resolve(
                 arguments: ["lifting-mcp", "--documents"], environment: [:],
-                home: URL(filePath: "/Users/lifter"))
+                home: URL(filePath: "/Users/user"))
         }
     }
 }

@@ -7,7 +7,7 @@ import LiftingKit
 // Split from the tool itself because it is a different job: writing a plan is
 // one decision, and describing what landed is a rendering of the document that
 // grows with the format. The caller reads this rather than what it sent, which
-// is how it learns that a uniform prescription became the sets the lifter will
+// is how it learns that a uniform prescription became the sets the user will
 // actually see.
 
 extension ToolRunner {
@@ -64,7 +64,7 @@ extension ToolRunner {
     /// the exercise's own reps, load and intensity beside a separate list of the
     /// sets that differed, so a reader had to reconcile the two to know what a
     /// ramp actually became. There is nothing to reconcile: what is here is what
-    /// the lifter will see.
+    /// the user will see.
     private static func reported(exercise: PlanDocumentExercise) -> JSONValue {
         [
             "exerciseID": .string(exercise.exerciseID.rawValue),

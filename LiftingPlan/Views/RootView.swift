@@ -1,10 +1,10 @@
 import SwiftUI
 import SwiftData
 
-/// Opens straight into the training, and carries the three failures the lifter
+/// Opens straight into the training, and carries the three failures the user
 /// has to be told about.
 ///
-/// **There is no onboarding and no profile to create.** The app asks the lifter
+/// **There is no onboarding and no profile to create.** The app asks the user
 /// nothing — every training question belongs in conversation with the coach, who
 /// records the answers in `ACCOUNT.md` — so the first launch shows the training,
 /// empty, rather than a form. It used to insert a `UserProfile` before anything
@@ -32,7 +32,7 @@ struct RootView: View {
     /// The outbox that writes the snapshot out. Optional for the same reason.
     @Environment(SnapshotOutbox.self) private var snapshotOutbox: SnapshotOutbox?
 
-    /// A failed export, taken up when the lifter arrives rather than the moment
+    /// A failed export, taken up when the user arrives rather than the moment
     /// it happens.
     @State private var exportFailure: String?
 
@@ -42,8 +42,8 @@ struct RootView: View {
         }
         // Something that could not be read is shown rather than swallowed: an
         // unreadable document otherwise looks identical to not having been sent
-        // one, and the lifter would wait for something that already arrived.
-        .alert("Couldn't Read What Arrived", isPresented: inboxErrorAlert) {
+        // one, and the user would wait for something that already arrived.
+        .alert("Couldn't read what arrived", isPresented: inboxErrorAlert) {
             Button("OK", role: .cancel) { documentInbox?.dismissError() }
         } message: {
             Text(documentInbox?.errorMessage ?? "")
@@ -51,7 +51,7 @@ struct RootView: View {
         // The mirror of the alert above. A snapshot that never left the phone
         // breaks the loop permanently and invisibly: the app looks fine while
         // the coach reads a record that stopped being true weeks ago.
-        .alert("Couldn't Share Your Log", isPresented: exportFailureAlert) {
+        .alert("Couldn't share your log", isPresented: exportFailureAlert) {
             Button("OK", role: .cancel) { snapshotOutbox?.dismissError() }
         } message: {
             Text(exportFailure ?? "")

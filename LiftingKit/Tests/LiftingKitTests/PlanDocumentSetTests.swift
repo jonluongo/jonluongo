@@ -86,7 +86,7 @@ struct PlanDocumentSetTests {
 
     @Test("A set with no load has none rather than a zero")
     func anAbsentLoadStaysAbsent() throws {
-        // The lifter picks the bar when the coach states an intensity instead.
+        // The user picks the bar when the coach states an intensity instead.
         // A zero here would be a prescription nobody wrote.
         let decoded = try roundTrip(document([
             PlanDocumentSet(
@@ -106,7 +106,7 @@ struct PlanDocumentSetTests {
     @Test("A warm-up the coach asked for survives as one")
     func aPrescribedWarmupSurvives() throws {
         // Before version 6 this could not be written at all: everything
-        // prescribed was hardcoded as work, and only a set the lifter added
+        // prescribed was hardcoded as work, and only a set the user added
         // himself was ever marked. "Ramp three sets to your top set" had no
         // way of being said.
         let decoded = try roundTrip(document([

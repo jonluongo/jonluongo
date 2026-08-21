@@ -6,7 +6,7 @@ import LiftingKit
 /// The owner's actual first experience. The app has never backgrounded on a
 /// device, so `snapshot.json` is not there — and every tool has to say so in a
 /// way he can act on, rather than crash or answer with an empty report that
-/// looks exactly like a lifter with no history.
+/// looks exactly like a user with no history.
 @Suite("No snapshot yet")
 struct MissingSnapshotTests {
 
@@ -27,7 +27,7 @@ struct MissingSnapshotTests {
 
         let outcome = runner.call(tool, arguments: ["id": "barbell-bench-press"])
 
-        #expect(outcome.report == nil, "an empty report would read as a lifter with no history")
+        #expect(outcome.report == nil, "an empty report would read as a user with no history")
         #expect(outcome.failureMessage != nil)
     }
 
@@ -65,7 +65,7 @@ struct MissingSnapshotTests {
         #expect(!message.contains("No training snapshot yet"))
     }
 
-    @Test("write_plan does not need a snapshot — a lifter with no history still gets a plan")
+    @Test("write_plan does not need a snapshot — a user with no history still gets a plan")
     func writePlanWorksWithoutSnapshot() throws {
         let documents = InMemoryDocuments()
         let runner = try makeRunner(documents: documents)

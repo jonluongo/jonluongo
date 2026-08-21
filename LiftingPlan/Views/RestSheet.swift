@@ -7,7 +7,7 @@ import LiftingKit
 ///
 /// **What it does.** Shows one thing at a time: how long is left, and the single
 /// row he is about to do. Ticking that row logs it and the sheet moves to the
-/// next one — so a lifter between sets can work through a session without
+/// next one — so a user between sets can work through a session without
 /// finding his place in a table.
 ///
 /// **Why a sheet and not a screen.** It is a state he is in for ninety seconds,

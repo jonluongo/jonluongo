@@ -107,7 +107,7 @@ struct SharedFolderTests {
 }
 
 /// The real catalog, not a fixture. If a resource fails to resolve it does not
-/// look like an error — it looks like a lifter with nothing to choose from —
+/// look like an error — it looks like a user with nothing to choose from —
 /// so this asserts the bundled data actually reaches the server.
 @Suite("The bundled catalog")
 struct BundledCatalogTests {

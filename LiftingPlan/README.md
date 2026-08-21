@@ -11,11 +11,11 @@ injury.
 There is no plan generator and deliberately no fallback one. Until Claude writes
 a plan, the app shows an empty state.
 
-**The app asks the lifter nothing.** No onboarding, no setup screen, no settings
+**The app asks the user nothing.** No onboarding, no setup screen, no settings
 form for a training question. Days, session length, goal, equipment, experience
 and injuries are things Claude asks better in conversation, and he writes them
 into `ACCOUNT.md`. The one preference the app owns is whether the rest clock runs at
-all — that is about this phone, not about the lifter, so it lives in
+all — that is about this phone, not about the user, so it lives in
 `UserDefaults` and never syncs.
 
 **It records what it is given.** A prescribed value is stored exactly as

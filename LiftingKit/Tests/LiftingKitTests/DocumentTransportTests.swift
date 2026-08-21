@@ -158,7 +158,7 @@ struct DocumentFolderTests {
         let directory = try makeTemporaryDirectory()
         let folder = DocumentFolder(directory: directory)
         let written = """
-            # The lifter
+            # The user
 
             ## Objective
             D1 offensive line.
@@ -178,7 +178,7 @@ struct DocumentFolderTests {
 
         try folder.writeSnapshot(makeSnapshot())
         try folder.writePlan(makePlan())
-        try folder.writeNote("# The lifter", as: .account)
+        try folder.writeNote("# The user", as: .account)
         try folder.writeNote("# This programme", as: .program)
 
         let names = try FileManager.default
@@ -321,11 +321,11 @@ struct InMemoryDocumentTransportTests {
 
         try transport.writeSnapshot(snapshot)
         try transport.writePlan(plan)
-        try transport.writeNote("# The lifter", as: .account)
+        try transport.writeNote("# The user", as: .account)
 
         #expect(try transport.readSnapshot() == snapshot)
         #expect(try transport.readPlan() == plan)
-        #expect(try transport.readNote(.account) == "# The lifter")
+        #expect(try transport.readNote(.account) == "# The user")
     }
 
     @Test("The fake reports an empty transport as nil, the same as a folder does")
@@ -429,7 +429,7 @@ struct PlanArchiveTests {
 
     @Test("A folder with no archive yet reports none rather than failing")
     func absenceIsNotFailure() throws {
-        // Exactly the state of a lifter who has never been sent a plan, which
+        // Exactly the state of a user who has never been sent a plan, which
         // must not look like a broken transport.
         let (subject, _) = try folder()
         #expect(try subject.archivedPlans().isEmpty)

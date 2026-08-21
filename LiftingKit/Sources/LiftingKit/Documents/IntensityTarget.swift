@@ -14,7 +14,7 @@ import Foundation
 /// scale nobody here has heard of and that scale must arrive intact.
 ///
 /// **Why the app never interprets it.** Whether an RPE of 8 is two reps in
-/// reserve, or 80% of a one-rep max is heavy for this lifter, are training
+/// reserve, or 80% of a one-rep max is heavy for this user, are training
 /// judgements. This app keeps data and shows it; the judgements belong to
 /// whoever wrote the plan.
 ///
@@ -27,7 +27,7 @@ public struct IntensityScale: ExtensibleTaxonomy {
     public static let rpe = IntensityScale(rawValue: "rpe")
     /// Reps left in the tank at the end of the set.
     public static let repsInReserve = IntensityScale(rawValue: "rir")
-    /// A share of the lifter's one-rep max, as a percentage.
+    /// A share of the user's one-rep max, as a percentage.
     public static let percentOfOneRepMax = IntensityScale(rawValue: "percent1rm")
 
     public static let known: [IntensityScale] = [.rpe, .repsInReserve, .percentOfOneRepMax]
@@ -42,7 +42,7 @@ public struct IntensityScale: ExtensibleTaxonomy {
 ///
 /// **How it is used.** A `PlanDocumentExercise` or a `SetPrescription` carries
 /// one, and the snapshot reports it back beside the sets that were logged
-/// against it — the lifter is asked for no rating of his own, so what the plan
+/// against it — the user is asked for no rating of his own, so what the plan
 /// asked for is read against the reps and load he actually put up. An exercise
 /// that states no target has `nil` — never a zero and never one inferred from a
 /// load.
@@ -71,7 +71,7 @@ public struct IntensityTarget: Codable, Hashable, Sendable {
 
     /// Both fields are required, and an unknown key is refused rather than
     /// dropped — a discarded qualifier on an effort target is a prescription
-    /// the lifter never sees.
+    /// the user never sees.
     public init(from decoder: any Decoder) throws {
         try decoder.refuseUnknownKeys(besides: Set(CodingKeys.allCases.map(\.stringValue)))
         let container = try decoder.container(keyedBy: CodingKeys.self)

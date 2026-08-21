@@ -12,7 +12,7 @@ import LiftingKit
 ///
 /// **What is typed never decides what is recorded.** The prescription says
 /// whether this set is counted, held or carried, and the number goes into that
-/// field and no other. A lifter tapping the wrong box cannot put seconds into a
+/// field and no other. A user tapping the wrong box cannot put seconds into a
 /// rep total.
 ///
 /// **Nothing on this row asks how hard it felt.** He is not rated and does not
@@ -75,7 +75,7 @@ struct SetRowView: View {
     ///
     /// **It states and no longer switches.** It used to open a menu changing
     /// whether the set counted as working volume, which is now the coach's to
-    /// say: he prescribes a warm-up, and a set the lifter adds says which it is
+    /// say: he prescribes a warm-up, and a set the user adds says which it is
     /// as he adds it.
     private var badge: some View {
         Text(slot.identity.badge)

@@ -130,7 +130,7 @@ public struct MCPServer: Sendable {
                 text = try report.prettyEncoded()
             case .failure(let message):
                 // A resource has no `isError`, so the explanation goes in the
-                // body. Empty text would describe a lifter who does not exist.
+                // body. Empty text would describe a user who does not exist.
                 text = message
             }
         } catch {
@@ -181,17 +181,17 @@ public struct MCPServer: Sendable {
 
     static let contextResourceDescriptor: JSONValue = [
         "uri": .string(contextResourceURI),
-        "name": "lifter-context",
-        "title": "Lifter context",
+        "name": "user-context",
+        "title": "User context",
         "description": .string(
-            "Who the lifter is, what equipment and constraints he has, the block he is on, "
+            "Who the user is, what equipment and constraints he has, the block he is on, "
                 + "what he trained lately, and the weight he is currently working with on "
                 + "each lift."),
         "mimeType": "application/json",
     ]
 
     static let instructions = """
-        This server reports on one lifter's training and writes plans for him. \
+        This server reports on one user's training and writes plans for him. \
         Read the \(contextResourceURI) resource first; it is small and says who \
         he is, what he has to train with, and what he did lately.
 

@@ -4,7 +4,7 @@ import Foundation
 ///
 /// **What it does.** Carries prescriptions the other way from `TrainingSnapshot`:
 /// the coach reads the snapshot, decides the training, and writes one of these;
-/// the app imports it and the lifter sees the sessions. Encode and decode with
+/// the app imports it and the user sees the sessions. Encode and decode with
 /// `makeEncoder()` and `makeDecoder()` so the macOS server and the phone cannot
 /// disagree about how a date is written.
 ///

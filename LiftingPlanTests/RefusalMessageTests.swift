@@ -20,16 +20,16 @@ private final class ManualWatcher: DocumentArrivalWatching {
     }
 }
 
-/// What the lifter reads when a document is turned away.
+/// What the user reads when a document is turned away.
 ///
 /// A refusal is written to whoever wrote the document. Put verbatim into an
 /// alert on a phone — *"Send it under a key the format has"*, *"Send one entry
 /// in 'weeks' for every week of the block"* — it addresses somebody who is not
 /// there and tells the person who is nothing he can do. These tests hold both
-/// halves: the lifter is told what happened and what to do, and the author's
+/// halves: the user is told what happened and what to do, and the author's
 /// own sentence survives underneath so that relaying it is possible.
 @MainActor
-@Suite("What a refusal says to the lifter")
+@Suite("What a refusal says to the user")
 struct RefusalMessageTests {
 
     private static let instant = Date(timeIntervalSince1970: 1_700_000_000)
@@ -82,9 +82,9 @@ struct RefusalMessageTests {
         }
         """
 
-    // MARK: - The lifter is told something he can act on
+    // MARK: - The user is told something he can act on
 
-    @Test("A refused plan tells the lifter what happened and what to do about it")
+    @Test("A refused plan tells the user what happened and what to do about it")
     func refusalIsAddressedToTheLifter() async throws {
         let message = try await messageAfterReading(Self.planFromAnEarlierBuild)
 
@@ -101,10 +101,10 @@ struct RefusalMessageTests {
         #expect(message.contains("version 5"))
         #expect(message.contains("version 6"))
         #expect(message.contains("write the plan again as version 6"),
-                "the lifter relays this, so it has to say what the coach must do")
+                "the user relays this, so it has to say what the coach must do")
     }
 
-    @Test("An unknown key still names the key, underneath something the lifter can use")
+    @Test("An unknown key still names the key, underneath something the user can use")
     func unknownKeyIsStillNamed() async throws {
         let message = try await messageAfterReading("""
             {

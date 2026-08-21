@@ -32,7 +32,7 @@ enum TargetUnits {
     ]
 
     /// Words that say the work is measured in time without naming a unit, so
-    /// `"max hold"` and `"hold for time"` reach the lifter as holds rather than
+    /// `"max hold"` and `"hold for time"` reach the user as holds rather than
     /// as a rep field. They are read only when no rep count could be found, so
     /// `"8-12, hold at the top"` stays eight to twelve repetitions.
     static let timingWords: Set<String> = ["hold", "holds", "time", "timed", "isometric"]
