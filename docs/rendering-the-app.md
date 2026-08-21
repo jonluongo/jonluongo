@@ -80,7 +80,7 @@ Make the plan with the real thing rather than by hand: drive
 written one proves the format does, and the refusals will tell you when you get
 a key or an exercise ID wrong.
 
-## Eight things that cost an hour each
+## Nine things that cost an hour each
 
 **`RENDER=x xcrun simctl launch` does not reach the app.** The prefix is
 `SIMCTL_CHILD_`. Without it the variable goes to `simctl` and the app sees
@@ -120,6 +120,16 @@ rendered.
 *every session is logged* line sits under the last block, which on a three-block
 routine is well past the fold, and there is no way to scroll. Seed a shorter
 plan — one block, one day — when the thing being checked lives at the end.
+
+**Measure colour from a crop; do not measure *distance* from one.** Picking the
+most saturated pixel in a rough window is reliable — any pixel in the region
+answers the question. Measuring how wide a figure is, or whether two shapes
+touch, needs the window to be exactly right, and twice here it was not: a crop
+meant for the rest ring counted the table showing through behind the sheet, and
+one meant for a weight figure counted the set badge beside it. Both produced
+confident numbers that meant nothing. Where the answer comes from a type size
+and a font metric, take it from the style sheet instead — `.title3` monospaced
+is 20pt and a mono digit advances about 0.6em, which needs no screenshot at all.
 
 **Judge colour by measurement, not by eye.** The olive `⋯` was found by cropping
 the glyph and taking the most saturated pixel — 3 in light, 80 in dark. Two
