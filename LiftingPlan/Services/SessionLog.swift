@@ -5,60 +5,115 @@ import LiftingKit
 /// Everything logging a session *does*, as opposed to how it looks.
 ///
 /// **What it does.** Owns the two jobs the logging screen was carrying besides
-/// layout: writing to the record — seeding rows, adding a set or a round,
-/// deleting one, finishing and un-finishing — and running the clock the
-/// prescription asks for when a set is ticked. Nothing here draws.
+/// layout: writing to the record — recording a set, taking one back, adding one
+/// nobody prescribed, finishing and un-finishing — and running the clock the
+/// prescription asks for. Nothing here draws.
+///
+/// **Recording a set creates a row; taking it back deletes one.** It used to
+/// flip `isCompleted` on a row seeded the moment the screen opened, which is why
+/// the store held a set for everything the coach asked for whether or not it
+/// ever happened, and why `reps` defaulted to zero. A performed row exists only
+/// if the lifter performed it.
 ///
 /// **How it is used.** `ActiveWorkoutView` builds one per redraw from the
 /// context and the two environment objects it already holds, then calls it.
 /// Every write is `throws`: a failed save is shown to the lifter by the view
 /// that can show it, rather than being handled by a type with no way to say so.
-/// The view was 316 lines doing five jobs, and every screen-level defect in this
-/// app has been in it or its neighbours — which is what one file with five
-/// responsibilities produces.
 ///
 /// **It decides nothing about training.** How long to rest is Claude's to
 /// prescribe and the lifter's to override, in that order, and this only asks
 /// `RestPreferences` which of the two answers applies. Where neither has said
 /// anything, no clock starts: the app does not invent one.
 ///
-/// **What it depends on.** `WorkoutDay`, `PlannedExercise` and `LoggedSet` from
-/// Store, `ExerciseGroup` for a group's rounds,
-/// `SetSeeding` for what a new row starts as, and the rest timer and
-/// preferences it is handed.
+/// **What it depends on.** `Session`, `PlannedExercise`, `PlannedSet` and
+/// `PerformedSet` from Store, `ExerciseGroup` for a group's rounds, and the rest
+/// timer and preferences it is handed.
 @MainActor
 struct SessionLog {
 
-    let day: WorkoutDay
+    let session: Session
     let context: ModelContext
     let restTimer: RestTimerModel
     let restPreferences: RestPreferences
-    /// Every block, for the one question a group's rest asks that reaches
-    /// outside this session.
 
     // MARK: - Writing to the record
 
-    /// Fills the table in from the prescription the first time this session is
-    /// opened. What each row starts as is `SetSeeding`'s rule, not this one's.
-    func seedIfNeeded() throws {
-        SetSeeding.seedMissingSets(for: day.orderedExercises, in: context)
+    /// Records a set as performed, then runs the rest it asks for.
+    ///
+    /// **The write is the point.** A recorded set is the one irreversible thing
+    /// a lifter does in this app — it is the claim that the work happened — so
+    /// it is saved here rather than left to SwiftData's autosave, which does run
+    /// but on no schedule anyone can promise.
+    ///
+    /// Which measure is written is decided by what was prescribed, never by what
+    /// was typed: a hold cannot land in the rep column by a lifter tapping the
+    /// wrong field.
+    func record(
+        _ slot: TrainingSlot, load: Mass? = nil, reps: Int? = nil,
+        durationSeconds: Int? = nil, distance: Distance? = nil,
+        at moment: Date = Date()
+    ) throws {
+        let performed = PerformedSet(
+            setIndex: slot.planned.setIndex, isWarmup: slot.planned.isWarmup,
+            load: load, reps: reps, durationSeconds: durationSeconds,
+            distance: distance, completedAt: moment)
+        performed.planned = slot.planned
+        performed.exercise = performedExercise(for: slot.exercise, at: moment)
+        context.insert(performed)
+
+        restStarted(after: slot)
         try context.saveOrThrow()
     }
 
-    func addSet(to exercise: PlannedExercise, warmup: Bool) throws {
-        SetSeeding.addSet(to: exercise, warmup: warmup, in: context)
+    /// Takes a set back out of the record, and stops any clock it started.
+    ///
+    /// A set taken back did not happen, so there is nothing to be resting from —
+    /// and nothing left in the record either. The row on screen returns to being
+    /// the prescription it always was.
+    func takeBack(_ slot: TrainingSlot) throws {
+        guard let performed = slot.record else { return }
+        let exercise = performed.exercise
+        context.delete(performed)
+        // An exercise with nothing left performed against it is not a
+        // performance. Leaving an empty one would put a session in the coach's
+        // history that the lifter did not train.
+        if let exercise, (exercise.sets ?? []).allSatisfy({ $0 === performed }) {
+            context.delete(exercise)
+        }
+        restTimer.stop()
         try context.saveOrThrow()
     }
 
+    /// A set the lifter did that nobody prescribed.
+    ///
+    /// It has no `PlannedSet` behind it, which is exactly what the nullable link
+    /// is for. Nothing is invented for it: no load, no count, no target.
+    func addSet(
+        to exercise: PlannedExercise, warmup: Bool, at moment: Date = Date()
+    ) throws {
+        let performance = performedExercise(for: exercise, at: moment)
+        let performed = PerformedSet(
+            setIndex: (performance.sets ?? []).count, isWarmup: warmup, completedAt: moment)
+        performed.exercise = performance
+        context.insert(performed)
+        try context.saveOrThrow()
+    }
 
     /// Marks the session trained. The first finish stamps the time and a later
     /// one leaves it: when he trained is a fact, and re-finishing a corrected
     /// session does not move it.
     func finish() throws {
         restTimer.stop()
-        if day.completedAt == nil {
-            day.completedAt = Date()
+        if session.finishedAt == nil {
+            session.finishedAt = Date()
         }
+        try context.saveOrThrow()
+    }
+
+    /// Takes a finished session back to unfinished, which is what makes
+    /// reopening one mean anything.
+    func unfinish() throws {
+        session.finishedAt = nil
         try context.saveOrThrow()
     }
 
@@ -66,96 +121,88 @@ struct SessionLog {
     ///
     /// **The switch has to silence the clock that is already going.** It only
     /// wrote the preference, so a lifter reaching for it mid-rest — which is
-    /// when anyone reaches for it — kept the bar counting and kept the three
-    /// alerts armed. Off means off now, not from the next set.
+    /// when anyone reaches for it — kept the bar counting and kept the alerts
+    /// armed. Off means off now, not from the next set.
     func clockSwitched(_ isOn: Bool) {
         restPreferences.setClockIsOn(isOn)
         if !isOn { restTimer.stop() }
     }
 
-    /// Takes a finished session back to unfinished, which is what makes
-    /// reopening one mean anything.
-    func unfinish() throws {
-        day.completedAt = nil
-        try context.saveOrThrow()
-    }
-
-    // MARK: - Ticking a set
-
-    /// Writes the tick, then runs the rest it asks for.
-    ///
-    /// **The write is the point.** A ticked set is the one irreversible thing a
-    /// lifter does in this app — it is the claim that the work happened — and
-    /// until now nothing saved it. `SetRowView` flipped the flag and the
-    /// callback only started a countdown, leaving the record to SwiftData's
-    /// autosave, which does run but on no schedule anyone can promise. A set
-    /// performed and then lost is the one failure a datastore may not have, and
-    /// "probably, eventually" is not the standard.
-    ///
-    /// It throws so the view shows a failed save rather than swallowing it,
-    /// which matters more here than anywhere else in the app.
-    func completionChanged(for exercise: PlannedExercise, isCompleted: Bool) throws {
-        restChanged(for: exercise, isCompleted: isCompleted)
-        try context.saveOrThrow()
-    }
-
-    /// The same for a movement inside a group, where the rest waits for the
-    /// round rather than the set.
-    func roundCompletionChanged(
-        _ group: ExerciseGroup, set: LoggedSet, completed: Bool
-    ) throws {
-        roundChanged(group, set: set, completed: completed)
-        try context.saveOrThrow()
-    }
-
     // MARK: - The clock
 
-    /// Runs the rest this exercise asks for when a set is ticked, and stops it
-    /// when one is taken back — a set taken back did not happen, so there is
-    /// nothing to be resting from.
-    private func restChanged(for exercise: PlannedExercise, isCompleted: Bool) {
-        guard isCompleted else { return restTimer.stop() }
-        guard hasWorkLeft else { return restTimer.stop() }
-        // **Nothing to run means nothing running.** A set with no rest against
-        // it, or a clock the lifter has switched off, used to fall through here
-        // and leave the countdown from the set before it going — timing the gap
-        // after work he has since finished, on a bar he cannot argue with. The
-        // clock measures the pause after the last set; logging another one ends
-        // it either way.
-        guard let seconds = restPreferences.runningSeconds(
-            prescribed: exercise.restSeconds, for: exercise.exerciseID
-        ) else { return restTimer.stop() }
-        restTimer.start(seconds: seconds, context: exercise.displayName)
-    }
-
-    /// Whether anything in this session is still waiting to be done.
+    /// Runs whatever rest follows the set just recorded.
     ///
-    /// **Rest is the gap between two pieces of work, so the last set has no
-    /// rest after it.** Ticking the last box started a countdown for nothing —
-    /// a bar across the bottom of the screen telling a lifter who has finished
-    /// to wait three minutes before the set that does not exist. What it is
-    /// asking about is the whole session and not the exercise: rest between
-    /// movements is real, so the clock still runs on the last set of the bench
-    /// press when the rows are next.
-    ///
-    /// Warm-ups count as work left, because they are: a warm-up still waiting
-    /// is a set he is about to do.
-    private var hasWorkLeft: Bool {
-        day.unloggedSetCount > 0
-    }
-
-    /// Runs a group's rest when a *round* closes, which is the one behavioural
-    /// difference a group makes and the whole reason the grouping is worth
-    /// expressing: ticking one movement starts nothing, because the next
-    /// follows immediately.
-    private func roundChanged(_ group: ExerciseGroup, set: LoggedSet, completed: Bool) {
-        guard completed, group.hasCompleteRound(containing: set) else { return restTimer.stop() }
-        // The round that closes the session has nothing after it either.
+    /// Inside a group the clock waits for the *round*: performing one movement
+    /// starts nothing, because the next follows immediately. That is the one
+    /// behavioural difference a group makes, and the whole reason the grouping
+    /// is worth expressing.
+    private func restStarted(after slot: TrainingSlot) {
+        // **Rest is the gap between two pieces of work, so the last set has no
+        // rest after it.** Recording the last box used to start a countdown for
+        // nothing — a bar telling a lifter who has finished to wait three
+        // minutes for the set that does not exist.
         guard hasWorkLeft else { return restTimer.stop() }
+
+        guard let group = groupContaining(slot.exercise) else {
+            guard let seconds = restPreferences.runningSeconds(
+                prescribed: slot.exercise.restSeconds, for: slot.exercise.exerciseID)
+            else { return restTimer.stop() }
+            return restTimer.start(seconds: seconds, context: name(of: slot.exercise))
+        }
+
+        guard group.isRoundComplete(at: slot.workingNumber - 1) else { return restTimer.stop() }
         guard let key = group.restKey,
             let seconds = restPreferences.runningSeconds(
                 prescribed: group.restSeconds, for: key)
         else { return restTimer.stop() }
-        restTimer.start(seconds: seconds, context: group.title)
+        restTimer.start(seconds: seconds, context: "Round \(group.letter)")
+    }
+
+    /// Whether anything in this session is still waiting to be done.
+    ///
+    /// It asks about the whole session rather than the exercise: rest between
+    /// movements is real, so the clock still runs after the last set of the
+    /// bench press when the rows are next. Warm-ups count as work left, because
+    /// they are — one still waiting is a set he is about to do.
+    private var hasWorkLeft: Bool {
+        session.orderedExercises
+            .flatMap(\.orderedSets)
+            .contains { !$0.hasBeenPerformed }
+    }
+
+    private func groupContaining(_ exercise: PlannedExercise) -> ExerciseGroup? {
+        SessionGrouping.entries(of: session.orderedExercises)
+            .compactMap { $0.groupContaining(exercise) }
+            .first
+    }
+
+    // MARK: - Finding the performance to hang a set on
+
+    /// The performance of this movement in this session, made if it is the first
+    /// set of it.
+    ///
+    /// One row per exercise per day is the grain the coach reads at, so a second
+    /// set of the same movement joins the performance already there rather than
+    /// starting another.
+    private func performedExercise(
+        for exercise: PlannedExercise, at moment: Date
+    ) -> PerformedExercise {
+        if let existing = (session.performedExercises ?? []).first(where: { $0.planned === exercise }
+        ) {
+            return existing
+        }
+        let performance = PerformedExercise(
+            exerciseID: exercise.exerciseID, occurredAt: moment, source: .logged)
+        performance.session = session
+        performance.planned = exercise
+        context.insert(performance)
+        return performance
+    }
+
+    /// What to call a movement on the clock. The catalog owns the name, and this
+    /// only has the key — the view resolves it, so the fallback here is the key
+    /// itself rather than a blank.
+    private func name(of exercise: PlannedExercise) -> String {
+        exercise.exerciseID.rawValue
     }
 }

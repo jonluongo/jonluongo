@@ -5,13 +5,8 @@ import LiftingKit
 /// its own, or a group performed as rounds.
 ///
 /// **What it does.** Gives a reader one thing to iterate. The logging screen
-/// walks these rather than the day's exercises, so an ungrouped exercise and a
-/// group each reach the drawing that suits them — the same card either way,
-/// with the group's members drawn under the rule that says they are one thing.
-///
-/// **How it is used.** `WorkoutDay.entries` builds them. `Identifiable` so a
-/// `ForEach` can hold them without an index, which is what keeps a row stable
-/// while its sets are being edited.
+/// walks these rather than the session's exercises, so an ungrouped exercise and
+/// a group each reach the drawing that suits them.
 ///
 /// **What it depends on.** `PlannedExercise` from Store and `ExerciseGroup`.
 enum SessionEntry: Identifiable {
@@ -34,7 +29,7 @@ enum SessionEntry: Identifiable {
     var id: String {
         switch self {
         case .exercise(let exercise): "exercise-\(exercise.persistentModelID)"
-        case .group(let group): "group-\(group.id)"
+        case .group(let group): "group-\(group.ordinal)"
         }
     }
 }
@@ -43,223 +38,156 @@ enum SessionEntry: Identifiable {
 /// round order, and the rest taken after the round.
 ///
 /// **What it does.** Answers the questions a screen asks about a group — what it
-/// is called, how long to rest when a round finishes, and whether one just did.
+/// is called, how long to rest when a round finishes, and what to do next.
 ///
-/// **How it is used.** Built by `SessionGrouping` and handed to the logging
-/// screen and to the snapshot the coach reads. It never writes and decides
-/// nothing about training: a group exists because a plan said so.
+/// **A group needs no row of its own.** Members share a `groupOrdinal` and sit
+/// next to each other in `order`; a round is the *N*th working set of each, taken
+/// in that order. The rest is on the member the round ends with, because that is
+/// where the clock actually runs — nothing is rested after the others.
 ///
-/// **What it depends on.** `PlannedExercise` from Store and `ExerciseID` from
-/// LiftingKit.
+/// **What it depends on.** `PlannedExercise` and `PlannedSet` from Store, and
+/// `ExerciseID` from LiftingKit. It never writes and decides nothing: a group
+/// exists because a plan said so.
 struct ExerciseGroup: Identifiable {
 
-    /// The group's own identity, shared by its members.
-    let id: UUID
-    /// The group's letter within its day — `A` for the first, `B` for the next.
+    /// Which group of its session this is, from 1.
+    let ordinal: Int
+    /// The group's letter within its session — `A` for the first, `B` for the
+    /// next.
     let letter: String
     /// The movements in the order they are performed within a round. Two or
     /// more, because the format cannot state fewer.
     let members: [PlannedExercise]
 
+    var id: Int { ordinal }
+
     /// The rest taken after each round, or `nil` when the plan prescribed none.
-    ///
-    /// It sits on the member the round ends with, which is where the rest is
-    /// actually taken; nothing is rested after the others.
     var restSeconds: Int? { members.last?.restSeconds }
 
-    /// The set to do next after ticking `set` of `member`, or `nil` when the
+    /// The exercise whose clock this group follows. The lifter's own rest is
+    /// kept per exercise, and the group's rest is the one after its last
+    /// movement, so that is the exercise a choice about this group is recorded
+    /// against.
+    var restKey: ExerciseID? { members.last?.exerciseID }
+
+    /// The set to do next after performing `set` of `member`, or `nil` when the
     /// group has nothing waiting.
     ///
-    /// **A superset is trained across its movements, and drawn down them.** Each
-    /// movement gets its own panel, which is what the lifter asked for and what
-    /// reads — but it means the order the work is done in runs *across* the
-    /// panels while the order it is drawn in runs down them. Ticking the first
-    /// fly and then looking for the first pushdown means scrolling past two more
-    /// fly rows to reach it.
+    /// **A superset is trained across its movements and drawn down them.** Each
+    /// movement gets its own panel, which is what reads — but it means the order
+    /// the work is done in runs *across* the panels while the order it is drawn
+    /// in runs down them. Ticking the first fly and then looking for the first
+    /// pushdown means scrolling past two more fly rows to reach it.
     ///
-    /// This answers only "what is next", from the grouping the plan already
-    /// prescribed. It decides nothing: a group states that its movements are
-    /// performed back to back, and the next thing to do is the next movement's
-    /// set at the same position. When the round is finished it is the first
-    /// movement's next set, which is where the next round starts.
+    /// This answers only *what is next*, from the grouping the plan already
+    /// prescribed. When the round is finished it is the first movement's next
+    /// set, which is where the next round starts.
     ///
-    /// `nil` when every set of the group is ticked, or when the position has no
-    /// answer — a movement prescribed fewer sets than its partner simply has
-    /// none to offer, and the lifter is left where he is rather than sent
-    /// somewhere arbitrary.
-    func setAfter(_ set: LoggedSet, of member: PlannedExercise) -> LoggedSet? {
+    /// `nil` when every set of the group has been performed, or when the
+    /// position has no answer — a movement prescribed fewer sets than its
+    /// partner simply has none to offer, and the lifter is left where he is
+    /// rather than sent somewhere arbitrary.
+    func setAfter(_ set: PlannedSet, of member: PlannedExercise) -> PlannedSet? {
         guard let memberIndex = members.firstIndex(where: { $0 === member }) else { return nil }
-        let working = members.map { Self.workingSets(of: $0) }
+        let working = members.map(\.workingSets)
         guard let position = working[memberIndex].firstIndex(where: { $0 === set })
         else { return nil }
 
         // The rest of this round, then the next round from the top.
-        let laterInRound = (memberIndex + 1)..<members.count
-        for index in laterInRound where position < working[index].count {
+        for index in (memberIndex + 1)..<members.count where position < working[index].count {
             let candidate = working[index][position]
-            if !candidate.isCompleted { return candidate }
+            if !candidate.hasBeenPerformed { return candidate }
         }
         let nextPosition = position + 1
         for index in members.indices where nextPosition < working[index].count {
             let candidate = working[index][nextPosition]
-            if !candidate.isCompleted { return candidate }
+            if !candidate.hasBeenPerformed { return candidate }
         }
         return nil
     }
 
-    /// One movement's working sets in order. Warm-ups are not part of a round —
-    /// they belong to the movement they warm up — so they are not offered as
-    /// the next thing to do.
-    private static func workingSets(of member: PlannedExercise) -> [LoggedSet] {
-        (member.loggedSets ?? [])
-            .filter { !$0.isWarmup }
-            .sorted { $0.setIndex < $1.setIndex }
-    }
-
-    /// The exercise whose clock the group follows. The lifter's own rest is kept
-    /// per exercise, and the group's rest is the one after its last movement, so
-    /// that is the exercise a choice about this group is recorded against.
-    var restKey: ExerciseID? { members.last?.exerciseID }
-
-    /// Whether any round of this group is finished — every movement of it
-    /// ticked.
+    /// Whether the round at `position` is finished — every movement of it
+    /// performed.
     ///
-    /// This is the one behavioural difference a group makes, and the whole
+    /// **This is the one behavioural difference a group makes**, and the whole
     /// reason the grouping is worth expressing: resting only after the round is
-    /// what a superset *is*, so ticking one movement starts nothing, because the
-    /// next follows immediately.
-    ///
-    /// A round is the sets at one position across the members. A movement
-    /// prescribed more sets than its partner still has its later positions
-    /// counted — they are rounds of one, which is what the lifter is actually
-    /// doing by then.
-    ///
-    /// It lived in a value type that also built every row of a superset screen:
-    /// the notation, the prescription, the ghost load, the warm-ups outside the
-    /// rounds. That screen was replaced by movements drawn as movements, and
-    /// this was the only line of it anything still asked for; the type went.
-    /// **The round `set` belongs to, not any round.** It used to ask whether
-    /// *any* round of the group was finished, which from round two onward was
-    /// always true because round one was: ticking the first movement of a round
-    /// started the group's rest, and a superset is precisely the thing that must
-    /// not do that. The lifter was sent to wait ninety seconds instead of
-    /// straight to the movement that follows immediately.
-    func hasCompleteRound(containing set: LoggedSet) -> Bool {
-        guard !set.isWarmup, let position = position(of: set) else { return false }
-        return round(at: position).allSatisfy(\.isCompleted)
-    }
-
-    /// Where this set sits among the working sets of its own movement, which is
-    /// which round it belongs to.
-    private func position(of set: LoggedSet) -> Int? {
-        for member in members {
-            if let index = workingSets(of: member).firstIndex(where: { $0 === set }) {
-                return index
-            }
-        }
-        return nil
-    }
-
-    /// The sets at one position across the members. A movement prescribed more
-    /// sets than its partner has later positions to itself — they are rounds of
-    /// one, which is what the lifter is actually doing by then.
-    private func round(at position: Int) -> [LoggedSet] {
-        members.compactMap { member in
-            let working = workingSets(of: member)
-            return working.indices.contains(position) ? working[position] : nil
-        }
-    }
-
-    private func workingSets(of member: PlannedExercise) -> [LoggedSet] {
-        (member.loggedSets ?? [])
-            .filter { !$0.isWarmup }
-            .sorted { $0.setIndex < $1.setIndex }
-    }
-
-    /// What the group is called: the standard word for a group of this size,
-    /// with its letter. Vocabulary a lifter already reads, not a judgement about
-    /// the training.
-    var title: String {
-        switch members.count {
-        case 2: "Superset \(letter)"
-        case 3: "Tri-set \(letter)"
-        default: "Giant set \(letter)"
+    /// what a superset *is*, so performing one movement starts no clock, because
+    /// the next follows immediately.
+    func isRoundComplete(at position: Int) -> Bool {
+        members.allSatisfy { member in
+            let working = member.workingSets
+            guard position < working.count else { return true }
+            return working[position].hasBeenPerformed
         }
     }
 }
 
-/// Reads a day's prescriptions back into the entries they were written as.
+/// Reads a session's exercises as the entries they were prescribed as.
 ///
-/// **What it does.** Turns a flat, ordered list of `PlannedExercise` into
-/// exercises and groups, by collecting neighbours that share a `groupID`. That
-/// is a restatement of what the plan said, not a decision: nothing here decides
-/// that two exercises belong together, and an exercise with no `groupID` is on
-/// its own no matter what sits beside it.
+/// **What it does.** Turns a flat, ordered list of movements back into
+/// ungrouped exercises and groups, by the `groupOrdinal` they share. Members are
+/// contiguous by construction, so a run of them is one group.
 ///
-/// **How it is used.** Through `WorkoutDay.entries`, by the logging screen and
-/// by `SnapshotExporter`. One place, so the lifter's screen and the coach's
-/// snapshot cannot disagree about what was prescribed as a group.
-///
-/// **What it depends on.** `PlannedExercise` from Store. Neighbours are
-/// collected rather than the whole day being bucketed by identity, so a group
-/// whose members somehow arrive apart — a half-synced CloudKit record — degrades
-/// into ordinary exercises in the order they were prescribed rather than
-/// reordering the day around them.
+/// **What it depends on.** `PlannedExercise` from Store. It decides nothing:
+/// the app never groups anything, and a session whose exercises share no ordinal
+/// is a session of plain movements.
 enum SessionGrouping {
 
-    /// The day's work in order. `exercises` must already be in prescribed order.
+    /// The entries of a session, in the order they are trained.
     static func entries(of exercises: [PlannedExercise]) -> [SessionEntry] {
         var entries: [SessionEntry] = []
-        var index = 0
-        var letters = 0
+        var pending: [PlannedExercise] = []
+        var groupsSeen = 0
 
-        while index < exercises.count {
-            let exercise = exercises[index]
-            guard let groupID = exercise.groupID else {
-                entries.append(.exercise(exercise))
-                index += 1
-                continue
+        func flush() {
+            guard !pending.isEmpty else { return }
+            defer { pending = [] }
+            // A group of one cannot be prescribed — the format refuses it — but
+            // one can survive a member being removed, and a card labelled "A"
+            // with a single movement in it is a lie the screen would tell.
+            guard pending.count > 1 else {
+                entries.append(.exercise(pending[0]))
+                return
             }
-            var members: [PlannedExercise] = []
-            while index < exercises.count, exercises[index].groupID == groupID {
-                members.append(exercises[index])
-                index += 1
-            }
-            // A group of one is not one. The format cannot state it, so this is
-            // a record that arrived incomplete: it reads as the exercise it is
-            // rather than as a group missing its other half.
-            guard members.count > 1 else {
-                entries.append(.exercise(members[0]))
-                continue
-            }
+            groupsSeen += 1
             entries.append(.group(ExerciseGroup(
-                id: groupID,
-                letter: letter(at: letters),
-                members: members.sorted { ($0.groupPosition ?? 0) < ($1.groupPosition ?? 0) }
-            )))
-            letters += 1
+                ordinal: pending[0].groupOrdinal ?? groupsSeen,
+                letter: letter(at: groupsSeen - 1),
+                members: pending)))
         }
+
+        for exercise in exercises.sorted(by: { $0.order < $1.order }) {
+            guard let group = exercise.groupOrdinal else {
+                flush()
+                entries.append(.exercise(exercise))
+                continue
+            }
+            if pending.first?.groupOrdinal != group { flush() }
+            pending.append(exercise)
+        }
+        flush()
         return entries
     }
 
-    /// The letter for the group at `index`: A, B, … Z, then AA. Spreadsheet
-    /// order, because it is the one everybody already reads and it never runs
-    /// out.
+    /// `A`, `B`, `C` … and past `Z`, `AA`. A session with twenty-six groups in
+    /// it is not a session anyone should be given, but a crash would be the
+    /// app's fault rather than the plan's.
     private static func letter(at index: Int) -> String {
-        var remaining = index
-        var letters = ""
-        repeat {
-            let scalar = UnicodeScalar(UInt8(65 + remaining % 26))
-            letters = String(Character(scalar)) + letters
-            remaining = remaining / 26 - 1
-        } while remaining >= 0
-        return letters
+        let alphabet = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        guard index >= alphabet.count else { return String(alphabet[index]) }
+        return String(alphabet[index / alphabet.count - 1]) + String(alphabet[index % alphabet.count])
     }
 }
 
-extension WorkoutDay {
+extension PlannedSet {
 
-    /// The day's work in the order it is trained, with grouped exercises
-    /// collected into the groups they were prescribed as.
-    var entries: [SessionEntry] { SessionGrouping.entries(of: orderedExercises) }
+    /// Whether anything has been recorded against this prescription.
+    ///
+    /// **There is no `isCompleted` to read.** A performed row exists only if it
+    /// happened, so its presence is the fact — which is what removed the
+    /// boolean, and the seeded rows that made one necessary.
+    var hasBeenPerformed: Bool { !(performed ?? []).isEmpty }
+
+    /// What was actually done against this prescription, if anything.
+    var record: PerformedSet? { (performed ?? []).first }
 }
