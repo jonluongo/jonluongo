@@ -1,117 +1,106 @@
 import Testing
-import SwiftData
 import Foundation
+import SwiftData
 @testable import LiftingPlan
 import LiftingKit
 
-/// What the lifter writes about performing a movement, and how it reaches the
-/// coach.
+/// What the lifter says about a movement, and where it lives.
 ///
-/// **Two notes, two fields, on purpose.** The coach's is part of the
-/// prescription — extra detail on the work he asked for — and arrives with every
-/// plan. The lifter's is part of what happened: *knee hurt at the end*. Sharing
-/// one field would mean whichever of them wrote last erased the other, and
-/// nothing afterwards could say whose sentence it had been.
+/// **His note moved to the record.** It used to sit on `PlannedExercise`, which
+/// put his words under the coach's rewrite rules: a note on a session he had not
+/// trained went when the coach rewrote the block. It belongs to what happened,
+/// so it lives on `PerformedExercise` — and writing one has to create that
+/// performance, because a note written before his first set would otherwise have
+/// nowhere to go.
 @Suite("The lifter's own note")
-@MainActor
 struct LifterNoteTests {
 
-    private static let instant = Date(timeIntervalSince1970: 1_700_000_000)
-    private static let bench = ExerciseID(rawValue: "barbell-bench-press")
-
-    private func context() throws -> ModelContext {
-        ModelContext(try StoreContainer.inMemory())
+    @MainActor
+    private func log(_ context: ModelContext, _ session: Session) -> SessionLog {
+        SessionLog(
+            session: session, context: context,
+            restTimer: RestTimerModel(),
+            restPreferences: RestPreferences())
     }
 
-    /// A block of one movement, imported the way one really arrives.
-    private func imported(
-        coachNote: String? = nil, into context: ModelContext
-    ) throws -> PlannedExercise {
-        let document = PlanDocument(
-            id: UUID(), catalogVersion: 5, generatedAt: Self.instant, title: "Autumn",
-            days: [PlanDocumentDay(weekday: .monday, focus: "Push", exercises: [
-                PlanDocumentExercise(
-                    exerciseID: Self.bench, displayName: "Barbell Bench Press",
-                    sets: 3, repRange: "5", notes: coachNote)
-            ])])
-        let plan = try PlanImporter.import(
-            document, into: context, catalog: try ExerciseCatalog.bundled(),
-            importedAt: Self.instant)
-        return try #require(plan.orderedWeeks.first?.orderedDays.first?.orderedExercises.first)
+    private func session() throws -> (ModelContext, Session, PlannedExercise) {
+        let context = try StoreFixture.imported(StoreFixture.plan())
+        let session = try #require(try StoreFixture.sessions(in: context).first)
+        let exercise = try #require(session.orderedExercises.first)
+        return (context, session, exercise)
     }
 
-    private func exported(_ context: ModelContext) throws -> TrainingSnapshot {
-        try SnapshotExporter.export(from: context, catalogVersion: 5, generatedAt: Self.instant)
+    @MainActor
+    @Test("A note written before the first set still has somewhere to go")
+    func aNoteBeforeAnySetCreatesThePerformance() throws {
+        let (context, session, exercise) = try self.session()
+        #expect((session.performedExercises ?? []).isEmpty)
+
+        try log(context, session).writeNote("Shoulder felt fine.", for: exercise)
+
+        let performed = try #require((session.performedExercises ?? []).first)
+        #expect(performed.lifterNote == "Shoulder felt fine.")
+        #expect((performed.sets ?? []).isEmpty, "he wrote before he lifted")
     }
 
-    @Test("A note the lifter writes reaches the coach in his own words")
-    func noteReachesTheCoach() throws {
-        let context = try context()
-        let exercise = try imported(into: context)
+    @MainActor
+    @Test("Clearing a note he wrote before lifting leaves nothing behind")
+    func clearingRemovesAnEmptyPerformance() throws {
+        // An empty performance would put a session in the coach's history that
+        // the lifter never trained.
+        let (context, session, exercise) = try self.session()
+        let log = log(context, session)
 
-        exercise.lifterNote = "Knee hurt at the end."
-        try context.saveOrThrow()
+        try log.writeNote("Typed by mistake.", for: exercise)
+        try log.writeNote(nil, for: exercise)
 
-        let note = try #require(try exported(context).lifterNotes.first)
-        #expect(note.text == "Knee hurt at the end.")
-        #expect(note.exerciseID == Self.bench)
-        #expect(note.blockOrdinal == 1)
-        #expect(note.weekday == .monday)
-        #expect(note.exerciseOrder == 0)
+        #expect((session.performedExercises ?? []).isEmpty)
     }
 
-    @Test("The two notes are two fields: neither writes over the other")
-    func theTwoNotesAreSeparate() throws {
-        let context = try context()
-        let exercise = try imported(coachNote: "Pause the last rep.", into: context)
+    @MainActor
+    @Test("Clearing a note keeps the sets he did")
+    func clearingKeepsPerformedSets() throws {
+        let (context, session, exercise) = try self.session()
+        let log = log(context, session)
+        let slot = try #require(SessionOrder.trainingOrder(of: session).first)
 
-        exercise.lifterNote = "Shoulder felt off."
-        try context.saveOrThrow()
+        try log.record(slot, load: Mass(value: 100, unit: .kilograms), reps: 5)
+        try log.writeNote("Heavy.", for: exercise)
+        try log.writeNote(nil, for: exercise)
 
-        // The coach's stays inside the plan document he wrote; the lifter's
-        // travels beside the log, because it is part of what happened.
-        let snapshot = try exported(context)
-        #expect(snapshot.firstPrescribedExercise?.notes == "Pause the last rep.")
-        #expect(snapshot.lifterNotes.first?.text == "Shoulder felt off.")
+        let performed = try #require((session.performedExercises ?? []).first)
+        #expect(performed.lifterNote == nil)
+        #expect((performed.sets ?? []).count == 1, "the work happened whatever he said about it")
     }
 
-    @Test("A movement he wrote nothing about carries no note at all")
-    func nothingWrittenIsNoNote() throws {
-        let context = try context()
-        _ = try imported(coachNote: "Pause the last rep.", into: context)
+    @MainActor
+    @Test("His words reach the coach")
+    func theNoteReachesTheSnapshot() throws {
+        let (context, session, exercise) = try self.session()
+        try log(context, session).writeNote("Left elbow ached on the last set.", for: exercise)
 
-        #expect(try exported(context).lifterNotes.isEmpty)
+        let snapshot = try SnapshotExporter.export(
+            from: context, catalogVersion: 5, exportedAt: StoreFixture.instant)
+
+        #expect(snapshot.performances.first?.lifterNote == "Left elbow ached on the last set.")
     }
 
-    @Test("A note emptied is a note gone, not an empty one kept")
-    func emptiedNoteIsGone() throws {
-        let context = try context()
-        let exercise = try imported(into: context)
-        exercise.lifterNote = "Knee hurt."
-        try context.saveOrThrow()
+    @MainActor
+    @Test("A rewritten session cannot take his note with it")
+    func aRewriteCannotTouchHisWords() throws {
+        // This is why the note moved. The coach may rewrite a session nothing
+        // has been logged against — and a note is something logged against it.
+        let (context, session, exercise) = try self.session()
+        try log(context, session).writeNote("Felt strong.", for: exercise)
 
-        exercise.lifterNote = nil
-        try context.saveOrThrow()
-
-        #expect(try exported(context).lifterNotes.isEmpty)
-    }
-
-    @Test("A new plan replaces the coach's note and leaves the lifter's alone")
-    func aNewPlanDoesNotEraseHisWords() throws {
-        // The blocks are different documents, so this is really the guarantee
-        // that his words live on the record rather than on the prescription: a
-        // note written against a block that has been superseded is still in the
-        // snapshot, under the block it was written in.
-        let context = try context()
-        let exercise = try imported(coachNote: "Pause the last rep.", into: context)
-        exercise.lifterNote = "Knee hurt at the end."
-        try context.saveOrThrow()
-
-        _ = try imported(coachNote: "Touch and go.", into: context)
-
-        let snapshot = try exported(context)
-        #expect(snapshot.routines.count == 2)
-        #expect(snapshot.lifterNotes.count == 1)
-        #expect(snapshot.lifterNotes.first?.text == "Knee hurt at the end.")
+        #expect(session.hasBeenTrained, "a note is part of the record")
+        #expect(throws: PlanImportError.self) {
+            try PlanImporter.import(
+                StoreFixture.plan(entries: [
+                    .exercise(StoreFixture.exercise(StoreFixture.squat))
+                ]),
+                into: context, catalog: try StoreFixture.catalog())
+        }
+        #expect((session.performedExercises ?? []).first?.lifterNote == "Felt strong.")
     }
 }

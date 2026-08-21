@@ -26,6 +26,17 @@ enum SessionEntry: Identifiable {
         return group
     }
 
+    /// The group this entry is, or `nil` when it is a single exercise.
+    ///
+    /// Named to match `PlanDocumentEntry.group`, which answers the same question
+    /// about the same idea on the other side of the seam.
+    var group: ExerciseGroup? {
+        switch self {
+        case .exercise: nil
+        case .group(let group): group
+        }
+    }
+
     var id: String {
         switch self {
         case .exercise(let exercise): "exercise-\(exercise.persistentModelID)"

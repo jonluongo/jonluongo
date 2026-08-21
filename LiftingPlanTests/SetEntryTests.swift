@@ -52,18 +52,27 @@ struct SetEntryTests {
 
     // MARK: - Reps
 
-    @Test("No reps shows an empty field rather than a nought")
-    func zeroRepsShowsNothing() {
-        #expect(SetEntry.text(forReps: 0).isEmpty)
+    @Test("An unstated count shows an empty field; a stated nought shows the nought")
+    func repsAreShownOnlyWhenStated() {
+        #expect(SetEntry.text(forReps: nil).isEmpty)
         #expect(SetEntry.text(forReps: 8) == "8")
+        // **Zero is a number somebody typed.** It used to draw as an empty
+        // field, because `reps` was not optional and zero was how absence was
+        // spelled — so a set he failed and recorded honestly looked the same as
+        // one he never touched.
+        #expect(SetEntry.text(forReps: 0) == "0")
     }
 
-    @Test("An emptied rep field is zero, because a counted set has a count")
-    func emptyRepsIsZero() {
-        // `reps` is not optional on the model: a counted set with nothing typed
-        // has no reps, rather than an unknown number of them.
-        #expect(SetEntry.reps(from: "") == 0)
+    @Test("An emptied rep field says nothing rather than saying none")
+    func emptyRepsIsUnstated() {
+        // `reps` is optional on the model. A counted set he ticked without
+        // typing has no *stated* count — which is not the same as having done
+        // none of them, and the coach used to read it as a completed working set
+        // at 185 lb by 0.
+        #expect(SetEntry.reps(from: "") == nil)
+        #expect(SetEntry.reps(from: "   ") == nil)
         #expect(SetEntry.reps(from: "12") == 12)
+        #expect(SetEntry.reps(from: "0") == 0, "he said none, which is a statement")
     }
 
     @Test("A stray character does not swallow the number around it")

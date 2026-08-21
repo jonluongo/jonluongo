@@ -36,10 +36,65 @@ final class PlannedSet {
     /// How hard this set should be. `nil` when the coach stated none — never a
     /// zero, and never inferred from the load.
     var intensity: IntensityTarget?
+    /// What this set asks for, stored as four primitives.
+    ///
+    /// **SwiftData accepts `Target?` as an attribute and stores nothing in it.**
+    /// The schema validates, `StoreContainer.cloudKit()` constructs, the app
+    /// launches — and a value written comes back `nil`. A Codable *struct*
+    /// persists; a Codable enum with associated values does not, silently. That
+    /// was found by a test asserting the round trip, and could not have been
+    /// found by launching the app, which is what it had been checked with.
+    ///
+    /// **Primitives rather than a blob.** Encoding to `Data` would need a `try?`
+    /// in the setter, which discards an error this project does not discard, and
+    /// the shorthand form is lossy — a unit this build has never heard of parses
+    /// back as nothing. Four columns hold every case exactly, stay queryable,
+    /// and cannot fail to encode.
+    private var targetMeasureRaw: String?
+    private var targetLow: Double?
+    private var targetHigh: Double?
+    private var targetUnitRaw: String?
+
     /// What this set asks for — a count, a hold, or a carry. Read once at the
-    /// document boundary and stored as the thing it is, so nothing downstream
-    /// scans text to find out what a number means.
-    var target: Target?
+    /// document boundary, so nothing downstream scans text to find out what a
+    /// number means.
+    var target: Target? {
+        get {
+            guard let measure = targetMeasureRaw else { return nil }
+            switch measure {
+            case "repsToFailure": return .repetitionsToFailure
+            case "reps":
+                guard let low = targetLow else { return nil }
+                return .repetitions(low: Int(low), high: targetHigh.map { Int($0) })
+            case "seconds":
+                guard let low = targetLow else { return nil }
+                return .time(low: Int(low), high: targetHigh.map { Int($0) })
+            case "distance":
+                guard let low = targetLow, let unit = targetUnitRaw else { return nil }
+                return .distance(
+                    low: low, high: targetHigh, unit: DistanceUnit(rawValue: unit))
+            default: return nil
+            }
+        }
+        set {
+            switch newValue {
+            case nil:
+                (targetMeasureRaw, targetLow, targetHigh, targetUnitRaw) = (nil, nil, nil, nil)
+            case .repetitionsToFailure:
+                (targetMeasureRaw, targetLow, targetHigh, targetUnitRaw) =
+                    ("repsToFailure", nil, nil, nil)
+            case .repetitions(let low, let high):
+                (targetMeasureRaw, targetLow, targetHigh, targetUnitRaw) =
+                    ("reps", Double(low), high.map(Double.init), nil)
+            case .time(let low, let high):
+                (targetMeasureRaw, targetLow, targetHigh, targetUnitRaw) =
+                    ("seconds", Double(low), high.map(Double.init), nil)
+            case .distance(let low, let high, let unit):
+                (targetMeasureRaw, targetLow, targetHigh, targetUnitRaw) =
+                    ("distance", low, high, unit.rawValue)
+            }
+        }
+    }
 
     var exercise: PlannedExercise?
 

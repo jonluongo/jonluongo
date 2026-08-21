@@ -61,11 +61,17 @@ struct RefusalMessageTests {
 
     /// The document the owner has sitting in his folder right now: a plan an
     /// earlier build wrote, stating a length beside a single week of days.
+    /// A plan written in the shape every version up to 5 used.
+    ///
+    /// **It is refused for its version now, not for its contents.** Version 6
+    /// states a flat list of sessions and has no routine, no block label and no
+    /// weekday, so there is no honest reading of this into it — the refusal says
+    /// exactly that rather than picking over keys it was never going to accept.
     private static let planFromAnEarlierBuild = """
         {
-          "version": 1, "id": "5C5C4C51-9E15-4F35-8D9F-0F1D2B3A4C5D",
+          "version": 5, "id": "5C5C4C51-9E15-4F35-8D9F-0F1D2B3A4C5D",
           "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
-          "title": "Autumn strength", "goal": "Bigger squat", "weekCount": 8,
+          "title": "Autumn strength", "goal": "Bigger squat",
           "days": [{
             "weekday": 2, "focus": "Lower",
             "exercises": [{
@@ -92,17 +98,19 @@ struct RefusalMessageTests {
     func authorsSentenceSurvives() async throws {
         let message = try await messageAfterReading(Self.planFromAnEarlierBuild)
 
-        #expect(message.contains("says it runs 8 blocks but states 1"))
-        #expect(message.contains("writing it again is the whole of the fix"))
+        #expect(message.contains("version 5"))
+        #expect(message.contains("version 6"))
+        #expect(message.contains("Write the plan again"),
+                "the lifter relays this, so it has to say what the coach must do")
     }
 
     @Test("An unknown key still names the key, underneath something the lifter can use")
     func unknownKeyIsStillNamed() async throws {
         let message = try await messageAfterReading("""
             {
-              "version": 3, "id": "5C5C4C51-9E15-4F35-8D9F-0F1D2B3A4C5D",
+              "version": 6, "id": "5C5C4C51-9E15-4F35-8D9F-0F1D2B3A4C5D",
               "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
-              "dropSets": true, "weeks": []
+              "dropSets": true, "sessions": []
             }
             """)
 
@@ -114,11 +122,12 @@ struct RefusalMessageTests {
     func unknownExerciseIsFramedToo() async throws {
         let message = try await messageAfterReading("""
             {
-              "version": 3, "id": "5C5C4C51-9E15-4F35-8D9F-0F1D2B3A4C5D",
+              "version": 6, "id": "5C5C4C51-9E15-4F35-8D9F-0F1D2B3A4C5D",
               "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
-              "weeks": [{"days": [{"weekday": 2, "exercises": [{
-                "exerciseID": "moon-press", "displayName": "Moon Press", "sets": 3
-              }]}]}]
+              "sessions": [{"blockOrdinal": 1, "ordinal": 1, "entries": [{
+                "exerciseID": "moon-press", "displayName": "Moon Press",
+                "sets": [{"target": "5"}]
+              }]}]
             }
             """)
 

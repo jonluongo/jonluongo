@@ -100,7 +100,11 @@ private struct SessionRow: View {
                 .font(.supersetTitle)
                 .foregroundStyle(Palette.ink)
             Spacer(minLength: Spacing.snug)
-            RecordedMark(isRecorded: standing == .finished)
+            // `showsEmpty: false` — a list marks only what is done. Drawing an
+            // outline on every unfinished row gives the column a box beside
+            // every session, and a mark that appears everywhere distinguishes
+            // nothing.
+            RecordedMark(isRecorded: standing == .finished, showsEmpty: false)
             DisclosureChevron()
         }
         .accessibilityElement(children: .combine)
