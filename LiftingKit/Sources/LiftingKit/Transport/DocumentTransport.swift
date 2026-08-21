@@ -127,6 +127,20 @@ public struct DocumentFolder: DocumentTransport {
     /// edit.** Prose has no refusal machinery of its own, so the guard is at the
     /// other end: `update_notes` states the text it expects to replace and is
     /// refused if that text is not there.
+    /// Keeps the version about to be replaced, beside the note itself.
+    ///
+    /// **A few kilobytes against losing what the coach wrote.** An anchored edit
+    /// is the guard — it refuses when the text it expects is not there — and
+    /// this is the backstop for anything it still gets wrong. Named by the
+    /// moment it was kept, so the folder reads as a history rather than as one
+    /// backup that keeps being overwritten.
+    public func keepCopy(of text: String, as note: NoteFile) throws {
+        let stamp = ISO8601DateFormatter().string(from: Date())
+            .replacingOccurrences(of: ":", with: "-")
+        try Data(text.utf8).write(
+            to: directory.appending(path: "\(note.rawValue).\(stamp).md"), options: .atomic)
+    }
+
     public func writeNote(_ text: String, as note: NoteFile) throws {
         try Data(text.utf8).write(
             to: directory.appending(path: note.filename), options: .atomic)

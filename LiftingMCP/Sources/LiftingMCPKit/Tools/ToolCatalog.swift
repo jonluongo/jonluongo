@@ -44,13 +44,11 @@ public enum ToolCatalog {
     public static let recentSessions = "recent_sessions"
     public static let volumeByMuscle = "volume_by_muscle"
     public static let writePlan = "write_plan"
-    public static let updateProfile = "update_profile"
-    public static let unstatedFacts = "unstated_facts"
+    public static let updateNotes = "update_notes"
 
     public static let definitions: [ToolDefinition] = [
         listExercisesDefinition, exerciseHistoryDefinition, recentSessionsDefinition,
-        volumeByMuscleDefinition, unstatedFactsDefinition, writePlanDefinition,
-        updateProfileDefinition,
+        volumeByMuscleDefinition, writePlanDefinition, updateNotesDefinition,
     ]
 
     // MARK: - Reading the catalog
@@ -147,135 +145,46 @@ public enum ToolCatalog {
         )
     )
 
-    // MARK: - Reading what nobody has said
+    // MARK: - Writing what he wrote
 
-    /// **This names empty fields. It does not name questions to ask.** The
-    /// difference is the architecture: "equipment and bodyweight are unstated"
-    /// is a fact about the record, and "ask about equipment before writing a
-    /// split" is a training opinion. The first belongs here; the second is
-    /// Claude's, and putting it in a tool description would be this app deciding
-    /// how coaching goes.
-    static let unstatedFactsDefinition = ToolDefinition(
-        name: unstatedFacts,
-        title: "Unstated facts",
+    /// **An anchored edit, because prose has no refusal machinery of its own.**
+    /// Every other inbound format is versioned and refuses a key it does not
+    /// have; a markdown file has no shape to violate, so the guard is that the
+    /// writer states the text he expects to replace. If it is not there, or
+    /// appears twice, nothing is written and he is told which.
+    ///
+    /// A whole-file write would lose whatever he had not read, silently, which
+    /// is the one failure mode this project does not accept.
+    static let updateNotesDefinition = ToolDefinition(
+        name: updateNotes,
+        title: "Update notes",
         description: """
-            Which facts about the lifter this record can hold, and which of them \
-            nobody has stated yet: the equipment he owns, what he weighs, what he \
-            can already lift, his experience, his goal, his injuries, and when and \
-            how long he can train. The app has no setup screen and asks him none \
-            of it, so an unstated fact is a conversation that has not happened \
-            rather than an answer of 'none' — and nothing else in this server will \
-            volunteer that a field is empty. Call it when you want to know what is \
-            not known. A fact he has stated comes back with the date he last said \
-            it, so a constraint mentioned this week and one mentioned before the \
-            last two blocks can be told apart — null where the record predates \
-            those dates being kept. Which of these matter for what you are about \
-            to write, whether an old date is worth revisiting, and whether to ask \
-            at all, is yours to judge; this reports fields and dates and passes no \
-            verdict on either. \(updateProfile) is what closes one, and stating a \
-            fact again records that he said it again.
-            """,
-        inputSchema: object([:])
-    )
+            Edits one of the two markdown notes the lifter's app renders.
 
-    // MARK: - Writing down who he is
+            'user.md' is who he is: what he trains for, his background, his \
+            injuries and limits, what he avoids and why, his equipment, and his \
+            bodyweight over time. 'program.md' is why this programme — the \
+            approach, what is being progressed, what to watch, and what makes a \
+            given block a deload.
 
-    static let updateProfileDefinition = ToolDefinition(
-        name: updateProfile,
-        title: "Update profile",
-        description: """
-            Records what you have learned about the lifter — the equipment he \
-            has, what he weighs, what he can already lift, his experience, his \
-            goal, his injuries, when he trains. The app asks him none of this, \
-            so what he tells you is written here or it is not written at all. \
-            Pass only the fields you have just learned: anything you leave out \
-            keeps the value it already has. Pass null for a single fact to \
-            return it to not-known, which is how a fact recorded in error is \
-            taken back. Lists replace rather than add, so send the whole list \
-            each time — except bodyweight and baselines, which are series: each \
-            record you send is filed under its day or its lift, adding a new one \
-            and correcting one already there, so the history is never \
-            overwritten. Those two cannot be nulled, and a null on either is \
-            refused rather than ignored: it would read either as recording \
-            nothing or as erasing every entry. Correct a series by stating that \
-            day's reading, or that lift's baseline, again. Every fact you state \
-            here is dated with this call, and stating one again records that he \
-            said it again — which is how a constraint he mentioned last year and \
-            one he mentioned this week are told apart later. The dates are \
-            written from the call and are not yours to send.
+            This is an anchored edit, not a rewrite. State 'oldText' exactly as \
+            it appears and it is replaced by 'newText'. If 'oldText' is not \
+            found, or is found more than once, nothing is written — read the \
+            note first rather than guessing at it.
+
+            Append rather than replace under 'Injuries and limits' and \
+            'Bodyweight': those are dated observations, and the earlier ones are \
+            the history.
             """,
         inputSchema: object([
-            "equipment": [
-                "description": .string(
-                    "What he actually owns, as a list of equipment types — "
-                        + "\(EquipmentType.known.map(\.rawValue).joined(separator: ", ")). "
-                        + "A real gym is not a tier: send exactly what he has, e.g. "
-                        + "['barbell', 'plate', 'band'] for a garage with no cable stack. "
-                        + "The coarse tiers "
-                        + "\(Equipment.allCases.map(\.rawValue).joined(separator: ", ")) "
-                        + "are accepted in the same list as shorthand and expand into the "
-                        + "types they stand for. Null if he has not said — that is unknown, "
-                        + "not 'owns nothing', and an empty list is 'owns nothing'."),
-                "anyOf": [
-                    ["type": "array", "items": ["type": "string"]],
-                    ["type": "string"], ["type": "null"],
-                ],
-            ],
-            "bodyweight": [
-                "description": .string(
-                    "What he weighs, as {\"value\": 182, \"unit\": \"lb\"}. This is a dated "
-                        + "series, not one number: pass a list to record several weigh-ins, "
-                        + "and add \"date\" (ISO 8601, UTC) to file one on the day it happened "
-                        + "rather than today. Stating a day again corrects that day's reading; "
-                        + "a new day is added, so the trend is never overwritten. Null is "
-                        + "refused here — a series cannot be taken back, only corrected."),
-                "anyOf": [massSchema, ["type": "array", "items": massSchema]],
-            ],
-            "baselines": [
-                "description": .string(
-                    "What he can already do on a lift, before any of it is logged — the load "
-                        + "anchor a first block has nothing else to work from. Each is "
-                        + "{\"exerciseID\": …, \"load\": {\"value\": …, \"unit\": …}, "
-                        + "\"reps\": …}, with an optional ISO 8601 \"recordedAt\". Leave out "
-                        + "\"load\" for bodyweight work. Take exerciseID verbatim from "
-                        + "\(listExercises); an ID the catalog does not have is refused. "
-                        + "Stating a lift again replaces that lift's baseline. Null is "
-                        + "refused here — a series cannot be taken back, only corrected."),
-                "anyOf": [baselineSchema, ["type": "array", "items": baselineSchema]],
-            ],
-            "experience": [
-                "description": .string(
-                    "How much training he has behind him, in his words. "
-                        + "\(ExperienceLevel.known.map(\.rawValue).joined(separator: ", ")) are "
-                        + "the usual answers, but they are not the only ones accepted: "
-                        + "'returning after two years off' is a truer answer than any of them "
-                        + "and is recorded as written. Null if he has not said."),
-                "anyOf": [["type": "string"], ["type": "null"]],
-            ],
-            "goal": string(
-                "What he is training for, in his words. This is the fact the "
-                    + "rest of the plan follows from — the split, the rep "
-                    + "ranges, the intensity and what progress even means all "
-                    + "answer to it, and nothing else in this record "
-                    + "distinguishes a lineman training for explosiveness from "
-                    + "someone who wants to look bigger. 'Get in shape' records "
-                    + "as little as it says; it is worth asking what he is "
-                    + "actually after before writing it down."),
-            "constraints": string(
-                "Injuries and limitations in his words, with the nuance a list "
-                    + "cannot hold, e.g. 'left shoulder hurts overhead'."),
-            "avoidedPatterns": stringOrList(
-                "Movement patterns to keep out of his training entirely, e.g. "
-                    + "'vertical press'. This is the enforceable half of an injury — "
-                    + "list_exercises and the app both filter on it."),
-            "avoidedExercises": stringOrList(
-                "Specific exercise IDs to keep out, taken verbatim from list_exercises."),
-            "preferredDurationMinutes": integer("How long he wants a session to run."),
-            "displayUnit": enumerated(
-                MassUnit.allCases.map(\.rawValue),
-                "How the app should render weights. A display setting, not a "
-                    + "training fact — he can also change it himself."),
-        ])
+            "file": enumerated(
+                NoteFile.allCases.map(\.rawValue),
+                "Which note to edit."),
+            "oldText": string(
+                "The text to replace, exactly as it appears in the note. Use a "
+                    + "heading and the line under it when replacing a section."),
+            "newText": string("What to put in its place."),
+        ], required: ["file", "oldText", "newText"])
     )
 
 }

@@ -30,14 +30,22 @@ public protocol TrainingDocuments: Sendable {
     /// Puts a profile update where the app will pick it up, replacing any
     /// earlier one. The app applies each update's identity once, so replacing
     /// an update that has already landed does not re-impose it.
-    func writeProfileUpdate(_ update: ProfileUpdate) throws
+    /// Replaces one of the coach's notes. Whole-file, which is why the tool
+    /// that calls it is an anchored edit.
+    func writeNote(_ text: String, as note: NoteFile) throws
+
+    /// Keeps the version about to be replaced, named by the moment it was kept.
+    /// A few kilobytes, and the backstop for anything an anchored edit still
+    /// gets wrong.
+    func keepCopy(of text: String, as note: NoteFile) throws
 
     /// The update sitting in the folder, or `nil` when there is none.
     ///
     /// The folder holds one at a time, so a writer reads this before replacing
     /// it: an update the phone has not taken in yet must be folded into the new
     /// one rather than overwritten, or the facts it carried are lost silently.
-    func readProfileUpdate() throws -> ProfileUpdate?
+    /// One of the coach's notes, or `nil` when he has written none.
+    func readNote(_ note: NoteFile) throws -> String?
 
     /// Where `readSnapshot()` looks, for an error message to name.
     var snapshotLocation: String { get }
@@ -46,7 +54,7 @@ public protocol TrainingDocuments: Sendable {
     var planLocation: String { get }
 
     /// Where `writeProfileUpdate(_:)` writes, for a report to name.
-    var profileUpdateLocation: String { get }
+
 }
 
 /// The shared folder is already the transport; it only needs to say where it is.
@@ -65,7 +73,4 @@ extension DocumentFolder: TrainingDocuments {
         url.appending(path: Self.planFilename).path(percentEncoded: false)
     }
 
-    public var profileUpdateLocation: String {
-        url.appending(path: Self.profileUpdateFilename).path(percentEncoded: false)
-    }
 }

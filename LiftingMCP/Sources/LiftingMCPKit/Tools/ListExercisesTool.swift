@@ -3,122 +3,44 @@ import LiftingKit
 
 extension ToolRunner {
 
-    /// Catalog entries with their real IDs, narrowed to what this lifter can
-    /// actually perform.
+    /// The catalog, so a plan can be written in IDs the app will accept.
     ///
-    /// This is what makes a hallucinated exercise ID impossible in normal use:
-    /// Claude picks an entry from here rather than typing a name. Each entry
-    /// carries enough — name, pattern, equipment, both muscle lists, mechanic,
-    /// difficulty — to choose well without a second call.
-    ///
-    /// The narrowing is reported alongside the results in `appliedFilter`, and
-    /// `includeUnavailable` turns it off, so "the lifter cannot do this" is
-    /// never indistinguishable from "the catalog does not have this". A lifter
-    /// with no profile yet is narrowed by nothing, and the report says so.
-    func listExercises(_ arguments: JSONValue, in snapshot: TrainingSnapshot) -> ToolOutcome {
-        let requested = ExerciseFilter(
-            equipment: Set((arguments.strings(at: "equipment") ?? []).map(EquipmentType.init)),
-            patterns: Set((arguments.strings(at: "pattern") ?? []).map(MovementPattern.init)),
-            muscles: Set((arguments.strings(at: "muscle") ?? []).map(MuscleGroup.init))
-        )
-        let query = arguments["query"]?.stringValue
-        let narrowToLifter = arguments["includeUnavailable"]?.boolValue != true
-        let profile = narrowToLifter ? snapshot.profile : nil
+    /// **It subtracts nothing.** It used to remove what the lifter avoided,
+    /// which is prose in `user.md` now — and hiding a movement was the wrong
+    /// answer anyway. A coach who reads *left knee, since June* and sees the
+    /// squat still listed has more to work with than one handed a shorter list
+    /// with no explanation, and prose carries degrees — *avoid unless nothing
+    /// else works*, *avoid until it settles* — that a filtered list cannot.
+    func listExercises(_ arguments: JSONValue) -> ToolOutcome {
+        let query = arguments["query"]?.stringValue?.lowercased()
+        let pattern = arguments["pattern"]?.stringValue.map { MovementPattern(rawValue: $0) }
+        let equipment = arguments["equipment"]?.stringValue.map { EquipmentType(rawValue: $0) }
 
-        var matches = query.map { catalog.search($0, limit: catalog.all.count) } ?? catalog.all
-        matches = matches.filter(requested.matches)
-        if let profile {
-            // Equipment narrows only when it is known. Nobody has necessarily
-            // said what gym he has — the app never asks — and an unknown answer
-            // must not narrow to nothing, which would read as a lifter who can
-            // perform no exercise at all.
-            let available = profile.availableEquipment.map(Set.init)
-            let avoidedPatterns = Set(profile.avoidedPatterns)
-            let avoidedExercises = Set(profile.avoidedExercises)
+        var filter = ExerciseFilter()
+        if let pattern { filter.patterns = [pattern] }
+        if let equipment { filter.equipment = [equipment] }
+        var matches = catalog.exercises(matching: filter)
+        if let query, !query.isEmpty {
             matches = matches.filter {
-                (available?.contains($0.equipment) ?? true)
-                    && !avoidedPatterns.contains($0.pattern)
-                    && !avoidedExercises.contains($0.id)
+                $0.displayName.lowercased().contains(query) || $0.id.rawValue.contains(query)
             }
         }
+        matches.sort { $0.id.rawValue < $1.id.rawValue }
 
-        let limit = arguments["limit"]?.intValue ?? Self.defaultExerciseLimit
         return .report([
-            "count": .integer(min(limit, matches.count)),
-            "totalMatching": .integer(matches.count),
-            "limit": .integer(limit),
             "catalogVersion": .integer(catalog.version),
-            "appliedFilter": appliedFilter(arguments, requested: requested, profile: profile),
-            "note": .string(narrowingNote(snapshot: snapshot, narrowed: narrowToLifter)),
-            "exercises": .array(matches.prefix(limit).map(Self.entry)),
+            "count": .integer(matches.count),
+            "exercises": .array(matches.map(Self.entry)),
         ])
     }
 
-    /// How many entries come back when the call does not say. A cap on a
-    /// response, not an opinion about training.
-    static let defaultExerciseLimit = 50
-
-    /// One catalog entry, complete enough to choose a movement from without a
-    /// second call.
     private static func entry(_ exercise: Exercise) -> JSONValue {
-        [
+        .object([
             "id": .string(exercise.id.rawValue),
-            "name": .string(exercise.displayName),
+            "displayName": .string(exercise.displayName),
             "pattern": .string(exercise.pattern.rawValue),
             "equipment": .string(exercise.equipment.rawValue),
-            "primaryMuscles": .taxonomy(exercise.primaryMuscles),
-            "secondaryMuscles": .taxonomy(exercise.secondaryMuscles),
-            "mechanic": .string(exercise.mechanic?.rawValue),
-            "force": .string(exercise.force?.rawValue),
-            "category": .string(exercise.category.rawValue),
-            "difficulty": .string(exercise.difficulty?.rawValue),
-            "aliases": .array(exercise.aliases.map { .string($0) }),
-        ]
-    }
-
-    /// Everything that narrowed this answer, stated rather than applied
-    /// silently. A result that was filtered without saying so is a result that
-    /// cannot be reasoned about.
-    private func appliedFilter(
-        _ arguments: JSONValue, requested: ExerciseFilter, profile: SnapshotProfile?
-    ) -> JSONValue {
-        [
-            "query": .string(arguments["query"]?.stringValue),
-            "pattern": .taxonomy(Self.ordered(requested.patterns)),
-            "muscle": .taxonomy(Self.ordered(requested.muscles)),
-            "equipment": .taxonomy(Self.ordered(requested.equipment)),
-            // Null for two different reasons — no profile at all, or a profile
-            // that has not said — and the note says which.
-            "lifterEquipment": profile?.availableEquipment.map { .taxonomy($0) } ?? .null,
-            "avoidedPatterns": profile.map { .taxonomy($0.avoidedPatterns) } ?? .null,
-            "avoidedExercises": profile.map {
-                .array($0.avoidedExercises.map { .string($0.rawValue) })
-            } ?? .null,
-        ]
-    }
-
-    /// A set in a stable order, so the same call twice reads the same twice.
-    private static func ordered<T: ExtensibleTaxonomy>(_ values: Set<T>) -> [T] {
-        values.sorted { $0.rawValue < $1.rawValue }
-    }
-
-    private func narrowingNote(snapshot: TrainingSnapshot, narrowed: Bool) -> String {
-        guard narrowed else {
-            return "Nothing was narrowed: includeUnavailable was set, so this is the whole "
-                + "catalog including movements the lifter said he avoids or has no equipment for."
-        }
-        guard let profile = snapshot.profile else {
-            return "Nothing is recorded about this lifter, so nothing is known about his "
-                + "equipment or what he avoids and nothing was narrowed. Every entry here is in "
-                + "the catalog; not all of them are necessarily ones he can perform."
-        }
-        guard profile.availableEquipment != nil else {
-            return "He has not said what equipment he has, so nothing was narrowed by it — that "
-                + "is unknown, not empty. What he avoids was still applied; see appliedFilter. "
-                + "Ask him, and record it with \(ToolCatalog.updateProfile), or pass 'equipment' "
-                + "here to narrow this one call. Use these IDs verbatim in write_plan."
-        }
-        return "Narrowed to what this lifter can perform — see appliedFilter. Pass "
-            + "includeUnavailable to see what was left out. Use these IDs verbatim in write_plan."
+            "primaryMuscles": .array(exercise.primaryMuscles.map { .string($0.rawValue) }),
+        ])
     }
 }

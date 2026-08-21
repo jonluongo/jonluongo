@@ -1,287 +1,103 @@
 import Foundation
 import LiftingKit
 
-/// The compact context that rides along on every turn: who the lifter is, what
-/// he has to train with, what block he is on, what he did lately, and what he
-/// is currently working with on each lift.
+/// The compact context that rides along on every turn: when the record was
+/// written, where the lifter is in it, and what he did lately.
 ///
-/// Built by `ToolRunner.contextResource()` and served as the one MCP resource.
-/// It is deliberately small — small enough to carry constantly — which is what
-/// makes the drill-down tools worth having: depth is paid for only when it is
-/// wanted, and `note` says where to go for it.
+/// **Who he is is not in here any more.** It used to carry his goal, experience,
+/// constraints, equipment, avoid lists, bodyweight and every strength baseline —
+/// nine fields, each one display-only in the app. They are prose in `user.md`
+/// now, which the coach reads as a resource and writes with `update_notes`.
+/// A paragraph he wrote says more than nine fields he had to fit into.
 ///
-/// Everything here is a restatement of the snapshot. It concludes nothing: no
-/// readiness score, no assessment of whether a lift is stalling, no verdict on
-/// balance. Those are Claude's to draw from the data.
+/// **`exportedAt` leads, and the age beside it.** The failure this exists to
+/// prevent arrives looking like a fact: a coach told a block holds four sessions
+/// when it holds nine. The phone is the only writer of the record and exports
+/// whenever it changes, so a stale read means the app has not been opened — and
+/// that is worth knowing before anything else here is believed.
+///
+/// **It concludes nothing.** No readiness score, no verdict on whether a lift is
+/// stalling, no assessment of balance. Those are the coach's to draw.
+///
+/// **It is deliberately small** — small enough to carry constantly — which is
+/// what makes the drill-down tools worth having: depth is paid for only when it
+/// is wanted, and `note` says where to go for it.
 ///
 /// Depends on: `ToolRunner`, `TrainingLog`, and the snapshot value types.
 struct ContextReport {
+
     let runner: ToolRunner
     let snapshot: TrainingSnapshot
-    /// What a logged set was asked to be, looked up in the document that asked.
-    private let prescriptions: Prescriptions
-
-    init(runner: ToolRunner, snapshot: TrainingSnapshot) {
-        self.runner = runner
-        self.snapshot = snapshot
-        prescriptions = Prescriptions(snapshot)
-    }
 
     /// How many recent sessions ride along before the tools take over.
     static let carriedSessions = 5
 
     func build() -> JSONValue {
-        [
-            "snapshotGeneratedAt": .date(snapshot.generatedAt),
-            "snapshotAgeDays": .integer(TrainingLog.ageInDays(of: snapshot, at: runner.now())),
+        let sessions = TrainingLog.sessions(in: snapshot)
+        let trained = TrainingLog.trained(in: snapshot)
+
+        return [
+            "exportedAt": .date(snapshot.exportedAt),
+            "recordAgeDays": .integer(ageInDays),
             "catalogVersion": .integer(snapshot.catalogVersion),
-            "lifter": lifter,
-            "currentBlock": currentBlock,
-            // How many sessions the record holds, beside the handful carried.
-            // Five entries and no total reads as *he has trained five times*,
-            // which is the summary being mistaken for the record — the same
-            // silent cap `recent_sessions` avoids by reporting `totalSessions`
-            // next to what it returned.
-            "sessionsLogged": .integer(TrainingLog.sessions(in: snapshot).count),
-            "recentSessions": recentSessions,
-            "workingWeights": workingWeights,
-            "note": .string(note),
+            "lifter": .object([
+                "note": .string(
+                    "Who he is, what he trains for, his injuries, his equipment and his "
+                        + "bodyweight are in user.md. Read it as a resource; write to it with "
+                        + "update_notes.")
+            ]),
+            "programme": .object([
+                "note": .string(
+                    "Why this programme — the approach, what is being progressed, what makes "
+                        + "a block a deload — is in program.md.")
+            ]),
+            "where": whereHeIs(sessions),
+            "sessionsRecorded": .integer(trained.count),
+            "recent": .array(trained.prefix(Self.carriedSessions).map(Self.summary)),
+            "note": .string(
+                "This is a summary. \(ToolCatalog.exerciseHistory) reports every performance "
+                    + "of one movement with what was prescribed beside it; "
+                    + "\(ToolCatalog.recentSessions) reports whole sessions; "
+                    + "\(ToolCatalog.volumeByMuscle) totals recent work."),
         ]
     }
 
-    // MARK: - Who he is
-
-    /// Who he is, with the facts nobody has stated left as `null`.
+    /// How old the record is, in whole days.
     ///
-    /// A `null` here means he has not said, not that the answer is nothing.
-    /// The app asks him nothing, so an unfilled field is the ordinary state of
-    /// a lifter early in a conversation — and reporting a plausible default
-    /// instead would be this server asserting something about him that nobody
-    /// ever said.
-    private var lifter: JSONValue {
-        guard let profile = snapshot.profile else { return .null }
-        return [
-            "experience": .string(profile.experience?.rawValue),
-            // **Empty is not a fact, it is an absence, and it is spelled the
-            // same way as every other one here.** The store writes free text he
-            // has not given as an empty string, because SwiftData has nowhere
-            // to put an absent one — but on the wire that made *goal* say `""`
-            // while *experience* said `null`, two spellings of "he has not
-            // said" in one object, and `unstated_facts` listing the goal it
-            // appeared to have.
-            "goal": .text(profile.goal),
-            "constraints": .text(profile.constraints),
-            "availableEquipment": profile.availableEquipment.map { .taxonomy($0) } ?? .null,
-            "avoidedPatterns": .taxonomy(profile.avoidedPatterns),
-            "avoidedExercises": .array(profile.avoidedExercises.map { .string($0.rawValue) }),
-            "preferredDurationMinutes": .integer(profile.preferredDurationMinutes),
-            "displayUnit": .string(profile.displayUnit.rawValue),
-            "bodyweight": .mass(LifterFacts.latestBodyweight(in: snapshot)),
-            "unstated": .array(unstatedFacts.map { .string($0) }),
-            // When he last said each of these. A fact he stated in March and a
-            // fact he stated this week read identically without it, and they
-            // are not the same instruction: a shoulder that was sore before the
-            // last two blocks is worth asking about, and one he mentioned on
-            // Tuesday is worth programming around.
-            //
-            // Absent from this map means the date is not on record — stated
-            // before the phone began keeping them, or never stated. It never
-            // means *recently*. Nothing here says whether a date is old, which
-            // is a judgement and is yours.
-            "statedAt": statedAt(of: profile),
-        ]
+    /// Reported rather than judged: whether four days is stale depends on how
+    /// often he trains, which is not this server's call.
+    private var ageInDays: Int {
+        max(0, Calendar(identifier: .gregorian).dateComponents(
+            [.day], from: snapshot.exportedAt, to: runner.now()).day ?? 0)
     }
 
-    /// The dates the profile carries, as an object keyed the way
-    /// `update_profile` names its arguments, so a fact and the date it was
-    /// stated on are looked up by the same word.
-    private func statedAt(of profile: SnapshotProfile) -> JSONValue {
-        .object(profile.statedAt.mapValues { .date($0) })
-    }
-
-    /// The facts nobody has stated yet, named rather than left for a reader to
-    /// notice one `null` at a time.
+    /// The session he is on, and what is left ahead of it.
     ///
-    /// Read from `LifterFacts` rather than worked out here, so this list and the
-    /// one `unstated_facts` reports are the same list. Two places
-    /// counting the record's empty fields separately would eventually disagree,
-    /// and a reader told one thing by the resource and another by the tool has
-    /// no way to tell which is right.
-    private var unstatedFacts: [String] {
-        LifterFacts.unstated(in: snapshot).map(\.name)
+    /// **`nil` when he has finished everything prescribed**, which is the
+    /// truthful answer on that day rather than a gap to be filled — and it is
+    /// the cue that the next block is due.
+    private func whereHeIs(_ sessions: [SessionRecord]) -> JSONValue {
+        let next = sessions.first { !$0.wasTrained }
+        return .object([
+            "blocksPrescribed": .integer(Set(sessions.map(\.blockOrdinal)).count),
+            "sessionsPrescribed": .integer(sessions.count),
+            "currentBlockOrdinal": next.map { .integer($0.blockOrdinal) } ?? .null,
+            "currentSessionOrdinal": next.map { .integer($0.ordinal) } ?? .null,
+            "currentSessionFocus": next.map { .string($0.focus) } ?? .null,
+            "nothingPrescribedBeyond": .bool(next == nil),
+        ])
     }
 
-    // MARK: - What he is on
-
-    /// The block he is on, and only that block.
-    ///
-    /// **`days` used to be every day of every block, flattened.** A routine of
-    /// three blocks of Monday, Wednesday and Friday reported nine days named
-    /// Monday, Wednesday, Friday, Monday, … under a key called *currentBlock*,
-    /// with nothing saying where one block ended and the next began. A coach
-    /// reading it could not tell which block was current, which is the first
-    /// thing he needs in order to write the next one.
-    ///
-    /// **Which block is current is read the way the app reads it**: the earliest
-    /// one still holding a session nobody has finished, and the last block when
-    /// every session is finished. The record decides it, never the calendar — a
-    /// fortnight away does not move him on.
-    private var currentBlock: JSONValue {
-        guard let routine = TrainingLog.currentRoutine(in: snapshot) else { return .null }
-        let plan = routine.document
-        // Which blocks hold logged work, read off the flat log rather than by
-        // walking the plan: the plan says what was asked for and the log says
-        // what happened, and they are two different documents now.
-        let loggedBlocks = Set(
-            snapshot.log.filter { $0.routineID == plan.id }.map(\.blockOrdinal))
-        let ordinal = Self.currentOrdinal(of: routine)
-        let block = plan.blocks.indices.contains(ordinal - 1) ? plan.blocks[ordinal - 1] : nil
-        return [
-            // What `write_plan` needs in order to add a block to this routine
-            // rather than replace it.
-            "routineID": .string(plan.id.uuidString),
-            "title": .text(plan.title),
-            "goal": .text(plan.goal),
-            "startDate": .date(routine.startDate),
-            "weekdays": .array(
-                Set(plan.blocks.flatMap(\.days).map(\.weekday))
-                    .sorted { Weekday.displayOrder.firstIndex(of: $0) ?? 0
-                        < Weekday.displayOrder.firstIndex(of: $1) ?? 0 }
-                    .map { .string($0.fullName) }),
-            "durationMinutes": .integer(plan.durationMinutes),
-            "blocksPrescribed": .integer(plan.blocks.count),
-            "blocksLogged": .integer(loggedBlocks.count),
-            "currentBlockOrdinal": .integer(ordinal),
-            "currentBlockLabel": .text(block?.label),
-            "currentBlockIsDeload": .bool(block?.isDeload ?? false),
-            // The fact a weekly loop turns on: he is on the last block that was
-            // written and every session in it is finished, so there is nothing
-            // prescribed for him to train next. It states the position and
-            // nothing about what should follow.
-            "nothingPrescribedBeyond": .bool(Self.isSpent(routine, at: ordinal)),
-            "days": .array(
-                (block?.days ?? []).map {
-                    [
-                        "weekday": .string($0.weekday.fullName),
-                        "focus": .text($0.focus),
-                        "exercises": .array(
-                            $0.entries.flatMap(\.exercises).map { .string($0.displayName) }),
-                    ]
-                }),
-        ]
-    }
-
-    /// The earliest block still holding an unfinished session, or the last block
-    /// when every one of them is finished.
-    static func currentOrdinal(of routine: SnapshotRoutine) -> Int {
-        let unfinished = routine.sessions.filter { $0.completedAt == nil }.map(\.blockOrdinal)
-        return unfinished.min() ?? max(1, routine.document.blocks.count)
-    }
-
-    /// Whether the routine has nothing left to train: the block he is on is the
-    /// last one written, and every session in it is finished.
-    static func isSpent(_ routine: SnapshotRoutine, at ordinal: Int) -> Bool {
-        guard ordinal == routine.document.blocks.count else { return false }
-        return routine.sessions
-            .filter { $0.blockOrdinal == ordinal }
-            .allSatisfy { $0.completedAt != nil }
-    }
-
-    // MARK: - What he did lately
-
-    /// The last few sessions, in full enough detail to be worth carrying.
-    ///
-    /// Capped at `carriedSessions`, which is what `sessionsLogged` beside it is
-    /// for: a reader can see at a glance whether he is looking at the record or
-    /// at the end of it.
-    private var recentSessions: JSONValue {
-        .array(
-            TrainingLog.sessions(in: snapshot).prefix(Self.carriedSessions).map { session in
-                [
-                    "date": session.date.map { .date($0) } ?? .null,
-                    "plan": .text(session.planTitle),
-                    "block": .integer(session.blockOrdinal),
-                    "weekday": .string(session.weekday.fullName),
-                    "focus": .text(session.focus),
-                    "exercises": .array(
-                        session.exercises.enumerated().map { order, exercise in
-                            let done = session.sets.count {
-                                $0.exerciseOrder == order && $0.isCompletedWorkingSet
-                            }
-                            return .string(
-                                "\(exercise.displayName): \(done) of \(exercise.sets)"
-                                    + " working sets")
-                        }),
-                ]
-            })
-    }
-
-    // MARK: - What he is working with
-
-    /// What he last worked with on each lift, and — beside it — the effort the
-    /// plan had asked for on that lift.
-    ///
-    /// `load` and the measure he performed are what he actually put up;
-    /// `prescribedIntensity` is what was asked of him, on whatever scale it was
-    /// prescribed on. Both are here so the comparison can be drawn; nothing here
-    /// draws it, converts an RIR into an RPE, or concludes that a target was
-    /// met. A lift with no stated target reports `null`, which means nobody
-    /// stated one — not that it was easy. He is asked for no rating of his own,
-    /// so none is reported: a number he could not supply accurately would be
-    /// worse than the load and the measure, which he can.
-    ///
-    /// **The measure is the same trio every other report states it as.** This
-    /// one spoke in repetitions alone, so the last thing a lifter did on a
-    /// farmer's carry read `"reps": 0` with nowhere for the 38 metres to go —
-    /// and this is the report the coach reads on every turn, so a plank and a
-    /// carry arrived in it as work that came to nothing. `reps`,
-    /// `durationSeconds` and `distance` answer different questions; the one he
-    /// performed carries the number and the other two say nothing.
-    private var workingWeights: JSONValue {
-        .array(
-            TrainingLog.lastWorkingSets(in: snapshot).map { record in
-                let prescribed = prescriptions.exercise(for: record)
-                return [
-                    "exerciseID": .string(record.exerciseID.rawValue),
-                    "displayName": .string(
-                        prescribed?.displayName ?? record.exerciseID.rawValue),
-                    "load": .mass(record.load),
-                    "reps": .integer(record.reps),
-                    "durationSeconds": .integer(record.durationSeconds),
-                    "distance": .distance(record.distance),
-                    "prescribedIntensity": .intensity(prescribed?.intensity),
-                    "lastTrained": .date(record.completedAt),
-                ]
-            })
-    }
-
-    // MARK: - Where to go for more
-
-    private var note: String {
-        opening
-            + "This is a summary. For depth: \(ToolCatalog.listExercises) for real exercise "
-            + "IDs he can perform, \(ToolCatalog.exerciseHistory) for every set on one "
-            + "movement, \(ToolCatalog.recentSessions) for full session detail, and "
-            + "\(ToolCatalog.volumeByMuscle) for set and rep totals. Write a plan with "
-            + "\(ToolCatalog.writePlan), using IDs from \(ToolCatalog.listExercises) verbatim."
-    }
-
-    /// What to say before the summary when there is nothing, or not enough, to
-    /// summarize. The app has no setup screen, so an empty profile is a
-    /// conversation that has not happened rather than a step he skipped.
-    private var opening: String {
-        guard snapshot.profile != nil else {
-            return "Nothing has been recorded about this lifter — the app asks him nothing, so "
-                + "everything known about him comes from what he tells you. Not one fact this "
-                + "record can hold is stated; \(ToolCatalog.unstatedFacts) names them and says "
-                + "what each holds. Assume nothing; ask, then write it down with "
-                + "\(ToolCatalog.updateProfile). "
-        }
-        let unstated = unstatedFacts
-        guard !unstated.isEmpty else { return "" }
-        return "He has not stated: \(unstated.joined(separator: ", ")). Those read as null "
-            + "above and are genuinely unknown, not defaults — do not assume a value for one. "
-            + "\(ToolCatalog.unstatedFacts) says what each of them holds. Record what he tells "
-            + "you with \(ToolCatalog.updateProfile). "
+    /// One session, said in a line: when, where, and what was done.
+    private static func summary(_ record: SessionRecord) -> JSONValue {
+        .object([
+            "blockOrdinal": .integer(record.blockOrdinal),
+            "ordinal": .integer(record.ordinal),
+            "focus": .string(record.focus),
+            "occurredAt": record.occurredAt.map { .date($0) } ?? .null,
+            "finished": .bool(record.isFinished),
+            "movements": .integer(record.performances.count),
+            "setsPerformed": .integer(record.performedSets.count),
+        ])
     }
 }

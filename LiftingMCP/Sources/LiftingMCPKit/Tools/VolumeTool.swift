@@ -60,25 +60,30 @@ extension ToolRunner {
         var unattributedSets = 0
         var unattributedIDs: Set<ExerciseID> = []
 
-        for record in TrainingLog.records(in: snapshot)
-        where record.isCompletedWorkingSet
-            && record.completedAt >= windowStart
-            && record.completedAt <= windowEnd
-        {
-            guard let exercise = catalog.exercise(id: record.exerciseID) else {
+        // Every working set performed in the window. A warm-up is not volume,
+        // and a performance exists only because it happened — there is no
+        // completion flag to check any more.
+        let performed = snapshot.performances.flatMap { performance in
+            performance.workingSets
+                .filter { $0.completedAt >= windowStart && $0.completedAt <= windowEnd }
+                .map { (id: performance.exerciseID, set: $0) }
+        }
+
+        for record in performed {
+            guard let exercise = catalog.exercise(id: record.id) else {
                 unattributedSets += 1
-                unattributedIDs.insert(record.exerciseID)
+                unattributedIDs.insert(record.id)
                 continue
             }
             guard exercise.isResistanceTraining else {
-                excluded.add(record, from: exercise)
+                excluded.add(record.set, from: exercise)
                 continue
             }
             for muscle in exercise.primaryMuscles {
-                totals[muscle, default: MuscleVolume()].addPrimary(record)
+                totals[muscle, default: MuscleVolume()].addPrimary(record.set)
             }
             for muscle in exercise.secondaryMuscles {
-                totals[muscle, default: MuscleVolume()].addSecondary(record)
+                totals[muscle, default: MuscleVolume()].addSecondary(record.set)
             }
         }
 
@@ -86,8 +91,7 @@ extension ToolRunner {
             "weeks": .integer(weeks),
             "windowStart": .date(windowStart),
             "windowEnd": .date(windowEnd),
-            "snapshotGeneratedAt": .date(snapshot.generatedAt),
-            "snapshotAgeDays": .integer(TrainingLog.ageInDays(of: snapshot, at: windowEnd)),
+            "exportedAt": .date(snapshot.exportedAt),
             "counts": .string(Self.countingRule),
             "muscles": .array(
                 totals

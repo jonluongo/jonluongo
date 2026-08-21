@@ -203,20 +203,16 @@ public struct MCPServer: Sendable {
         are the interface. A fact that reads as null is one nobody has stated, \
         not a default and not an empty answer — never assume a value for one. \
         When he tells you something standing — his gym, an injury, when he can \
-        train — write it down with \(ToolCatalog.updateProfile), or the next \
+        train — write it down with \(ToolCatalog.updateNotes), or the next \
         conversation starts from nothing again. That tool merges: send only \
         what you just learned.
 
-        **The record has gaps, and it will not mention them on its own.** \
-        \(ToolCatalog.unstatedFacts) lists every fact this record can hold about \
-        him — his equipment, what he weighs, what he can already lift, his \
-        experience, his goal, his injuries, when and how long he can train — and \
-        which of them are currently empty. Early on that is most of them, and \
-        nothing in a report will say so unless you look: an empty field simply \
-        reads as null. The same list rides along in the context resource, but \
-        whether your client attaches a resource is your client's behaviour, so \
-        the tool is there when it does not. It reports empty fields; which of \
-        them matter, and whether to ask, is yours.
+        **The record holds no facts about him at all, and that is deliberate.** \
+        Who he is lives in `user.md` — his objective, his background, his \
+        injuries, what he avoids and why, his equipment, his bodyweight. Read it \
+        before writing a plan. An unwritten note reads as its template, so \
+        "_Not yet stated._" under a heading is the record telling you nobody has \
+        asked.
 
         Always take exercise IDs from \(ToolCatalog.listExercises) verbatim. \
         \(ToolCatalog.writePlan) rejects an ID the catalog does not have, \

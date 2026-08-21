@@ -99,7 +99,7 @@ extension ToolRunner {
                     + " — or omit `icon`, which leaves the session unmarked.")
         }
 
-        if let refusal = Self.refusalForARewrittenBlock(in: document, documents: documents) {
+        if let refusal = Self.refusalForARewrittenSession(in: document, documents: documents) {
             return .failure(refusal)
         }
 
@@ -112,15 +112,14 @@ extension ToolRunner {
                     + "will not see this plan.")
         }
 
-        let days = document.blocks.flatMap(\.days)
+        let sessions = document.sessions
         return .report([
             "writtenTo": .string(documents.planLocation),
-            "weekCount": .integer(document.blockCount),
-            "dayCount": .integer(days.count),
-            "exerciseCount": .integer(days.reduce(0) { $0 + $1.exercises.count }),
+            "blockCount": .integer(document.blockOrdinals.count),
+            "sessionCount": .integer(sessions.count),
+            "exerciseCount": .integer(sessions.reduce(0) { $0 + $1.exercises.count }),
             "note": .string(Self.deliveryNote(delivery(documents.planLocation))),
             "plan": Self.reported(document),
-            "unstatedWhenWritten": unstatedWhenWritten(),
         ])
     }
 
@@ -162,31 +161,39 @@ extension ToolRunner {
     /// store — a block trained since it was written looks untrained here — so
     /// this catches earlier, never instead. Anything it misses the app still
     /// refuses.
-    static func refusalForARewrittenBlock(
+    /// Why a plan may not be written, when it rewrites something he has trained.
+    ///
+    /// **The server refuses before the phone has to.** The app refuses this too
+    /// — that is where the rule is enforced — but a coach who is told at write
+    /// time can fix it in the same breath, and one who is told by a phone alert
+    /// hours later cannot.
+    ///
+    /// It names the session rather than the block. A plan is a flat list of
+    /// sessions now, so changing one does not put the rest of its block out of
+    /// reach.
+    static func refusalForARewrittenSession(
         in document: PlanDocument, documents: any TrainingDocuments
     ) -> String? {
-        guard let snapshot = try? documents.readSnapshot(),
-            let stored = snapshot.routines.first(where: { $0.document.id == document.id })
-        else { return nil }
+        guard let snapshot = try? documents.readSnapshot() else { return nil }
+        let trained = Set(
+            TrainingLog.trained(in: snapshot).map {
+                SessionCoordinates(block: $0.blockOrdinal, ordinal: $0.ordinal)
+            })
 
-        let trainedOrdinals = Set(
-            stored.sessions.filter { $0.completedAt != nil }.map(\.blockOrdinal)
-        ).union(snapshot.log.filter { $0.routineID == document.id && $0.isCompleted }
-            .map(\.blockOrdinal))
-
-        for ordinal in trainedOrdinals.sorted() {
-            let index = ordinal - 1
-            let asStored = stored.document.blocks.indices.contains(index)
-                ? stored.document.blocks[index] : nil
-            let arriving = document.blocks.indices.contains(index)
-                ? document.blocks[index] : nil
-            guard arriving != asStored else { continue }
+        for arriving in document.sessions {
+            let key = SessionCoordinates(
+                block: arriving.blockOrdinal, ordinal: arriving.ordinal)
+            guard trained.contains(key) else { continue }
+            guard let stored = snapshot.sessions.first(where: {
+                $0.blockOrdinal == arriving.blockOrdinal && $0.ordinal == arriving.ordinal
+            }) else { continue }
+            guard stored.prescription != arriving else { continue }
             return """
-                This plan changes block \(ordinal), which he has already trained. A set he \
-                ticked, or a session he marked finished, is the record of what happened and a \
-                plan may not rewrite it — the app would refuse this one on arrival, so nothing \
-                was written here either. Send block \(ordinal) exactly as it stands and put the \
-                change in a later block.
+                This plan changes session \(arriving.ordinal) of block \
+                \(arriving.blockOrdinal), which he has already trained. A set he ticked, or \
+                a session he marked finished, is the record of what happened and cannot be \
+                rewritten. Nothing was written. Send that session exactly as it stands, and \
+                the change in one he has not reached.
                 """
         }
         return nil
@@ -200,7 +207,7 @@ extension ToolRunner {
     /// in the call. The set is `SessionIcon.all`, which is also what the schema
     /// offers, so the two cannot disagree about what is allowed.
     private static func firstUnknownIcon(in document: PlanDocument) -> SessionIcon? {
-        for day in document.blocks.flatMap(\.days) {
+        for day in document.sessions {
             guard let icon = day.icon, !icon.isKnown else { continue }
             return icon
         }
@@ -212,7 +219,7 @@ extension ToolRunner {
     private static func firstUnknownExercise(
         in document: PlanDocument, using catalog: any ExerciseCatalogProviding
     ) -> ExerciseID? {
-        for day in document.blocks.flatMap(\.days) {
+        for day in document.sessions {
             for exercise in day.exercises where catalog.exercise(id: exercise.exerciseID) == nil {
                 return exercise.exerciseID
             }

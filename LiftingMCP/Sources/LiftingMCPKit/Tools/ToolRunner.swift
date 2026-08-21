@@ -89,15 +89,14 @@ public struct ToolRunner: Sendable {
     /// do exist, rather than an empty result that would look like no data.
     public func call(_ name: String, arguments: JSONValue) -> ToolOutcome {
         switch name {
-        case ToolCatalog.listExercises: withSnapshot { listExercises(arguments, in: $0) }
+        // The catalog is bundled, so this is the one read that needs no record.
+        case ToolCatalog.listExercises: listExercises(arguments)
         case ToolCatalog.exerciseHistory: withSnapshot { exerciseHistory(arguments, in: $0) }
         case ToolCatalog.recentSessions: withSnapshot { recentSessions(arguments, in: $0) }
         case ToolCatalog.volumeByMuscle: withSnapshot { volumeByMuscle(arguments, in: $0) }
-        case ToolCatalog.unstatedFacts: withSnapshot { unstatedFacts(in: $0) }
         case ToolCatalog.writePlan: writePlan(arguments)
-        // The only two tools that do not read the snapshot: both write into
-        // the shared folder, and neither has anything to ask the log.
-        case ToolCatalog.updateProfile: updateProfile(arguments)
+        // Writes into the shared folder, and has nothing to ask the record.
+        case ToolCatalog.updateNotes: updateNotes(arguments)
         default:
             .failure(
                 "There is no tool called '\(name)'. This server offers: "
