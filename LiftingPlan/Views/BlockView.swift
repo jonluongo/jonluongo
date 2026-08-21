@@ -79,8 +79,8 @@ struct BlockView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingProgram) { ProgramSheet() }
-        .sheet(isPresented: $showingAccount) { AccountView() }
+        .sheet(isPresented: $showingProgram) { NoteSheet(note: .program) }
+        .sheet(isPresented: $showingAccount) { NoteSheet(note: .account) }
         .sheet(isPresented: $showingHistory) { HistoryView() }
     }
 

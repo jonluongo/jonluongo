@@ -23,7 +23,23 @@ struct SessionIconView: View {
     var body: some View {
         Image(systemName: Self.symbol(for: icon))
             .font(.supersetTitle)
-            .foregroundStyle(Palette.muted)
+            // **Ink, because the theme is a fill and never a line.** This file
+            // already says so twice — `Palette.ink` is *every line and every
+            // word this app draws in something other than grey*, and the chart
+            // states it again for a plotted series. These marks are line art of
+            // a person, and the highlighter rendered them as a bright smear on
+            // cream that read worse than the grey it replaced. Green was tried
+            // on Jon's call and looked wrong for exactly the reason the rule
+            // exists.
+            //
+            // `muted` was the other end of the same mistake: the one mark
+            // distinguishing a session from every other row drawn in the grey
+            // reserved for words that qualify something. Full-strength ink is
+            // what a mark that carries information gets.
+            //
+            // No disc behind it either. The glyph is the mark; a filled shape
+            // around it would be a second one saying nothing the first does not.
+            .foregroundStyle(Palette.ink)
             .accessibilityHidden(true)
     }
 
