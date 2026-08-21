@@ -37,7 +37,7 @@ struct BlockView: View {
     var body: some View {
         Group {
             if sessions.isEmpty {
-                NoTrainingView()
+                NoPlanView()
             } else {
                 list
             }
@@ -174,12 +174,13 @@ struct SessionRow: View {
 /// make one would be the app deciding what somebody should train.
 /// What the app says before a plan exists.
 ///
-/// **It names what is missing and who supplies it.** *No training yet* described
-/// the app's own state and told the user nothing: he has not stopped training,
-/// and nothing on the screen said a plan is something his coach writes or how
-/// one arrives. The heading is the fact, the line under it is the one action —
-/// which is the shape every empty state in this app takes.
-private struct NoTrainingView: View {
+/// **It names what is missing, and what is missing has to be a thing.**
+/// *No training yet* put a mass noun where a count noun belongs: there is no
+/// such object as *a training*, so the sentence never says what is absent. A
+/// plan is an object — the coach writes one, it arrives, and until it does there
+/// is nothing to show. The heading is the fact, the line under it is the one
+/// action, and the type is named for the same thing the heading is.
+private struct NoPlanView: View {
     var body: some View {
         ContentUnavailableView(
             "No plan yet",

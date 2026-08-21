@@ -332,6 +332,11 @@ Set*; *Couldn't read what arrived*, not *Couldn't Read What Arrived*. Only the
 app's own name is capitalised. This is Apple's rule and it is not a preference —
 mixed casing on one screen reads as two authors.
 
+**What is absent must be a thing.** An empty state names a missing *object* —
+*No plan yet* — because a mass noun cannot be counted or absent: there is no such
+object as *a training*, so *No training yet* never says what is missing. The
+heading is the fact and the line under it is the one action.
+
 A label names its control in the words the user would use, and **an action keeps
 the same name through the whole flow**: the button that says *Finish workout*
 produces a screen that says the workout is finished. A section heading is a plain
