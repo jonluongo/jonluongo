@@ -44,6 +44,14 @@ struct SessionIconView: View {
         case .intervals: "figure.highintensity.intervaltraining"
         case .walk: "figure.walk"
         case .conditioning: "figure.mixed.cardio"
+        case .cycle: "figure.outdoor.cycle"
+        case .elliptical: "figure.elliptical"
+        case .swim: "figure.pool.swim"
+        case .hike: "figure.hiking"
+        case .climb: "figure.climbing"
+        case .jumpRope: "figure.jumprope"
+        case .combat: "figure.boxing"
+        case .gymnastics: "figure.gymnastics"
         default: "figure.strengthtraining.traditional"
         }
     }

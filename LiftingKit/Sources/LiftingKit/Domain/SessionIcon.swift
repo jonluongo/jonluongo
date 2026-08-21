@@ -53,15 +53,44 @@ public struct SessionIcon: RawRepresentable, Codable, Hashable, Sendable {
     public static let walk = SessionIcon(rawValue: "walk")
     /// Mixed conditioning that is none of the above on its own.
     public static let conditioning = SessionIcon(rawValue: "conditioning")
+    /// A bike, indoors or out.
+    public static let cycle = SessionIcon(rawValue: "cycle")
+    /// The elliptical.
+    public static let elliptical = SessionIcon(rawValue: "elliptical")
+    /// Swimming.
+    public static let swim = SessionIcon(rawValue: "swim")
+    /// Walking uphill, on a trail or loaded.
+    public static let hike = SessionIcon(rawValue: "hike")
+    /// Climbing, on a wall or a board.
+    public static let climb = SessionIcon(rawValue: "climb")
+    /// Skipping — the rope, as its own session or as the warm-up that is one.
+    public static let jumpRope = SessionIcon(rawValue: "jumprope")
+    /// Bag work, pads, sparring. **Named for the modality and not the sport**,
+    /// so one mark covers boxing, kickboxing and everything beside them —
+    /// `boxing` would invite `muaythai` and `bjj`, and the set is closed.
+    public static let combat = SessionIcon(rawValue: "combat")
+    /// Bodyweight skill work — handstands, rings, levers.
+    public static let gymnastics = SessionIcon(rawValue: "gymnastics")
 
     /// Every mark this build can draw, in the order the tool schema lists them.
     ///
     /// The schema is built from this array rather than retyping the names, so a
     /// mark added here is offered to the coach in the same commit and one
     /// removed stops being offered.
+    /// **They are named for the modality, never for the sport.** *Row* covers
+    /// the erg and the water; *combat* covers boxing, kickboxing and the rest.
+    /// A sport name reads better on one session and invites the next one the set
+    /// does not have — and the coach is refused for a mark this build cannot
+    /// draw, so every name he might reasonably reach for has to already be here.
+    ///
+    /// **A mark earns its place by being a session somebody prescribes and a
+    /// glyph the eye can tell from the others.** Equipment is not an axis: a
+    /// treadmill run and an outdoor run are one modality on two machines, so
+    /// there is one `run`.
     public static let all: [SessionIcon] = [
-        .strength, .accessory, .core, .mobility, .run,
-        .row, .stairs, .intervals, .walk, .conditioning,
+        .strength, .accessory, .core, .gymnastics, .mobility,
+        .run, .walk, .hike, .row, .cycle, .elliptical, .stairs,
+        .swim, .climb, .jumpRope, .combat, .intervals, .conditioning,
     ]
 
     /// Whether this build can draw it. `PlanImporter` asks before storing.

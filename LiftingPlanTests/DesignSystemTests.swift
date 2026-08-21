@@ -1,6 +1,7 @@
 import Testing
 import SwiftUI
 @testable import LiftingPlan
+import LiftingKit
 
 /// The vocabulary itself, guarded.
 ///
@@ -139,5 +140,50 @@ struct DesignSystemTests {
         let gutters = SetTableMetrics.columnGutter * 6
 
         #expect(columns + markers + gutters < 319)
+    }
+}
+
+/// The marks the coach may choose from, and what each one draws as.
+///
+/// **`SessionIcon.all` is a vocabulary the app publishes and refuses anything
+/// outside**, so it is only as good as the drawing behind it: a name the schema
+/// offers that resolves to the same glyph as another is a choice that changes
+/// nothing, and a name that falls through to the default is the app quietly
+/// drawing a barbell for a swim.
+@Suite("The session marks")
+struct SessionIconDrawingTests {
+
+    @Test("Every mark the coach is offered draws as itself")
+    func everyMarkHasItsOwnGlyph() {
+        var drawn: [String: SessionIcon] = [:]
+        for icon in SessionIcon.all {
+            let symbol = SessionIconView.symbol(for: icon)
+            if let taken = drawn[symbol] {
+                Issue.record(Comment(rawValue:
+                    "\(icon.rawValue) and \(taken.rawValue) both draw \(symbol)"))
+            }
+            drawn[symbol] = icon
+        }
+        #expect(drawn.count == SessionIcon.all.count)
+    }
+
+    @Test("No mark falls through to the barbell it is not")
+    func nothingFallsThrough() {
+        // The default exists for a stored mark that outlives a build, which
+        // cannot arrive through the front door. Anything in `all` reaching it
+        // means a case was added to the vocabulary and not to the drawing.
+        let barbell = "figure.strengthtraining.traditional"
+        for icon in SessionIcon.all where icon != .strength {
+            #expect(SessionIconView.symbol(for: icon) != barbell, Comment(rawValue: icon.rawValue))
+        }
+    }
+
+    @Test("Every mark is known, so the importer accepts what the schema offers")
+    func theVocabularyAgreesWithItself() {
+        // `write_plan`'s schema is built from `all` and `PlanImporter` refuses
+        // anything `isKnown` rejects. If those two ever disagree the coach is
+        // offered a mark and then refused for choosing it.
+        #expect(SessionIcon.all.filter(\.isKnown).count == SessionIcon.all.count)
+        #expect(Set(SessionIcon.all.map(\.rawValue)).count == SessionIcon.all.count)
     }
 }
