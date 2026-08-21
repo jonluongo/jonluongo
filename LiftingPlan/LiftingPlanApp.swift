@@ -39,6 +39,10 @@ struct LiftingPlanApp: App {
     /// What the lifter has said about his own clock — on or off, and how long
     /// on each exercise. One instance for the app, like the timer it feeds.
     @State private var restPreferences = RestPreferences()
+    /// The coach's two markdown notes, mirrored locally so the account screen
+    /// works on a phone iCloud cannot reach.
+    @State private var notes = NotesStore(
+        directory: URL.applicationSupportDirectory.appending(path: "Notes"))
     private let container: ModelContainer
     /// The shared iCloud folder both machines see. The snapshot goes out
     /// through it and plans and profile updates come in through it; nothing
@@ -84,6 +88,7 @@ struct LiftingPlanApp: App {
                 .environment(\.exerciseCatalog, catalog)
                 .environment(restTimer)
                 .environment(restPreferences)
+                .environment(notes)
                 .environment(documentInbox)
                 .environment(snapshotOutbox)
                 .task {

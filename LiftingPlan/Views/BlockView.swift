@@ -24,6 +24,11 @@ struct BlockView: View {
     @Query(sort: [SortDescriptor(\Session.blockOrdinal), SortDescriptor(\Session.ordinal)])
     private var sessions: [Session]
 
+    /// The session he is on: the first unfinished one anywhere in the timeline.
+    /// Worked out once here, because being current is a fact about the whole
+    /// record rather than about a block.
+    private var current: Session? { SessionListing.current(in: sessions) }
+
     @State private var openSession: Session?
     @State private var showingProgram = false
     @State private var showingAccount = false
@@ -59,13 +64,12 @@ struct BlockView: View {
         List {
             ForEach(SessionListing.blocks(of: sessions), id: \.ordinal) { block in
                 Section(SessionListing.blockTitle(block.ordinal)) {
-                    let standings = SessionListing.standings(of: block.sessions)
-                    ForEach(Array(block.sessions.enumerated()), id: \.element.persistentModelID) {
-                        index, session in
+                    ForEach(block.sessions, id: \.persistentModelID) { session in
                         Button { openSession = session } label: {
                             SessionRow(
                                 session: session,
-                                standing: standings[index])
+                                standing: SessionListing.standing(
+                                    of: session, current: current))
                         }
                     }
                 }

@@ -67,19 +67,17 @@ enum SessionListing {
         session.focus.isEmpty ? "Session \(session.ordinal)" : session.focus
     }
 
-    /// Where each of these sessions stands, in the order given.
+    /// Where one session stands, given the one he is on.
     ///
-    /// Computed across the list rather than per session, because *current* is a
-    /// fact about the list: it is the first unfinished one, and every session
-    /// after it is upcoming.
-    static func standings(of sessions: [Session]) -> [Standing] {
-        var currentFound = false
-        return sessions.map { session in
-            if session.finishedAt != nil { return .finished }
-            if currentFound { return .upcoming }
-            currentFound = true
-            return .current
-        }
+    /// **`current` is passed in rather than worked out here, and that is the
+    /// point.** Being current is a fact about the whole timeline: it is the
+    /// first unfinished session there is. Asking a list of sessions to work it
+    /// out makes it a fact about *that* list — so a screen drawing block 1 and
+    /// block 2 separately would mark a current session in each of them, and the
+    /// lifter would be told he is in two places.
+    static func standing(of session: Session, current: Session?) -> Standing {
+        if session.finishedAt != nil { return .finished }
+        return session === current ? .current : .upcoming
     }
 
     /// The session the lifter is on: the first he has not finished.
