@@ -67,7 +67,6 @@ struct ExerciseDetailView: View {
         InfoSheet(displayName) {
             ExerciseAboutSections(entry: catalog.exercise(id: exerciseID))
             if !history.isEmpty {
-                chart(history)
                 sessions(history)
             } else {
                 // A sentence rather than the whole screen: the movement above
@@ -90,46 +89,57 @@ struct ExerciseDetailView: View {
     /// **One session is not a trend.** A single point plotted on its own axis
     /// reads as a flat line at whatever height it happens to sit, which is the
     /// chart claiming a shape the record does not have. Absence stays absence.
+    ///
+    /// **It has no heading of its own.** It used to sit under *Heaviest set*
+    /// above a list under *Sessions* — two headings over one subject, because
+    /// the line plots exactly the figures the rows state. The chart is the
+    /// sessions, drawn.
     @ViewBuilder
     private func chart(_ history: [PerformedExercise]) -> some View {
         let points = loads(history)
         if points.count >= 2 {
-            Section {
-                SectionHeading("Heaviest set")
-                Chart(points) { point in
-                    // `run` breaks the line wherever a session carried no load
-                    // at all: each unbroken stretch is its own series, so
-                    // absence reads as a gap. It used to plot as 0, which drew
-                    // a collapse in strength that never happened.
-                    LineMark(
-                        x: .value("Date", point.date),
-                        y: .value("Heaviest set", point.value),
-                        series: .value("Run", point.run)
-                    )
-                    .interpolationMethod(.monotone)
-                    // Ink, stated rather than inherited. Unstyled marks take
-                    // the app's tint asset, which is near-black in light and
-                    // the theme in dark — so the one line on the page changed
-                    // what it meant with the appearance. The theme is a fill
-                    // and never a line; a plotted series is a line.
-                    .foregroundStyle(Palette.ink)
-                    PointMark(
-                        x: .value("Date", point.date),
-                        y: .value("Heaviest set", point.value)
-                    )
-                    .foregroundStyle(Palette.ink)
-                }
-                .frame(height: 200)
-                .panelRow()
-                .listRowSeparator(.hidden)
-                .padding(.vertical, Spacing.snug)
+            Chart(points) { point in
+                // `run` breaks the line wherever a session carried no load
+                // at all: each unbroken stretch is its own series, so
+                // absence reads as a gap. It used to plot as 0, which drew
+                // a collapse in strength that never happened.
+                LineMark(
+                    x: .value("Date", point.date),
+                    y: .value("Heaviest set", point.value),
+                    series: .value("Run", point.run)
+                )
+                .interpolationMethod(.monotone)
+                // Ink, stated rather than inherited. Unstyled marks take
+                // the app's tint asset, which is near-black in light and
+                // the theme in dark — so the one line on the page changed
+                // what it meant with the appearance. The theme is a fill
+                // and never a line; a plotted series is a line.
+                .foregroundStyle(Palette.ink)
+                PointMark(
+                    x: .value("Date", point.date),
+                    y: .value("Heaviest set", point.value)
+                )
+                .foregroundStyle(Palette.ink)
             }
+            // **The axis is left to Charts.** A custom `AxisValueLabel` was
+            // tried here to force `Aug 21` and drew no labels at all. The
+            // timestamps that prompted it — `3:47:56…`, truncated — came from
+            // seeded sessions logged seconds apart, so Charts resolved to what
+            // actually separated them and was right. Real sessions are days
+            // apart and it labels days.
+            .frame(height: 200)
+            .panelRow()
+            .listRowSeparator(.hidden)
+            .padding(.vertical, Spacing.snug)
         }
     }
 
     private func sessions(_ history: [PerformedExercise]) -> some View {
         Section {
             SectionHeading("Sessions")
+            // The line first, then the figures it is drawn from — one heading
+            // over both, because they are one subject.
+            chart(history)
             Panel {
                 ForEach(history.reversed(), id: \.persistentModelID) { performed in
                     HStack {
