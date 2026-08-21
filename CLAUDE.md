@@ -89,6 +89,15 @@ swift build --package-path LiftingMCP -Xswiftc -warnings-as-errors
 Device builds sign with `DEVELOPMENT_TEAM = GKMVG76BQR` and need
 `-allowProvisioningUpdates`.
 
+**A quiet error list is not a green build.** `xcodebuild` fails fast: it stops
+after a batch of files, so grepping its output for errors reports only what it
+reached. Twice in one session a phase was declared finished on that signal while
+files it owned had never been compiled at all — they named types that no longer
+existed and nothing had looked. **The only completion signal is
+`** BUILD SUCCEEDED **`**, and for the packages, `Build complete!` plus a test
+count. When checking whether a layer is done, grep the sources for the names of
+what was deleted; the compiler will not volunteer a file it never opened.
+
 **A stale dependent looks exactly like data corruption.** Adding a stored
 property to a `public struct` in LiftingKit changes its layout, and a dependent
 package whose objects were not rebuilt reads strings at the wrong offset — `"8"`
