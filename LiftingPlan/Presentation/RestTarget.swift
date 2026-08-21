@@ -15,7 +15,7 @@ struct RestTarget: Identifiable {
 
     init(exercise: PlannedExercise) {
         id = "exercise-\(exercise.persistentModelID)"
-        name = exercise.displayName
+        name = exercise.exerciseID.rawValue
         prescribedSeconds = exercise.restSeconds
         key = exercise.exerciseID
     }
@@ -24,8 +24,8 @@ struct RestTarget: Identifiable {
     /// format cannot state and no screen should crash over.
     init?(group: ExerciseGroup) {
         guard let key = group.restKey else { return nil }
-        id = "group-\(group.id)"
-        name = group.title
+        id = "group-\(group.ordinal)"
+        name = "Round \(group.letter)"
         prescribedSeconds = group.restSeconds
         self.key = key
     }
