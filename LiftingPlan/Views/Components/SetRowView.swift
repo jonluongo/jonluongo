@@ -62,8 +62,8 @@ struct SetRowView: View {
             badge
             Spacer(minLength: 0)
             field(text: $loadText, placeholder: prescription.loadPlaceholder, isDecimal: true)
-                .accessibilityLabel(SetFieldLabel.load(unit: .pounds, identity: slot.identity))
-            marker(Text(MassUnit.pounds.rawValue), shown: namesALoad)
+                .accessibilityLabel(SetFieldLabel.load(unit: prescription.loadUnit, identity: slot.identity))
+            marker(Text(prescription.loadUnit.rawValue), shown: namesALoad)
             marker(Text("×"), shown: joinsTwoFigures)
             field(text: $workText, placeholder: prescription.workPlaceholder, isDecimal: measuresDistance)
                 .accessibilityLabel(
@@ -125,7 +125,10 @@ struct SetRowView: View {
     /// than a zero: he ticked the set without saying how many, which is not the
     /// same as saying none.
     private func commit() {
-        let load = SetEntry.load(from: loadText, in: .pounds)
+        // **In the unit the row is drawn in.** It committed pounds
+        // whatever the marker said, so typing 100 into a row prescribed in
+        // kilograms recorded a hundred pounds against it.
+        let load = SetEntry.load(from: loadText, in: prescription.loadUnit)
         switch prescription.measure {
         case .repetitions:
             onRecord(load, SetEntry.reps(from: workText), nil, nil)
@@ -140,7 +143,7 @@ struct SetRowView: View {
     /// session shows what he did rather than an empty table.
     private func seedFields() {
         guard let record = slot.record else { return }
-        loadText = SetEntry.text(for: record.load, in: .pounds)
+        loadText = SetEntry.text(for: record.load, in: prescription.loadUnit)
         workText = SetEntry.workText(of: record, measure: prescription.measure)
     }
 

@@ -44,6 +44,25 @@ struct SetRowPrescription {
     ///
     /// Empty rather than a dash: a placeholder is a hint about what to type, and
     /// a dash hints at nothing while making a fresh table look broken.
+    /// The unit this row's load is in.
+    ///
+    /// **From the prescription, then the record, then pounds.** The row wrote
+    /// `lb` beside every load whatever it was, so a hundred-kilogram bench drew
+    /// as `100 lb` — the number the coach wrote under a unit he did not, which
+    /// is a 2.2× error reported as a fact. Typing into it recorded pounds
+    /// against a kilogram prescription.
+    ///
+    /// Everything under this row already keeps units straight: `Mass` carries
+    /// its own, the snapshot round-trips a kilogram prescription beside a pound
+    /// record, and CLAUDE.md says a load is never converted. The view was the one
+    /// place that threw the answer away.
+    ///
+    /// Pounds when nothing states one — the app's own default, and what an empty
+    /// field commits.
+    var loadUnit: MassUnit {
+        slot.planned?.load?.unit ?? slot.record?.load?.unit ?? .pounds
+    }
+
     var loadPlaceholder: String {
         if let load = slot.planned?.load { return load.value.compactString }
         if let hint = lastLoadThisSession { return hint }

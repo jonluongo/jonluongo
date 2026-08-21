@@ -192,3 +192,46 @@ struct AddedRowPlaceholderTests {
         #expect(shown.workPlaceholder == "")
     }
 }
+
+/// The unit a row is drawn in, and typed in.
+///
+/// **The row wrote `lb` beside every load whatever it was.** A hundred-kilogram
+/// bench drew as `100 lb` — the coach's number under a unit he did not write,
+/// a 2.2× error reported as a fact — and typing into it recorded pounds against
+/// a kilogram prescription. Everything beneath the row already keeps units
+/// straight; the view was the one place that threw the answer away.
+@MainActor
+@Suite("The unit a load is drawn in")
+struct LoadUnitTests {
+
+    private func slot(load: Mass?) throws -> TrainingSlot {
+        let context = try StoreFixture.imported(
+            StoreFixture.plan(sessions: 1, entries: [.exercise(PlanDocumentExercise(
+                exerciseID: StoreFixture.bench, displayName: "",
+                sets: [PlanDocumentSet(target: .repetitions(low: 5, high: nil), load: load)]))]))
+        let session = try #require(try StoreFixture.sessions(in: context).first)
+        return try #require(SessionOrder.trainingOrder(of: session).first)
+    }
+
+    @Test("A kilogram prescription is drawn in kilograms")
+    func kilogramsStayKilograms() throws {
+        let shown = SetRowPrescription(
+            slot: try slot(load: Mass(value: 100, unit: .kilograms)), previous: nil)
+        #expect(shown.loadUnit == .kilograms)
+        #expect(shown.loadPlaceholder == "100")
+    }
+
+    @Test("A pound prescription is drawn in pounds")
+    func poundsStayPounds() throws {
+        let shown = SetRowPrescription(
+            slot: try slot(load: Mass(value: 225, unit: .pounds)), previous: nil)
+        #expect(shown.loadUnit == .pounds)
+    }
+
+    @Test("A row with no load at all falls to pounds")
+    func nothingPrescribedIsPounds() throws {
+        // The app's own default, and what an empty field commits.
+        let shown = SetRowPrescription(slot: try slot(load: nil), previous: nil)
+        #expect(shown.loadUnit == .pounds)
+    }
+}
