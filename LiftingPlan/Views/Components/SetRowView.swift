@@ -247,6 +247,15 @@ struct SetRowView: View {
         text
             .font(.supersetSupport)
             .foregroundStyle(Palette.muted)
+            // **It takes the width of its word and is never squeezed.** These
+            // are one or two characters — `lb`, `kg`, `m`, `s`, `×` — and the
+            // row's other columns are fixed, so a narrow screen has nowhere to
+            // take its space from except here. On an iPhone SE at ordinary text
+            // size that meant `lb` wrapping into `l` above `b`: a unit stacked
+            // like a fraction, next to the figure it belongs to. The few points
+            // this costs come out of the gaps, which have them to give.
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
             .opacity(shown ? 1 : 0)
             .accessibilityHidden(!shown)
     }
