@@ -25,6 +25,10 @@ struct TimerRing: View {
     var progress: Double
     var timeText: String
     var isRunning: Bool
+    /// Whether the rest has run out. **A whole ring with a check in it**, rather
+    /// than the empty ring a countdown ends on: an empty circle reads as *not
+    /// started*, and the one thing this has to say at that moment is *done*.
+    var isComplete: Bool = false
     /// The ring's diameter at the default text size. It is multiplied by the
     /// user's text scale, so the ring and the time inside it grow together.
     var size: CGFloat = 200
@@ -48,12 +52,16 @@ struct TimerRing: View {
             // empty ring and finishes it whole — fullest at the moment it stops
             // mattering. A rest is a thing running out, and the ring says so.
             Circle()
-                .trim(from: 0, to: 1 - progress)
+                .trim(from: 0, to: isComplete ? 1 : 1 - progress)
                 .stroke(
                     // Running is the app pointing at something; ready is not,
                     // and a second hue for it would be the only other colour on
                     // the screen saying nothing the word beneath it does not.
-                    isRunning ? Palette.ink : Palette.muted,
+                    // Ink when it is running or finished — both are the app
+                    // pointing at something. **Not the accent**, which means
+                    // *in the record*: a rest that ran out is not a set that
+                    // was logged, and one mark meaning two things means neither.
+                    isRunning || isComplete ? Palette.ink : Palette.muted,
                     style: StrokeStyle(lineWidth: lineWidth * textScale, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
@@ -65,14 +73,22 @@ struct TimerRing: View {
             // parameter with one possible value is not a choice, and the word
             // it guarded had not been drawn on a screen in this app for as long
             // as every caller has been passing `false`.
-            Text(timeText)
-                .font(font)
-                .contentTransition(.numericText())
-                .lineLimit(1)
-            // The ring is a circle: text that outgrows its chord shrinks rather
-            // than spilling over the stroke.
-            .minimumScaleFactor(0.6)
-            .padding(.horizontal, lineWidth * textScale)
+            if isComplete {
+                Image(systemName: "checkmark")
+                    .font(font)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Palette.ink)
+                    .accessibilityHidden(true)
+            } else {
+                Text(timeText)
+                    .font(font)
+                    .contentTransition(.numericText())
+                    .lineLimit(1)
+                    // The ring is a circle: text that outgrows its chord shrinks
+                    // rather than spilling over the stroke.
+                    .minimumScaleFactor(0.6)
+                    .padding(.horizontal, lineWidth * textScale)
+            }
         }
         .frame(width: scaledSize, height: scaledSize)
     }
@@ -83,6 +99,10 @@ struct TimerRing: View {
         TimerRing(progress: 0.4, timeText: "2:30", isRunning: true)
         TimerRing(
             progress: 0.4, timeText: "59:59", isRunning: true,
+            size: 52, lineWidth: 5, font: .supersetSupport
+        )
+        TimerRing(
+            progress: 1, timeText: "0:00", isRunning: false, isComplete: true,
             size: 52, lineWidth: 5, font: .supersetSupport
         )
     }

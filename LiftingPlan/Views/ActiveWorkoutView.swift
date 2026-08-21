@@ -143,18 +143,28 @@ struct ActiveWorkoutView: View {
                 // corner that once marked an untouched session as trained can
                 // safely hold the thing everyone reads it as.
                 CloseToolbarItem("Close workout") { dismiss() }
-                // **The elapsed clock is not here any more; the bar has it.**
-                // It sat in the title's place and the bar carries the same
-                // figure between sets, so the screen read `0:24` twice in two
-                // corners — one number, two elements, which is the thing the
-                // standards forbid. The bar is the one that survives leaving
-                // the session, so it is the one that keeps the clock.
+                // **How long he has been training, in the bar's own line.**
+                // It moved to the rest bar for one commit and came back on
+                // Jon's call: the bar is the rest timer, and a session clock
+                // living inside it made one surface answer two questions. As a
+                // leading item this was given a small fixed capsule and
+                // truncated to "1…", which is a clock saying nothing.
+                ToolbarItem(placement: .principal) {
+                    if let startedAt = session.startedAt,
+                        let lastLoggedAt = session.lastPerformedAt {
+                        SessionClock(
+                            startedAt: startedAt, lastLoggedAt: lastLoggedAt,
+                            finishedAt: session.finishedAt)
+                    }
+                }
             }
             .safeAreaInset(edge: .bottom) {
-                // **It stays when the countdown ends.** It used to appear on the
-                // first tick and vanish on the last, so the surface tying the
-                // screen to the session blinked in and out between every set.
-                if session.startedAt != nil && session.finishedAt == nil {
+                // **On with the first check, off with the last.** The bar is
+                // the rest timer, and a rest is what sits between two sets — so
+                // it arrives when there is a set behind him and leaves when
+                // there is none in front. It does not wait for Finish, which he
+                // may never press.
+                if SessionProgress.underway(in: [session]) != nil {
                     // The bar is the clock in a glance; tapping it is the clock
                     // to look at, with the next set under it. Rest is the one
                     // moment in a session with nothing else to do, which is why
@@ -164,12 +174,7 @@ struct ActiveWorkoutView: View {
                     // whole thing in a button put `−15`, `+15` and skip inside
                     // another button, and a tap on one of those is then a tap
                     // whose meaning depends on which the system decides it hit.
-                    RestTimerBar(
-                        restTimer: restTimer,
-                        sessionTitle: SessionListing.sessionTitle(session),
-                        startedAt: session.startedAt,
-                        lastLoggedAt: session.lastPerformedAt
-                    ) { showingRest = true }
+                    RestTimerBar(restTimer: restTimer) { showingRest = true }
                 }
             }
             .sheet(isPresented: $showingRest) {

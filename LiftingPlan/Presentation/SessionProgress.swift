@@ -18,13 +18,29 @@ enum SessionProgress {
 
     /// The session underway, or `nil` when none is.
     ///
-    /// **Started and unfinished.** A session he has opened but not logged
-    /// against is not underway — he looked at it — and one he finished is over.
+    /// **It opens on the first tick and closes on the last.** A session he has
+    /// opened but not logged against is not underway — he looked at it — and one
+    /// where every prescribed set is ticked has nothing left to rest between.
+    /// That is the bar's whole life: the first check puts it on screen, the last
+    /// takes it away, and `finishedAt` is not what decides either, because he
+    /// can log every set and never press Finish.
+    ///
     /// The earliest is taken if somehow two qualify, so the answer is stable
     /// rather than dependent on fetch order.
     static func underway(in sessions: [Session]) -> Session? {
         sessions
-            .filter { $0.startedAt != nil && $0.finishedAt == nil }
+            .filter { $0.startedAt != nil && $0.finishedAt == nil && !isFullyLogged($0) }
             .min { ($0.startedAt ?? .distantFuture) < ($1.startedAt ?? .distantFuture) }
+    }
+
+    /// Whether every prescribed set of this session has been ticked.
+    ///
+    /// **Asked of the prescription, not of a count.** Comparing how many sets
+    /// were performed against how many were prescribed would call a session
+    /// complete when he logged two extra sets of one movement and none of
+    /// another. Every slot has to have its record.
+    static func isFullyLogged(_ session: Session) -> Bool {
+        let slots = SessionOrder.trainingOrder(of: session)
+        return !slots.isEmpty && slots.allSatisfy { $0.record != nil }
     }
 }

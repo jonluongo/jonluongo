@@ -209,6 +209,49 @@ struct SessionProgressTests {
         #expect(SessionProgress.underway(in: all)?.ordinal == 2)
     }
 
+    @Test("A session with every set ticked is over, without Finish being pressed")
+    func theLastCheckEndsIt() throws {
+        // The bar's whole life: the first check puts it on screen, the last
+        // takes it away. Waiting for Finish would leave a rest timer up with
+        // nothing in front of him to rest before — and he may never press it.
+        let context = try store()
+        let all = try StoreFixture.sessions(in: context)
+        let session = all[0]
+        let log = SessionLog(
+            session: session, context: context,
+            restTimer: RestTimerModel(), restPreferences: RestPreferences())
+
+        for slot in SessionOrder.trainingOrder(of: session) {
+            try log.record(
+                slot, load: Mass(value: 100, unit: .pounds), reps: 5,
+                durationSeconds: nil, distance: nil as Distance?)
+        }
+
+        #expect(session.finishedAt == nil, "he never pressed Finish")
+        #expect(SessionProgress.isFullyLogged(session))
+        #expect(SessionProgress.underway(in: all) == nil)
+    }
+
+    @Test("One set short is still underway")
+    func oneSetShortKeepsItUp() throws {
+        let context = try store()
+        let all = try StoreFixture.sessions(in: context)
+        let session = all[0]
+        let slots = SessionOrder.trainingOrder(of: session)
+        let log = SessionLog(
+            session: session, context: context,
+            restTimer: RestTimerModel(), restPreferences: RestPreferences())
+
+        for slot in slots.dropLast() {
+            try log.record(
+                slot, load: Mass(value: 100, unit: .pounds), reps: 5,
+                durationSeconds: nil, distance: nil as Distance?)
+        }
+
+        #expect(!SessionProgress.isFullyLogged(session))
+        #expect(SessionProgress.underway(in: all)?.ordinal == session.ordinal)
+    }
+
     @Test("A finished session is over, not underway")
     func finishingEndsIt() throws {
         let context = try store()

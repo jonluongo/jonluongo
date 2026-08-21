@@ -4,10 +4,11 @@ import SwiftUI
 ///
 /// **It does not go away when the rest ends.** It used to appear on the first
 /// tick and vanish on the last, so the one surface tying the app to the session
-/// in progress blinked in and out between every set. It has two states now and
-/// the axis between them is whether a clock is running: **resting** is the ring
-/// counting down with ±15 and skip beside it; **between sets** is the session's
-/// name and how long he has been training. Both open the same thing.
+/// blinked in and out between every set. The clock running out is not the bar
+/// being finished with — it is the answer changing from *how long left* to
+/// *go*. Resting is the ring counting down with ±15 and skip beside it; **rest
+/// over is a whole ring with a check in it**, and no controls, because there is
+/// nothing left to add fifteen seconds to.
 ///
 /// **And it survives leaving the session.** `RootView` draws it too, so the way
 /// back into a workout is on screen wherever he wandered off to — which is what
@@ -21,13 +22,6 @@ import SwiftUI
 /// the whole point of the notification is that the user is not looking.
 struct RestTimerBar: View {
     var restTimer: RestTimerModel
-    /// What the session is called, shown when no clock is running. Empty draws
-    /// nothing rather than an empty line.
-    var sessionTitle: String = ""
-    /// When training began and when the last set landed, for the elapsed clock
-    /// between sets. `nil` before anything has been logged.
-    var startedAt: Date?
-    var lastLoggedAt: Date?
     /// Opens the clock at full size. Only the ring and the word carry it: the
     /// three controls beside them are buttons of their own, and a button inside
     /// a button is a tap whose meaning depends on which one the system decides
@@ -84,24 +78,22 @@ struct RestTimerBar: View {
         .padding(.bottom, Spacing.tight)
     }
 
-    /// The left of the bar: the countdown while one is running, and what he is
-    /// in the middle of when none is.
+    /// The rest: counting down, or run out.
     private var glance: some View {
         HStack(spacing: Spacing.standard) {
-            if restTimer.isRunning {
-                TimerRing(
-                    progress: restTimer.progress,
-                    timeText: restTimer.formattedRemaining,
-                    isRunning: true,
-                    size: 52,
-                    lineWidth: 5,
-                    // Support rather than Metric: the countdown has to fit inside
-                    // a 52pt ring, and "59:59" at Metric does not. What matters
-                    // is that it is a text style at all, so it grows when the
-                    // user's type does.
-                    font: .supersetSupport
-                )
-            }
+            TimerRing(
+                progress: restTimer.progress,
+                timeText: restTimer.formattedRemaining,
+                isRunning: restTimer.isRunning,
+                isComplete: !restTimer.isRunning,
+                size: 52,
+                lineWidth: 5,
+                // Support rather than Metric: the countdown has to fit inside a
+                // 52pt ring, and "59:59" at Metric does not. What matters is
+                // that it is a text style at all, so it grows when the user's
+                // type does.
+                font: .supersetSupport
+            )
 
             // **The movement is not named here.** The ring, `−15`, `+15` and
             // skip take most of the bar, so the name arrived as
@@ -113,39 +105,17 @@ struct RestTimerBar: View {
             // It is still carried by the notification, which is the case where
             // he is *not* looking at this screen and the name is the whole
             // point — `Next up: Barbell Bench Press`.
-            //
-            // Between sets there is room, and the question changes: not *how
-            // long left* but *what am I in the middle of*. So the session's own
-            // name goes here, with the elapsed clock under it.
-            VStack(alignment: .leading, spacing: Spacing.tight) {
-                Text(restTimer.isRunning ? "Resting" : sessionTitle)
-                    .font(.supersetTitle)
-                    .foregroundStyle(Palette.ink)
-                if !restTimer.isRunning, let startedAt, let lastLoggedAt {
-                    SessionClock(
-                        startedAt: startedAt, lastLoggedAt: lastLoggedAt, finishedAt: nil)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            // Between sets the bar is a way back rather than a set of controls,
-            // and nothing else on it says so.
-            if !restTimer.isRunning {
-                Image(systemName: "chevron.right")
-                    .font(.supersetSupport)
-                    .foregroundStyle(Palette.muted)
-                    .accessibilityHidden(true)
-            }
+            Text(restTimer.isRunning ? "Resting" : "Rest over")
+                .font(.supersetTitle)
+                .foregroundStyle(Palette.ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         // The glance is what opens the clock; the controls beside it are not
         // part of that tap.
         .contentShape(.rect)
         .onTapGesture(perform: onOpen)
         .accessibilityAddTraits(.isButton)
-        .accessibilityHint(
-            restTimer.isRunning
-                ? "Opens the rest clock and the next set"
-                : "Returns to the workout")
+        .accessibilityHint("Opens the rest clock and the next set")
     }
 
     private var controls: some View {

@@ -64,12 +64,7 @@ struct RootView: View {
         // already on screen, and two would be one too many.
         .safeAreaInset(edge: .bottom) {
             if let underway, openSession == nil {
-                RestTimerBar(
-                    restTimer: restTimer,
-                    sessionTitle: SessionListing.sessionTitle(underway),
-                    startedAt: underway.startedAt,
-                    lastLoggedAt: underway.lastPerformedAt
-                ) { openSession = underway }
+                RestTimerBar(restTimer: restTimer) { openSession = underway }
             }
         }
         .animation(.snappy, value: underway?.persistentModelID)
