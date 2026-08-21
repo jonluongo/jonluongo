@@ -5,10 +5,10 @@ import LiftingKit
 /// plan asked for, and the menu.
 ///
 /// **What it does.** Says which exercise the table below it logs, and states the
-/// part of the prescription that table will not — the effort every set shares,
-/// and the tempo. The count is the number of rows and the target is the
-/// placeholder in each of them, so restating either here was the card saying the
-/// same thing twice and charging the sets for the space.
+/// part of the prescription that table will not — the effort every set shares.
+/// The count is the number of rows and the target is the placeholder in each of
+/// them, so restating either here was the card saying the same thing twice and
+/// charging the sets for the space.
 ///
 /// **How it is used.** `ActiveWorkoutView` puts one above each exercise's
 /// section. The menu holds the four things there are to do to an exercise
@@ -65,9 +65,13 @@ struct ExerciseHeaderView: View {
     /// above the prescription and draws the rule down the panel's edge.
     var paired: Bool = false
 
-    /// What the table below cannot say: the effort every set shares, and the
-    /// tempo. `nil` when it says everything, which leaves the header the name
-    /// alone.
+    /// What the table below cannot say: the effort every set shares. `nil` when
+    /// it says everything, which leaves the header the name alone.
+    ///
+    /// **Tempo used to be the other half of this line and is not a field any
+    /// more** — nothing parsed it, and two free-text boxes on one exercise
+    /// invited a coin-flip about which to write in, so it folded into the
+    /// coach's note.
     ///
     /// It used to restate the prescription in full — `3 × 10-12 · RPE 8` over
     /// three rows whose rep fields each read `10-12`. The count is the number of
