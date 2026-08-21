@@ -13,7 +13,7 @@ enum StoreFixture {
 
     static let bench = ExerciseID(rawValue: "barbell-bench-press")
     static let row = ExerciseID(rawValue: "barbell-bent-over-row")
-    static let squat = ExerciseID(rawValue: "barbell-back-squat")
+    static let squat = ExerciseID(rawValue: "barbell-squat")
     static let instant = Date(timeIntervalSince1970: 1_700_000_000)
 
     static func context() throws -> ModelContext {
