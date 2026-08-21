@@ -402,16 +402,27 @@ enum TapTarget {
 /// place to take it from: it is the one column that is read rather than tapped.
 enum SetTableMetrics {
 
-    /// The set-number badge, and the completion check at the other end.
-    static let setColumnWidth: CGFloat = TapTarget.minimum
+    /// The set-number badge.
+    ///
+    /// **Narrower than a tap target, because it stopped being one.** It used to
+    /// open a menu that changed whether the set counted as working volume; the
+    /// coach prescribes that now, so this states and does not switch. The width
+    /// it gives up goes into the fields, which are the only things on the row a
+    /// lifter actually has to hit.
+    static let setColumnWidth: CGFloat = 28
 
     /// The same, so the table's two ends match.
     static let checkColumnWidth: CGFloat = TapTarget.minimum
 
-    /// The weight field and the work field. Wider than it was: the figures in
-    /// them are monospaced now, and mono digits are broader than proportional
-    /// ones, so a three-figure load needs the room rather than the shrinking.
-    static let entryColumnWidth: CGFloat = 68
+    /// The weight field and the work field.
+    ///
+    /// **These are the two things he has to hit with a bar in his hands**, so
+    /// they take every point the row can spare. Monospaced digits are broader
+    /// than proportional ones, and at 68 a five-glyph figure shrank rather than
+    /// fitting — the essential figure on the screen, drawn smaller than the rep
+    /// count beside it. The width comes from the badge, which no longer needs a
+    /// tap target, and from tighter gutters.
+    static let entryColumnWidth: CGFloat = 76
 
     /// Breathing room inside an entry field, each side.
     ///
@@ -422,15 +433,21 @@ enum SetTableMetrics {
     /// right way round: the number he lifted stays the biggest thing on the row.
     static let entryInset: CGFloat = 8
 
-    /// The height of an entry field. These are tapped to focus, so they are
-    /// held to the same minimum as the buttons either side of them.
-    static let entryHeight: CGFloat = TapTarget.minimum
+    /// The height of an entry field.
+    ///
+    /// **Above the minimum on purpose.** 44 points is what Apple calls the
+    /// smallest thing a finger can be asked to hit sitting still; this is tapped
+    /// standing, between sets, with chalk or sweat on the hands and a bar
+    /// waiting. Height costs the row nothing — it is width that is contested —
+    /// so there is no reason to spend it meanly.
+    static let entryHeight: CGFloat = 56
 
     /// The height of the set badge and the completion check.
     static let controlHeight: CGFloat = TapTarget.minimum
 
-    /// Between columns.
-    static let columnGutter: CGFloat = Spacing.snug
+    /// Between columns. Tight, because every point here is a point the fields
+    /// do not have.
+    static let columnGutter: CGFloat = Spacing.tight
 
     /// What surrounds one set row.
     ///

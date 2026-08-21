@@ -101,13 +101,43 @@ struct DesignSystemTests {
 
     // MARK: - Set table
 
-    @Test("The set table's columns are declared once")
+    @Test("The row spends its width on the two things a lifter has to hit")
     func setTableColumns() {
-        // These were three literals in two files — ExerciseLogSection's header
-        // and SetRowView's rows — that had to agree or the header stopped
-        // sitting over its column, with nothing enforcing it.
-        #expect(SetTableMetrics.setColumnWidth == SetTableMetrics.checkColumnWidth)
-        #expect(SetTableMetrics.entryColumnWidth > SetTableMetrics.setColumnWidth)
-        #expect(SetTableMetrics.columnGutter == Spacing.snug)
+        // These were literals in two files that had to agree or the header
+        // stopped sitting over its column, with nothing enforcing it.
+        //
+        // **The two ends no longer match, and that is the point.** The check is
+        // a control and stays at the tap minimum; the badge stopped being one —
+        // it opened a menu that changed whether a set counted as working volume,
+        // which is the coach's to say now — so it is a label, and the width it
+        // gave up went into the fields.
+        #expect(SetTableMetrics.checkColumnWidth == TapTarget.minimum)
+        #expect(SetTableMetrics.setColumnWidth < TapTarget.minimum, "a label, not a target")
+        #expect(SetTableMetrics.entryColumnWidth > SetTableMetrics.checkColumnWidth,
+                "the fields are the widest thing on the row")
+    }
+
+    @Test("An entry field is bigger than the smallest thing a finger can hit")
+    func entryFieldsAreGenerous() {
+        // 44 points is what Apple calls the minimum sitting still. This is
+        // tapped standing, between sets, with a bar waiting. Height costs the
+        // row nothing — width is what is contested — so there is no reason to
+        // spend it meanly.
+        #expect(SetTableMetrics.entryHeight > TapTarget.minimum)
+    }
+
+    @Test("The whole row fits the narrowest screen this ships to")
+    func theRowFitsAnSE() {
+        // An iPhone SE is 375 points wide, and the panel it sits in leaves about
+        // 319. Every point the fields gained came from the badge and the
+        // gutters, so this is the arithmetic that says the gain was real rather
+        // than borrowed from the edge of the screen.
+        let markers: CGFloat = 20 + 12 + 16   // lb, ×, and the work unit
+        let columns = SetTableMetrics.setColumnWidth
+            + SetTableMetrics.entryColumnWidth * 2
+            + SetTableMetrics.checkColumnWidth
+        let gutters = SetTableMetrics.columnGutter * 6
+
+        #expect(columns + markers + gutters < 319)
     }
 }

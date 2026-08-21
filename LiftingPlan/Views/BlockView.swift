@@ -73,8 +73,15 @@ struct BlockView: View {
                             SessionRow(
                                 session: session,
                                 standing: SessionListing.standing(
-                                    of: session, current: current))
+                                    of: session, current: current),
+                                isLast: session === block.sessions.last)
                         }
+                        // **The app draws its own hairline.** A `List` separator
+                        // is a colour nothing here chose, and it inset itself on
+                        // every row but one — a line crossing the panel's edge on
+                        // a single row of a single block. One rule, from the
+                        // palette, in the same place every time.
+                        .listRowSeparator(.hidden)
                     }
                 }
             }
@@ -94,8 +101,24 @@ private struct SessionRow: View {
 
     let session: Session
     let standing: SessionListing.Standing
+    /// The last row of its block draws no rule: the panel's own edge is the
+    /// division there, and a hairline against it would be two lines saying one
+    /// thing.
+    let isLast: Bool
 
     var body: some View {
+        VStack(spacing: 0) {
+            row
+            if !isLast {
+                Rectangle()
+                    .fill(Palette.rule)
+                    .frame(height: Palette.hairline)
+                    .padding(.leading, Spacing.major + Spacing.standard)
+            }
+        }
+    }
+
+    private var row: some View {
         HStack(spacing: Spacing.standard) {
             // A day he marked nothing carries nothing: a glyph the app chose
             // would be the app deciding what a session trains.
