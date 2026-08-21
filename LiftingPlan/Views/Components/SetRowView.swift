@@ -173,6 +173,14 @@ struct SetRowView: View {
             Spacer(minLength: 0)
 
             field(text: weightText, placeholder: loadTargetText, isDecimal: true)
+                // **Named, because a placeholder is not a name.** A `TextField`
+                // takes its accessibility label from its placeholder, and this
+                // one's placeholder is the prescribed load — so a set prescribed
+                // at 185 announced its weight field as "185", beside a work
+                // field announcing "8-12". Two fields naming figures, neither
+                // naming itself, on the screen where a lifter enters numbers he
+                // may not be able to see.
+                .accessibilityLabel(SetFieldLabel.load(unit: unit, identity: identity))
             // **The unit, wherever there is a weight to name.** The field said
             // `185` and left the reader to know what in; it says `185 lb` now,
             // in the same device the hold and the carry already use for their
@@ -201,6 +209,10 @@ struct SetRowView: View {
             marker(Text("×"), shown: joinsTwoFigures)
             // A distance can be a fraction of its unit; reps and seconds cannot.
             field(text: workText, placeholder: repTargetText, isDecimal: measuresDistance)
+                // Named for what this exercise measures, so the field that
+                // records a hold says seconds and the one that records a carry
+                // says the unit it was prescribed in.
+                .accessibilityLabel(SetFieldLabel.work(measure: measure, identity: identity))
             // What the figure beside it is measured in, on the one row that
             // needs saying. A column header used to carry this — `SECS`, or a
             // carry's own unit — and deleting it left a plank reading `34` with
