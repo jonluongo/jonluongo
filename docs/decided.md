@@ -69,6 +69,17 @@ in words.
 plan written in one go is still a plan somebody may want, and a schema that
 refused it would be the server making a training decision.
 
+## Resolved — the rename that was held open
+
+**Done by deletion, 2026-08-21.** The two `@Model` names below were held hostage
+for months: SwiftData derives the CloudKit record type from the entity name, so
+renaming `TrainingPlan` or `TrainingWeek` without a tested migration opens the
+store empty with the data still in the container. The backend rebuild deletes
+both types outright — there are no routines and no block table — and it resets
+the store, so there is nothing to migrate and no record type to strand. Every
+name in the store is set correctly once, at the only moment it was free. What
+follows is kept for the reasoning, not as an obligation.
+
 ## Held open — finish the rename
 
 Two pieces of the routine/block rename are deliberately unfinished. They are not
@@ -102,6 +113,8 @@ they are until there is a tested migration.
 | Decision | Why |
 |---|---|
 | The snapshot carries the plan document itself, and the log is flat | A prescription lived in three vocabularies, and two of them disagreed: a document *nests* a group, the old `Snapshot*` tree *flattened* it into a marker on each member. One description now, written by the format that prescribed it. The log is a series and was nested five deep, so every reading tool began by flattening it — the wire does it once. |
+| `RoutineBlueprint` and `DayBlueprint` are deleted; `PlanImporter` maps the document straight into the store | **Overturns the rule in CLAUDE.md that called `RoutineBlueprint` the seam a plan enters by.** Checked rather than argued: `PlanImporter.swift:129` builds it and `PlanImporter` reads it, one producer and one consumer in the same file. It never crosses a boundary, so it is not a seam — it is a **third plain-value description of a prescription** sitting between the document and the store, which is exactly the shape this project already paid a rewrite to remove. `PlanDocument` is already a tree of plain values and can be the thing the importer reads. 390 lines go. The guarantee the blueprint was carrying — *records what it was handed, never clamping* — is a rule about `PlanImporter` and moves onto it, along with the rule that it is the only producer and no second one may be added. |
+| `assembly-rules.json` is deleted | **Zero readers in any target** — confirmed by grep across all three. CLAUDE.md already said nothing decodes it and it was reference material for Claude, but nothing ever put it in front of him either, so it was a bundled file whose only delivery mechanism was somebody opening it by hand. `program.md` does the job properly: the same material, written by the coach for this lifter, editable, rather than frozen at build time and unwritable. Data earns its place or it goes, whole. |
 | A plan format 6 refuses every earlier version — **once**, at the reset | Amends the row below, and only for this break. Versions 1–5 stated a routine of named blocks of days keyed by weekday, with an exercise's sets as a count *or* a list. Version 6 has no routine, no block label, no weekday, and states every set. Reading a version 5 document into it would mean inventing block ordinals from list positions and discarding weekdays — interpretation wearing compatibility's clothes, landing in the store as prescriptions nobody wrote. It is safe **only** because the store resets at this format, so no earlier document has anywhere to land and none is archived. From version 6 onward the archive rule holds again: a version 7 reader must read a version 6 plan. Carrying the older shape would have meant keeping `LegacyBlockKey`, `SingleWeekCodingKeys` and the three-way `blocks`/`weeks`/`days` reconciliation forever, for documents that will never arrive. |
 | A snapshot is refused in **both** directions; a plan and a profile update are not | A plan is an archive: the coach wrote it, it is the only copy, and an older one must read forever. A snapshot is a cache the phone rewrites whenever the record changes, so an old one is a stale file rather than history. Reading either skew half-way reports a lifter who has trained less than he has, which is the one failure that arrives looking like a fact. |
 | The app is a datastore and the interface an AI trainer works through | Everything that is neither is bloat. This is the filter for any proposal. |

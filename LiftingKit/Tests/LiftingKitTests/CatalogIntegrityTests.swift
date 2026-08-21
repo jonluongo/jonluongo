@@ -23,24 +23,23 @@ struct CatalogIntegrityTests {
     /// which is exactly why this asserts the URLs rather than trusting the
     /// build to have copied them.
     ///
-    /// `assembly-rules.json` is deliberately decoded by nothing in Swift: every
-    /// number in it is a training opinion, and the app makes no training
-    /// decisions. It ships as material Claude reads. That is precisely why it
-    /// needs a test — nothing else would notice if it stopped shipping.
-    @Test("Both bundled reference files resolve from the package bundle")
+    /// `assembly-rules.json` used to be guarded here too, on the reasoning that
+    /// it shipped as material Claude reads and nothing else would notice if it
+    /// stopped shipping. That turned out to be the argument against it: nothing
+    /// ever put it in front of him either, so its only delivery mechanism was
+    /// somebody opening it by hand. `program.md` does the job properly — the
+    /// same material, written by the coach for this lifter and editable, rather
+    /// than frozen at build time. The file is gone; the catalog stays.
+    @Test("The bundled catalog resolves from the package bundle")
     func bundledResourcesResolve() throws {
         let exercises = try #require(
             Bundle.module.url(forResource: "exercises", withExtension: "json"),
             "exercises.json did not resolve from Bundle.module"
         )
-        let rules = try #require(
-            Bundle.module.url(forResource: "assembly-rules", withExtension: "json"),
-            "assembly-rules.json did not resolve from Bundle.module"
-        )
 
-        // Read and parse both, so a zero-byte or truncated copy fails here
-        // rather than surfacing as absent data somewhere downstream.
-        for url in [exercises, rules] {
+        // Read and parse it, so a zero-byte or truncated copy fails here rather
+        // than surfacing as absent data somewhere downstream.
+        for url in [exercises] {
             let data = try Data(contentsOf: url)
             #expect(!data.isEmpty, "\(url.lastPathComponent) is empty")
             let parsed = try JSONSerialization.jsonObject(with: data)
