@@ -21,12 +21,22 @@ side has one string that means whichever.
 /// What one prescribed set asks for: a count, a hold, or a carry.
 public enum Target: Codable, Equatable, Sendable {
     case repetitions(low: Int, high: Int?)
+    case repetitionsToFailure                    // AMRAP
     case time(low: Int, high: Int?)              // seconds
     case distance(low: Double, high: Double?, unit: DistanceUnit)
 }
 ```
 
-Three cases, mirroring `WorkMeasure`, so a target cannot claim to be two things.
+**new, found while building** — `repetitionsToFailure`. Today `"AMRAP"` falls
+through `WorkMeasure` to `.repetitions` with an empty range and is drawn
+verbatim. A strictly typed target that refused it would take a prescription
+coaches actually write out of the vocabulary, silently, in the name of type
+safety. It is **not a fourth measure** — it reports `.repetitions` and is logged
+in `reps`; it says what was asked for, not what it is measured in, so
+`WorkMeasure` keeps its three cases and CLAUDE.md's rule about a fourth measure
+is untouched.
+
+Four cases, three measures, so a target cannot claim to be two things.
 `high == nil` is a single value rather than a range — `40 metres`, not
 `40–40 metres`. `measure` is derived, never stored beside it.
 
