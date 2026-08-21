@@ -157,10 +157,51 @@ extension JSONValue {
     /// Indented, key-sorted JSON, for a report a human or a model will read.
     /// Only ever goes inside a JSON string, so its newlines are escaped by the
     /// time they reach the wire.
+    ///
+    /// **Absent keys rather than null ones, which is what the record does.**
+    /// `snapshot.json` writes no nulls at all — an absent value is absent, not
+    /// "no value" written as a value — and the reports built from it were
+    /// writing one line of `null` for every field a set did not have. Measured
+    /// on a three-exercise session: **twenty-four null lines, 26% of the
+    /// report.** A set that states a duration was spending five lines saying it
+    /// had no reps, no load, no distance and was not a warm-up.
+    ///
+    /// The coach pays for those in tokens on every read, and they tell him
+    /// nothing the missing key does not.
     public func prettyEncoded() throws -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        return String(decoding: try encoder.encode(self), as: UTF8.self)
+        return String(decoding: try encoder.encode(withoutNulls), as: UTF8.self)
+    }
+
+    /// This value with every `null`-valued key dropped, recursively.
+    ///
+    /// **Objects only — an array keeps its length.** A null inside an array is
+    /// positional: dropping it would shift everything after it, which is a
+    /// different list rather than a tidier one. No report writes one today, and
+    /// this is why it would still be safe if one did.
+    ///
+    /// Not applied to `lineEncoded()`: that is the JSON-RPC wire, where a null
+    /// is part of the protocol rather than an absence in the data.
+    ///
+    /// **`filter` then `mapValues`, and not `compactMapValues`.** The obvious
+    /// spelling — `compactMapValues { $0 == .null ? nil : $0.withoutNulls }` —
+    /// compiles and does nothing at all, because `JSONValue` is
+    /// `ExpressibleByNilLiteral`: in a context expecting a `JSONValue`, the
+    /// literal `nil` is `JSONValue.null` rather than `Optional.none`, so the
+    /// closure hands back a null instead of dropping one and `compactMapValues`
+    /// keeps every key. The conformance that makes `["load": nil]` read nicely
+    /// at a call site is the same one that makes `nil` mean *present and null*
+    /// here. There is no warning; the only symptom is a no-op.
+    var withoutNulls: JSONValue {
+        switch self {
+        case .object(let members):
+            .object(members.filter { $0.value != .null }.mapValues(\.withoutNulls))
+        case .array(let items):
+            .array(items.map(\.withoutNulls))
+        default:
+            self
+        }
     }
 
     /// Re-encodes this value so a `Codable` type can be decoded from it —

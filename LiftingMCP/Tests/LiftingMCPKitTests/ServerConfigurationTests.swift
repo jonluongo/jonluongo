@@ -108,3 +108,70 @@ struct JSONValueTests {
         #expect(asDocument == "[\(try JSONValue.date(referenceNow).lineEncoded())]")
     }
 }
+
+/// What a report leaves out.
+///
+/// **The record writes no nulls and the reports built from it were full of
+/// them.** A set that states a duration was spending five lines saying it had no
+/// reps, no load, no distance and was not a warm-up — twenty-four null lines on
+/// a three-exercise session, 26% of the report. The coach pays for those in
+/// tokens on every read and they tell him nothing the missing key does not.
+@Suite("Reports leave absent things out")
+struct ReportNullTests {
+
+    @Test("A null-valued key is dropped from a report")
+    func nullsAreDropped() throws {
+        let report: JSONValue = .object([
+            "reps": .integer(5), "load": .null, "durationSeconds": .null,
+        ])
+        let text = try report.prettyEncoded()
+
+        #expect(text.contains("\"reps\""))
+        #expect(!text.contains("null"))
+        #expect(!text.contains("load"))
+    }
+
+    @Test("It reaches nulls nested inside objects and arrays")
+    func nullsAreDroppedThroughout() throws {
+        let report: JSONValue = .object([
+            "sets": .array([
+                .object(["reps": .integer(5), "distance": .null]),
+                .object(["durationSeconds": .integer(45), "reps": .null]),
+            ])
+        ])
+        #expect(!(try report.prettyEncoded()).contains("null"))
+    }
+
+    @Test("An array keeps its length, because a null in one is positional")
+    func arraysAreNotCompacted() throws {
+        // Dropping a null from a list shifts everything after it, which is a
+        // different list rather than a tidier one.
+        let report: JSONValue = .object(["xs": .array([.integer(1), .null, .integer(3)])])
+        let text = try report.prettyEncoded()
+        #expect(text.contains("null"), "the one place a null survives")
+    }
+
+    @Test("`nil` inside a JSONValue context means null, not absent")
+    func nilIsNotAbsence() {
+        // **The trap this fix walked into.** `JSONValue` is
+        // `ExpressibleByNilLiteral`, so where a `JSONValue` is expected the
+        // literal `nil` is `JSONValue.null` — not `Optional.none`. Written as
+        // `compactMapValues { $0 == .null ? nil : $0 }` the strip compiles and
+        // removes nothing, because the closure hands back a null rather than
+        // dropping one. There is no warning; the only symptom is a no-op.
+        let asValue: JSONValue = nil
+        #expect(asValue == .null)
+
+        let members: [String: JSONValue] = ["a": .integer(1), "b": .null]
+        #expect(members.compactMapValues { $0 == .null ? nil : $0 }.count == 2,
+                "the spelling that looks right keeps both keys")
+        #expect(members.filter { $0.value != .null }.count == 1,
+                "the one that works")
+    }
+
+    @Test("The JSON-RPC wire keeps its nulls, where they are protocol")
+    func theWireIsUntouched() throws {
+        let message: JSONValue = .object(["id": .null, "method": .string("ping")])
+        #expect((try message.lineEncoded()).contains("null"))
+    }
+}
