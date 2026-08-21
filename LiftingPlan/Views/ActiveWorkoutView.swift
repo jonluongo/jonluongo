@@ -143,21 +143,12 @@ struct ActiveWorkoutView: View {
                 // corner that once marked an untouched session as trained can
                 // safely hold the thing everyone reads it as.
                 CloseToolbarItem("Close workout") { dismiss() }
-                // How long he has been training, counting from the first ticked
-                // set. It lived in the header of a screen that no longer exists,
-                // and went with it — another thing the restructure dropped
-                // rather than decided.
-                // The title's place, because it is the bar's own line. As a
-                // leading item it was given a small fixed capsule and truncated
-                // to "1…", which is a clock saying nothing.
-                ToolbarItem(placement: .principal) {
-                    if let startedAt = session.startedAt,
-                        let lastLoggedAt = session.lastPerformedAt {
-                        SessionClock(
-                            startedAt: startedAt, lastLoggedAt: lastLoggedAt,
-                            finishedAt: session.finishedAt)
-                    }
-                }
+                // **The elapsed clock is not here any more; the bar has it.**
+                // It sat in the title's place and the bar carries the same
+                // figure between sets, so the screen read `0:24` twice in two
+                // corners — one number, two elements, which is the thing the
+                // standards forbid. The bar is the one that survives leaving
+                // the session, so it is the one that keeps the clock.
             }
             .safeAreaInset(edge: .bottom) {
                 // **It stays when the countdown ends.** It used to appear on the
