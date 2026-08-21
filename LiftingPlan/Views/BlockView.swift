@@ -93,12 +93,14 @@ private struct SessionRow: View {
 
     var body: some View {
         HStack(spacing: Spacing.standard) {
-            SessionIconView(icon: session.icon)
+            // A day he marked nothing carries nothing: a glyph the app chose
+            // would be the app deciding what a session trains.
+            if let icon = session.icon { SessionIconView(icon: icon) }
             Text(SessionListing.sessionTitle(session))
                 .font(.supersetTitle)
                 .foregroundStyle(Palette.ink)
             Spacer(minLength: Spacing.snug)
-            if standing == .finished { RecordedMark() }
+            RecordedMark(isRecorded: standing == .finished)
             DisclosureChevron()
         }
         .accessibilityElement(children: .combine)

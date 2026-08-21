@@ -29,13 +29,17 @@ import LiftingKit
 /// and `SessionLog` for the write.
 struct RestSheet: View {
 
-    let day: WorkoutDay
-    let profile: UserProfile
-    let plans: [TrainingPlan]
+    @Environment(\.exerciseCatalog) private var catalog
+
+    let session: Session
+    /// What he did on each movement last time, keyed by exercise, for the load
+    /// field a prescription may leave blank.
+    let previous: [ExerciseID: SnapshotPerformedExercise]
     var restTimer: RestTimerModel
-    /// Called with the set that was ticked, so the session can start the rest
-    /// that follows it exactly as the table would.
-    var onCompletionChanged: (PlannedExercise, LoggedSet, Bool) -> Void
+    /// Records the set, so the session starts the rest that follows it exactly
+    /// as the table would.
+    var onRecord: (TrainingSlot, Mass?, Int?, Int?, Distance?) -> Void
+    var onTakeBack: (TrainingSlot) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -44,7 +48,7 @@ struct RestSheet: View {
     @State private var heldID: PersistentIdentifier?
 
     /// The row he is about to do, or `nil` when every row is ticked.
-    private var next: TrainingSlot? { SessionOrder.next(in: day) }
+    private var next: TrainingSlot? { SessionOrder.next(in: session) }
 
     /// The row on screen: the one he just ticked while the tick is still being
     /// shown, and the next one after that.
@@ -56,7 +60,7 @@ struct RestSheet: View {
     /// waits, so the record and the clock are never held up by an animation.
     private var shown: TrainingSlot? {
         guard let heldID,
-            let held = SessionOrder.trainingOrder(of: day).first(where: { $0.id == heldID })
+            let held = SessionOrder.trainingOrder(of: session).first(where: { $0.id == heldID })
         else { return next }
         return held
     }
@@ -154,39 +158,35 @@ struct RestSheet: View {
 
     /// The next set, drawn by the same row the table draws.
     private func row(_ slot: TrainingSlot) -> some View {
-        let reading = SetRowPrescription(
-            exercise: slot.exercise, plans: plans, unit: profile.displayUnit)
-        let prescribed = reading.prescription(
-            forWorkingNumber: slot.workingNumber, isWarmup: slot.set.isWarmup)
-        return VStack(alignment: .leading, spacing: Spacing.standard) {
-            Text(slot.exercise.displayName)
+        VStack(alignment: .leading, spacing: Spacing.standard) {
+            Text(name(of: slot.exercise))
                 .font(.supersetTitle)
                 .foregroundStyle(Palette.ink)
             SetRowView(
-                set: slot.set,
-                identity: slot.identity,
-                repTargetText: WorkPrescription.targetFigure(
-                    for: prescribed?.repRange,
-                    measure: WorkPrescription.measure(for: prescribed, in: slot.exercise)),
-                loadTargetText: reading.loadTarget(prescribed),
-                prescriptionDetail: PrescriptionSummary.detail(
-                    for: prescribed, in: slot.exercise),
-                measure: WorkPrescription.measure(for: prescribed, in: slot.exercise),
-                unit: profile.displayUnit,
+                slot: slot,
+                prescription: SetRowPrescription(
+                    slot: slot, previous: previous[slot.exercise.exerciseID]),
+                isLocked: false,
                 // Animated from here rather than by the caller: the set the
                 // sheet is showing changes as a result of this write, and the
                 // slide out and in is the whole of the answer to *did that
                 // land?* The rest of the session's writes are the table's, and
                 // a table does not move.
-                onCompletionChanged: { completed in
-                    onCompletionChanged(slot.exercise, slot.set, completed)
-                    advance(after: slot, ticked: completed)
-                }
-            )
+                onRecord: { load, reps, seconds, distance in
+                    onRecord(slot, load, reps, seconds, distance)
+                    advance(after: slot, ticked: true)
+                },
+                onTakeBack: { onTakeBack(slot) })
         }
         .padding(PanelMetrics.edge)
         .panelSurface()
         .padding(.horizontal, PanelMetrics.inset)
+    }
+
+    /// What the movement is called. The catalog owns the name, keyed by
+    /// `exerciseID`.
+    private func name(of exercise: PlannedExercise) -> String {
+        catalog.exercise(id: exercise.exerciseID)?.displayName ?? exercise.exerciseID.rawValue
     }
 
     /// Holds the ticked row on screen long enough to see the mark fill, then

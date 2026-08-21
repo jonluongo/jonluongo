@@ -47,8 +47,6 @@ struct ExerciseDetailView: View {
     /// What to call it at the top. Display only; the record is keyed by id.
     let displayName: String
     /// The lifter's display unit, so a logged load reads in the unit he reads
-    /// everything else in.
-    let unit: MassUnit
 
     @Environment(\.exerciseCatalog) private var catalog
     /// Every performance there has ever been, newest last.

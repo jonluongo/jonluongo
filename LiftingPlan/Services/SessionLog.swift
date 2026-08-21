@@ -99,6 +99,28 @@ struct SessionLog {
         try context.saveOrThrow()
     }
 
+    /// Writes what the lifter has to say about a movement today.
+    ///
+    /// **It creates the performance if he has not logged a set yet.** His words
+    /// are a record of the session as much as a ticked box is, and a note he
+    /// wrote before his first set would otherwise have nowhere to go. Clearing
+    /// it back to nothing leaves an empty performance behind only if he has
+    /// logged sets against it; one holding neither is deleted, because an empty
+    /// performance would put a session in the coach's history he did not train.
+    func writeNote(_ note: String?, for exercise: PlannedExercise) throws {
+        let text = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let existing = (session.performedExercises ?? []).first { $0.planned === exercise }
+
+        if let text, !text.isEmpty {
+            let performance = existing ?? performedExercise(for: exercise, at: Date())
+            performance.lifterNote = text
+        } else if let existing {
+            existing.lifterNote = nil
+            if (existing.sets ?? []).isEmpty { context.delete(existing) }
+        }
+        try context.saveOrThrow()
+    }
+
     /// Marks the session trained. The first finish stamps the time and a later
     /// one leaves it: when he trained is a fact, and re-finishing a corrected
     /// session does not move it.

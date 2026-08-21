@@ -100,7 +100,7 @@ struct ExerciseHeaderView: View {
     /// reach here — the importer refuses it — so the fallback is the key itself
     /// rather than a blank.
     private var name: String {
-        catalog?.exercise(id: exercise.exerciseID)?.displayName ?? exercise.exerciseID.rawValue
+        catalog.exercise(id: exercise.exerciseID)?.displayName ?? exercise.exerciseID.rawValue
     }
 
     /// What the exercise asks for above its table.

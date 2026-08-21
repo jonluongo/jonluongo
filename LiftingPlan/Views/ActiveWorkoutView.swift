@@ -6,11 +6,11 @@ import LiftingKit
 /// an editable table of sets (set · previous · weight · reps · ✓). Checking a set
 /// off starts the rest/pace timer, which floats in a bar at the bottom.
 struct ActiveWorkoutView: View {
-    let day: WorkoutDay
-    let profile: UserProfile
+    let session: Session
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.exerciseCatalog) private var catalog
     @Environment(RestTimerModel.self) private var restTimer
     /// The lifter's own clock: whether it runs at all, and how long on each
     /// exercise. Not the prescription, and not in the store.
@@ -18,7 +18,10 @@ struct ActiveWorkoutView: View {
     /// The outbox the finished session is sent through. Optional so a preview
     /// need not supply one; the app always does.
     @Environment(SnapshotOutbox.self) private var snapshotOutbox: SnapshotOutbox?
-    @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
+    /// Every performance there has ever been, for the one question a row asks
+    /// that reaches outside this session: what he did on this movement last
+    /// time.
+    @Query(sort: \PerformedExercise.occurredAt) private var performances: [PerformedExercise]
 
     /// The clock being edited — an exercise's, or a group's — and the exercise
     /// being read about.
@@ -32,17 +35,54 @@ struct ActiveWorkoutView: View {
     @State private var scrollTarget: PersistentIdentifier?
     @State private var errorMessage: String?
 
-    private var exercises: [PlannedExercise] { day.orderedExercises }
+    private var exercises: [PlannedExercise] { session.orderedExercises }
+
+    /// The rows of this session, in the order they are trained, grouped by the
+    /// movement they belong to.
+    private var slotsByExercise: [PersistentIdentifier: [TrainingSlot]] {
+        Dictionary(grouping: SessionOrder.trainingOrder(of: session)) {
+            $0.exercise.persistentModelID
+        }
+    }
+
+    /// The most recent performance of each movement *before this session*, which
+    /// is what a blank load field falls back to.
+    private var previous: [ExerciseID: SnapshotPerformedExercise] {
+        var latest: [ExerciseID: PerformedExercise] = [:]
+        for performed in performances where performed.session !== session {
+            latest[performed.exerciseID] = performed
+        }
+        return latest.mapValues(PerformanceHistory.value(of:))
+    }
 
     /// The session in the order it is trained: an exercise, or a group of them
     /// performed as rounds. The grouping was prescribed; nothing here makes one.
-    private var entries: [SessionEntry] { day.entries }
+    private var entries: [SessionEntry] { SessionGrouping.entries(of: exercises) }
 
     /// Whether this session has been marked done. Not derived from how much of
     /// it is filled in: a lifter who stops at three sets of four has finished,
     /// and one resting between sets has not, and nothing in the record can tell
     /// those apart. Only he can, which is what the button is for.
-    private var isLogged: Bool { day.completedAt != nil }
+    private var isLogged: Bool { session.finishedAt != nil }
+
+    /// How many prescribed rows are not yet in the record. It decides nothing —
+    /// finishing a session with sets left is entirely allowed, and often correct.
+    private var unrecordedSetCount: Int {
+        SessionOrder.trainingOrder(of: session).count { !$0.isDone }
+    }
+
+    /// What has been performed of one movement today, or `nil` before anything
+    /// has. It is where the lifter's own note lives.
+    private func performed(for exercise: PlannedExercise) -> PerformedExercise? {
+        (session.performedExercises ?? []).first { $0.planned === exercise }
+    }
+
+    /// Whether every prescribed row of a movement is in the record, which is
+    /// what tints its panel.
+    private func isFullyRecorded(_ exercise: PlannedExercise) -> Bool {
+        let slots = slotsByExercise[exercise.persistentModelID] ?? []
+        return !slots.isEmpty && slots.allSatisfy(\.isDone)
+    }
 
     private var errorAlertBinding: Binding<Bool> {
         Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
@@ -66,7 +106,7 @@ struct ActiveWorkoutView: View {
                     // finished arrives. It used to be top right, where it was
                     // pressed as a way out of the screen.
                     SessionFinishSection(
-                        isLogged: isLogged, unloggedSetCount: day.unloggedSetCount,
+                        isLogged: isLogged, unloggedSetCount: unrecordedSetCount,
                         onFinish: { writeAndShare(log.finish) },
                         onUnfinish: { writeAndShare(log.unfinish) })
                 }
@@ -114,10 +154,11 @@ struct ActiveWorkoutView: View {
                 // leading item it was given a small fixed capsule and truncated
                 // to "1…", which is a clock saying nothing.
                 ToolbarItem(placement: .principal) {
-                    if let startedAt = day.startedAt, let lastLoggedAt = day.lastLoggedAt {
+                    if let startedAt = session.startedAt,
+                        let lastLoggedAt = session.lastPerformedAt {
                         SessionClock(
                             startedAt: startedAt, lastLoggedAt: lastLoggedAt,
-                            finishedAt: day.completedAt)
+                            finishedAt: session.finishedAt)
                     }
                 }
             }
@@ -137,10 +178,15 @@ struct ActiveWorkoutView: View {
             }
             .sheet(isPresented: $showingRest) {
                 RestSheet(
-                    day: day, profile: profile, plans: plans, restTimer: restTimer,
-                    onCompletionChanged: { exercise, set, completed in
-                        completionChanged(for: exercise, set: set, completed: completed)
-                    })
+                    session: session, previous: previous, restTimer: restTimer,
+                    onRecord: { slot, load, reps, seconds, distance in
+                        write {
+                            try log.record(
+                                slot, load: load, reps: reps,
+                                durationSeconds: seconds, distance: distance)
+                        }
+                    },
+                    onTakeBack: { slot in write { try log.takeBack(slot) } })
             }
             .animation(.snappy, value: restTimer.isRunning)
             // **Leaving the session ends the rest.** The clock and the three
@@ -178,12 +224,11 @@ struct ActiveWorkoutView: View {
             // apart from the coach's and sent on to him.
             .sheet(item: $noteExercise) { exercise in
                 LifterNoteSheet(
-                    exerciseName: exercise.displayName, note: exercise.lifterNote
+                    exerciseName: catalog.exercise(id: exercise.exerciseID)?.displayName
+                        ?? exercise.exerciseID.rawValue,
+                    note: performed(for: exercise)?.lifterNote
                 ) { note in
-                    write {
-                        exercise.lifterNote = note
-                        try context.saveOrThrow()
-                    }
+                    write { try log.writeNote(note, for: exercise) }
                 }
             }
             // The same screen the exercise row pushes elsewhere in the app —
@@ -193,8 +238,8 @@ struct ActiveWorkoutView: View {
                 NavigationStack {
                     ExerciseDetailView(
                         exerciseID: exercise.exerciseID,
-                        displayName: exercise.displayName,
-                        unit: profile.displayUnit
+                        displayName: catalog.exercise(id: exercise.exerciseID)?.displayName
+                            ?? exercise.exerciseID.rawValue
                     )
                 }
                 // The grabber, as on the block and account sheets. This one had
@@ -204,7 +249,6 @@ struct ActiveWorkoutView: View {
                 // for a behaviour that already exists.
                 .presentationDragIndicator(.visible)
             }
-        .onAppear { write(log.seedIfNeeded) }
         }
     }
 
@@ -259,7 +303,7 @@ struct ActiveWorkoutView: View {
             // a label floating over a table that happens to be beneath it.
             ExerciseHeaderView(
                 exercise: exercise,
-                unit: profile.displayUnit,
+                performed: performed(for: exercise),
                 onShowInfo: { infoExercise = exercise },
                 // Rest is prescribed per exercise and per group, so the menu
                 // edits whichever this movement is trained under.
@@ -277,12 +321,18 @@ struct ActiveWorkoutView: View {
 
             ExerciseLogSection(
                 exercise: exercise,
-                profile: profile,
-                plans: plans,
-                onCompletionChanged: { exercise, set, completed in
-                    completionChanged(for: exercise, set: set, completed: completed, in: group)
-                    showNext(after: set, of: exercise, in: group, ticked: completed)
+                slots: slotsByExercise[exercise.persistentModelID] ?? [],
+                performed: performed(for: exercise),
+                previous: previous[exercise.exerciseID],
+                onRecord: { slot, load, reps, seconds, distance in
+                    write {
+                        try log.record(
+                            slot, load: load, reps: reps,
+                            durationSeconds: seconds, distance: distance)
+                    }
+                    showNext(after: slot, in: group)
                 },
+                onTakeBack: { slot in write { try log.takeBack(slot) } },
                 paired: paired,
                 isLocked: isLogged
             )
@@ -293,26 +343,8 @@ struct ActiveWorkoutView: View {
         .panelRow(
             insets: EdgeInsets(
                 top: 0, leading: PanelMetrics.inset, bottom: 0, trailing: PanelMetrics.inset),
-            paired: paired, isRecorded: exercise.isFullyLogged)
+            paired: paired, isRecorded: isFullyRecorded(exercise))
         .listRowSeparator(.hidden)
-    }
-
-    /// Records a tick and starts whatever rest follows it.
-    ///
-    /// **One path, whether the tick came from the table or from the rest
-    /// sheet.** A set logged in one place and the same set logged in the other
-    /// must mean the same thing — including which clock starts, which is the one
-    /// behavioural difference a group makes.
-    private func completionChanged(
-        for exercise: PlannedExercise, set: LoggedSet, completed: Bool,
-        in group: ExerciseGroup? = nil
-    ) {
-        let group = group ?? day.entries.compactMap { $0.groupContaining(exercise) }.first
-        if let group {
-            write { try log.roundCompletionChanged(group, set: set, completed: completed) }
-        } else {
-            write { try log.completionChanged(for: exercise, isCompleted: completed) }
-        }
     }
 
     /// Brings the next set of a group into view when one is ticked.
@@ -329,13 +361,11 @@ struct ActiveWorkoutView: View {
     /// **It decides nothing.** The order comes from the grouping the plan
     /// prescribed — `ExerciseGroup.setAfter` — and a group with nothing waiting
     /// leaves him where he is.
-    private func showNext(
-        after set: LoggedSet, of member: PlannedExercise,
-        in group: ExerciseGroup?, ticked: Bool
-    ) {
+    private func showNext(after slot: TrainingSlot, in group: ExerciseGroup?) {
         // An ungrouped exercise has its next set on the row below, already on
         // screen and already under his thumb.
-        guard let group, ticked, let next = group.setAfter(set, of: member) else { return }
+        guard let group, let next = group.setAfter(slot.planned, of: slot.exercise)
+        else { return }
         withAnimation(.snappy) { scrollTarget = next.persistentModelID }
     }
 
@@ -346,7 +376,7 @@ struct ActiveWorkoutView: View {
     /// to keep in step with the first.
     private var log: SessionLog {
         SessionLog(
-            day: day, context: context, restTimer: restTimer,
+            session: session, context: context, restTimer: restTimer,
             restPreferences: restPreferences)
     }
 

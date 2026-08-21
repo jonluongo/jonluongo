@@ -142,7 +142,7 @@ struct ExerciseRestSheet: View {
                 """
         }
         return """
-            Your coach prescribed \(RestPrescription.durationText(prescribedSeconds)) here. \
+            Your coach prescribed \(PrescriptionSummary.rest(prescribedSeconds) ?? "") here. \
             Changing the timer doesn't change the block.
             """
     }
