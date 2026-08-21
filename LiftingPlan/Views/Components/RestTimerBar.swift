@@ -38,15 +38,18 @@ struct RestTimerBar: View {
     /// How far the bar's contents sit from the edge of the bar.
     private static let contentInset = Spacing.standard
 
-    /// The error label sits above the bar and has to line up with what is
-    /// inside it, so its inset is the sum of the two above rather than a
-    /// hand-added total. It was written as `26`, which was `12 + 14` worked out
-    /// once by hand: changing either of the two paddings moved the ring and
-    /// left the label behind, with nothing to catch it.
-    private static var errorInset: CGFloat { barInset + contentInset }
+    /// The notice sits *under* the bar, centred, so its inset is the bar's own
+    /// rather than the sum that lined it up with the ring.
+    ///
+    /// **Above and left-aligned put it between the session and the clock**,
+    /// where it read as the first line of the bar — a caption about a setting
+    /// sitting where the next thing to do goes. Under it, centred, it is what it
+    /// is: a footnote about the phone, below the thing it is a footnote to.
+    private static var noticeInset: CGFloat { barInset }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.snug) {
+        VStack(spacing: Spacing.snug) {
+            bar
             if let errorMessage = restTimer.cue.errorMessage {
                 Button { restTimer.cue.dismissError() } label: {
                     Label(errorMessage, systemImage: "bell.slash")
@@ -55,14 +58,16 @@ struct RestTimerBar: View {
                         // inside a `Button`, where `.secondary` resolves against
                         // the tint rather than against the ink.
                         .foregroundStyle(Palette.muted)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal, Self.errorInset)
+                .padding(.horizontal, Self.noticeInset)
             }
-            bar
         }
+        // The stack's, not the bar's — the notice is under it now, and a bottom
+        // inset on the bar would have opened a gap between the two.
+        .padding(.bottom, Spacing.tight)
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
@@ -80,7 +85,6 @@ struct RestTimerBar: View {
         .padding(.vertical, Spacing.snug)
         .panelSurface()
         .padding(.horizontal, Self.barInset)
-        .padding(.bottom, Spacing.tight)
     }
 
     /// The rest: counting down, or run out.

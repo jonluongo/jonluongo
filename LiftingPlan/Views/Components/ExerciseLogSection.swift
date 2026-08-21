@@ -145,10 +145,17 @@ struct ExerciseLogSection: View {
                 .frame(width: Self.noteGlyphWidth, alignment: .center)
                 .accessibilityHidden(true)
             Text(text)
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        // **The whole row centres, not the text inside it.** Centring the label
+        // within the space left over after the glyph pushes it right by the
+        // glyph's width — near the middle and never on it.
+        .frame(maxWidth: .infinity, alignment: .center)
         .font(.supersetSupport)
         .foregroundStyle(isLifters ? Palette.muted : Palette.ink)
+        // **Centred, like everything else at the foot of a panel.** The notes
+        // were flush left under a table whose columns are centred, so the last
+        // line of every exercise hung off the left edge on its own.
+        .multilineTextAlignment(.center)
         .padding(.horizontal, PanelMetrics.edge)
         .padding(.top, Spacing.standard)
         // The whole line is the target, not the words: a tap anywhere along it
@@ -165,8 +172,8 @@ struct ExerciseLogSection: View {
         .accessibilityAddTraits(isLifters ? .isButton : [])
     }
 
-    /// Fixed so both notes' text starts on the same column — a pencil and a
-    /// speech bubble are not the same width, and ragged left edges on two
-    /// stacked lines read as a mistake.
+    /// Fixed so both notes read as the same shape — a person-in-a-bubble and a
+    /// pencil-in-a-square are not the same width, and two centred rows whose
+    /// glyphs sit at different offsets look accidental.
     private static let noteGlyphWidth: CGFloat = 16
 }
