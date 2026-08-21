@@ -1,151 +1,52 @@
-import Foundation
 import Testing
+import Foundation
 @testable import LiftingKit
 
-@Suite("Training snapshot")
+/// What the record carries to the coach, and what it refuses.
+///
+/// **The suite this replaced was mostly about the lifter.** It asserted a
+/// profile's goal, experience, constraints, equipment, avoid lists, bodyweight
+/// series and strength baselines survived the wire — nine fields that were
+/// display-only in the app and are now prose in `user.md`, where he can be
+/// described in sentences rather than columns. What is left is the training:
+/// what was asked for, what was done, and when this was written.
+@Suite("The record on the wire")
 struct TrainingSnapshotTests {
 
-    // MARK: - A snapshot from a build this one cannot read
-
-    /// The shape a v2 reader would otherwise take in silently: a version it has
-    /// never seen, and the training under a key it does not know.
-    private static func laterSnapshot(version: Int) -> Data {
-        Data("""
-            {
-              "version": \(version),
-              "catalogVersion": 5,
-              "generatedAt": "2023-11-14T22:13:20Z",
-              "routines": [{ "everything": "the lifter has ever trained" }]
-            }
-            """.utf8)
-    }
-
-    @Test("A snapshot from a later build is refused, naming both versions")
-    func laterVersionIsRefused() throws {
-        let error = #expect(throws: DocumentRefusal.self) {
-            try TrainingSnapshot.makeDecoder().decode(
-                TrainingSnapshot.self, from: Self.laterSnapshot(version: 99))
-        }
-
-        #expect(error == .snapshotVersionMismatch(99, understood: TrainingSnapshot.currentVersion))
-    }
-
-    @Test("The refusal says what would otherwise be reported, and how to fix it")
-    func refusalNamesTheFailureAndTheRemedy() {
-        let message = DocumentRefusal
-            .snapshotVersionMismatch(3, understood: 2).errorDescription ?? ""
-
-        #expect(message.contains("version 3"))
-        #expect(message.contains("version 2"))
-        // The point of refusing rather than reading: the alternative is a
-        // well-formed report of a lifter who has done nothing.
-        #expect(message.contains("trained less than he has"))
-        #expect(message.contains("Rebuild the MCP server"))
-    }
-
-    @Test("Refusing comes before anything else is held against the document")
-    func versionIsCheckedFirst() throws {
-        // The fixture states no `generatedAt`, which is required. A reader that
-        // checked keys first would report a missing timestamp — true, useless,
-        // and it would send whoever read it looking in the wrong place.
-        let stated = Data("""
-            {"version": 99, "catalogVersion": 5}
-            """.utf8)
-
-        let error = #expect(throws: DocumentRefusal.self) {
-            try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: stated)
-        }
-
-        #expect(error == .snapshotVersionMismatch(99, understood: TrainingSnapshot.currentVersion))
-    }
-
-    @Test("A snapshot this build writes reads; one written in any other version does not")
-    func onlyTheCurrentVersionReads() throws {
-        let current = try TrainingSnapshot.makeEncoder().encode(snapshot())
-        #expect(throws: Never.self) {
-            try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: current)
-        }
-
-        // Older is refused as well as newer, which the two write formats do not
-        // do. A plan is an archive and must be read forever; a snapshot is a
-        // cache the phone rewrites whenever the record changes, so an old one is
-        // a stale file rather than history — and reading it as though its
-        // sections were merely absent would report a lifter who has never
-        // trained.
-        let older = Data("""
-            {"version": 2, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
-            """.utf8)
-        #expect(throws: DocumentRefusal.snapshotVersionMismatch(
-            2, understood: TrainingSnapshot.currentVersion)
-        ) {
-            try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: older)
-        }
-    }
-
-    // MARK: - Fixtures
-
-    /// A fixed instant on a second boundary. ISO 8601 encodes whole seconds,
-    /// so a date built this way survives a round trip exactly and whole-value
-    /// equality is a fair assertion.
     private static let instant = Date(timeIntervalSince1970: 1_700_000_000)
+    private static let later = Date(timeIntervalSince1970: 1_700_003_600)
+    private let bench = ExerciseID(rawValue: "barbell-bench-press")
 
-    private static let routineID = UUID(uuidString: "3E7F7E2E-2B47-4C51-9E58-52C1D1F0A0B1")!
+    private func session(block: Int = 1, ordinal: Int = 1, finished: Date? = nil)
+        -> SnapshotSession {
+        SnapshotSession(
+            prescription: PlanDocumentSession(
+                blockOrdinal: block, ordinal: ordinal, focus: "Push", icon: .strength,
+                entries: [.exercise(PlanDocumentExercise(
+                    exerciseID: bench, displayName: "Barbell Bench Press", restSeconds: 180,
+                    sets: [PlanDocumentSet(
+                        target: .repetitions(low: 5, high: 6),
+                        load: Mass(value: 100, unit: .kilograms))]))]),
+            finishedAt: finished, generatedAt: Self.instant, sourceDocumentID: UUID())
+    }
 
-    private func loggedSet(load: Mass?) -> LoggedSetRecord {
-        LoggedSetRecord(
-            routineID: Self.routineID, blockOrdinal: 1, weekday: .monday, exerciseOrder: 0,
-            exerciseID: ExerciseID(rawValue: "barbell-bench-press"), setIndex: 0,
-            isWarmup: false, isCompleted: true, completedAt: Self.instant,
-            load: load, reps: 5
-        )
+    private func performance(
+        source: PerformanceSource = .logged, block: Int? = 1, ordinal: Int? = 1
+    ) -> SnapshotPerformance {
+        SnapshotPerformance(
+            exerciseID: bench, occurredAt: Self.instant, source: source,
+            blockOrdinal: block, sessionOrdinal: ordinal, lifterNote: "Felt heavy.",
+            sets: [SnapshotPerformedSet(
+                setIndex: 0, load: Mass(value: 225, unit: .pounds), reps: 5,
+                completedAt: Self.instant)])
     }
 
     private func snapshot(
-        load: Mass? = Mass(value: 135, unit: .pounds),
-        restSeconds: Int? = 180,
-        avoidedPatterns: [MovementPattern] = [.hinge],
-        availableEquipment: [EquipmentType] = [.barbell]
+        sessions: [SnapshotSession] = [], performances: [SnapshotPerformance] = []
     ) -> TrainingSnapshot {
-        let exercise = PlanDocumentExercise(
-            exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
-            displayName: "Barbell Bench Press", restSeconds: restSeconds,
-            coachNote: "Pause the last rep. Three down, explode up.",
-            sets: [PlanDocumentSet(
-                target: .repetitions(low: 5, high: nil),
-                load: Mass(value: 100, unit: .kilograms))]
-        )
-        let routine = SnapshotRoutine(
-            document: PlanDocument(
-                id: Self.routineID, catalogVersion: 5, generatedAt: Self.instant,
-                sessions: [PlanDocumentSession(
-                    blockOrdinal: 1, ordinal: 1, focus: "Push",
-                    entries: [.exercise(exercise)])]),
-            startDate: Self.instant,
-            sessions: [SnapshotSession(
-                blockOrdinal: 1, weekday: .monday, completedAt: Self.instant)]
-        )
-        let profile = SnapshotProfile(
-            displayUnit: .pounds, experience: .intermediate,
-            availableEquipment: availableEquipment, goal: "Get stronger",
-            constraints: "Left shoulder hurts overhead",
-            bodyweight: Mass(value: 182, unit: .pounds),
-            avoidedPatterns: avoidedPatterns,
-            avoidedExercises: [ExerciseID(rawValue: "barbell-upright-row")],
-            preferredDurationMinutes: 60,
-            statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
-        )
-        return TrainingSnapshot(
-            catalogVersion: 5, generatedAt: Self.instant, profile: profile,
-            bodyMetrics: [SnapshotBodyMetric(
-                date: Self.instant, bodyweight: Mass(value: 182, unit: .pounds)
-            )],
-            baselines: [SnapshotBaseline(
-                exerciseID: ExerciseID(rawValue: "barbell-back-squat"),
-                load: Mass(value: 225, unit: .pounds), reps: 5, recordedAt: Self.instant
-            )],
-            routines: [routine],
-            log: [loggedSet(load: load)]
-        )
+        TrainingSnapshot(
+            exportedAt: Self.later, catalogVersion: 5,
+            sessions: sessions, performances: performances)
     }
 
     private func roundTrip(_ snapshot: TrainingSnapshot) throws -> TrainingSnapshot {
@@ -153,247 +54,204 @@ struct TrainingSnapshotTests {
         return try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
     }
 
-    private func firstLoggedSet(in snapshot: TrainingSnapshot) throws -> LoggedSetRecord {
-        try #require(snapshot.log.first)
+    private func decoded(_ json: String) throws -> TrainingSnapshot {
+        try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: Data(json.utf8))
     }
 
-    /// The one movement the fixture prescribes, read out of the document the
-    /// routine carries.
-    private func firstExercise(in snapshot: TrainingSnapshot) throws -> PlanDocumentExercise {
-        let routine = try #require(snapshot.routines.first)
-        let session = try #require(routine.document.sessions.first)
-        return try #require(session.entries.flatMap(\.exercises).first)
+    // MARK: - The envelope
+
+    @Test("A snapshot says when it was written, and that reaches the reader")
+    func exportedAtSurvives() throws {
+        // The failure this guards against arrives looking like a fact: a coach
+        // told a block holds four sessions when it holds nine. A date does not
+        // stop the export going stale; it stops a stale read being convincing.
+        let read = try roundTrip(snapshot())
+        #expect(read.exportedAt == Self.later)
+        #expect(read.version == 6)
+        #expect(read.catalogVersion == 5)
     }
 
-    // MARK: - Round trip
-
-    @Test("A full snapshot survives encoding and decoding unchanged")
-    func fullSnapshotRoundTrips() throws {
-        let original = snapshot()
-        #expect(try roundTrip(original) == original)
+    @Test("An empty record is a record, not a failure")
+    func anEmptyRecordDecodes() throws {
+        let read = try roundTrip(snapshot())
+        #expect(read.sessions.isEmpty)
+        #expect(read.performances.isEmpty)
     }
 
-    @Test("A snapshot carries its own version and the catalog version it was made against")
-    func carriesBothVersions() throws {
-        let decoded = try roundTrip(snapshot())
-        #expect(decoded.version == TrainingSnapshot.currentVersion)
-        #expect(decoded.catalogVersion == 5)
+    // MARK: - What was asked for
+
+    @Test("A session carries the prescription itself rather than a second description of it")
+    func sessionsCarryTheDocument() throws {
+        let read = try roundTrip(snapshot(sessions: [session()]))
+        let carried = try #require(read.sessions.first)
+
+        #expect(carried.prescription.focus == "Push")
+        #expect(carried.prescription.icon == .strength)
+        let set = try #require(carried.prescription.exercises.first?.sets.first)
+        #expect(set.target == .repetitions(low: 5, high: 6))
+        #expect(set.load == Mass(value: 100, unit: .kilograms))
     }
 
-    // MARK: - Mass is not canonicalized
-
-    @Test("A logged set keeps the unit it was entered in rather than being canonicalized")
-    func loggedSetKeepsEnteredUnit() throws {
-        let decoded = try roundTrip(snapshot(load: Mass(value: 135, unit: .pounds)))
-        let load = try #require(try firstLoggedSet(in: decoded).load)
-
-        #expect(load.unit == .pounds)
-        #expect(load.value == 135)
-        // `Mass` compares exactly on representation, so this fails the moment
-        // anything in the pipeline rewrites pounds into their kilogram value.
-        #expect(load == Mass(value: 135, unit: .pounds))
-        #expect(load != Mass(value: 135, unit: .pounds).converted(to: .kilograms))
+    @Test("A finished session says so, and an unfinished one says nothing")
+    func finishedSessionsAreMarked() throws {
+        let read = try roundTrip(snapshot(sessions: [
+            session(ordinal: 1, finished: Self.instant), session(ordinal: 2),
+        ]))
+        #expect(read.sessions(inBlock: 1).map(\.isFinished) == [true, false])
     }
 
-    @Test("A kilogram load stays kilograms and is not rewritten as pounds")
-    func kilogramLoadStaysKilograms() throws {
-        let decoded = try roundTrip(snapshot(load: Mass(value: 100, unit: .kilograms)))
-        let load = try #require(try firstLoggedSet(in: decoded).load)
-
-        #expect(load == Mass(value: 100, unit: .kilograms))
-        #expect(load != Mass(value: 100, unit: .kilograms).converted(to: .pounds))
+    @Test("Blocks are reported in order, however the sessions arrive")
+    func blocksAreOrdered() throws {
+        let read = try roundTrip(snapshot(sessions: [
+            session(block: 3, ordinal: 1), session(block: 1, ordinal: 2),
+            session(block: 1, ordinal: 1),
+        ]))
+        #expect(read.blockOrdinals == [1, 3])
+        #expect(read.sessions(inBlock: 1).map(\.ordinal) == [1, 2])
     }
 
-    @Test("Every weight in a snapshot keeps its own unit, not one shared unit")
-    func weightsKeepIndependentUnits() throws {
-        let decoded = try roundTrip(snapshot(load: Mass(value: 135, unit: .pounds)))
-        let exercise = try firstExercise(in: decoded)
+    // MARK: - What was done
 
-        // The set was logged in pounds and the prescription written in kilograms.
-        #expect(try firstLoggedSet(in: decoded).load?.unit == .pounds)
-        #expect(exercise.sets.first?.load == Mass(value: 100, unit: .kilograms))
-        #expect(decoded.profile?.bodyweight == Mass(value: 182, unit: .pounds))
-        #expect(decoded.baselines.first?.load == Mass(value: 225, unit: .pounds))
+    @Test("A performance carries its own sets rather than being one row per set")
+    func performancesHoldTheirSets() throws {
+        // The log used to be flat, restating the plan, block, weekday, focus and
+        // prescription on every row, because nothing sat at the grain the
+        // question is asked at.
+        let read = try roundTrip(snapshot(performances: [performance()]))
+        let performed = try #require(read.performances.first)
+
+        #expect(performed.exerciseID == bench)
+        #expect(performed.sets.count == 1)
+        #expect(performed.sets.first?.reps == 5)
+        #expect(performed.lifterNote == "Felt heavy.")
     }
 
-    // MARK: - Unknown taxonomy values
-
-    @Test("A movement pattern this build does not know survives a round trip intact")
-    func unknownMovementPatternRoundTrips() throws {
-        let unknown = MovementPattern(rawValue: "anti-rotation")
-        #expect(!unknown.isKnown)
-
-        let decoded = try roundTrip(snapshot(avoidedPatterns: [unknown, .hinge]))
-        #expect(decoded.profile?.avoidedPatterns == [unknown, .hinge])
-        #expect(decoded.profile?.avoidedPatterns.first?.rawValue == "anti-rotation")
+    @Test("A performance says which session it belongs to")
+    func performancesCarryTheirCoordinates() throws {
+        let read = try roundTrip(snapshot(performances: [performance(block: 2, ordinal: 3)]))
+        let performed = try #require(read.performances.first)
+        #expect(performed.blockOrdinal == 2)
+        #expect(performed.sessionOrdinal == 3)
     }
 
-    @Test("An equipment type this build does not know survives a round trip intact")
-    func unknownEquipmentTypeRoundTrips() throws {
-        let unknown = EquipmentType(rawValue: "reverse hyper")
-        #expect(!unknown.isKnown)
+    @Test("A stated baseline is a performance with no session behind it")
+    func aStatedBaselineHasNoCoordinates() throws {
+        // It was its own table, saying the same thing in the same shape, so
+        // every history report had to answer twice.
+        let read = try roundTrip(snapshot(performances: [
+            performance(source: .stated, block: nil, ordinal: nil)
+        ]))
+        let stated = try #require(read.performances.first)
 
-        let decoded = try roundTrip(snapshot(availableEquipment: [unknown, .barbell]))
-        #expect(decoded.profile?.availableEquipment == [unknown, .barbell])
+        #expect(stated.source == .stated)
+        #expect(stated.blockOrdinal == nil)
+        #expect(stated.sessionOrdinal == nil)
+        #expect(stated.sets.first?.reps == 5, "he still did it; nobody watched")
     }
 
-    @Test("A snapshot written by a newer catalog decodes with its unknown values kept")
-    func unknownValuesFromRawJSONDecode() throws {
-        let json = """
-        {
-          "version": 5,
-          "catalogVersion": 99,
-          "generatedAt": "2023-11-14T22:13:20Z",
-          "profile": {
-            "displayUnit": "lb",
-            "experience": "Intermediate",
-            "equipmentAccess": "Full gym",
-            "availableEquipment": ["barbell", "reverse hyper"],
-            "goal": "",
-            "constraints": "",
-            "avoidedPatterns": ["anti-rotation"],
-            "avoidedExercises": [],
-            "updatedAt": "2023-11-14T22:13:20Z"
-          }
+    @Test("Performances of one lift read oldest first")
+    func historyIsOrdered() throws {
+        let older = SnapshotPerformance(exerciseID: bench, occurredAt: Self.instant)
+        let newer = SnapshotPerformance(exerciseID: bench, occurredAt: Self.later)
+        let other = SnapshotPerformance(
+            exerciseID: ExerciseID(rawValue: "barbell-squat"), occurredAt: Self.later)
+
+        let read = try roundTrip(snapshot(performances: [newer, other, older]))
+        #expect(read.performances(of: bench).map(\.occurredAt) == [Self.instant, Self.later])
+    }
+
+    // MARK: - Measures never mix
+
+    @Test("A hold, a carry and a count stay in their own fields")
+    func measuresNeverMix() throws {
+        let sets = [
+            SnapshotPerformedSet(setIndex: 0, reps: 8, completedAt: Self.instant),
+            SnapshotPerformedSet(setIndex: 1, durationSeconds: 45, completedAt: Self.instant),
+            SnapshotPerformedSet(
+                setIndex: 2, distance: Distance(value: 40, unit: .metres),
+                completedAt: Self.instant),
+        ]
+        let read = try roundTrip(snapshot(performances: [
+            SnapshotPerformance(exerciseID: bench, occurredAt: Self.instant, sets: sets)
+        ]))
+        let performed = try #require(read.performances.first)
+
+        #expect(performed.sets.map(\.reps) == [8, nil, nil])
+        #expect(performed.sets.map(\.durationSeconds) == [nil, 45, nil])
+        #expect(performed.sets.map { $0.distance?.value } == [nil, nil, 40])
+    }
+
+    @Test("A set ticked without a count says nothing rather than saying none")
+    func absentRepsAreNotZero() throws {
+        // `reps` used to be a non-optional Int, so a set prescribed as a range
+        // and ticked without a number reached the coach as a completed working
+        // set at 185 lb by 0.
+        let read = try roundTrip(snapshot(performances: [
+            SnapshotPerformance(
+                exerciseID: bench, occurredAt: Self.instant,
+                sets: [SnapshotPerformedSet(
+                    setIndex: 0, load: Mass(value: 185, unit: .pounds),
+                    completedAt: Self.instant)])
+        ]))
+        #expect(try #require(read.performances.first).sets.first?.reps == nil)
+    }
+
+    @Test("A load keeps the unit it was recorded in, on both sides of the record")
+    func loadsAreNeverConverted() throws {
+        // The prescription is in kilograms and the set was logged in pounds.
+        // A snapshot that canonicalized would misreport what was lifted.
+        let read = try roundTrip(snapshot(sessions: [session()], performances: [performance()]))
+        let prescribed = try #require(
+            read.sessions.first?.prescription.exercises.first?.sets.first?.load)
+        let performed = try #require(read.performances.first?.sets.first?.load)
+
+        #expect(prescribed.unit == .kilograms)
+        #expect(performed.unit == .pounds)
+    }
+
+    @Test("Warm-ups are told apart from work on the record side too")
+    func warmupsAreDistinguished() throws {
+        let read = try roundTrip(snapshot(performances: [
+            SnapshotPerformance(
+                exerciseID: bench, occurredAt: Self.instant,
+                sets: [
+                    SnapshotPerformedSet(setIndex: 0, isWarmup: true, completedAt: Self.instant),
+                    SnapshotPerformedSet(setIndex: 1, reps: 5, completedAt: Self.instant),
+                ])
+        ]))
+        #expect(try #require(read.performances.first).workingSets.count == 1)
+    }
+
+    // MARK: - Refusal, in both directions
+
+    @Test("A snapshot from either direction of skew is refused whole")
+    func skewIsRefusedBothWays() throws {
+        // A plan is an archive and an older one must read forever. A snapshot is
+        // a cache the phone rewrites whenever the record changes, so an old one
+        // is a stale file rather than history — and reading it half-way would
+        // report a lifter who has trained less than he has.
+        for stated in [5, 7] {
+            let error = #expect(throws: DocumentRefusal.self, "\(stated)") {
+                try decoded("""
+                    {"version": \(stated), "exportedAt": "2023-11-14T22:13:20Z",
+                     "catalogVersion": 5}
+                    """)
+            }
+            let message = try #require(error?.errorDescription)
+            #expect(message.contains("\(stated)"))
+            #expect(message.contains("6"))
         }
-        """
-        let decoded = try TrainingSnapshot.makeDecoder()
-            .decode(TrainingSnapshot.self, from: Data(json.utf8))
-        let profile = try #require(decoded.profile)
-
-        #expect(profile.availableEquipment == [.barbell, EquipmentType(rawValue: "reverse hyper")])
-        #expect(profile.avoidedPatterns == [MovementPattern(rawValue: "anti-rotation")])
-        #expect(decoded.catalogVersion == 99)
     }
 
-    // MARK: - Absence is normal
-
-    @Test("A snapshot with no profile and nothing logged is valid, not an error")
-    func emptySnapshotIsValid() throws {
-        let empty = TrainingSnapshot(catalogVersion: 5, generatedAt: Self.instant)
-        let decoded = try roundTrip(empty)
-
-        #expect(decoded.profile == nil)
-        #expect(decoded.bodyMetrics.isEmpty)
-        #expect(decoded.baselines.isEmpty)
-        #expect(decoded.routines.isEmpty)
-        #expect(decoded.log.isEmpty)
-        #expect(decoded == empty)
-    }
-
-    @Test("Absent sections decode as empty rather than failing")
-    func absentSectionsDecodeAsEmpty() throws {
-        let json = """
-        {"version": 5, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z"}
-        """
-        let decoded = try TrainingSnapshot.makeDecoder()
-            .decode(TrainingSnapshot.self, from: Data(json.utf8))
-
-        #expect(decoded.profile == nil)
-        #expect(decoded.routines.isEmpty)
-        #expect(decoded.log.isEmpty)
-        #expect(decoded.generatedAt == Self.instant)
-    }
-
-    @Test("A lifter who has stated nothing about himself reads as unknown, not as a default")
-    func unstatedProfileFactsAreAbsent() throws {
-        // The whole point of the optionals: the app asks him nothing, so an
-        // untouched profile must not tell a reader "full gym, intermediate".
-        let blank = SnapshotProfile(
-            displayUnit: .pounds, experience: nil,
-            availableEquipment: nil, goal: "", constraints: "", bodyweight: nil,
-            avoidedPatterns: [], avoidedExercises: [],
-            preferredDurationMinutes: nil, statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
-        )
-        let decoded = try roundTrip(
-            TrainingSnapshot(catalogVersion: 5, generatedAt: Self.instant, profile: blank)
-        )
-        let profile = try #require(decoded.profile)
-
-        #expect(profile.experience == nil)
-        // Not an empty list: "he can perform nothing" is a far stronger claim
-        // than "nobody has said what he has".
-        #expect(profile.availableEquipment == nil)
-        #expect(profile == blank)
-    }
-
-    @Test("An unknown equipment access writes no key rather than a stated default")
-    func unstatedEquipmentWritesNoKey() throws {
-        let blank = SnapshotProfile(
-            displayUnit: .pounds, experience: nil,
-            availableEquipment: nil, goal: "", constraints: "", bodyweight: nil,
-            avoidedPatterns: [], avoidedExercises: [],
-            preferredDurationMinutes: nil, statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
-        )
-        let data = try TrainingSnapshot.makeEncoder().encode(
-            TrainingSnapshot(catalogVersion: 5, generatedAt: Self.instant, profile: blank))
-        let json = String(decoding: data, as: UTF8.self)
-
-        #expect(!json.contains("equipmentAccess"))
-        #expect(!json.contains("availableEquipment"))
-        #expect(!json.contains("experience"))
-    }
-
-    @Test("A profile with no dates on it reads as a profile with no dates")
-    func aProfileWithoutStatedDatesDecodes() throws {
-        // Every install predating the phone keeping dates has exactly this, and
-        // so does a snapshot written by hand. The facts are there; only the
-        // record of when they were stated is missing.
-        let data = Data(        """
-        {
-          "version": 5, "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
-          "profile": {
-            "displayUnit": "lb", "goal": "Bench 225", "constraints": "",
-            "avoidedPatterns": [], "avoidedExercises": []
-          }
+    @Test("A key this format does not have is refused, naming it")
+    func anUnknownKeyIsRefused() throws {
+        let error = #expect(throws: DocumentRefusal.self) {
+            try decoded("""
+                {"version": 6, "exportedAt": "2023-11-14T22:13:20Z",
+                 "catalogVersion": 5, "profile": {"goal": "Get strong"}}
+                """)
         }
-        """
-       .utf8)
-
-        let snapshot = try TrainingSnapshot.makeDecoder()
-            .decode(TrainingSnapshot.self, from: data)
-
-        #expect(snapshot.profile?.goal == "Bench 225")
-        #expect(snapshot.profile?.statedAt.isEmpty == true)
-    }
-
-    @Test("A profile written before these facts were known decodes as not knowing them")
-    func profileWithoutStatedFactsDecodes() throws {
-        let json = """
-        {
-          "version": 5,
-          "catalogVersion": 5,
-          "generatedAt": "2023-11-14T22:13:20Z",
-          "profile": {
-            "displayUnit": "lb",
-            "goal": "",
-            "constraints": "",
-            "avoidedPatterns": [],
-            "avoidedExercises": [],
-            "updatedAt": "2023-11-14T22:13:20Z"
-          }
-        }
-        """
-        let profile = try #require(
-            try TrainingSnapshot.makeDecoder()
-                .decode(TrainingSnapshot.self, from: Data(json.utf8)).profile)
-
-        #expect(profile.experience == nil)
-        #expect(profile.availableEquipment == nil)
-        #expect(profile.displayUnit == .pounds)
-    }
-
-    @Test("An unprescribed rest stays absent rather than becoming a number")
-    func absentRestStaysAbsent() throws {
-        let decoded = try roundTrip(snapshot(restSeconds: nil))
-        #expect(try firstExercise(in: decoded).restSeconds == nil)
-    }
-
-    @Test("A bodyweight set has no load rather than a zero load")
-    func bodyweightSetHasNoLoad() throws {
-        let decoded = try roundTrip(snapshot(load: nil))
-        let set = try firstLoggedSet(in: decoded)
-        #expect(set.load == nil)
-        #expect(set.reps == 5)
+        #expect(try #require(error?.errorDescription).contains("profile"),
+                "who he is lives in user.md, not on this wire")
     }
 }

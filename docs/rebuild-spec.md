@@ -317,7 +317,7 @@ itself, so after phase 6 their only caller is `Target` and their `public`
 surface drops to `internal`. Nothing is dead before then: phase 1 is additive
 and every one of those readers is still live.
 
-**Phase 2 was declared closed on half of itself, on 2026-08-21.** The plan
+**Phase 2 was declared closed on half of itself, on 2026-08-21 — closed properly the same day as 2b.** The plan
 document was rebuilt; `TrainingSnapshot` was left at version 5 with
 `SnapshotProfile`, `bodyMetrics`, `baselines`, `lifterNotes` and a `log` keyed by
 weekday, and `SnapshotRoutine` with `startDate` and `completedAt`. LiftingKit was

@@ -1,112 +1,89 @@
 import Foundation
 
-/// Everything the app knows about one lifter, as a tree of plain values.
+/// Everything the app knows about the training, as a tree of plain values.
 ///
-/// This is the document the app writes when it backgrounds and Claude reads
-/// through the MCP server: who the lifter is, his bodyweight history, his
-/// strength baselines, and every plan with every set logged against it. Build
-/// one with the app's `SnapshotExporter`, encode it with `makeEncoder()`, and
-/// decode it with `makeDecoder()` so both clients agree on how dates are
-/// written. `version` identifies this format; `catalogVersion` records which
-/// generation of `exercises.json` the exercise IDs inside were selected from,
-/// so a reader can tell a snapshot built against older catalog data rather
-/// than silently reinterpreting it.
+/// **What it does.** Carries the record the other way from `PlanDocument`: the
+/// app writes one, the coach reads it and decides what to prescribe next. It
+/// holds what was asked for, what was done, and when it was exported — and
+/// nothing about the lifter himself, which lives in `user.md` where he can be
+/// described in words rather than fields.
+///
+/// **`exportedAt` is the honest half of a cache.** The phone is the only writer
+/// of the record, so a reliable export is always current — but nothing is
+/// reliable enough to go unstated, and the failure this guards against arrives
+/// looking like a fact: a coach told a block holds four sessions when it holds
+/// nine. Every tool that reads this reports the date, so a stale read is
+/// visible rather than convincing.
+///
+/// **A prescription is stated once.** A session carries the plan document's own
+/// `PlanDocumentSession`, not a second description of it. A prescription used to
+/// live in three vocabularies and two of them disagreed about how a superset is
+/// written; there are two now, and the round-trip suite is what says the store
+/// holds everything the document stated. Do not add a third.
+///
+/// **What it depends on.** `PlanDocumentSession`, `Mass`, `Distance`,
+/// `ExerciseID` and `PerformanceSource` from the layers above. Pure value types
+/// by design — the macOS server links this package and must never link
+/// SwiftData, so the mapping from the stored models lives in the app.
 ///
 /// Every weight is carried as the lifter entered it. Nothing here converts a
-/// load into a common unit — `Mass` compares exactly on representation, and a
+/// load into a common unit: `Mass` compares exactly on representation, and a
 /// snapshot that canonicalized would misreport what was actually lifted.
-/// Absent values stay absent: no profile, no rest prescription, and no load are
-/// all `nil`, never a substituted default.
-///
-/// Depends on: `Mass`, `ExerciseID`, and the taxonomies in `Domain`. Pure value
-/// types by design — the macOS server links this package and must never link
-/// SwiftData, so the mapping from the stored models lives in the app.
 public struct TrainingSnapshot: Codable, Hashable, Sendable {
 
     /// The format version this build writes. Bump it when a reader would need
     /// to behave differently, not for an additive field.
     ///
-    /// Version 4 renamed `weekOrdinal` to `blockOrdinal` everywhere the log and
-    /// the sessions name where a thing sits, following `PlanDocument` version 5
-    /// and the word the app, the coach and the lifter already use. Refused
-    /// rather than read loosely: a reader that took a missing `blockOrdinal` as
-    /// zero would file every set under a block that does not exist.
-    ///
-    /// Version 3 replaced `plans` — a tree of snapshot types that restated the
-    /// plan document in a second shape — with `routines`, which carry the
-    /// document itself, and `log`, a flat series of every set logged against
-    /// them. A version 2 reader would find neither key and report a lifter who
-    /// has never trained, which is why `init(from:)` refuses a version it does
-    /// not know before it looks at anything else.
-    ///
-    /// Version 2 dropped the per-set `rpe` a lifter used to be asked for.
-    public static let currentVersion = 5
+    /// **Version 6 is the rebuild.** The whole `profile` object is gone, and
+    /// with it `bodyMetrics`, `baselines`, `statedAt` and the avoid lists —
+    /// every one of them display-only in the app, and all of them better said
+    /// in prose the coach writes and reads. `routines` and their weekday-keyed
+    /// sessions are replaced by a flat `sessions` list, each stating which block
+    /// it belongs to; the weekday-keyed `log` and the separate `lifterNotes` are
+    /// replaced by `performances`, one per exercise per day, each holding its
+    /// own sets. That grain is the point: *how has bench gone* is a series of
+    /// performances, and this format used to answer it with a flat array of sets
+    /// that restated the plan, block, weekday and focus on every row.
+    public static let currentVersion = 6
 
     /// The format version of this document, as written.
     public let version: Int
-    /// The `ExerciseCatalogProviding.version` these exercise IDs came from.
+    /// When the phone wrote this. Reported by every tool that reads it, so a
+    /// coach reading yesterday's record knows that is what he is doing.
+    public let exportedAt: Date
+    /// Which generation of `exercises.json` the exercise IDs were selected from.
     public let catalogVersion: Int
-    /// When the snapshot was produced. A reader uses it to judge staleness.
-    public let generatedAt: Date
-    /// The lifter's standing facts. `nil` when the store holds no profile
-    /// record at all — an empty store is a normal state, not an error. A
-    /// profile that is present but says nothing about him is `nil` in every
-    /// field instead, which is a different and equally normal state.
-    public let profile: SnapshotProfile?
-    /// Bodyweight readings, oldest first. Empty when none were recorded.
-    public let bodyMetrics: [SnapshotBodyMetric]
-    /// Stated starting strength per exercise, oldest first.
-    public let baselines: [SnapshotBaseline]
-    /// Every training block the lifter has, oldest first, each carrying the
-    /// document the coach wrote it as.
-    public let routines: [SnapshotRoutine]
-    /// Every set ever logged, oldest first, flat. Each row names the block, the
-    /// week, the day and the movement it answers to, so what was prescribed for
-    /// it is a lookup into that block's document rather than a copy beside it.
-    public let log: [LoggedSetRecord]
-    /// What the lifter wrote about performing a movement, in his own words.
-    /// Empty when he has written nothing, which is nearly always.
-    public let lifterNotes: [LifterNote]
+    /// Every session the coach has prescribed, in no particular order — each
+    /// states which block it belongs to and where it sits in that block.
+    public let sessions: [SnapshotSession]
+    /// Every exercise performed, flat, each carrying its own sets and the
+    /// coordinates of the session it belongs to.
+    public let performances: [SnapshotPerformance]
 
     public init(
         version: Int = TrainingSnapshot.currentVersion,
+        exportedAt: Date,
         catalogVersion: Int,
-        generatedAt: Date,
-        profile: SnapshotProfile? = nil,
-        bodyMetrics: [SnapshotBodyMetric] = [],
-        baselines: [SnapshotBaseline] = [],
-        routines: [SnapshotRoutine] = [],
-        log: [LoggedSetRecord] = [],
-        lifterNotes: [LifterNote] = []
+        sessions: [SnapshotSession] = [],
+        performances: [SnapshotPerformance] = []
     ) {
         self.version = version
+        self.exportedAt = exportedAt
         self.catalogVersion = catalogVersion
-        self.generatedAt = generatedAt
-        self.profile = profile
-        self.bodyMetrics = bodyMetrics
-        self.baselines = baselines
-        self.routines = routines
-        self.log = log
-        self.lifterNotes = lifterNotes
+        self.sessions = sessions
+        self.performances = performances
     }
 
-    /// Decoding tolerates an absent section, so a snapshot from a lifter with
-    /// no plans yet — or one written before a section existed — reads as empty
-    /// rather than failing. The three version and timestamp fields are
-    /// required: a document that cannot say what it is or when it was made is
-    /// not a snapshot.
-    ///
-    /// **Any version but this one is refused whole, before a key is held
-    /// against it.** That tolerance of absent sections is exactly what makes the
-    /// check necessary: a version this build does not write would have moved or
-    /// renamed the section holding the training, and an absent section reads as
-    /// *empty*. The coach would be told, in well-formed data, that the lifter
-    /// has done nothing.
-    ///
-    /// **Older is refused too, which the write formats do not do.** A plan is an
-    /// archive and must be read forever; a snapshot is a cache the phone
-    /// rewrites whenever the record changes, so an old one is a stale file
-    /// rather than history — see `DocumentRefusal.snapshotVersionMismatch`.
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case version, exportedAt, catalogVersion, sessions, performances
+    }
+
+    /// **A snapshot is refused in both directions, and a plan is not.** A plan is
+    /// an archive: the coach wrote it and it is the only copy. A snapshot is a
+    /// cache the phone rewrites whenever the record changes, so an old one is
+    /// not history — it is a stale file that will be replaced the moment the app
+    /// opens. Reading one half-way would report a lifter who has trained less
+    /// than he has, which is the one failure that arrives looking like a fact.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         version = try container.decode(Int.self, forKey: .version)
@@ -114,17 +91,30 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
             throw DocumentRefusal.snapshotVersionMismatch(
                 version, understood: Self.currentVersion)
         }
+        try decoder.refuseUnknownKeys(besides: Set(CodingKeys.allCases.map(\.stringValue)))
+
+        exportedAt = try container.decode(Date.self, forKey: .exportedAt)
         catalogVersion = try container.decode(Int.self, forKey: .catalogVersion)
-        generatedAt = try container.decode(Date.self, forKey: .generatedAt)
-        profile = try container.decodeIfPresent(SnapshotProfile.self, forKey: .profile)
-        bodyMetrics = try container.decodeIfPresent(
-            [SnapshotBodyMetric].self, forKey: .bodyMetrics) ?? []
-        baselines = try container.decodeIfPresent(
-            [SnapshotBaseline].self, forKey: .baselines) ?? []
-        routines = try container.decodeIfPresent([SnapshotRoutine].self, forKey: .routines) ?? []
-        log = try container.decodeIfPresent([LoggedSetRecord].self, forKey: .log) ?? []
-        lifterNotes = try container.decodeIfPresent(
-            [LifterNote].self, forKey: .lifterNotes) ?? []
+        sessions = try container.decodeIfPresent([SnapshotSession].self, forKey: .sessions) ?? []
+        performances = try container.decodeIfPresent(
+            [SnapshotPerformance].self, forKey: .performances) ?? []
+    }
+
+    /// Every block the record knows about, in order.
+    public var blockOrdinals: [Int] {
+        Array(Set(sessions.map(\.blockOrdinal))).sorted()
+    }
+
+    /// The sessions of one block, in the order they are to be trained.
+    public func sessions(inBlock ordinal: Int) -> [SnapshotSession] {
+        sessions.filter { $0.blockOrdinal == ordinal }.sorted { $0.ordinal < $1.ordinal }
+    }
+
+    /// Every performance of one movement, oldest first — what a coach means by
+    /// *how has this lift gone*.
+    public func performances(of exerciseID: ExerciseID) -> [SnapshotPerformance] {
+        performances.filter { $0.exerciseID == exerciseID }
+            .sorted { $0.occurredAt < $1.occurredAt }
     }
 
     /// The encoder both clients use. ISO 8601 dates and sorted keys, so a
@@ -134,161 +124,5 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
 
     /// The matching decoder. Use it rather than a bare `JSONDecoder`, whose
     /// default date strategy would reject everything `makeEncoder()` writes.
-    /// Both are `DocumentCoding`'s, so the three formats cannot drift apart.
     public static func makeDecoder() -> JSONDecoder { DocumentCoding.makeDecoder() }
-}
-
-/// The lifter's standing facts: his equipment, his experience, his
-/// constraints, and when he wants to train.
-///
-/// Read it to know who a plan is for. It is a record of what he said, not a
-/// conclusion drawn from it — and the app asks him nothing, so everything here
-/// arrived through a `ProfileUpdate` Claude wrote after learning it.
-///
-/// **A fact nobody has stated is absent, never a default.** `experience` and
-/// `availableEquipment` are optional because "he has not said" and "he said full
-/// gym" are different answers, and a reader given the second when the first is
-/// true will plan confidently for a lifter who does not exist. Free text and
-/// lists say the same thing with an empty value, which is documented on each.
-///
-/// `availableEquipment` is what he can actually train with: the open set of
-/// equipment he said he owns, and bodyweight besides. It is not a tier, because
-/// a real gym is not one — "barbell and bands but no rack" is what a lot of
-/// people train in. It is `nil`, never `[]`, when nobody has said: an empty list
-/// would read as a lifter who can perform nothing, which is a much stronger
-/// claim than not knowing.
-///
-/// Depends on: `Mass`, `ExerciseID`, `MovementPattern`, `EquipmentType`,
-/// `ExperienceLevel`, `Weekday`.
-public struct SnapshotProfile: Codable, Hashable, Sendable {
-
-    /// How weights are shown and what new entries are entered in. It never
-    /// rewrites what was already logged. Always present: the app has to render
-    /// a number somehow, so this is a display setting rather than a claim about
-    /// the lifter.
-    public let displayUnit: MassUnit
-    /// Rough training age, as he described it. `nil` when he has not said.
-    public let experience: ExperienceLevel?
-    /// What he can train with: the equipment he said he owns, and bodyweight
-    /// besides. `nil` when he has not said — not known, as distinct from none.
-    public let availableEquipment: [EquipmentType]?
-    /// What he is training for, in his own words. Empty means he has not said.
-    public let goal: String
-    /// Injuries and limitations, in his own words. Empty means he has not said.
-    public let constraints: String
-    /// The last bodyweight entered, in the unit entered. `nil` until set.
-    public let bodyweight: Mass?
-    public let avoidedPatterns: [MovementPattern]
-    public let avoidedExercises: [ExerciseID]
-    /// How long he wants a session to run. `nil` means he has not said.
-    public let preferredDurationMinutes: Int?
-    /// The last `ProfileUpdate` this profile took in. A writer reads it to tell
-    /// an update still waiting in the folder from one already applied, which is
-    /// the difference between folding a new update onto it and re-imposing
-    /// facts the lifter may have changed since. `nil` when none has been
-    /// applied.
-    public let appliedProfileUpdateID: UUID?
-
-    /// When each of these facts was last stated, keyed as `update_profile`
-    /// names them. A fact absent from this was stated before the phone began
-    /// keeping dates, or never.
-    ///
-    /// **It replaces a single `updatedAt` for the whole profile**, which moved
-    /// whenever any one fact changed and so could not answer the question a
-    /// reader of `constraints` actually has: is this still true, or is it two
-    /// years old? No tool ever reported that timestamp, because a whole-record
-    /// date cannot honestly mean *when he said this*.
-    ///
-    /// `bodyweight` and the baselines are not here. Each is already a dated
-    /// series of its own, and a second date for them would be a second answer.
-    ///
-    /// Nothing here says whether a date is *old*. That is a training judgement.
-    public let statedAt: [String: Date]
-
-    public init(
-        displayUnit: MassUnit, experience: ExperienceLevel?,
-        availableEquipment: [EquipmentType]?, goal: String, constraints: String,
-        bodyweight: Mass?, avoidedPatterns: [MovementPattern],
-        avoidedExercises: [ExerciseID], preferredDurationMinutes: Int?, appliedProfileUpdateID: UUID? = nil,
-        statedAt: [String: Date] = [:]
-    ) {
-        self.displayUnit = displayUnit
-        self.experience = experience
-        self.availableEquipment = availableEquipment
-        self.goal = goal
-        self.constraints = constraints
-        self.bodyweight = bodyweight
-        self.avoidedPatterns = avoidedPatterns
-        self.avoidedExercises = avoidedExercises
-        self.preferredDurationMinutes = preferredDurationMinutes
-        self.appliedProfileUpdateID = appliedProfileUpdateID
-        self.statedAt = statedAt
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case displayUnit, experience, availableEquipment, goal, constraints, bodyweight
-        case avoidedPatterns, avoidedExercises, preferredDurationMinutes
-        case appliedProfileUpdateID, statedAt
-    }
-
-    /// **A profile with no dates on it is read as a profile with no dates**,
-    /// rather than as a malformed one. Every install that predates the phone
-    /// keeping them has exactly that, and so does a snapshot written by hand —
-    /// which this format is meant to stay writable by. The facts are still
-    /// there; only the record of when they were stated is missing, which is
-    /// what an empty map says.
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        displayUnit = try container.decode(MassUnit.self, forKey: .displayUnit)
-        experience = try container.decodeIfPresent(ExperienceLevel.self, forKey: .experience)
-        availableEquipment = try container.decodeIfPresent(
-            [EquipmentType].self, forKey: .availableEquipment)
-        goal = try container.decode(String.self, forKey: .goal)
-        constraints = try container.decode(String.self, forKey: .constraints)
-        bodyweight = try container.decodeIfPresent(Mass.self, forKey: .bodyweight)
-        avoidedPatterns = try container.decode([MovementPattern].self, forKey: .avoidedPatterns)
-        avoidedExercises = try container.decode([ExerciseID].self, forKey: .avoidedExercises)
-        preferredDurationMinutes = try container.decodeIfPresent(
-            Int.self, forKey: .preferredDurationMinutes)
-        appliedProfileUpdateID = try container.decodeIfPresent(
-            UUID.self, forKey: .appliedProfileUpdateID)
-        statedAt = try container.decodeIfPresent([String: Date].self, forKey: .statedAt) ?? [:]
-    }
-}
-
-/// One dated bodyweight reading.
-///
-/// Read the series to see a trend. `bodyweight` is `nil` rather than zero when
-/// a reading was not entered. Depends on: `Mass`.
-public struct SnapshotBodyMetric: Codable, Hashable, Sendable {
-    public let date: Date
-    /// The reading as entered, in the unit entered. `nil` when not recorded.
-    public let bodyweight: Mass?
-
-    public init(date: Date, bodyweight: Mass?) {
-        self.date = date
-        self.bodyweight = bodyweight
-    }
-}
-
-/// What the lifter stated he could do on one exercise before any history
-/// existed.
-///
-/// Read it as the starting point for a movement with no logged sets yet.
-/// `load` is `nil` for a bodyweight baseline rather than zero, so "no external
-/// weight" and "an empty bar" stay distinguishable. Depends on: `ExerciseID`,
-/// `Mass`.
-public struct SnapshotBaseline: Codable, Hashable, Sendable {
-    public let exerciseID: ExerciseID
-    /// The weight as entered, in the unit entered. `nil` means bodyweight.
-    public let load: Mass?
-    public let reps: Int
-    public let recordedAt: Date
-
-    public init(exerciseID: ExerciseID, load: Mass?, reps: Int, recordedAt: Date) {
-        self.exerciseID = exerciseID
-        self.load = load
-        self.reps = reps
-        self.recordedAt = recordedAt
-    }
 }

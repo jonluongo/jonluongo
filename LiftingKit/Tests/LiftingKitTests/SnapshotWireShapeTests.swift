@@ -1,63 +1,36 @@
-import Foundation
 import Testing
+import Foundation
 @testable import LiftingKit
 
-/// What the snapshot actually says on the wire.
+/// The snapshot as JSON: which keys are written, and which are never written.
 ///
-/// The app writes this file and a separate process reads it, so the shape is a
-/// contract rather than an implementation detail: a key renamed here is a key
-/// the coach stops seeing, silently. These pin the shape by reading the encoded
-/// JSON rather than by round-tripping Swift values, which would pass whatever
-/// the two sides happened to agree on.
-///
-/// **The shape changed in version 3.** A block used to be restated as a tree of
-/// snapshot types beside the plan document it came from — the same prescription
-/// written twice, and written differently: nested one side, flattened the other.
-/// A routine carries the document itself now, and every logged set is one row of
-/// a flat series that names where it sits.
+/// **This is about the file, not the API.** `TrainingSnapshotTests` asserts what
+/// survives a round trip through Swift; this asserts what a reader on the other
+/// end actually finds — because the reader on the other end is a separate
+/// process that was compiled at a different time, and a shape that only holds
+/// when both sides share a build is not a wire format.
 @Suite("Snapshot wire shape")
 struct SnapshotWireShapeTests {
 
     private static let instant = Date(timeIntervalSince1970: 1_700_000_000)
-    private static let routineID = UUID(uuidString: "3E7F7E2E-2B47-4C51-9E58-52C1D1F0A0B1")!
-    private static let bench = ExerciseID(rawValue: "barbell-bench-press")
-
-    // MARK: - Fixtures
-
-    private func document(
-        exercises: [PlanDocumentExercise] = [],
-        entries: [PlanDocumentEntry]? = nil,
-        notes: String? = nil
-    ) -> PlanDocument {
-        PlanDocument(
-            id: Self.routineID, catalogVersion: 5, generatedAt: Self.instant,
-            sessions: [PlanDocumentSession(
-                blockOrdinal: 1, ordinal: 1, focus: notes ?? "Push",
-                entries: entries ?? exercises.map(PlanDocumentEntry.exercise))])
-    }
-
-    private func logged(
-        reps: Int = 5, load: Mass? = Mass(value: 225, unit: .pounds),
-        durationSeconds: Int? = nil, distance: Distance? = nil
-    ) -> LoggedSetRecord {
-        LoggedSetRecord(
-            routineID: Self.routineID, blockOrdinal: 1, weekday: .monday, exerciseOrder: 0,
-            exerciseID: Self.bench, setIndex: 0, isWarmup: false, isCompleted: true,
-            completedAt: Self.instant, load: load, reps: reps,
-            durationSeconds: durationSeconds, distance: distance)
-    }
+    private let bench = ExerciseID(rawValue: "barbell-bench-press")
 
     private func snapshot(
-        document: PlanDocument? = nil, log: [LoggedSetRecord] = []
+        sessions: [SnapshotSession] = [], performances: [SnapshotPerformance] = []
     ) -> TrainingSnapshot {
         TrainingSnapshot(
-            catalogVersion: 5, generatedAt: Self.instant,
-            routines: [SnapshotRoutine(
-                document: document ?? self.document(),
-                startDate: Self.instant, completedAt: nil,
-                sessions: [SnapshotSession(
-                    blockOrdinal: 1, weekday: .monday, completedAt: Self.instant)])],
-            log: log)
+            exportedAt: Self.instant, catalogVersion: 5,
+            sessions: sessions, performances: performances)
+    }
+
+    private func session() -> SnapshotSession {
+        SnapshotSession(
+            prescription: PlanDocumentSession(
+                blockOrdinal: 1, ordinal: 1, focus: "Push",
+                entries: [.exercise(PlanDocumentExercise(
+                    exerciseID: bench, displayName: "Bench", restSeconds: 180,
+                    sets: [PlanDocumentSet(target: .repetitions(low: 5, high: nil))]))]),
+            generatedAt: Self.instant)
     }
 
     private func object(_ snapshot: TrainingSnapshot) throws -> [String: Any] {
@@ -65,196 +38,156 @@ struct SnapshotWireShapeTests {
         return try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
     }
 
-    private func firstLogRow(_ snapshot: TrainingSnapshot) throws -> [String: Any] {
-        let log = try #require(try object(snapshot)["log"] as? [[String: Any]])
-        return try #require(log.first)
+    private func text(_ snapshot: TrainingSnapshot) throws -> String {
+        let data = try TrainingSnapshot.makeEncoder().encode(snapshot)
+        return try #require(String(data: data, encoding: .utf8))
     }
 
-    // MARK: - A block is the document the coach wrote
+    // MARK: - The keys that exist
 
-    @Test("A routine carries the plan document itself, under 'document'")
-    func routineCarriesTheDocument() throws {
-        let written = document(
-            exercises: [PlanDocumentExercise(
-                exerciseID: Self.bench, displayName: "Barbell Bench Press",
-                restSeconds: 180,
-                sets: Array(repeating: PlanDocumentSet(
-                    target: .repetitions(low: 5, high: nil)), count: 3))],
-            notes: "Take the deload.")
-        let routines = try #require(
-            try object(snapshot(document: written))["routines"] as? [[String: Any]])
-        let carried = try #require(routines.first?["document"] as? [String: Any])
-
-        let sessions = try #require(carried["sessions"] as? [[String: Any]])
-        #expect(sessions.first?["focus"] as? String == "Take the deload.")
-        // The document's own version travels with it, so a reader knows which
-        // format the prescription inside was written in.
-        #expect(carried["version"] as? Int == PlanDocument.currentVersion)
-        #expect(routines.first?["startDate"] as? String == "2023-11-14T22:13:20Z")
+    @Test("The envelope states exactly five keys")
+    func theEnvelopeIsFiveKeys() throws {
+        let written = try object(snapshot(sessions: [session()]))
+        #expect(Set(written.keys) == ["version", "exportedAt", "catalogVersion",
+                                      "sessions", "performances"])
     }
 
-    @Test("A routine's document decodes back as the document it was")
-    func documentSurvivesTheWire() throws {
-        let written = document(entries: [.group(PlanDocumentGroup(
-            exercises: [
-                PlanDocumentExercise(
-                    exerciseID: Self.bench, displayName: "Barbell Bench Press",
-                    sets: [PlanDocumentSet(), PlanDocumentSet(), PlanDocumentSet()]),
-                PlanDocumentExercise(
-                    exerciseID: ExerciseID(rawValue: "barbell-curl"),
-                    displayName: "Barbell Curl",
-                    sets: [PlanDocumentSet(), PlanDocumentSet(), PlanDocumentSet()]),
-            ],
-            restSeconds: 90))])
-        let data = try TrainingSnapshot.makeEncoder().encode(snapshot(document: written))
-        let read = try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
-
-        // A superset survives as a group rather than as a marker on each member,
-        // because it is the coach's own document that came back.
-        #expect(read.routines.first?.document == written)
-    }
-
-    @Test("What the record knows, and not what it does not, sits beside the document")
-    func recordFactsSitBesideIt() throws {
-        let routines = try #require(try object(snapshot())["routines"] as? [[String: Any]])
-        let sessions = try #require(routines.first?["sessions"] as? [[String: Any]])
-
-        #expect(sessions.first?["blockOrdinal"] as? Int == 1)
-        // Calendar's numbering, 1 = Sunday, which is what `Weekday` is.
-        #expect(sessions.first?["weekday"] as? Int == Weekday.monday.rawValue)
-        #expect(sessions.first?["completedAt"] as? String == "2023-11-14T22:13:20Z")
-        // A block nothing has superseded states no closing date rather than a
-        // null one: the key is absent.
-        #expect(routines.first?["completedAt"] == nil)
-    }
-
-    // MARK: - The log is flat, and every row says where it sits
-
-    @Test("A logged set names the block, the week, the day, the movement and the set")
-    func logRowNamesItsPosition() throws {
-        let row = try firstLogRow(snapshot(log: [logged()]))
-
-        #expect(row["routineID"] as? String == Self.routineID.uuidString)
-        #expect(row["blockOrdinal"] as? Int == 1)
-        #expect(row["weekday"] as? Int == Weekday.monday.rawValue)
-        #expect(row["exerciseOrder"] as? Int == 0)
-        #expect(row["exerciseID"] as? String == "barbell-bench-press")
-        #expect(row["setIndex"] as? Int == 0)
-        #expect(row["isWarmup"] as? Bool == false)
-        #expect(row["isCompleted"] as? Bool == true)
-    }
-
-    @Test("A counted set writes reps, and no duration and no distance at all")
-    func countedSetWritesRepsOnly() throws {
-        let row = try firstLogRow(snapshot(log: [logged(reps: 5)]))
-
-        #expect(row["reps"] as? Int == 5)
-        // Absent rather than null or zero: a counted set was not held for no
-        // time and did not travel no distance.
-        #expect(row["durationSeconds"] == nil)
-        #expect(row["distance"] == nil)
-    }
-
-    @Test("A held set writes its seconds and reports no reps")
-    func heldSetWritesSeconds() throws {
-        let row = try firstLogRow(
-            snapshot(log: [logged(reps: 0, load: nil, durationSeconds: 34)]))
-
-        #expect(row["durationSeconds"] as? Int == 34)
-        #expect(row["reps"] as? Int == 0)
-        #expect(row["distance"] == nil)
-        #expect(row["load"] == nil)
-    }
-
-    @Test("A carried set writes a value and the unit it was carried in")
-    func carriedSetWritesItsUnit() throws {
-        let row = try firstLogRow(snapshot(log: [logged(
-            reps: 0, load: nil, distance: Distance(value: 40, unit: .metres))]))
-        let distance = try #require(row["distance"] as? [String: Any])
-
-        // The unit travels with the number. Two carries in different units are
-        // two facts, and a reader that assumed one would report a distance
-        // nobody covered.
-        #expect(distance["value"] as? Double == 40)
-        #expect(distance["unit"] as? String == "m")
-        #expect(row["durationSeconds"] == nil)
-    }
-
-    @Test("A load is written in the unit it was entered in, never converted")
-    func loadKeepsItsUnit() throws {
-        let row = try firstLogRow(snapshot(log: [logged(
-            load: Mass(value: 100, unit: .kilograms))]))
-        let load = try #require(row["load"] as? [String: Any])
-
-        #expect(load["value"] as? Double == 100)
-        #expect(load["unit"] as? String == "kg")
-    }
-
-    // MARK: - The format says which one it is
-
-    @Test("The snapshot states version 5, and a reader that finds another refuses it")
-    func versionIsStatedAndEnforced() throws {
-        #expect(TrainingSnapshot.currentVersion == 5)
-        #expect(try object(snapshot())["version"] as? Int == 5)
-
-        // Both directions: the shape moved, so neither an older nor a newer file
-        // can be read as though sections were merely absent.
-        for stated in [4, 6] {
-            let data = Data("""
-                {"version": \(stated), "catalogVersion": 5,
-                 "generatedAt": "2023-11-14T22:13:20Z"}
-                """.utf8)
-            #expect(throws: DocumentRefusal.self) {
-                try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
-            }
+    @Test("Nothing about the lifter is written, ever")
+    func theLifterIsNotOnThisWire() throws {
+        // Who he is, what he owns, what he avoids and what he weighs are prose
+        // in `user.md`. A field here would be a second place to say them, and
+        // the two would drift.
+        let written = try text(snapshot(sessions: [session()]))
+        for gone in ["profile", "bodyweight", "baselines", "avoidedPatterns",
+                     "availableEquipment", "experience", "constraints", "statedAt"] {
+            #expect(!written.contains(gone), "\(gone)")
         }
     }
 
-    @Test("A hand-written snapshot reads, so the shape is writable by something else")
-    func handWrittenSnapshotDecodes() throws {
+    @Test("A session writes the prescription itself, under one key")
+    func aSessionCarriesTheDocument() throws {
+        let sessions = try #require(
+            try object(snapshot(sessions: [session()]))["sessions"] as? [[String: Any]])
+        let first = try #require(sessions.first)
+
+        #expect(first["prescription"] != nil, "one description of a session, not two")
+        let prescription = try #require(first["prescription"] as? [String: Any])
+        #expect(prescription["blockOrdinal"] as? Int == 1)
+        #expect(prescription["focus"] as? String == "Push")
+        #expect(prescription["entries"] != nil)
+    }
+
+    @Test("A performance holds its sets, rather than the log holding one row per set")
+    func performancesNestTheirSets() throws {
+        let written = try object(snapshot(performances: [
+            SnapshotPerformance(
+                exerciseID: bench, occurredAt: Self.instant, blockOrdinal: 1, sessionOrdinal: 1,
+                sets: [
+                    SnapshotPerformedSet(setIndex: 0, reps: 5, completedAt: Self.instant),
+                    SnapshotPerformedSet(setIndex: 1, reps: 5, completedAt: Self.instant),
+                ])
+        ]))
+        let performances = try #require(written["performances"] as? [[String: Any]])
+        #expect(performances.count == 1, "one exercise on one day is one row")
+
+        let sets = try #require(performances.first?["sets"] as? [[String: Any]])
+        #expect(sets.count == 2)
+        #expect(performances.first?["exerciseID"] as? String == "barbell-bench-press")
+        #expect(performances.first?["blockOrdinal"] as? Int == 1)
+    }
+
+    // MARK: - The keys that are absent rather than null
+
+    @Test("An absent value is absent, not written as null")
+    func absenceIsNotWritten() throws {
+        // `null` is the app saying "no value" as a value, which is a different
+        // statement from having none. A reader cannot tell them apart later.
+        let written = try object(snapshot(performances: [
+            SnapshotPerformance(
+                exerciseID: bench, occurredAt: Self.instant,
+                sets: [SnapshotPerformedSet(setIndex: 0, completedAt: Self.instant)])
+        ]))
+        let performance = try #require((written["performances"] as? [[String: Any]])?.first)
+
+        #expect(performance["lifterNote"] == nil)
+        #expect(performance["blockOrdinal"] == nil, "a stated baseline has no session")
+
+        let set = try #require((performance["sets"] as? [[String: Any]])?.first)
+        for absent in ["load", "reps", "durationSeconds", "distance"] {
+            #expect(set[absent] == nil, "\(absent)")
+        }
+    }
+
+    @Test("A working set writes no warm-up marker")
+    func aWorkingSetWritesNothing() throws {
+        let written = try text(snapshot(performances: [
+            SnapshotPerformance(
+                exerciseID: bench, occurredAt: Self.instant,
+                sets: [SnapshotPerformedSet(setIndex: 0, reps: 5, completedAt: Self.instant)])
+        ]))
+        #expect(!written.contains("isWarmup"))
+    }
+
+    // MARK: - Dates
+
+    @Test("Dates are ISO 8601, so a Mac and a phone cannot disagree about an instant")
+    func datesAreISO8601() throws {
+        let written = try text(snapshot(sessions: [session()]))
+        #expect(written.contains("\"exportedAt\":\"2023-11-14T22:13:20Z\"")
+            || written.contains("\"exportedAt\" : \"2023-11-14T22:13:20Z\""))
+    }
+
+    // MARK: - Writable by something else
+
+    @Test("A hand-written snapshot reads, so the shape is not a private arrangement")
+    func aHandWrittenSnapshotReads() throws {
         let data = Data("""
             {
-              "version": 5,
+              "version": 6,
+              "exportedAt": "2023-11-14T22:13:20Z",
               "catalogVersion": 5,
-              "generatedAt": "2023-11-14T22:13:20Z",
-              "routines": [{
-                "document": {
-                  "version": 6, "id": "3E7F7E2E-2B47-4C51-9E58-52C1D1F0A0B1",
-                  "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
-                  "sessions": [{"blockOrdinal": 1, "ordinal": 1, "focus": "Push",
-                    "entries": [
-                    {"exerciseID": "barbell-bench-press", "displayName": "Bench",
-                     "sets": [{"target": "5"}]}]}]
+              "sessions": [{
+                "prescription": {
+                  "blockOrdinal": 1, "ordinal": 1, "focus": "Push",
+                  "entries": [{"exerciseID": "barbell-bench-press",
+                               "displayName": "Bench",
+                               "sets": [{"target": "5"}]}]
                 },
-                "startDate": "2023-11-14T22:13:20Z",
-                "sessions": [{"blockOrdinal": 1, "weekday": 2}]
+                "generatedAt": "2023-11-14T22:13:20Z"
               }],
-              "log": [{
-                "routineID": "3E7F7E2E-2B47-4C51-9E58-52C1D1F0A0B1",
-                "blockOrdinal": 1, "weekday": 2, "exerciseOrder": 0,
-                "exerciseID": "barbell-bench-press", "setIndex": 0,
-                "isWarmup": false, "isCompleted": true,
-                "completedAt": "2023-11-14T22:13:20Z", "reps": 5
+              "performances": [{
+                "exerciseID": "barbell-bench-press",
+                "occurredAt": "2023-11-14T22:13:20Z",
+                "source": "logged",
+                "blockOrdinal": 1, "sessionOrdinal": 1,
+                "sets": [{"setIndex": 0, "reps": 5,
+                          "load": {"value": 225, "unit": "lb"},
+                          "completedAt": "2023-11-14T22:13:20Z"}]
               }]
             }
             """.utf8)
 
         let read = try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
-        #expect(read.routines.count == 1)
-        #expect(read.routines.first?.document.sessions.first?.focus == "Push")
-        #expect(read.routines.first?.sessions.first?.completedAt == nil)
-        #expect(read.log.count == 1)
-        #expect(read.log.first?.reps == 5)
-        #expect(read.log.first?.durationSeconds == nil)
+
+        #expect(read.sessions.count == 1)
+        #expect(read.sessions.first?.prescription.focus == "Push")
+        #expect(read.sessions.first?.isFinished == false)
+        #expect(read.performances.count == 1)
+        #expect(read.performances.first?.sets.first?.reps == 5)
+        #expect(read.performances.first?.sets.first?.load == Mass(value: 225, unit: .pounds))
     }
 
-    @Test("A lifter with no blocks writes no routines and no log, rather than failing")
-    func emptyRecordIsANormalDocument() throws {
-        let empty = TrainingSnapshot(catalogVersion: 5, generatedAt: Self.instant)
-        let data = try TrainingSnapshot.makeEncoder().encode(empty)
-        let read = try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
-
-        #expect(read.routines.isEmpty)
-        #expect(read.log.isEmpty)
+    @Test("An unknown key inside a performance is refused, naming it")
+    func anUnknownKeyInsideAPerformanceIsRefused() throws {
+        let data = Data("""
+            {"version": 6, "exportedAt": "2023-11-14T22:13:20Z", "catalogVersion": 5,
+             "performances": [{"exerciseID": "barbell-bench-press",
+                               "occurredAt": "2023-11-14T22:13:20Z",
+                               "weekday": 2, "sets": []}]}
+            """.utf8)
+        let error = #expect(throws: DocumentRefusal.self) {
+            try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
+        }
+        #expect(try #require(error?.errorDescription).contains("weekday"))
     }
 }

@@ -81,21 +81,15 @@ private let instant = Date(timeIntervalSince1970: 1_700_000_000)
 
 private func makeSnapshot(catalogVersion: Int = 5) -> TrainingSnapshot {
     TrainingSnapshot(
+        exportedAt: instant,
         catalogVersion: catalogVersion,
-        generatedAt: instant,
-        profile: SnapshotProfile(
-            displayUnit: .pounds, experience: .intermediate,
-            availableEquipment: [EquipmentType(rawValue: "barbell")],
-            goal: "Bigger bench", constraints: "Left shoulder is touchy",
-            bodyweight: Mass(value: 182, unit: .pounds),
-            avoidedPatterns: [], avoidedExercises: [],
-            preferredDurationMinutes: 60, statedAt: ["goal": Date(timeIntervalSince1970: 1_700_000_000)]
-        ),
-        baselines: [
-            SnapshotBaseline(
+        performances: [
+            SnapshotPerformance(
                 exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
-                load: Mass(value: 225, unit: .pounds), reps: 5, recordedAt: instant
-            )
+                occurredAt: instant, blockOrdinal: 1, sessionOrdinal: 1,
+                sets: [SnapshotPerformedSet(
+                    setIndex: 0, load: Mass(value: 225, unit: .pounds), reps: 5,
+                    completedAt: instant)])
         ]
     )
 }

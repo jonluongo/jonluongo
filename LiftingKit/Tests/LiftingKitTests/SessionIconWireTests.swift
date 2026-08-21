@@ -156,19 +156,20 @@ struct SessionIconWireTests {
             id: UUID(), catalogVersion: 5, generatedAt: Self.instant,
             sessions: [PlanDocumentSession(
                 blockOrdinal: 1, ordinal: 1, focus: "Push", icon: .strength)])
+        let prescribed = try #require(document.sessions.first)
         let snapshot = TrainingSnapshot(
-            catalogVersion: 5, generatedAt: Self.instant,
-            routines: [SnapshotRoutine(document: document, startDate: Self.instant)])
+            exportedAt: Self.instant, catalogVersion: 5,
+            sessions: [SnapshotSession(
+                prescription: prescribed, generatedAt: Self.instant)])
 
         let data = try TrainingSnapshot.makeEncoder().encode(snapshot)
         let object = try #require(
             try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let routines = try #require(object["routines"] as? [[String: Any]])
-        let plan = try #require(routines.first?["document"] as? [String: Any])
-        let days = try #require(plan["sessions"] as? [[String: Any]])
-        #expect(days.first?["icon"] as? String == "strength")
+        let sessions = try #require(object["sessions"] as? [[String: Any]])
+        let plan = try #require(sessions.first?["prescription"] as? [String: Any])
+        #expect(plan["icon"] as? String == "strength")
 
         let read = try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
-        #expect(read.routines.first?.document.sessions.first?.icon == .strength)
+        #expect(read.sessions.first?.prescription.icon == .strength)
     }
 }
