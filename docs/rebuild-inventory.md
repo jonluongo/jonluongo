@@ -133,7 +133,7 @@ Keep 1 · Rewrite 5 · Delete 6 · Add 1
 | `SnapshotOutbox.swift` | 125 | **Rewrite** | Three triggers and a background assertion |
 | `StatedFacts.swift` | 46 | **Delete** | Dies with `ProfileStatement` |
 | `StoreUpgrade.swift` | 43 | **Delete** | The store resets; nothing to carry |
-| `UbiquitousDocumentWatcher.swift` | 134 | **Delete** | 420 lines across two files for *a file appeared in a folder*; one is enough with `profile-update.json` gone |
+| `UbiquitousDocumentWatcher.swift` | 134 | **Keep** | **Verdict reversed on 2026-08-21, after reading it.** It is `NSMetadataQuery` plumbing — iCloud advertises an item before its contents arrive, so it requests the download and announces only once the item reports current — while `DocumentInbox` handles refusals and application. Two jobs; merging them makes one 420-line file doing both. |
 
 Keep 3 · Rewrite 10 · Delete 8
 
@@ -369,13 +369,16 @@ carry an exercise records. The typed `Target` answers that from storage, so the
 inference has nothing left to do. `PrescriptionSummary` and `SetRowPrescription`
 survive; the other five go.
 
-**Four files for one job, twice.** `ExerciseTrend` folds into
-`PerformanceHistory` — `PerformedExercise` *is* the reduction both were doing.
-`UbiquitousDocumentWatcher` folds into `DocumentInbox` — 420 lines across two
-files for *a file appeared in a folder*, with `profile-update.json` gone.
-`DayBlueprint` folds into `RoutineBlueprint`, whose tree is two levels
-shallower now. The value-type seam stays: it is what stops a plan generator
-being added.
+**Files for one job, merged.** `ExerciseTrend` folds into `PerformanceHistory` —
+`PerformedExercise` *is* the reduction both were doing. `DayBlueprint` folds into
+`RoutineBlueprint`, and both were then deleted outright once it turned out the
+blueprint was built and read inside `PlanImporter` and crossed no boundary at all.
+
+**One merge in this pass was wrong, and reading the file is what said so.**
+`UbiquitousDocumentWatcher` was to fold into `DocumentInbox`. It is
+`NSMetadataQuery` plumbing and the inbox is refusal handling; merging them makes
+a 420-line file doing two jobs. **A line count is evidence that something might
+be wrong, never that it is** — and this pass was argued from line counts.
 
 **`Style.swift` splits, and CLAUDE.md changes with it.** 512 lines and nine
 declarations — `Palette`, a `UIColor` extension, a `Font` extension, `Spacing`,
