@@ -43,7 +43,8 @@ public struct Exercise: Codable, Hashable, Sendable, Identifiable {
 
     public let id: ExerciseID
     public let displayName: String
-    /// Alternate names, used by `ExerciseResolver` and search.
+    /// Alternate names, read by `ExerciseCatalog.search` — which is what
+    /// `list_exercises` matches a coach's free text against.
     public let aliases: [String]
     public let primaryMuscles: [MuscleGroup]
     public let secondaryMuscles: [MuscleGroup]

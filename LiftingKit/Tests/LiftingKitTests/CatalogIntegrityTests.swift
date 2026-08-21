@@ -137,22 +137,19 @@ struct CatalogIntegrityTests {
         }
     }
 
-    @Test("Every catalog entry resolves to itself by display name")
-    func everyEntryResolves() throws {
-        let loaded = try loaded()
-        let resolver = ExerciseResolver(catalog: loaded)
-        for exercise in loaded.all {
-            let resolved = resolver.resolve(exercise.displayName)
-            #expect(resolved?.id == exercise.id, "\(exercise.id) did not resolve to itself")
-        }
-    }
-
-    /// No alias string may be claimed by more than one entry. A shared alias
-    /// is exactly how the resolver's `.alias` tier — a confidence callers
-    /// treat as safe to persist — can point at the wrong exercise; this is
-    /// the same class of bug that let "upright barbell row" resolve to a
-    /// dumbbell exercise and "decline barbell bench press" collide with
-    /// "barbell-incline-bench-press"'s bad enrichment.
+    /// No alias string may be claimed by more than one entry.
+    ///
+    /// **This outlived the resolver it was written for, and the reason
+    /// changed with it.** It used to guard the `.alias` tier — a confidence
+    /// callers treated as safe to persist — from pointing at the wrong
+    /// exercise. Nothing resolves free text to an `ExerciseID` any more. What
+    /// still reads aliases is `ExerciseCatalog.search`, which `list_exercises`
+    /// exposes as its `query`, so a shared alias now means the coach asks for
+    /// one movement and is handed two candidates with no way to tell which he
+    /// meant. That is a worse catalog rather than a wrong key — but it is the
+    /// same defect that let "upright barbell row" match a dumbbell exercise and
+    /// "decline barbell bench press" collide with `barbell-incline-bench-press`,
+    /// and it is still worth refusing.
     @Test("No alias is claimed by more than one catalog entry")
     func aliasesAreUnique() throws {
         var owner: [String: ExerciseID] = [:]

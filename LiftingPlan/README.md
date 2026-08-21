@@ -59,8 +59,10 @@ snapshot file and must never link SwiftData.
   and the shared `RestTimerModel`.
 - **`LiftingKit` → `Domain/`** — pure value types: `Mass`, `RepRange`,
   `Exercise`, the taxonomies. Foundation only.
-- **`LiftingKit` → `Catalog/`** — `ExerciseCatalog` (the lego box and the query
-  surface) and `ExerciseResolver` (free text → a real `ExerciseID`).
+- **`LiftingKit` → `Catalog/`** — `ExerciseCatalog`: the bundled reference data,
+  and the query surface `list_exercises` searches. Free text never becomes an
+  `ExerciseID` here — the catalog offers candidates and the coach sends one back
+  verbatim.
 - **`Store/`** — SwiftData `@Model` types: `UserProfile`, `TrainingPlan`,
   `TrainingWeek`, `WorkoutDay`, `PlannedExercise`, `LoggedSet`,
   `StrengthBaseline`, `BodyMetric`. **These keep their original names on
