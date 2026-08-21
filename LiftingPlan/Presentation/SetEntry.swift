@@ -53,16 +53,31 @@ enum SetEntry {
 
     /// What the work field shows for a counted set. Zero shows as nothing: the
     /// row is offering a place to type, not reporting that he did none.
-    static func text(forReps reps: Int) -> String {
-        reps > 0 ? String(reps) : ""
+    static func text(forReps reps: Int?) -> String {
+        reps.map(String.init) ?? ""
     }
 
-    /// The rep count a typed string means. Non-digits are dropped rather than
-    /// refused, so a stray character does not swallow the number around it, and
-    /// an empty field is zero — `reps` is not optional, and a counted set with
-    /// nothing in the field has no reps rather than an unknown number of them.
-    static func reps(from text: String) -> Int {
-        Int(text.filter(\.isNumber)) ?? 0
+    /// The rep count a typed string means, or `nil` for an empty field.
+    ///
+    /// Non-digits are dropped rather than refused, so a stray character does not
+    /// swallow the number around it. **An empty field is `nil` and not zero.**
+    /// It used to be zero because `reps` was not optional, which made a set he
+    /// ticked without typing indistinguishable from one he did none of — and the
+    /// coach read a completed working set at `185 lb × 0`.
+    static func reps(from text: String) -> Int? {
+        let digits = text.filter(\.isNumber)
+        return digits.isEmpty ? nil : Int(digits)
+    }
+
+    /// What the work field shows for a set already in the record, in whichever
+    /// measure it was prescribed in. One field, one measure, chosen by the
+    /// prescription and never by what happens to be stored.
+    static func workText(of record: PerformedSet, measure: WorkMeasure) -> String {
+        switch measure {
+        case .repetitions: text(forReps: record.reps)
+        case .time: text(forSeconds: record.durationSeconds)
+        case .distance: text(for: record.distance)
+        }
     }
 
     /// What the work field shows for a hold, in seconds, or nothing when it was
