@@ -123,7 +123,11 @@ private struct SessionRow: View {
             DisclosureChevron()
         }
         .padding(.horizontal, PanelMetrics.edge)
-        .padding(.vertical, Spacing.standard)
+        // **Tall enough not to read as a pill.** One row in a panel with the
+        // app's corner radius on it is wider than it is high, and a rounded
+        // rectangle that short stops looking like a panel and starts looking
+        // like a capsule. The radius is right; the height was not.
+        .padding(.vertical, Spacing.major)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             "\(SessionListing.sessionTitle(session)), \(standing.spoken)")
