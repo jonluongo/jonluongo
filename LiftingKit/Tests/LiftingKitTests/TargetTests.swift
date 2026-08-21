@@ -208,3 +208,44 @@ struct TargetTests {
     }
 
 }
+
+/// The two forms a target is written in, and which is for what.
+///
+/// **A placeholder is not a wire value.** `shorthand` writes the unit because
+/// `plan.json` has nowhere else to put it. A field has a unit marker beside it,
+/// so drawing the wire form there says it twice — `45s s` for a plank, `40m m`
+/// for a carry. Reps hid it: they have no unit in either form.
+@Suite("A target's figures, apart from its unit")
+struct TargetFiguresTests {
+
+    @Test("A hold's figures carry no unit")
+    func aHoldDropsItsUnit() {
+        #expect(Target.time(low: 45, high: nil).shorthand == "45s")
+        #expect(Target.time(low: 45, high: nil).figures == "45")
+        #expect(Target.time(low: 30, high: 60).figures == "30-60")
+    }
+
+    @Test("A carry's figures carry no unit, in either unit")
+    func aCarryDropsItsUnit() {
+        #expect(Target.distance(low: 40, high: nil, unit: .metres).shorthand == "40m")
+        #expect(Target.distance(low: 40, high: nil, unit: .metres).figures == "40")
+        #expect(Target.distance(low: 40, high: nil, unit: .yards).figures == "40",
+                "the unit is the marker's, whichever it is")
+    }
+
+    @Test("A count reads the same either way, which is why this went unnoticed")
+    func aCountIsUnchanged() {
+        #expect(Target.repetitions(low: 8, high: 12).figures == "8-12")
+        #expect(Target.repetitions(low: 8, high: 12).shorthand == "8-12")
+        #expect(Target.repetitionsToFailure.figures == "AMRAP")
+    }
+
+    @Test("The wire form still carries its unit, because the file has nowhere else")
+    func theWireIsUntouched() {
+        // If this ever stops being true, a plan round-trips a hold as a count.
+        #expect(Target(shorthand: Target.time(low: 45, high: nil).shorthand)
+            == .time(low: 45, high: nil))
+        #expect(Target(shorthand: Target.distance(low: 40, high: nil, unit: .metres).shorthand)
+            == .distance(low: 40, high: nil, unit: .metres))
+    }
+}

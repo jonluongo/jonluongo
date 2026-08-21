@@ -150,6 +150,31 @@ extension Target: CustomStringConvertible {
         }
     }
 
+    /// The span alone, with no unit — `8-12`, `AMRAP`, `45`, `40`.
+    ///
+    /// **`shorthand` is the wire form and carries its own unit; this is for a
+    /// field that has a unit beside it.** A plank prescribed for forty-five
+    /// seconds drew `45s` in the entry field with the row's own `s` marker next
+    /// to it — `45s s` — because the placeholder was taken from the form written
+    /// into `plan.json`. A carry read `40m m` the same way. The counted case
+    /// never showed it: reps have no unit in either form, so the one measure
+    /// anybody had looked at was the one that could not go wrong.
+    ///
+    /// The unit belongs to whatever draws it, exactly as a load's does: the
+    /// field says `185` and the marker says `lb`.
+    public var figures: String {
+        switch self {
+        case .repetitions(let low, let high):
+            Self.span("\(low)", high.map(String.init))
+        case .repetitionsToFailure:
+            "AMRAP"
+        case .time(let low, let high):
+            Self.span("\(low)", high.map(String.init))
+        case .distance(let low, let high, _):
+            Self.span(Self.number(low), high.map(Self.number))
+        }
+    }
+
     public var description: String { shorthand }
 
     private static func span(_ low: String, _ high: String?) -> String {

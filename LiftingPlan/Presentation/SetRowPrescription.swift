@@ -53,7 +53,7 @@ struct SetRowPrescription {
     /// What the empty work field shows: the target as the coach wrote it —
     /// `8-12`, `45s`, `40m`, `AMRAP`.
     var workPlaceholder: String {
-        if let target = slot.planned?.target { return target.shorthand }
+        if let target = slot.planned?.target { return target.figures }
         return lastRepsThisSession
     }
 
