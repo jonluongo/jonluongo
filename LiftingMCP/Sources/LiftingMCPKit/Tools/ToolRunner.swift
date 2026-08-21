@@ -67,22 +67,41 @@ public struct ToolRunner: Sendable {
     public enum DeliveryProspect: Sendable, Equatable {
         /// A ubiquity item iCloud has taken or is taking.
         case onItsWay
-        /// A ubiquity item iCloud will not take, with its own reason.
-        case refused(String)
         /// Not a ubiquity item at all: a plain folder, or a container this Mac
         /// is not syncing. Nothing will carry it anywhere.
         case notShared
     }
 
-    /// The real answer, read off the file's own iCloud state.
+    /// Whether the folder this plan was written into is one iCloud carries.
+    ///
+    /// **It no longer claims to know whether the plan was delivered, because at
+    /// the moment of the write nothing does.** This used to read the file's
+    /// uploading error immediately after writing and report a refusal from
+    /// whatever it found — so every successful write told the coach *iCloud will
+    /// not take it, so the phone will not see this plan*. It was crying wolf on
+    /// a loop that was working, and `decided.md` recorded the loop as broken on
+    /// the strength of it.
+    ///
+    /// **Measured, rather than reasoned about.** For the first seconds after a
+    /// write the file reads *not uploaded, not uploading, error present* — that
+    /// is what iCloud looks like before it picks a file up, not what a refusal
+    /// looks like. The same file reads `isUploaded: true` with no error a few
+    /// seconds later. Two intermediate fixes failed here: waiting two seconds
+    /// was not long enough, and polling a single `URL` returned its first cached
+    /// answer twenty times, which looks like patience and is one reading.
+    ///
+    /// So it answers only what is true immediately and stays true: whether this
+    /// is a ubiquity container at all. That is the fault worth naming — a plan
+    /// written to a plain folder is going nowhere, permanently, and no waiting
+    /// changes it. A real upload failure reaches the user on his own phone,
+    /// where `SnapshotOutbox` reports it against a file iCloud has actually had
+    /// time to refuse.
     @Sendable
     public static func systemDelivery(at path: String) -> DeliveryProspect {
-        let url = URL(filePath: path)
-        guard let values = try? url.resourceValues(forKeys: [
-            .isUbiquitousItemKey, .ubiquitousItemUploadingErrorKey,
-        ]), values.isUbiquitousItem == true else { return .notShared }
-        guard let error = values.ubiquitousItemUploadingError else { return .onItsWay }
-        return .refused(error.localizedDescription)
+        guard let values = try? URL(filePath: path).resourceValues(
+            forKeys: [.isUbiquitousItemKey]), values.isUbiquitousItem == true
+        else { return .notShared }
+        return .onItsWay
     }
 
     /// Runs the named tool. An unknown name is a failure naming the tools that

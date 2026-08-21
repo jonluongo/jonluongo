@@ -89,6 +89,13 @@ swift build --package-path LiftingMCP -Xswiftc -warnings-as-errors
 Device builds sign with `DEVELOPMENT_TEAM = GKMVG76BQR` and need
 `-allowProvisioningUpdates`.
 
+**iCloud delivery cannot be judged at the moment of a write.** For the first
+seconds a new file reads *not uploaded, not uploading, error present* — which is
+what iCloud looks like before it picks the file up, not a refusal. Anything that
+asks then and reports the answer will tell the user his setup is broken while it
+works. Ask about a file iCloud has had time to decide on, or report only what is
+knowable immediately: whether the folder is a ubiquity container at all.
+
 **A quiet error list is not a green build.** `xcodebuild` fails fast: it stops
 after a batch of files, so grepping its output for errors reports only what it
 reached. Twice in one session a phase was declared finished on that signal while

@@ -209,6 +209,37 @@ they are until there is a tested migration.
 | A right-aligned value that wraps | `Add size to my chest and back without losing / the squat`, the tail stranded against the right edge. `FactRow` offers the one-line arrangement first and the wrapping one when it does not fit. |
 
 ## Settled by investigation
+**The loop reaches the Mac. It always did, and the tool was crying wolf.** This
+file recorded it as broken — *`brctl status` reports `SYNC DISABLED (app not
+installed)`* — and every part of that was checked on 2026-08-21 and is wrong.
+The container `iCloud~com~jonluongo~LiftingPlan` exists on the Mac with its
+`Documents` folder; `brctl status iCloud.com.jonluongo.LiftingPlan` reports
+`client:idle`, `caught-up`, `appuninstalled:(null)` and a `last-sync` stamped
+seconds after a write. The *SYNC DISABLED* lines belong to other containers in
+the same output. A plan written into the real container reads `isUploaded: true`
+with no error moments later.
+
+**What was actually broken was the reporting.** `write_plan` read the file's
+uploading error the instant after writing it and reported a refusal from
+whatever it found — so every successful write told the coach *iCloud will not
+take it, so the phone will not see this plan*. For the first seconds after a
+write the file reads *not uploaded, not uploading, error present*: that is what
+iCloud looks like **before** it picks a file up, not what a refusal looks like.
+
+**Delivery is not knowable at the moment of the write, so the tool stopped
+claiming it.** It reports the one fault that is knowable and permanent — the
+folder not being a ubiquity container at all — and a genuine upload failure
+reaches the user on his own phone, where `SnapshotOutbox` judges a file iCloud
+has had time to refuse. Two intermediate fixes failed first, both worth knowing:
+waiting two seconds is not long enough, and polling a single `URL` returns its
+first cached answer however many times you ask, which looks like patience and is
+one reading.
+
+**Quota is a real constraint and a separate one.** `brctl quota` reports about
+117 KB free, and `com.apple.clouddocs` has multi-megabyte Desktop uploads failing
+with *Quota exceeded*. That has not stopped this app's own container syncing —
+its documents are one to seven kilobytes — but it is the thing to watch.
+
 **The rest no longer ends when the session screen closes, and the reasoning that
 said it should was half right.** *Leaving the session ends the rest* was recorded
 because the bar, the ±15 and the skip all lived on that screen, so a rest running

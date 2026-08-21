@@ -129,14 +129,9 @@ extension ToolRunner {
         switch prospect {
         case .onItsWay:
             "Written. The app imports it the next time it is opened or comes forward."
-        case .refused(let reason):
-            "Written, but iCloud will not take it, so the phone will not see this plan. "
-                + "iCloud says: \(reason)"
         case .notShared:
-            "Written to a folder iCloud is not syncing, so the phone will not see this plan. "
-                + "Check that this Mac syncs the app's container — `brctl status` says "
-                + "\"SYNC DISABLED (app not installed)\" when it does not — and that the "
-                + "account has room left."
+            "Written to a folder iCloud is not syncing, so the phone will not see this "
+                + "plan. Point the server at the app's iCloud container."
         }
     }
 
