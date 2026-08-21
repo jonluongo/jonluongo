@@ -84,8 +84,14 @@ public struct PlanDocumentExercise: Codable, Hashable, Sendable {
     /// wherever the coach stated none, at both ends of the wire.
     public let displayName: String
     /// How long to rest after this movement. `nil` when the coach did not say.
-    /// Inside a group this is the rest after *this* member, which is how a
-    /// round's rest reaches the last one and nothing at all reaches the others.
+    ///
+    /// **An exercise inside a group may not state one, and is refused if it
+    /// does** — see `DocumentRefusal.restInsideGroup`. A group is performed as
+    /// rounds and the rest is taken after the round, so a rest on one member
+    /// alone is a rest nobody takes. The group states it once. What the *store*
+    /// holds is the flattened form of that — nothing after the early members,
+    /// the round's rest after the last — which is the importer's business and
+    /// not this format's.
     public let restSeconds: Int?
     /// What the coach wants said about the movement — a cue, a tempo, what to
     /// watch. `nil` when there is none.

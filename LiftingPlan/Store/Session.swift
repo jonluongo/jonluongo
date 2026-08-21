@@ -57,7 +57,15 @@ final class Session {
     @Relationship(deleteRule: .cascade, inverse: \PlannedExercise.session)
     var plannedExercises: [PlannedExercise]? = []
 
-    @Relationship(deleteRule: .cascade, inverse: \PerformedExercise.session)
+    /// **Nullify, not cascade, and the difference matters more here than
+    /// anywhere else in the store.** A prescription is the coach's and can be
+    /// rewritten; the log is what actually happened and cannot be recovered.
+    /// Cascading would make deleting a session destroy the training it records.
+    /// *Prescriptions are permanent* is a rule written in prose, and a delete
+    /// rule is a guarantee written in the schema — this one has to point the
+    /// safe way regardless. A performed row carries its own `exerciseID` and
+    /// `occurredAt`, so it stays readable with no session behind it.
+    @Relationship(deleteRule: .nullify, inverse: \PerformedExercise.session)
     var performedExercises: [PerformedExercise]? = []
 
     init(

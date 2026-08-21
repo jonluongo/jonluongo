@@ -317,6 +317,16 @@ itself, so after phase 6 their only caller is `Target` and their `public`
 surface drops to `internal`. Nothing is dead before then: phase 1 is additive
 and every one of those readers is still live.
 
+**Phase 2 was declared closed on half of itself, on 2026-08-21.** The plan
+document was rebuilt; `TrainingSnapshot` was left at version 5 with
+`SnapshotProfile`, `bodyMetrics`, `baselines`, `lifterNotes` and a `log` keyed by
+weekday, and `SnapshotRoutine` with `startDate` and `completedAt`. LiftingKit was
+green, which is what made it look finished — the snapshot embeds the *whole* plan
+document rather than its parts, so nothing about it failed to compile. **A layer
+is not done because it builds.** Reopened as 2b below; the lesson is that
+"green" answers a different question from "rebuilt", and only the second one was
+asked for.
+
 **Phase 2 — Documents.** `PlanDocument` v6, `TrainingSnapshot` v6,
 `SetPrescription`, `SnapshotRoutine`, the new refusal cases, transport paths.
 Delete the four profile-document files. The round-trip suite is the gate.
