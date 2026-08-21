@@ -392,3 +392,14 @@ xcodebuild -project LiftingPlan.xcodeproj -scheme LiftingPlan \
   -destination 'platform=iOS Simulator,name=iPhone 16' test 2>&1 \
   | grep -E "Test run with|✘|error:"
 ```
+
+**And the count itself is not proof on a single run.** On 2026-08-21 the app
+suite reported `Test run with 135 tests in 26 suites passed` — twenty-nine tests
+short, the same number of suites, and *passed*. The four runs either side of it,
+on unchanged sources, all reported 164. Why is not known: it is not a failure,
+not a crash, and nothing in the output says anything is missing.
+
+So a green line with a plausible count is not evidence that everything ran —
+**compare the count against the last known total**, and re-run when it has
+dropped. A number that has gone down while the code has not is the only signal
+there is, and it looks exactly like success.

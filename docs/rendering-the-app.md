@@ -136,6 +136,13 @@ session clock drawn twice, and *Finish workout* in sentence case were all legibl
 around the alert. Reaching for `erase` first costs the store and every seeded
 plan with it — read what you have before deciding you need a clean device.
 
+**A superset needs a plan that states one.** Nothing in the app makes a group —
+the coach does — so the whole feature is invisible unless `write_plan` is given
+an `entries[].group` of two or more exercises with the round's `restSeconds` on
+the entry. It went unrendered for a long time for exactly this reason: every
+seeded plan was a list of plain exercises, so the eyebrow, the rule down the
+panel edge and the round order had tests and no screenshot.
+
 **The store outlives the build.** Installing a new build keeps the old
 container, so a session you logged three firings ago is still ticked and a
 routine you imported is still current. That is useful when you want history and
