@@ -226,6 +226,24 @@ heaviest on both, `volume_by_muscle` counting the same twelve sets and sixty
 reps under chest, and eight sessions reported where eight were logged. The read
 path does not lie.
 
+**The store's schema change was proven by upgrading a real store in place, on
+2026-08-21.** Adding a `@Model` and removing a property are the two changes most
+likely to open a SwiftData store empty, and everything until then had been
+tested on a schema that never changed under it. So the build from before both —
+`31f7374` — was checked out into a worktree, run, and given a real plan and a
+real profile update, until its store held a routine of eight sessions, a goal, a
+constraint, seven pieces of equipment, a weigh-in, and the `preferredWeekdays`
+that was later deleted. The current build was then installed *over* it, with no
+erase.
+
+Everything survived. The same goal, constraint, equipment and weigh-in came back
+out, the routine still had its eight sessions, and the snapshot went from version
+4 to 5. `ZPROFILESTATEMENT` had been created by lightweight migration, the
+weekday column was gone from `ZUSERPROFILE`, and `statedAt` came back as `{}` —
+a profile that predates the dates carrying no dates rather than invented ones,
+which is what the unit test claims and this is the same claim against a store
+that actually migrated.
+
 **The dated statements were driven the same way on 2026-08-20, and the
 distinction holds through real files.** Two `profile-update.json` documents were
 written by hand — a March one stating a constraint and an experience, an August
