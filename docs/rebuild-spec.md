@@ -265,16 +265,6 @@ Each phase ends green: all three suites and both `-warnings-as-errors` builds.
 The app does not compile between phases 1 and 3; that is expected and is why
 this is a branch.
 
-**A stale dependent looks exactly like data corruption.** Adding a stored
-property to a `public struct` in LiftingKit changes its memory layout, and a
-dependent package whose objects were not rebuilt reads strings at the wrong
-offset. On 2026-08-21 that surfaced as `"8"` decoding to `"\0"` and `"AMRAP"` to
-`"\0MRAP"` — first byte zeroed, length intact — in two LiftingMCP tests, after
-`isWarmup` was added to `SetPrescription`. There was no defect: deleting
-`LiftingMCP/.build/arm64-apple-macosx/debug` and re-running gave 279 passing.
-This rebuild changes public layouts constantly, so **when a package suite fails
-with values that look mangled rather than wrong, clean it before debugging it.**
-
 **A deletion is not a phase — it trails its last reader.** Checked on
 2026-08-21 rather than assumed: `RoutineCalendar` and `RoutineSchedule` are read
 by `RoutineListing`, and `EquipmentAccess` by `UserProfile`,
