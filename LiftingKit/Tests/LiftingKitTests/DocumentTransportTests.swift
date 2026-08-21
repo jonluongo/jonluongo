@@ -12,18 +12,18 @@ private final class InMemoryDocumentTransport: DocumentTransport, @unchecked Sen
     private let lock = NSLock()
     private var snapshot: TrainingSnapshot?
     private var plan: PlanDocument?
-    private var profileUpdate: ProfileUpdate?
+    private var notes: [NoteFile: String] = [:]
     private var failure: (any Error)?
 
     struct Broken: Error {}
 
     init(
         snapshot: TrainingSnapshot? = nil, plan: PlanDocument? = nil,
-        profileUpdate: ProfileUpdate? = nil
+        notes: [NoteFile: String] = [:]
     ) {
         self.snapshot = snapshot
         self.plan = plan
-        self.profileUpdate = profileUpdate
+        self.notes = notes
     }
 
     func breakTransport() {
@@ -58,19 +58,9 @@ private final class InMemoryDocumentTransport: DocumentTransport, @unchecked Sen
         }
     }
 
-    func readProfileUpdate() throws -> ProfileUpdate? {
-        try lock.withLock {
-            if let failure { throw failure }
-            return profileUpdate
-        }
-    }
+    func readNote(_ note: NoteFile) throws -> String? { notes[note] }
 
-    func writeProfileUpdate(_ update: ProfileUpdate) throws {
-        try lock.withLock {
-            if let failure { throw failure }
-            self.profileUpdate = update
-        }
-    }
+    func writeNote(_ text: String, as note: NoteFile) throws { notes[note] = text }
 }
 
 // MARK: - Fixtures
@@ -115,14 +105,6 @@ private func makePlan(id: UUID = UUID(), focus: String = "Push") -> PlanDocument
     )
 }
 
-private func makeProfileUpdate(id: UUID = UUID()) -> ProfileUpdate {
-    ProfileUpdate(
-        id: id, generatedAt: instant, experience: .stated(.advanced),
-        equipment: .stated([.dumbbell, .plate]), goal: .stated("Bigger bench"),
-        constraints: .unstated,
-        preferredDurationMinutes: .stated(45)
-    )
-}
 
 /// A directory that exists, cleaned up by the caller's `defer`.
 private func makeTemporaryDirectory() throws -> URL {
@@ -160,16 +142,21 @@ struct DocumentFolderTests {
         #expect(try folder.readPlan() == plan)
     }
 
-    @Test("A profile update written to the folder reads back exactly as written")
-    func profileUpdateRoundTrips() throws {
+    @Test("A note the coach wrote reads back as the text he wrote")
+    func aNoteRoundTrips() throws {
         let directory = try makeTemporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: directory) }
         let folder = DocumentFolder(directory: directory)
-        let update = makeProfileUpdate()
+        let written = """
+            # The lifter
 
-        try folder.writeProfileUpdate(update)
+            ## Objective
+            D1 offensive line.
+            """
 
-        #expect(try folder.readProfileUpdate() == update)
+        try folder.writeNote(written, as: .user)
+
+        #expect(try folder.readNote(.user) == written)
+        #expect(try folder.readNote(.program) == nil, "he has written no programme note")
     }
 
     @Test("Every document has a fixed name, so neither side has to be told them")
@@ -180,11 +167,12 @@ struct DocumentFolderTests {
 
         try folder.writeSnapshot(makeSnapshot())
         try folder.writePlan(makePlan())
-        try folder.writeProfileUpdate(makeProfileUpdate())
+        try folder.writeNote("# The lifter", as: .user)
+        try folder.writeNote("# This programme", as: .program)
 
         let names = try FileManager.default
             .contentsOfDirectory(atPath: directory.path(percentEncoded: false)).sorted()
-        #expect(names == ["plan.json", "profile-update.json", "snapshot.json"])
+        #expect(names == ["plan.json", "program.md", "snapshot.json", "user.md"])
     }
 
     @Test("Everything the server writes is something the app is told to watch for")
@@ -193,7 +181,7 @@ struct DocumentFolderTests {
         // into the folder but missing from it would sync and never be noticed.
         #expect(
             DocumentFolder.inboundFilenames.sorted()
-                == [DocumentFolder.planFilename, DocumentFolder.profileUpdateFilename].sorted())
+                == ([DocumentFolder.planFilename] + NoteFile.allCases.map(\.filename)).sorted())
         #expect(!DocumentFolder.inboundFilenames.contains(DocumentFolder.snapshotFilename))
     }
 
@@ -251,24 +239,31 @@ struct DocumentFolderTests {
         }
     }
 
-    @Test("A folder with no profile update in it yet returns nil rather than throwing")
-    func absentProfileUpdateIsNil() throws {
+    @Test("A folder with no note in it yet returns nil rather than throwing")
+    func absentNoteIsNil() throws {
         let directory = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
 
-        #expect(try DocumentFolder(directory: directory).readProfileUpdate() == nil)
+        #expect(try DocumentFolder(directory: directory).readNote(.user) == nil)
+        #expect(try DocumentFolder(directory: directory).readNote(.program) == nil)
     }
 
-    @Test("A malformed profile update throws rather than reading as no update at all")
-    func malformedProfileUpdateThrows() throws {
+    @Test("A note is text, so there is nothing in it that can be malformed")
+    func aNoteCannotBeMalformed() throws {
+        // **This is what makes prose different from a document.** A malformed
+        // plan throws, because half a prescription is worse than none. A note
+        // has no shape to violate — whatever the coach wrote is what he wrote,
+        // and the app renders it. The guard against losing his words is at the
+        // other end: `update_notes` is an anchored edit, refused when the text
+        // it expects to replace is not there.
         let directory = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
-        try Data("{ this is not an update".utf8)
-            .write(to: directory.appending(path: DocumentFolder.profileUpdateFilename))
+        try Data("{ this is not markdown, and that is fine".utf8)
+            .write(to: directory.appending(path: NoteFile.user.filename))
 
-        #expect(throws: (any Error).self) {
-            try DocumentFolder(directory: directory).readProfileUpdate()
-        }
+        #expect(
+            try DocumentFolder(directory: directory).readNote(.user)
+                == "{ this is not markdown, and that is fine")
     }
 
     @Test("A malformed snapshot throws rather than reading as no snapshot")
@@ -312,15 +307,14 @@ struct InMemoryDocumentTransportTests {
         let transport = InMemoryDocumentTransport()
         let snapshot = makeSnapshot()
         let plan = makePlan()
-        let update = makeProfileUpdate()
 
         try transport.writeSnapshot(snapshot)
         try transport.writePlan(plan)
-        try transport.writeProfileUpdate(update)
+        try transport.writeNote("# The lifter", as: .user)
 
         #expect(try transport.readSnapshot() == snapshot)
         #expect(try transport.readPlan() == plan)
-        #expect(try transport.readProfileUpdate() == update)
+        #expect(try transport.readNote(.user) == "# The lifter")
     }
 
     @Test("The fake reports an empty transport as nil, the same as a folder does")
@@ -353,19 +347,4 @@ struct InMemoryDocumentTransportTests {
         #expect(try transport.readPlan()?.sessions.first?.focus == "Push")
     }
 
-    /// A key that has been retired reads rather than refusing the document
-    /// whole. An update written before the fact went is not a broken update,
-    /// and refusing it would lose everything else it said.
-    @Test("An update naming a retired fact still reads, and the fact is ignored")
-    func aRetiredKeyDoesNotRefuseTheDocument() throws {
-        let data = Data("""
-            {"version": 3, "id": "3E7F7E2E-2B47-4C51-9E58-52C1D1F0A0B1",
-             "generatedAt": "2023-11-14T22:13:20Z",
-             "goal": "Bench 225", "preferredWeekdays": ["monday", "thursday"]}
-            """.utf8)
-
-        let update = try ProfileUpdate.makeDecoder().decode(ProfileUpdate.self, from: data)
-
-        #expect(update.goal == .stated("Bench 225"), "everything else it said survives")
-    }
 }

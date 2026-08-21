@@ -127,8 +127,8 @@ struct ICloudDocumentTransport: DocumentTransport {
         try documentsFolder().readPlan()
     }
 
-    func readProfileUpdate() throws -> ProfileUpdate? {
-        try documentsFolder().readProfileUpdate()
+    func readNote(_ note: NoteFile) throws -> String? {
+        try documentsFolder().readNote(note)
     }
 
     /// The shared folder inside the container, for a caller that has to watch

@@ -40,10 +40,12 @@ public protocol DocumentTransport: Sendable {
     /// corruption is.
     func readPlan() throws -> PlanDocument?
 
-    /// The profile update waiting to be applied, or `nil` when there is none.
+    /// One of the coach's markdown notes, or `nil` when he has written none.
     ///
-    /// Same contract as `readPlan()`: absence is ordinary, corruption throws.
-    func readProfileUpdate() throws -> ProfileUpdate?
+    /// **Text, not a document.** Nothing is parsed out of these: the app renders
+    /// them. The moment a value has to come out of prose, that value belongs in
+    /// a table instead.
+    func readNote(_ note: NoteFile) throws -> String?
 }
 
 /// The documents of the loop, living side by side in one directory.
@@ -67,15 +69,10 @@ public struct DocumentFolder: DocumentTransport {
     public static let snapshotFilename = "snapshot.json"
     /// The name the server writes and the app reads.
     public static let planFilename = "plan.json"
-    /// The other name the server writes and the app reads: what Claude has
-    /// learned about the lifter. A separate file rather than a section of the
-    /// plan, because facts about a lifter outlive any one training block.
-    public static let profileUpdateFilename = "profile-update.json"
-
     /// Every file the server writes and the app watches for. A caller that has
     /// to notice arrivals reads this rather than restating the names, so a
     /// document that is written but never watched for cannot happen.
-    public static let inboundFilenames = [planFilename, profileUpdateFilename]
+    public static let inboundFilenames = [planFilename] + NoteFile.allCases.map(\.filename)
 
     private let directory: URL
 
@@ -102,9 +99,9 @@ public struct DocumentFolder: DocumentTransport {
         return try PlanDocument.makeDecoder().decode(PlanDocument.self, from: data)
     }
 
-    public func readProfileUpdate() throws -> ProfileUpdate? {
-        guard let data = try contents(of: Self.profileUpdateFilename) else { return nil }
-        return try ProfileUpdate.makeDecoder().decode(ProfileUpdate.self, from: data)
+    public func readNote(_ note: NoteFile) throws -> String? {
+        guard let data = try contents(of: note.filename) else { return nil }
+        return String(data: data, encoding: .utf8)
     }
 
     // MARK: - The server's direction
@@ -124,16 +121,15 @@ public struct DocumentFolder: DocumentTransport {
         try data.write(to: directory.appending(path: Self.planFilename), options: .atomic)
     }
 
-    /// Puts a profile update where the app will pick it up, replacing any
-    /// earlier one.
+    /// Puts one of the coach's notes where the app will pick it up.
     ///
-    /// Replacing is safe because each update carries its own identity and the
-    /// app applies an identity once: an update that has already landed is not
-    /// re-imposed when a newer one supersedes the file.
-    public func writeProfileUpdate(_ update: ProfileUpdate) throws {
-        let data = try ProfileUpdate.makeEncoder().encode(update)
-        try data.write(
-            to: directory.appending(path: Self.profileUpdateFilename), options: .atomic)
+    /// **Whole-file, and that is why the tool that calls it is an anchored
+    /// edit.** Prose has no refusal machinery of its own, so the guard is at the
+    /// other end: `update_notes` states the text it expects to replace and is
+    /// refused if that text is not there.
+    public func writeNote(_ text: String, as note: NoteFile) throws {
+        try Data(text.utf8).write(
+            to: directory.appending(path: note.filename), options: .atomic)
     }
 
     // MARK: - Absence, told apart from failure

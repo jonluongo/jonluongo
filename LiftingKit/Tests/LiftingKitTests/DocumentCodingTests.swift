@@ -28,7 +28,7 @@ struct DocumentCodingTests {
         let written = [
             try PlanDocument.makeEncoder().encode(value),
             try TrainingSnapshot.makeEncoder().encode(value),
-            try ProfileUpdate.makeEncoder().encode(value),
+            try PlanDocument.makeEncoder().encode(value),
         ]
 
         #expect(Set(written).count == 1, "one format writing a date differently is the bug")
@@ -43,7 +43,7 @@ struct DocumentCodingTests {
 
         for decoder in [
             PlanDocument.makeDecoder(), TrainingSnapshot.makeDecoder(),
-            ProfileUpdate.makeDecoder(),
+            PlanDocument.makeDecoder(),
         ] {
             #expect(try decoder.decode(Stamped.self, from: data) == value)
         }

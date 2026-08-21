@@ -155,43 +155,6 @@ extension DocumentRefusal {
                 + "with its own 'restSeconds'.")
     }
 
-    /// Why a dated series cannot be taken back with a `null`.
-    ///
-    /// Built here rather than at either call site because both clients answer
-    /// this question: the phone refuses it while decoding a document, and the
-    /// macOS server refuses it while reading the arguments of the call that
-    /// would have written one. One sentence, so a writer cannot learn that a
-    /// `null` is accepted from the tool and that it is refused from the app.
-    public static func nulledSeries(_ series: ProfileSeries) -> DocumentRefusal {
-        .unreadableValue(
-            "'\(series.rawValue)' is a dated series, not a single value, so a null cannot take "
-                + "it back — it would read either as recording nothing or as erasing every "
-                + "entry, and there is no telling which was meant. Nothing was taken in. To "
-                + "correct an entry, \(series.remedy); to add one, send just the new one.")
-    }
-}
-
-/// The facts a `ProfileUpdate` carries as a series of dated records rather than
-/// as a single value.
-///
-/// Two, and closed on purpose: this is the list of keys in one document format,
-/// the way `CodingKeys` is, not a vocabulary that data may extend. Read it to
-/// name a series in a refusal, and to say how a writer corrects an entry in it.
-///
-/// Depends on: Foundation only.
-public enum ProfileSeries: String, Sendable, CaseIterable {
-    case bodyweight
-    case baselines
-
-    /// What a writer does instead of nulling this series, in the words the
-    /// refusal uses. Each record is filed under what it is about, so restating
-    /// that one record is the correction.
-    public var remedy: String {
-        switch self {
-        case .bodyweight: "state that day's reading again"
-        case .baselines: "state that lift's baseline again"
-        }
-    }
 }
 
 /// A key of whatever object is being read, whatever it is called.
