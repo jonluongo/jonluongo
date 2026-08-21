@@ -63,25 +63,36 @@ import UIKit
 enum Palette {
 
     /// Behind everything. A clean neutral, carrying none of the theme's hue.
-    static let surface = dynamic(light: 0xF1F1F3, dark: 0x0B0B0D)
+    ///
+    /// **Warm, barely.** Every light neutral in this file measured hue 240 — the
+    /// blue end — so the paper read cold under a yellow-green mark and the two
+    /// fought. They sit around hue 40 now at two or three per cent saturation:
+    /// far enough to read as paper rather than as screen, not far enough to be
+    /// a colour.
+    ///
+    /// **Light only, on Jon's call: *dark mode should be stark white*.** Dark's
+    /// neutrals were hue 240 as well — a faint blue nobody asked for — so they
+    /// are true greys now, and its ink is a stark `0xF7F7F7` rather than the
+    /// cream a first pass gave it. Warmth is paper, and dark has no paper.
+    static let surface = dynamic(light: 0xF3F1EC, dark: 0x0B0B0B)
 
     /// The ground a table of sets is written on.
-    static let panel = dynamic(light: 0xFFFFFF, dark: 0x161618)
+    static let panel = dynamic(light: 0xFFFDF8, dark: 0x161616)
 
     /// Hairlines. The instrument's ruling — it separates columns and rows
     /// without boxing them, which is what a card does.
-    static let rule = dynamic(light: 0xE3E3E7, dark: 0x2B2B30)
+    static let rule = dynamic(light: 0xE7E3DB, dark: 0x2C2C2C)
 
     /// Text and, above all, numbers. It is also every line and every word this
     /// app draws in something other than grey: the rule down a superset, the
     /// filled part of a progress track, the eyebrow over a paired movement. The
     /// theme cannot do that job — see below — and a second hue invented to do it
     /// would be the app having two colours again.
-    static let ink = dynamic(light: 0x0F0F11, dark: 0xF4F4F6)
+    static let ink = dynamic(light: 0x12100D, dark: 0xF7F7F7)
 
     /// Anything qualifying something else: column names, units, the last
     /// session's figures, and the glyphs that open a menu.
-    static let muted = dynamic(light: 0x6B6B73, dark: 0x8B8B93)
+    static let muted = dynamic(light: 0x6F6A61, dark: 0x8C8C8C)
 
     /// The theme, at full strength, in both appearances — a fill and never a
     /// line. `onAccent` is what sits on it.
@@ -99,7 +110,7 @@ enum Palette {
     /// in either appearance. The full-width action is the one thing filled this
     /// way: on Jon's call, a session is finished by pressing something black,
     /// not something highlighted.
-    static let onInk = dynamic(light: 0xF4F4F6, dark: 0x0F0F11)
+    static let onInk = dynamic(light: 0xF7F4EE, dark: 0x0F0F0F)
 
     /// The one word in the app that undoes something that does not come back.
     ///
