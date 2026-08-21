@@ -12,7 +12,7 @@ The design this measures against is the row **The backend, rebuilt** in
 it once the design lands. **Read** — cannot be classified from its declared
 purpose; someone must open it before the rebuild starts.
 
-**Counts.** 141 source files, ~19,000 lines. 98 test files, ~19,000 lines.
+**Counts.** 143 source files, ~19,000 lines. 98 test files, ~19,000 lines.
 The verdict tallies are at the foot of each section.
 
 ---
@@ -113,11 +113,11 @@ Keep 1 · Rewrite 5 · Delete 6 · Add 1
 
 | File | Lines | Verdict | Why |
 |---|---|---|---|
-| `DayBlueprint.swift` | 102 | **Rewrite** | Blueprint shape follows the schema |
-| `DocumentInbox.swift` | 286 | **Rewrite** | Loses the profile-update path; markdown is not imported |
-| `ExerciseTrend.swift` | 101 | **Rewrite** | Reads performances rather than logged sets |
+| `DayBlueprint.swift` | 102 | **Delete** | Folds into `RoutineBlueprint`; the tree it navigated is two levels shallower |
+| `DocumentInbox.swift` | 286 | **Rewrite** | Absorbs the watcher; loses the profile-update path; markdown is not imported |
+| `ExerciseTrend.swift` | 101 | **Delete** | `PerformedExercise` *is* this reduction; two reducers become one |
 | `ICloudDocumentTransport.swift` | 143 | **Keep** | Container access is unchanged |
-| `PerformanceHistory.swift` | 103 | **Rewrite** | Grain moves to `PerformedExercise` |
+| `PerformanceHistory.swift` | 103 | **Rewrite** | Absorbs `ExerciseTrend`; grain moves to `PerformedExercise` |
 | `PlanDocumentMapping.swift` | 148 | **Rewrite** | Reconstruction follows the new document |
 | `PlanImporter.swift` | 378 | **Rewrite** | Merge keys on block ordinal, not routine id |
 | `ProfileUpdater.swift` | 249 | **Delete** | No profile to update |
@@ -133,9 +133,9 @@ Keep 1 · Rewrite 5 · Delete 6 · Add 1
 | `SnapshotOutbox.swift` | 125 | **Rewrite** | Three triggers and a background assertion |
 | `StatedFacts.swift` | 46 | **Delete** | Dies with `ProfileStatement` |
 | `StoreUpgrade.swift` | 43 | **Delete** | The store resets; nothing to carry |
-| `UbiquitousDocumentWatcher.swift` | 134 | **Keep** | Still watches for `plan.json` |
+| `UbiquitousDocumentWatcher.swift` | 134 | **Delete** | 420 lines across two files for *a file appeared in a folder*; one is enough with `profile-update.json` gone |
 
-Keep 4 · Rewrite 12 · Delete 5
+Keep 3 · Rewrite 10 · Delete 8
 
 ### `Presentation/` — 21 files
 
@@ -144,14 +144,14 @@ Keep 4 · Rewrite 12 · Delete 5
 | `AccountRecord.swift` | 229 | **Delete** | The account screen renders `user.md` |
 | `BlockSelection.swift` | 57 | **Rewrite** | Blocks have no names; `isDeload` gone |
 | `ExerciseAbout.swift` | 78 | **Keep** | Reads the catalog |
-| `HoldPrescription.swift` | 33 | **Rewrite** | Targets arrive typed |
-| `IntensityPrescription.swift` | 75 | **Keep** | `intensity` unchanged |
+| `HoldPrescription.swift` | 33 | **Delete** | Inferred a hold from free text; the stored `Target` says so |
+| `IntensityPrescription.swift` | 75 | **Delete** | One caller; folds into `PrescriptionSummary` |
 | `LoggedWorkSummary.swift` | 49 | **Rewrite** | Light — reads a performed set |
 | `NumberFormatting.swift` | 15 | **Keep** | — |
 | `OpenRoutine.swift` | 57 | **Delete** | No routines to open; Home is blank |
-| `PrescriptionSummary.swift` | 119 | **Rewrite** | Per-set prescriptions, no exercise-level defaults |
-| `RepPrescription.swift` | 46 | **Rewrite** | Targets arrive typed |
-| `RestPrescription.swift` | 33 | **Keep** | — |
+| `PrescriptionSummary.swift` | 119 | **Rewrite** | One of the two survivors: renders a prescription, absorbing intensity and rest |
+| `RepPrescription.swift` | 46 | **Delete** | Same inference, same reason |
+| `RestPrescription.swift` | 33 | **Delete** | One caller; folds into `PrescriptionSummary` |
 | `RestTarget.swift` | 33 | **Rewrite** | Group rest is per exercise now |
 | `RoutineFacts.swift` | 49 | **Delete** | The routine screen renders `program.md` |
 | `RoutineListing.swift` | 197 | **Rewrite** | Lists blocks, not routines |
@@ -159,11 +159,11 @@ Keep 4 · Rewrite 12 · Delete 5
 | `SetEntry.swift` | 97 | **Keep** | What typing means is unchanged |
 | `SetFieldLabel.swift` | 84 | **Keep** | — |
 | `SetIdentity.swift` | 35 | **Keep** | — |
-| `SetRowPrescription.swift` | 81 | **Rewrite** | Reads a `PlannedSet` directly |
+| `SetRowPrescription.swift` | 81 | **Rewrite** | The other survivor: what one row shows, reading a `PlannedSet` directly |
 | `StatedFact.swift` | 35 | **Delete** | Dies with the account rows |
-| `WorkPrescription.swift` | 106 | **Rewrite** | The measure is stored, not inferred |
+| `WorkPrescription.swift` | 106 | **Delete** | Exists **entirely** to answer which of three a set records — which the schema now answers |
 
-Keep 7 · Rewrite 10 · Delete 4
+Keep 5 · Rewrite 7 · Delete 9
 
 ### `Views/` — 9 files
 
@@ -209,10 +209,10 @@ Keep 2 · Rewrite 7 · Add 1
 | `SessionFinishSection.swift` | 99 | **Rewrite** — Finish now triggers an export |
 | `SessionIconView.swift` | 51 | **Keep** |
 | `SetRowView.swift` | 420 | **Rewrite** |
-| `Style.swift` | 512 | **Keep** |
+| `Style.swift` | 512 | **Rewrite** — splits; see below |
 | `TimerRing.swift` | 91 | **Keep** |
 
-Keep 18 · Rewrite 6 · Delete 1
+Keep 17 · Rewrite 7 · Delete 1
 
 ### Root
 
@@ -355,16 +355,69 @@ three-session store exported whole, asserting all nine survive.
 
 ---
 
+## The revision pass — cleanest, not least invasive
+
+Jon, after the first draft: *"we are optimizing for best and cleanest final
+build not minimum invasive change."* He was right that several verdicts were
+inertia. What changed on 2026-08-21:
+
+**The seven prescription types in `Presentation/` become two.** 493 lines, and
+**four of the seven have exactly one caller**. They exist because a prescription
+arrives as an untyped string and each infers something from it — `WorkPrescription`
+(106 lines, 7 callers) exists *entirely* to answer which of reps, a hold or a
+carry an exercise records. The typed `Target` answers that from storage, so the
+inference has nothing left to do. `PrescriptionSummary` and `SetRowPrescription`
+survive; the other five go.
+
+**Four files for one job, twice.** `ExerciseTrend` folds into
+`PerformanceHistory` — `PerformedExercise` *is* the reduction both were doing.
+`UbiquitousDocumentWatcher` folds into `DocumentInbox` — 420 lines across two
+files for *a file appeared in a folder*, with `profile-update.json` gone.
+`DayBlueprint` folds into `RoutineBlueprint`, whose tree is two levels
+shallower now. The value-type seam stays: it is what stops a plan generator
+being added.
+
+**`Style.swift` splits, and CLAUDE.md changes with it.** 512 lines and nine
+declarations — `Palette`, a `UIColor` extension, a `Font` extension, `Spacing`,
+`Radius`, `TapTarget`, `SetTableMetrics`, `ProgressMetrics`, `PanelMetrics`. The
+last three are *component* constants wearing a token file's clothes, and
+`SetTableMetrics.entryColumnWidth` — the number behind two defects this week —
+sits 400 lines from the row that reads it. It becomes:
+
+| New file | Holds |
+|---|---|
+| `Palette.swift` | every colour, and the `UIColor` bridge |
+| `Typography.swift` | the type roles |
+| `Layout.swift` | `Spacing`, `Radius`, `TapTarget` |
+
+and `SetTableMetrics`, `ProgressMetrics` and `PanelMetrics` move next to the
+components that own them.
+
+CLAUDE.md currently states *"Every colour, gap, radius and type role lives in
+Style.swift."* The split keeps the intent — one place, never scattered through
+views — and breaks the letter, so that line is rewritten **when the split lands,
+not before**; editing it now would describe a build that does not exist. Jon's
+ruling on the standard: *"the claude.md is not hard boundaries if you think its
+in the best interest to change something you can just do it for a good reason."*
+
+**Four test suites exist twice.** `CarriedWorkTests`, `TimedWorkTests` and
+`PerSetPrescriptionTests` each appear in both `LiftingPlanTests` and
+`LiftingMCPKitTests`; `DocumentTransportTests` in both `LiftingKitTests` and
+`LiftingPlanTests`. Each pair collapses to one, in the package that owns the
+behaviour.
+
+---
+
 ## Tallies
 
 | | Keep | Rewrite | Delete | Read | Add |
 |---|---|---|---|---|---|
-| App | 32 | 41 | 16 | 0 | 2 |
+| App | 28 | 37 | 24 | 0 | 2 |
 | LiftingKit | 13 | 12 | 7 | 0 | 1 |
-| LiftingMCP | 5 | 10 | 5 | 0 | 1 |
-| **Source total** | **50** | **63** | **28** | **0** | **4** |
+| LiftingMCP | 6 | 11 | 5 | 0 | 1 |
+| **Source total** | **47** | **60** | **36** | **0** | **4** |
 
-**28 files delete outright.** Roughly 4,600 lines of source and a further 3,000
+**36 files delete outright.** Roughly 5,400 lines of source and a further 3,000
 of tests, none of which anything will read.
 
 ---
