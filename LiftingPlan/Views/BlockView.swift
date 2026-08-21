@@ -45,11 +45,18 @@ struct BlockView: View {
         .navigationTitle("Training")
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
+                // **Both marks are bare outlines, and that is the whole reason
+                // they match.** `person.crop.circle` is an enclosed glyph: it
+                // fills its optical box edge to edge, so beside a narrow upright
+                // clipboard it read as a solid disc next to a hairline and the
+                // pair looked mis-sized. SF Symbols balances within an enclosure
+                // style, not across one, and there is no `clipboard.circle` to
+                // match it with — so the circle goes instead.
                 Button { showingProgram = true } label: {
                     Label("The programme", systemImage: "clipboard")
                 }
                 Button { showingAccount = true } label: {
-                    Label("The lifter", systemImage: "person.crop.circle")
+                    Label("The lifter", systemImage: "person")
                 }
             }
         }
