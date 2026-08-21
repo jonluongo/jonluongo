@@ -86,10 +86,14 @@ struct SetRowView: View {
     }
 
     /// The tick. On is *this happened*; off takes it back out of the record.
+    ///
+    /// **`RecordedMark`, not an SF circle.** This app has one mark for *in the
+    /// record* and it is drawn in one place; a rebuild that reached for
+    /// `checkmark.circle.fill` gave the same idea a second appearance, smaller
+    /// and rounder, on the one screen where it is tapped most.
     private var check: some View {
         Button(action: toggle) {
-            Image(systemName: slot.isDone ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(slot.isDone ? Palette.accent : Palette.muted)
+            RecordedMark(isRecorded: slot.isDone)
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)

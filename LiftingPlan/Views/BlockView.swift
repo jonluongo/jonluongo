@@ -69,24 +69,30 @@ struct BlockView: View {
             ForEach(SessionListing.blocks(of: sessions), id: \.ordinal) { block in
                 Section(SessionListing.blockTitle(block.ordinal)) {
                     ForEach(block.sessions, id: \.persistentModelID) { session in
+                        let standing = SessionListing.standing(
+                            of: session, current: current)
                         Button { openSession = session } label: {
-                            SessionRow(
-                                session: session,
-                                standing: SessionListing.standing(
-                                    of: session, current: current),
-                                isLast: session === block.sessions.last)
+                            SessionRow(session: session, standing: standing)
                         }
-                        // **The app draws its own hairline.** A `List` separator
-                        // is a colour nothing here chose, and it inset itself on
-                        // every row but one — a line crossing the panel's edge on
-                        // a single row of a single block. One rule, from the
-                        // palette, in the same place every time.
+                        // **One session, one panel.** They shared a panel and
+                        // were divided by a hairline; the gap between panels
+                        // says the same thing without a line, and a finished
+                        // session can then be coloured rather than only marked.
+                        //
+                        // `fillsPanel` because the panel *is* the row here. The
+                        // default row inset is `contentInset` — the room content
+                        // gets inside a panel — so applying it to the panel
+                        // itself indented every one of them twice.
+                        .panelRow(fillsPanel: true, isRecorded: standing == .finished)
                         .listRowSeparator(.hidden)
                     }
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        // **Plain, because the panels are the grouping.** `.insetGrouped` adds
+        // its own section margins on top of the row insets, so every panel was
+        // indented twice — a gutter about double what it should be.
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
     }
 }
@@ -101,24 +107,7 @@ private struct SessionRow: View {
 
     let session: Session
     let standing: SessionListing.Standing
-    /// The last row of its block draws no rule: the panel's own edge is the
-    /// division there, and a hairline against it would be two lines saying one
-    /// thing.
-    let isLast: Bool
-
     var body: some View {
-        VStack(spacing: 0) {
-            row
-            if !isLast {
-                Rectangle()
-                    .fill(Palette.rule)
-                    .frame(height: Palette.hairline)
-                    .padding(.leading, Spacing.major + Spacing.standard)
-            }
-        }
-    }
-
-    private var row: some View {
         HStack(spacing: Spacing.standard) {
             // A day he marked nothing carries nothing: a glyph the app chose
             // would be the app deciding what a session trains.
@@ -127,13 +116,14 @@ private struct SessionRow: View {
                 .font(.supersetTitle)
                 .foregroundStyle(Palette.ink)
             Spacer(minLength: Spacing.snug)
-            // `showsEmpty: false` — a list marks only what is done. Drawing an
-            // outline on every unfinished row gives the column a box beside
-            // every session, and a mark that appears everywhere distinguishes
-            // nothing.
+            // `showsEmpty: false` — a list marks only what is done. An outline
+            // on every unfinished row puts a box beside every session, and a
+            // mark that appears everywhere distinguishes nothing.
             RecordedMark(isRecorded: standing == .finished, showsEmpty: false)
             DisclosureChevron()
         }
+        .padding(.horizontal, PanelMetrics.edge)
+        .padding(.vertical, Spacing.standard)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             "\(SessionListing.sessionTitle(session)), \(standing.spoken)")
