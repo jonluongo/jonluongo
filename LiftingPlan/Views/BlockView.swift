@@ -114,7 +114,18 @@ private struct SessionRow: View {
             if let icon = session.icon { SessionIconView(icon: icon) }
             Text(SessionListing.sessionTitle(session))
                 .font(.supersetTitle)
-                .foregroundStyle(Palette.ink)
+                // **Emphasis by taking it away, not by adding it.** The session
+                // he is on looked exactly like one three weeks out, so opening
+                // the app to train meant counting down the list to find today.
+                // The standing was computed and spent entirely on the
+                // accessibility label — the screen reader knew and the screen
+                // did not.
+                //
+                // Nothing is added to say it: what is behind him is already
+                // coloured and marked, and what is ahead of him recedes. No new
+                // glyph, no second use of the accent, which has one job in this
+                // app and keeps it.
+                .foregroundStyle(standing == .upcoming ? Palette.muted : Palette.ink)
             Spacer(minLength: Spacing.snug)
             // `showsEmpty: false` — a list marks only what is done. An outline
             // on every unfinished row puts a box beside every session, and a

@@ -22,6 +22,12 @@ public enum NoteFile: String, Sendable, CaseIterable {
 
     /// What an unwritten note says, and what the coach edits beneath.
     ///
+    /// **It starts at the first section, not at a title.** The sheet that draws
+    /// this is already called *The lifter*; a heading repeating it is the screen
+    /// saying the same thing twice, which is chrome. The renderer still draws a
+    /// `#` heading — the coach may write one — this simply does not hand him a
+    /// redundant one to begin with.
+    ///
     /// **An empty file gives an anchored edit nothing to anchor to.** The
     /// headings are the anchors: `update_notes` states the text it expects to
     /// replace, so the coach's first write needs something already there to
@@ -32,8 +38,6 @@ public enum NoteFile: String, Sendable, CaseIterable {
         switch self {
         case .user:
             """
-            # The lifter
-
             ## Objective
             _Not yet stated._
 
@@ -54,8 +58,6 @@ public enum NoteFile: String, Sendable, CaseIterable {
             """
         case .program:
             """
-            # This programme
-
             ## The approach
             _Not yet stated._
 
