@@ -53,12 +53,18 @@ struct SessionLog {
         durationSeconds: Int? = nil, distance: Distance? = nil,
         at moment: Date = Date()
     ) throws {
+        let performance = performedExercise(for: slot.exercise, at: moment)
+        // **A row he added has no prescription to take these from.** Its
+        // position is where it sits in what was actually performed, and its
+        // warm-up flag is its own — which is the whole reason the flag is stored
+        // on the slot rather than read off a prescription that may not be there.
         let performed = PerformedSet(
-            setIndex: slot.planned.setIndex, isWarmup: slot.planned.isWarmup,
+            setIndex: slot.planned?.setIndex ?? (performance.sets ?? []).count,
+            isWarmup: slot.isWarmup,
             load: load, reps: reps, durationSeconds: durationSeconds,
             distance: distance, completedAt: moment)
         performed.planned = slot.planned
-        performed.exercise = performedExercise(for: slot.exercise, at: moment)
+        performed.exercise = performance
         context.insert(performed)
 
         restStarted(after: slot)

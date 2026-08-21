@@ -33,8 +33,11 @@ struct SetRowPrescription {
     /// from the prescription and nothing else, never from what was typed.
     ///
     /// A row the coach set no target for is counted, which is what the field has
-    /// always been and what the row is drawn beside.
-    var measure: WorkMeasure { slot.planned.target?.measure ?? .repetitions }
+    /// always been and what the row is drawn beside. **A row he added has no
+    /// prescription at all** and is counted for the same reason: reps is what a
+    /// set is measured in unless something says otherwise, and on an added row
+    /// nothing does.
+    var measure: WorkMeasure { slot.planned?.target?.measure ?? .repetitions }
 
     /// What the empty weight field shows: the load this set was prescribed, and
     /// nothing when none was.
@@ -42,14 +45,14 @@ struct SetRowPrescription {
     /// Empty rather than a dash: a placeholder is a hint about what to type, and
     /// a dash hints at nothing while making a fresh table look broken.
     var loadPlaceholder: String {
-        if let load = slot.planned.load { return load.value.compactString }
+        if let load = slot.planned?.load { return load.value.compactString }
         return previousLoad
     }
 
     /// What the empty work field shows: the target as the coach wrote it —
     /// `8-12`, `45s`, `40m`, `AMRAP`.
     var workPlaceholder: String {
-        slot.planned.target?.shorthand ?? ""
+        slot.planned?.target?.shorthand ?? ""
     }
 
     /// What he put on the bar for this set last time, where the coach named no
@@ -60,7 +63,7 @@ struct SetRowPrescription {
     /// asked only where nothing was prescribed, so it never stands in front of a
     /// figure the coach wrote.
     private var previousLoad: String {
-        guard !slot.planned.isWarmup, let previous else { return "" }
+        guard !slot.isWarmup, let previous else { return "" }
         let index = slot.workingNumber - 1
         guard previous.sets.indices.contains(index),
             let load = previous.sets[index].load, load.value > 0

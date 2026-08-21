@@ -121,8 +121,10 @@ struct SupersetTests {
         ])
         let order = SessionOrder.trainingOrder(of: session)
 
-        #expect(order.first?.planned.isWarmup == true)
-        #expect(order.dropFirst().allSatisfy { !$0.planned.isWarmup })
+        // Asked of the slot, not of the prescription behind it — a row may now
+        // have no prescription, and warm-up is a fact about the row either way.
+        #expect(order.first?.isWarmup == true)
+        #expect(order.dropFirst().filter(\.isWarmup).isEmpty)
     }
 
     @Test("Unequal set counts degrade to what is actually there")
@@ -140,5 +142,101 @@ struct SupersetTests {
         #expect(order.count == 5, "three and two, not three and three")
         #expect(order.last?.exercise.exerciseID == StoreFixture.bench,
                 "the last round is the bench alone, which is what happens on the floor")
+    }
+}
+
+/// Work the user did that nobody prescribed.
+///
+/// **The defect this closes.** `TrainingSlot.planned` was non-optional, so
+/// `trainingOrder` could only build rows from prescriptions — and `addSet`
+/// writes a `PerformedSet` with no prescription behind it. Pressing *Add extra
+/// set* put a row in the store, exported it to the coach as real volume, and
+/// changed nothing on screen. He pressed it, saw nothing, and pressed again.
+@MainActor
+@Suite("A set nobody prescribed")
+struct AddedSetTests {
+
+    private func session() throws -> (ModelContext, Session, PlannedExercise) {
+        let context = try StoreFixture.imported(StoreFixture.plan(sessions: 1))
+        let session = try #require(try StoreFixture.sessions(in: context).first)
+        return (context, session, try #require(session.orderedExercises.first))
+    }
+
+    private func log(_ context: ModelContext, _ session: Session) -> SessionLog {
+        SessionLog(
+            session: session, context: context,
+            restTimer: RestTimerModel(), restPreferences: RestPreferences())
+    }
+
+    @Test("An added set is a row")
+    func anAddedSetDraws() throws {
+        let (context, session, exercise) = try session()
+        let before = SessionOrder.trainingOrder(of: session).count
+
+        try log(context, session).addSet(to: exercise, warmup: false)
+
+        let after = SessionOrder.trainingOrder(of: session)
+        #expect(after.count == before + 1)
+        #expect(after.last?.planned == nil, "nothing prescribed it")
+        #expect(after.last?.isDone == true, "it is in the record the moment it exists")
+    }
+
+    @Test("An added warm-up says it is one")
+    func anAddedWarmupIsNamed() throws {
+        let (context, session, exercise) = try session()
+
+        try log(context, session).addSet(to: exercise, warmup: true)
+
+        let added = try #require(SessionOrder.trainingOrder(of: session).last)
+        #expect(added.isWarmup)
+        #expect(added.identity == .warmup, "and takes no set number")
+    }
+
+    @Test("Added rows come after the prescription, in the order they happened")
+    func addedRowsComeLast() throws {
+        let (context, session, exercise) = try session()
+        let prescribed = SessionOrder.trainingOrder(of: session).count
+        let log = log(context, session)
+
+        try log.addSet(to: exercise, warmup: false, at: Date().addingTimeInterval(60))
+        try log.addSet(to: exercise, warmup: false, at: Date().addingTimeInterval(120))
+
+        let order = SessionOrder.trainingOrder(of: session)
+        #expect(order.prefix(prescribed).allSatisfy { $0.planned != nil })
+        #expect(order.suffix(2).allSatisfy { $0.planned == nil })
+    }
+
+    @Test("Taking an added set back removes the row, because nothing is left of it")
+    func untickingAnAddedSetRemovesIt() throws {
+        // **This is the delete affordance.** A prescribed row empties when it is
+        // taken back — the coach still asked for it. An added row exists only
+        // because its record does, so taking the record back leaves nothing to
+        // draw. A second control would do the same thing twice.
+        let (context, session, exercise) = try session()
+        let before = SessionOrder.trainingOrder(of: session).count
+        let log = log(context, session)
+        try log.addSet(to: exercise, warmup: false)
+
+        let added = try #require(SessionOrder.trainingOrder(of: session).last)
+        #expect(added.vanishesWhenTakenBack)
+        try log.takeBack(added)
+
+        #expect(SessionOrder.trainingOrder(of: session).count == before)
+    }
+
+    @Test("Taking a prescribed set back keeps its row")
+    func untickingAPrescribedSetKeepsIt() throws {
+        let (context, session, exercise) = try session()
+        _ = exercise
+        let log = log(context, session)
+        let slot = try #require(SessionOrder.trainingOrder(of: session).first)
+        try log.record(slot, load: Mass(value: 100, unit: .pounds), reps: 5,
+                       durationSeconds: nil, distance: nil as Distance?)
+        let count = SessionOrder.trainingOrder(of: session).count
+
+        try log.takeBack(try #require(SessionOrder.trainingOrder(of: session).first))
+
+        #expect(SessionOrder.trainingOrder(of: session).count == count)
+        #expect(SessionOrder.trainingOrder(of: session).first?.isDone == false)
     }
 }

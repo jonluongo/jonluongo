@@ -19,20 +19,63 @@ import LiftingKit
 struct TrainingSlot: Identifiable {
 
     let exercise: PlannedExercise
-    let planned: PlannedSet
+    /// The prescription behind this row, or `nil` for a set the user added.
+    ///
+    /// **Optional because the record may hold work nobody prescribed.** A fifth
+    /// set actually performed is the thing this app exists to keep, and while
+    /// this was non-optional `addSet` wrote a `PerformedSet` that no row could
+    /// be built for — in the store, exported to the coach as real volume, and
+    /// drawn nowhere. He pressed *Add extra set* and the table did not change.
+    let planned: PlannedSet?
+    /// The record of a set nobody prescribed. A prescribed row reads its record
+    /// through `planned`; this is the other half, and exactly one of the two is
+    /// ever set.
+    private let added: PerformedSet?
     /// What the row is called on screen.
     let identity: SetIdentity
     /// Which working set of its movement this is, counting warm-ups out. A ramp
     /// states its sets one at a time, so the third row of a movement is the
     /// third prescription.
     let workingNumber: Int
+    /// Warm-ups lead a group and take no set number. Stored rather than read off
+    /// `planned`, which an added row does not have.
+    let isWarmup: Bool
+
+    let id: PersistentIdentifier
 
     /// What the user actually did here, or `nil` while he has not.
-    var record: PerformedSet? { planned.record }
+    var record: PerformedSet? { planned?.record ?? added }
     /// Whether this row is in the record.
-    var isDone: Bool { planned.hasBeenPerformed }
+    var isDone: Bool { record != nil }
+    /// Whether unticking this row removes it. **An added row exists only because
+    /// its record does**, so taking the record back leaves nothing to draw —
+    /// which is the delete affordance, without a second control that would do
+    /// the same thing.
+    var vanishesWhenTakenBack: Bool { planned == nil }
 
-    var id: PersistentIdentifier { planned.persistentModelID }
+    init(
+        exercise: PlannedExercise, planned: PlannedSet,
+        identity: SetIdentity, workingNumber: Int
+    ) {
+        self.exercise = exercise
+        self.planned = planned
+        self.added = nil
+        self.identity = identity
+        self.workingNumber = workingNumber
+        self.isWarmup = planned.isWarmup
+        self.id = planned.persistentModelID
+    }
+
+    /// A row for a set the user added, which has a record and no prescription.
+    init(exercise: PlannedExercise, added: PerformedSet, workingNumber: Int) {
+        self.exercise = exercise
+        self.planned = nil
+        self.added = added
+        self.identity = added.isWarmup ? .warmup : .working(workingNumber)
+        self.workingNumber = workingNumber
+        self.isWarmup = added.isWarmup
+        self.id = added.persistentModelID
+    }
 }
 
 /// The order a session is actually trained in.
@@ -73,14 +116,34 @@ enum SessionOrder {
         }
     }
 
-    /// One movement's rows, in the order they are prescribed.
+    /// One movement's rows: what was prescribed, then what he added past it.
+    ///
+    /// **The added ones come last because that is when they happened.** They are
+    /// work done after the prescription ran out, and putting them anywhere else
+    /// would claim an order the record does not have.
     private static func slots(of exercise: PlannedExercise) -> [TrainingSlot] {
-        exercise.orderedSets.enumerated().map { index, set in
+        let prescribed = exercise.orderedSets.enumerated().map { index, set in
             TrainingSlot(
                 exercise: exercise, planned: set,
                 identity: identity(of: set, at: index, in: exercise),
                 workingNumber: workingNumber(at: index, in: exercise))
         }
+        var working = prescribed.filter { !$0.isWarmup }.count
+        let added = addedSets(of: exercise).map { performed -> TrainingSlot in
+            if !performed.isWarmup { working += 1 }
+            return TrainingSlot(
+                exercise: exercise, added: performed, workingNumber: working)
+        }
+        return prescribed + added
+    }
+
+    /// Sets recorded against this movement that no prescription is behind, in
+    /// the order they were performed.
+    private static func addedSets(of exercise: PlannedExercise) -> [PerformedSet] {
+        (exercise.performed ?? [])
+            .flatMap { $0.sets ?? [] }
+            .filter { $0.planned == nil }
+            .sorted { $0.completedAt < $1.completedAt }
     }
 
     /// A group's rows, in the order they are trained: every warm-up first, then
@@ -90,8 +153,8 @@ enum SessionOrder {
     /// movement they warm up, and the rounds start once the bar is loaded.
     private static func slots(of group: ExerciseGroup) -> [TrainingSlot] {
         let perMember = group.members.map(slots(of:))
-        let warmups = perMember.flatMap { $0.filter { $0.planned.isWarmup } }
-        let working = perMember.map { $0.filter { !$0.planned.isWarmup } }
+        let warmups = perMember.flatMap { $0.filter(\.isWarmup) }
+        let working = perMember.map { $0.filter { !$0.isWarmup } }
 
         var rounds: [TrainingSlot] = []
         let longest = working.map(\.count).max() ?? 0

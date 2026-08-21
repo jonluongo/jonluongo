@@ -44,7 +44,10 @@ struct SetRowView: View {
             // prescription gains no line per row for saying nothing new. It gets
             // the row's whole width to wrap in: a sentence squeezed into a
             // column narrower than its own words ran off the card.
-            if let detail = PrescriptionSummary.detail(for: slot.planned, in: slot.exercise) {
+            // A row he added has no prescription to summarise, and inventing a
+            // line for it would be the app describing work it never asked for.
+            if let planned = slot.planned,
+                let detail = PrescriptionSummary.detail(for: planned, in: slot.exercise) {
                 Text(detail)
                     .font(.supersetSupport)
                     .foregroundStyle(Palette.muted)

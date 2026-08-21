@@ -361,8 +361,12 @@ struct ActiveWorkoutView: View {
     /// leaves him where he is.
     private func showNext(after slot: TrainingSlot, in group: ExerciseGroup?) {
         // An ungrouped exercise has its next set on the row below, already on
-        // screen and already under his thumb.
-        guard let group, let next = group.setAfter(slot.planned, of: slot.exercise)
+        // screen and already under his thumb. **A set he added has no place in
+        // the round order** — the rounds are the prescription's shape, and work
+        // past it belongs to the movement it was added to rather than to a
+        // position across the group.
+        guard let group, let planned = slot.planned,
+            let next = group.setAfter(planned, of: slot.exercise)
         else { return }
         withAnimation(.snappy) { scrollTarget = next.persistentModelID }
     }
