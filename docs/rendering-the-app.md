@@ -15,9 +15,9 @@ Mark every one `// RENDER SCAFFOLDING — removed before commit.` so the grep
 finds it.
 
 **1. Point the transport at a local folder.** The simulator has no iCloud, so
-the real container never resolves and the app shows *Can't reach the iCloud
-folder* — which is correct behaviour and useless for rendering anything else.
-In `LiftingPlanApp.init`:
+the real container never resolves and the app shows *Couldn't share your log* —
+which is correct behaviour and useless for rendering anything else. In
+`LiftingPlanApp.init`:
 
 ```swift
 let transport = ICloudDocumentTransport(
@@ -28,47 +28,60 @@ Documents then live at `<app data container>/Documents/Documents/` — the
 transport appends `Documents` to whatever the container resolves to.
 
 **2. Open the screen.** Read an environment variable and set the state that
-presents it. `RoutineView` for a session, `ActiveWorkoutView` for its sheets,
-`AccountToolbarItem` for the account:
+presents it. The session's cover and the rest bar live on `RootView`; the three
+toolbar sheets live on `BlockView`:
 
 ```swift
-.onAppear {
-    guard ProcessInfo.processInfo.environment["RENDER"] == "session" else { return }
-    openSession = plan.orderedWeeks.flatMap(Self.trainingDays(of:)).first
+.task {
+    guard let render = ProcessInfo.processInfo.environment["RENDER"] else { return }
+    try? await Task.sleep(for: .seconds(2))
+    if render == "session" { openSession = sessions.first }
+    if render == "account" { showingAccount = true }
+    if render == "program" { showingProgram = true }
+    if render == "history" { showingHistory = true }
 }
 ```
 
-**3. Seed a log, when the screen needs one.** Rows exist only once a session has
-been opened, so seed them first or nothing gets ticked:
+**A `.task` cannot read `@Query` on its first pass.** The sleep is not padding —
+it is waiting for the query to be populated *and* for `DocumentInbox` to have
+imported whatever is in the folder. Without it `sessions.first` is `nil` and the
+screen never opens, which looks exactly like scaffolding that did not compile.
+
+**3. Log a set, when the screen needs one.** `SetSeeding` is gone: a performed
+row exists only when something is ticked, so drive the real service.
 
 ```swift
-SetSeeding.seedMissingSets(for: block.orderedDays.flatMap(\.orderedExercises), in: context)
-try? context.save()
+let log = SessionLog(session: first, context: ctx,
+                     restTimer: restTimer, restPreferences: RestPreferences())
+try? log.record(SessionOrder.trainingOrder(of: first).first!,
+                load: Mass(value: 225, unit: .pounds), reps: 5,
+                durationSeconds: nil, distance: nil as Distance?)
 ```
 
-`RootView`'s `.task` is the place, after a `Task.sleep` long enough for the
-inbox to have imported the plan. **Import first**: launch once without `RENDER`
-so the plan lands, then launch again with it.
+`RootView` is the place, and it needs `import LiftingKit` for `Mass` and
+`Distance`. Recording a set **starts a rest**, which is how to reach the bar's
+resting state; `restTimer.skip()` reaches *Rest over*, and it has to happen
+**after** the cover is presented or something restarts the clock.
 
-**4. Stub the notification centre** if a rest is involved, so the permission
-dialog does not cover the screen:
+**4. Stop the app asking for notifications** if a rest is involved, so the
+permission dialog does not cover the screen. One guard, in `ScreenLockedCue`:
 
 ```swift
-private struct RenderCentre: RestNotificationScheduling {
-    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool { true }
-    func add(_ request: UNNotificationRequest) async throws {}
-    func removePendingRequests(withIdentifiers identifiers: [String]) {}
-    func allowsAlerts() async -> Bool { true }
-}
+guard ProcessInfo.processInfo.environment["RENDER"] == nil else { return }
+Task { await requestAuthorization() }
 ```
+
+Stubbing the whole `RestNotificationScheduling` conformance was the old advice
+and is more code for the same result.
 
 ## Driving it
 
 ```sh
 xcrun simctl install booted <path>/LiftingPlan.app
 DATA=$(xcrun simctl get_app_container booted com.jonluongo.LiftingPlan data)
-mkdir -p "$DATA/Documents/Documents"
-cp plan.json "$DATA/Documents/Documents/"
+D="$DATA/Documents/Documents"; mkdir -p "$D"
+./LiftingMCP/.build/release/lifting-mcp --documents "$D" < plan-call.jsonl
+xcrun simctl launch booted com.jonluongo.LiftingPlan     # once, so it imports
 SIMCTL_CHILD_RENDER=session xcrun simctl launch booted com.jonluongo.LiftingPlan
 xcrun simctl io booted screenshot shot.png
 xcrun simctl ui booted appearance dark   # and again for the other appearance
@@ -80,7 +93,16 @@ Make the plan with the real thing rather than by hand: drive
 written one proves the format does, and the refusals will tell you when you get
 a key or an exercise ID wrong.
 
-## Nine things that cost an hour each
+**A plan states one block, so several blocks are several calls.** Write block
+one, launch so it imports, write block two, launch again. A single document
+naming two blocks is refused whole — correctly — and the refusal reads like a
+seeding bug if you have forgotten this.
+
+**Terminate between launches.** `xcrun simctl launch` on a running app does
+nothing and returns success, so the previous `RENDER` value stays in force and
+the screenshot is of the last thing you asked for.
+
+## Eleven things that cost an hour each
 
 **`RENDER=x xcrun simctl launch` does not reach the app.** The prefix is
 `SIMCTL_CHILD_`. Without it the variable goes to `simctl` and the app sees
@@ -101,6 +123,18 @@ scaffolding exists at all.
 re-presents on every launch, and it is SpringBoard's rather than the app's —
 proved by stubbing the centre so the app cannot ask, and watching it appear
 anyway. `xcrun simctl erase` clears it; nothing else reliably does.
+
+**`simctl privacy grant all` does not cover notifications.** It grants
+calendar, contacts, photos and the rest, and the notification alert is not in
+that list — so the one dialog that actually blocks these screens is the one it
+cannot clear. Patch 4 stops the app *asking*; a dialog already queued from an
+earlier launch survives that and needs `xcrun simctl erase`.
+
+**A screenshot with the dialog over it is still worth reading.** Three findings
+today came off shots that were half covered: the toolbar capsule split, the
+session clock drawn twice, and *Finish workout* in sentence case were all legible
+around the alert. Reaching for `erase` first costs the store and every seeded
+plan with it — read what you have before deciding you need a clean device.
 
 **The store outlives the build.** Installing a new build keeps the old
 container, so a session you logged three firings ago is still ticked and a
