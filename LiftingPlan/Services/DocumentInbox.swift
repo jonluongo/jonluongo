@@ -187,7 +187,7 @@ final class DocumentInbox {
             // the sync channel and the local copy is what the screen reads**, so
             // a note that arrives and is never mirrored is a note the lifter can
             // never see — which is exactly what happened until a render caught
-            // it: the account screen drew its template while `user.md` sat in
+            // it: the account screen drew its template while `ACCOUNT.md` sat in
             // the folder beside the plan.
             for note in NoteFile.allCases {
                 guard let text = try await Self.readNote(note, from: transport) else { continue }
@@ -237,14 +237,18 @@ final class DocumentInbox {
     /// What to put in front of the lifter when something could not be taken in.
     ///
     /// **A refusal is written to whoever wrote the document, and the lifter is
-    /// not him.** "Send it under a key the format has" and "unknown key
-    /// `dropSets` at weeks → 0 → days → 1" are exactly right for Claude and
-    /// useless in an alert on a phone: the person reading it cannot rewrite the
-    /// plan, and nothing tells him what he *can* do. So a refusal reaches him
-    /// as two sentences — what happened, in terms of his training, and the one
-    /// thing that fixes it — with the author's own sentence kept underneath,
-    /// unaltered, because relaying it is the fix. Nothing is summarized away:
-    /// the detail he shows Claude is the detail Claude was given.
+    /// not him.** "Send it under a key the format has" is exactly right for
+    /// Claude and useless in an alert on a phone: the person reading it cannot
+    /// rewrite the plan.
+    ///
+    /// **He gets one line, and it is the two things he needs.** Nothing he
+    /// logged is gone, and the fix is to show this to his coach. The preamble
+    /// used to run four lines — *could not read whole*, *none of it was taken
+    /// in*, *nothing has changed*, *showing what it says below is the quickest
+    /// fix, and it will be clear from there what to change* — which said the
+    /// same thing three ways and pushed the only actionable sentence, the
+    /// author's, off the first screen. The author's sentence is kept underneath
+    /// unaltered, because relaying it *is* the fix.
     ///
     /// Anything that is not a refusal of a document — a folder that cannot be
     /// reached, a file that is not JSON — is shown as it is. Those are already
@@ -254,10 +258,7 @@ final class DocumentInbox {
             return (error as? any LocalizedError)?.errorDescription ?? error.localizedDescription
         }
         return """
-            A plan arrived that this app could not read whole, so none of it was taken in. \
-            Nothing you have already logged has changed. Ask your coach to send it again — \
-            showing what it says below is the quickest fix, and it will be clear from there \
-            what to change.
+            Nothing you have logged has changed. Show your coach this:
 
             \(addressedToTheAuthor)
             """

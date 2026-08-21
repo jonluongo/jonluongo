@@ -7,7 +7,7 @@ import Foundation
 /// **The suite this replaced was mostly about the lifter.** It asserted a
 /// profile's goal, experience, constraints, equipment, avoid lists, bodyweight
 /// series and strength baselines survived the wire — nine fields that were
-/// display-only in the app and are now prose in `user.md`, where he can be
+/// display-only in the app and are now prose in `ACCOUNT.md`, where he can be
 /// described in sentences rather than columns. What is left is the training:
 /// what was asked for, what was done, and when this was written.
 @Suite("The record on the wire")
@@ -252,6 +252,6 @@ struct TrainingSnapshotTests {
                 """)
         }
         #expect(try #require(error?.errorDescription).contains("profile"),
-                "who he is lives in user.md, not on this wire")
+                "who he is lives in ACCOUNT.md, not on this wire")
     }
 }

@@ -3,7 +3,7 @@ import LiftingKit
 
 /// Everything on record about the lifter, in his coach's words.
 ///
-/// **What it does.** Renders `user.md`. That is the whole of it.
+/// **What it does.** Renders `ACCOUNT.md`. That is the whole of it.
 ///
 /// **It used to be a form's worth of rows.** Goal, experience, constraints,
 /// equipment, both avoid lists, bodyweight and every strength baseline, each a
@@ -24,14 +24,14 @@ struct AccountView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                MarkdownView(text: notes?.text(of: .user) ?? NoteFile.user.template)
+                MarkdownView(text: notes?.text(of: .account) ?? NoteFile.account.template)
                     .padding(Spacing.section)
             }
             .background(Palette.surface)
-            .navigationTitle("The lifter")
+            .navigationTitle("Account")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                CloseToolbarItem("Close the lifter's page") { dismiss() }
+                CloseToolbarItem("Close account") { dismiss() }
             }
         }
     }

@@ -27,7 +27,7 @@ struct CatalogIntegrityTests {
     /// it shipped as material Claude reads and nothing else would notice if it
     /// stopped shipping. That turned out to be the argument against it: nothing
     /// ever put it in front of him either, so its only delivery mechanism was
-    /// somebody opening it by hand. `program.md` does the job properly — the
+    /// somebody opening it by hand. `PROGRAM.md` does the job properly — the
     /// same material, written by the coach for this lifter and editable, rather
     /// than frozen at build time. The file is gone; the catalog stays.
     @Test("The bundled catalog resolves from the package bundle")
@@ -422,7 +422,7 @@ struct CatalogIntegrityTests {
 
     /// Swimming requires a pool. These entries must never ship as
     /// `.bodyweight`, which would tell a reader that a lifter with nothing can
-    /// do them. What he actually has access to is prose in `user.md` and the
+    /// do them. What he actually has access to is prose in `ACCOUNT.md` and the
     /// coach reads it; the catalog's job is only to state what a movement needs.
     @Test("No swimming entry is tagged bodyweight")
     func swimmingRequiresEquipment() throws {

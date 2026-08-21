@@ -3,7 +3,7 @@ import LiftingKit
 
 /// What this programme is for, in the coach's words.
 ///
-/// **What it does.** Renders `program.md`: the approach, what is being
+/// **What it does.** Renders `PROGRAM.md`: the approach, what is being
 /// progressed, what to watch, and what makes a given block a deload.
 ///
 /// **It replaced a panel of figures.** The routine's information sheet stated a
@@ -24,10 +24,10 @@ struct ProgramSheet: View {
                     .padding(Spacing.section)
             }
             .background(Palette.surface)
-            .navigationTitle("The programme")
+            .navigationTitle("Program")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                CloseToolbarItem("Close the programme") { dismiss() }
+                CloseToolbarItem("Close program") { dismiss() }
             }
         }
     }

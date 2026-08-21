@@ -33,7 +33,7 @@ extension ToolCatalog {
 
             **A block has no name and no deload flag.** What makes block 3 an \
             accumulation block, or a deload, is something you write in \
-            program.md with update_notes — it is prose, and prose says it better \
+            PROGRAM.md with update_notes — it is prose, and prose says it better \
             than a label.
 
             **Every set is stated.** There is no set count and no exercise-level \

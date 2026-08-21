@@ -88,9 +88,9 @@ struct RefusalMessageTests {
     func refusalIsAddressedToTheLifter() async throws {
         let message = try await messageAfterReading(Self.planFromAnEarlierBuild)
 
-        #expect(message.contains("Ask your coach to send it again"))
+        #expect(message.contains("Show your coach this"))
         #expect(
-            message.contains("Nothing you have already logged has changed"),
+            message.contains("Nothing you have logged has changed"),
             "the first thing he will wonder is whether his log survived")
     }
 
@@ -100,7 +100,7 @@ struct RefusalMessageTests {
 
         #expect(message.contains("version 5"))
         #expect(message.contains("version 6"))
-        #expect(message.contains("Write the plan again"),
+        #expect(message.contains("write the plan again as version 6"),
                 "the lifter relays this, so it has to say what the coach must do")
     }
 
@@ -115,7 +115,7 @@ struct RefusalMessageTests {
             """)
 
         #expect(message.contains("'dropSets'"))
-        #expect(message.contains("Ask your coach to send it again"))
+        #expect(message.contains("Show your coach this"))
     }
 
     @Test("An exercise the catalog does not have reads the same way")
@@ -132,7 +132,7 @@ struct RefusalMessageTests {
             """)
 
         #expect(message.contains("moon-press"))
-        #expect(message.contains("Ask your coach to send it again"))
+        #expect(message.contains("Show your coach this"))
     }
 
     @Test("A document from a later format keeps its own remedy, which he can act on himself")
@@ -144,8 +144,8 @@ struct RefusalMessageTests {
             }
             """)
 
-        #expect(message.contains("update the app"))
-        #expect(message.contains("Ask your coach to send it again"))
+        #expect(message.contains("Update the app"))
+        #expect(message.contains("Show your coach this"))
     }
 
     // MARK: - Everything else is left alone
@@ -155,7 +155,7 @@ struct RefusalMessageTests {
         let message = try await messageAfterReading("{ this is not JSON at all")
 
         #expect(
-            !message.contains("Ask your coach to send it again"),
+            !message.contains("Show your coach this"),
             "a malformed file is not a plan a coach can be shown and asked to fix")
     }
 }

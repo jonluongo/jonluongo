@@ -199,7 +199,7 @@ public struct DocumentFolder: DocumentTransport {
         let stamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
         try Data(text.utf8).write(
-            to: directory.appending(path: "\(note.rawValue).\(stamp).md"), options: .atomic)
+            to: directory.appending(path: "\(note.basename).\(stamp).md"), options: .atomic)
     }
 
     public func writeNote(_ text: String, as note: NoteFile) throws {

@@ -14,7 +14,7 @@ import LiftingKit
 /// run continuously and this shows all of them, so the list *is* the app.
 ///
 /// **A block is a number.** What makes block 3 an accumulation block is a line
-/// the coach wrote in `program.md`, which is a tap away rather than a label
+/// the coach wrote in `PROGRAM.md`, which is a tap away rather than a label
 /// here.
 ///
 /// **What it depends on.** `Session` from Store, `SessionListing` for what each
@@ -53,10 +53,10 @@ struct BlockView: View {
                 // style, not across one, and there is no `clipboard.circle` to
                 // match it with — so the circle goes instead.
                 Button { showingProgram = true } label: {
-                    Label("The programme", systemImage: "clipboard")
+                    Label("Program", systemImage: "clipboard")
                 }
                 Button { showingAccount = true } label: {
-                    Label("The lifter", systemImage: "person")
+                    Label("Account", systemImage: "person")
                 }
             }
         }

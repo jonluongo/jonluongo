@@ -3,7 +3,7 @@ import LiftingKit
 
 /// The two markdown files the coach writes and the app renders.
 ///
-/// **What it does.** Keeps a local copy of `user.md` and `program.md` and hands
+/// **What it does.** Keeps a local copy of `ACCOUNT.md` and `PROGRAM.md` and hands
 /// their text to whatever draws it. It parses nothing: the app renders these and
 /// never reads a value out of them, because the moment a number has to come out
 /// of prose, that number belongs in a table.

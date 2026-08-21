@@ -23,7 +23,7 @@ import Foundation
 /// **What it depends on.** Foundation, and nothing else. It holds no model and
 /// no id of one.
 /// **It survived the account page it was written for.** That screen listed the
-/// lifter as nine labelled fields; it renders `user.md` now, and nothing about
+/// lifter as nine labelled fields; it renders `ACCOUNT.md` now, and nothing about
 /// him is a row any more. This still has a caller: `ExerciseAbout` draws what
 /// the *catalog* knows about a movement — its target, its equipment, its
 /// pattern — and those are facts with labels in the same way. It was deleted

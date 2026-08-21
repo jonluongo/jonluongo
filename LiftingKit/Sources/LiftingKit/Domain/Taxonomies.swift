@@ -55,7 +55,7 @@ public struct EquipmentType: ExtensibleTaxonomy {
     public static let suspension = EquipmentType(rawValue: "suspension")
     public static let sled = EquipmentType(rawValue: "sled")
     public static let cardioMachine = EquipmentType(rawValue: "cardio machine")
-    /// A swimming pool. What the lifter has access to is prose in `user.md`,
+    /// A swimming pool. What the lifter has access to is prose in `ACCOUNT.md`,
     /// so nothing here has to guess whether "full gym" means there is a pool in
     /// the building.
     public static let pool = EquipmentType(rawValue: "pool")

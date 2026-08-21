@@ -13,7 +13,7 @@ import Foundation
 /// contents — the shape that once let seven weeks of a declared eight-week block
 /// vanish, because a stated count could disagree with what was stated. Blocks
 /// run continuously and never restart, so a block ordinal also orders the whole
-/// timeline. What makes block 3 an accumulation block is a line in `program.md`,
+/// timeline. What makes block 3 an accumulation block is a line in `PROGRAM.md`,
 /// not a label here: a block is a number, and the character of one is prose the
 /// coach writes for himself to read.
 ///
@@ -92,9 +92,7 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         version = try container.decode(Int.self, forKey: .version)
         guard version == Self.currentVersion else {
-            throw version > Self.currentVersion
-                ? DocumentRefusal.laterVersion(version, understood: Self.currentVersion)
-                : DocumentRefusal.earlierVersion(version, understood: Self.currentVersion)
+            throw DocumentRefusal.versionMismatch(version, understood: Self.currentVersion)
         }
         try decoder.refuseUnknownKeys(besides: Set(CodingKeys.allCases.map(\.stringValue)))
 

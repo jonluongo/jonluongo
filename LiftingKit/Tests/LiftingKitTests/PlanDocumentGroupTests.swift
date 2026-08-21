@@ -148,7 +148,7 @@ struct PlanDocumentGroupTests {
     @Test("The format states version 6, and a later one is still refused whole")
     func versionIsSixAndSkewIsRefused() {
         #expect(PlanDocument.currentVersion == 6)
-        #expect(throws: DocumentRefusal.laterVersion(7, understood: 6)) {
+        #expect(throws: DocumentRefusal.versionMismatch(7, understood: 6)) {
             try decoded("""
             {"version": 7, "catalogVersion": 5,
              "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",

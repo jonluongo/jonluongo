@@ -27,7 +27,7 @@ do.
 **The app also asks the lifter nothing.** No onboarding, no setup screen, no
 settings form for a training question. Days, session length, goal, equipment,
 experience and injuries are things Claude asks better in conversation, and he
-writes them into `user.md`. The one preference the app owns is whether the rest
+writes them into `ACCOUNT.md`. The one preference the app owns is whether the rest
 clock runs at all — that is about this phone, not about the lifter, so it lives
 in `UserDefaults` and never syncs.
 
@@ -38,7 +38,7 @@ database and a pile of text.
 
 ## The loop
 
-> The coach reads `user.md`, `program.md` and the performed tables, and writes
+> The coach reads `ACCOUNT.md`, `PROGRAM.md` and the performed tables, and writes
 > prescriptions. The app draws them and logs against them.
 
 | File | Written by | Read by |
@@ -46,7 +46,7 @@ database and a pile of text.
 | `snapshot.json` | phone | server |
 | `plan.json` | server | phone |
 | `plans/<id>.json` | phone, on import | the archive — every plan taken in |
-| `user.md`, `program.md` | server | phone, **rendered, never parsed** |
+| `ACCOUNT.md`, `PROGRAM.md` | server | phone, **rendered, never parsed** |
 | `notes/<file>.<timestamp>.md` | server, before each edit | the versions |
 
 **The phone is the only writer of the record**, so a reliable export is always
@@ -160,7 +160,7 @@ Session
   `completedAt`.
 
 **Blocks are ordinals and have no names.** What makes block 3 an accumulation
-block is a line in `program.md`. Blocks run continuously and never restart.
+block is a line in `PROGRAM.md`. Blocks run continuously and never restart.
 
 **Every prescribed set is a row.** A ramp, a drop set and three identical sets
 are one shape. There are no exercise-level defaults for a set to override — that
@@ -223,7 +223,7 @@ carry our own IDs and simply have no animation.
 
 **Nothing about a lift is copied into the store.** The database holds
 `exerciseID` and nothing else about the movement; a working max is computed, and
-*how he does a lift* is prose in `user.md`.
+*how he does a lift* is prose in `ACCOUNT.md`.
 
 ## Standards
 

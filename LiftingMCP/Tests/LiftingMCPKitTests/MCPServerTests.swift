@@ -72,7 +72,7 @@ struct MCPServerTests {
         let names = tools.compactMap { $0["name"]?.stringValue }.sorted()
 
         // `update_profile` and `unstated_facts` went with the profile: who he
-        // is is prose in user.md, edited with `update_notes`.
+        // is is prose in ACCOUNT.md, edited with `update_notes`.
         #expect(names == [
             "exercise_history", "list_exercises", "recent_sessions",
             "update_notes", "volume_by_muscle", "write_plan",

@@ -14,7 +14,7 @@ import LiftingKit
 ///
 /// **Nothing is converted.** A load is drawn in the unit it was prescribed in,
 /// exactly as `Mass` keeps it — the display unit that used to convert here was a
-/// fact about the lifter, and it lives in `user.md` with the rest of him.
+/// fact about the lifter, and it lives in `ACCOUNT.md` with the rest of him.
 ///
 /// **A placeholder is never a value.** The prescription reaches him without the
 /// app claiming he lifted it, and nothing is logged until he types.

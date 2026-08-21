@@ -6,7 +6,7 @@ import SwiftData
 ///
 /// **There is no onboarding and no profile to create.** The app asks the lifter
 /// nothing — every training question belongs in conversation with the coach, who
-/// records the answers in `user.md` — so the first launch shows the training,
+/// records the answers in `ACCOUNT.md` — so the first launch shows the training,
 /// empty, rather than a form. It used to insert a `UserProfile` before anything
 /// could draw, because everything hung off it; nothing does now.
 ///

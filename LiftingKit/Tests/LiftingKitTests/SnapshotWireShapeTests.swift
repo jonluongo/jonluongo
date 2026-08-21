@@ -55,7 +55,7 @@ struct SnapshotWireShapeTests {
     @Test("Nothing about the lifter is written, ever")
     func theLifterIsNotOnThisWire() throws {
         // Who he is, what he owns, what he avoids and what he weighs are prose
-        // in `user.md`. A field here would be a second place to say them, and
+        // in `ACCOUNT.md`. A field here would be a second place to say them, and
         // the two would drift.
         let written = try text(snapshot(sessions: [session()]))
         for gone in ["profile", "bodyweight", "baselines", "avoidedPatterns",

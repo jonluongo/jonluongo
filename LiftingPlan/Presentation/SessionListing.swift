@@ -52,7 +52,7 @@ enum SessionListing {
     /// What a block is called.
     ///
     /// **A number, and nothing else.** Blocks have no names: what makes block 3
-    /// an accumulation block is a line the coach wrote in `program.md`, and a
+    /// an accumulation block is a line the coach wrote in `PROGRAM.md`, and a
     /// label here would be the second place that fact lived.
     static func blockTitle(_ ordinal: Int) -> String {
         "Block \(ordinal)"

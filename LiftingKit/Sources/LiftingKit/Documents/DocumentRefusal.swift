@@ -25,30 +25,22 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
     /// `location` is empty at the top level of the document.
     case unknownKey(String, location: String)
 
-    /// The document states a format later than this build reads.
+    /// The document states a format this build does not read.
     ///
-    /// Refused whole rather than read for the parts this build recognizes:
-    /// a partial read would discard the rest of it in exactly the silence this
+    /// Refused whole rather than read for the parts this build recognizes: a
+    /// partial read would discard the rest of it in exactly the silence this
     /// type exists to end.
-    case laterVersion(Int, understood: Int)
-
-    /// A plan written in a format older than this build reads.
     ///
-    /// **This exists for exactly one break, and should not grow another.** The
-    /// standing rule is that a plan is an archive — the coach wrote it, it is
-    /// the only copy, and an older one must go on being read forever. Plan
-    /// format 6 breaks that once: every earlier version stated a routine of
-    /// named blocks of days keyed by weekday, and version 6 has no routine, no
-    /// block label and no weekday, so reading one would mean inventing block
-    /// ordinals from list positions and discarding the weekdays. That is
-    /// interpretation wearing compatibility's clothes, and it would land in the
-    /// store as prescriptions nobody wrote.
-    ///
-    /// It is safe *only* because the store resets at this format, so no earlier
-    /// document has anywhere to land and none is archived. From version 6
-    /// onward the archive rule holds again: a version 7 reader must read a
-    /// version 6 plan.
-    case earlierVersion(Int, understood: Int)
+    /// **One case, in both directions, because the asymmetry that justified two
+    /// is gone.** There used to be a separate `earlierVersion` carrying a
+    /// paragraph about routines, block labels and weekdays — why a version 5
+    /// plan could not honestly be read as a version 6 one. `decided.md` scoped
+    /// that to *exactly one break, at the reset*: it was safe only because the
+    /// store reset at format 6, so no earlier document had anywhere to land.
+    /// The reset happened, nothing older exists anywhere, and no version 5 plan
+    /// will ever arrive again — so the paragraph was explaining a shape nobody
+    /// can send to somebody who could not act on it either way.
+    case versionMismatch(Int, understood: Int)
 
     /// A snapshot written in a format this build does not read — in either
     /// direction.
@@ -62,7 +54,7 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
     /// lifter who has trained less than he has, which is the one failure that
     /// arrives looking like a fact.
     ///
-    /// It carries its own sentence rather than reusing `laterVersion` because
+    /// It carries its own sentence rather than reusing `versionMismatch` because
     /// the audience is the other way round: a plan's refusal tells the coach to
     /// write an older format, and there is nothing he can do about a snapshot
     /// except rebuild the server or open the app.
@@ -91,17 +83,12 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
             "'\(key)' is not something this format can record\(Self.said(location)), so it "
                 + "would have been dropped without anyone noticing. Nothing was taken in. "
                 + "Send it under a key the format has, or leave it out and say it in a note."
-        case .laterVersion(let stated, let understood):
-            "This document says it is written in format version \(stated), and this build "
-                + "reads version \(understood). Nothing was taken in, because reading only the "
-                + "parts this build recognizes would silently discard the rest. Write version "
-                + "\(understood), or update the app."
-        case .earlierVersion(let stated, let understood):
-            "This plan says it is written in format version \(stated), and this build reads "
-                + "version \(understood). Nothing was taken in. Version \(understood) states a "
-                + "flat list of sessions, each saying which block it belongs to and where it "
-                + "sits in that block; there are no routines, no block labels and no weekdays, "
-                + "so there is no honest way to read the older shape into it. Write the plan "
+        case .versionMismatch(let stated, let understood):
+            // Both remedies in one line, because only one of them is the
+            // lifter's: he can update the app, and he can ask for the plan
+            // again. Which applies is obvious from the two numbers.
+            "This plan is written in format version \(stated) and this build reads version "
+                + "\(understood). Nothing was taken in. Update the app, or write the plan "
                 + "again as version \(understood)."
         case .snapshotVersionMismatch(let stated, let understood):
             "The training log on disk is written in snapshot format version \(stated), and "

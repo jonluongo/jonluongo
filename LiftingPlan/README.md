@@ -14,7 +14,7 @@ a plan, the app shows an empty state.
 **The app asks the lifter nothing.** No onboarding, no setup screen, no settings
 form for a training question. Days, session length, goal, equipment, experience
 and injuries are things Claude asks better in conversation, and he writes them
-into `user.md`. The one preference the app owns is whether the rest clock runs at
+into `ACCOUNT.md`. The one preference the app owns is whether the rest clock runs at
 all — that is about this phone, not about the lifter, so it lives in
 `UserDefaults` and never syncs.
 
@@ -29,14 +29,14 @@ device.
 
 ## The loop
 
-> The coach reads `user.md`, `program.md` and the performed tables, and writes
+> The coach reads `ACCOUNT.md`, `PROGRAM.md` and the performed tables, and writes
 > prescriptions. The app draws them and logs against them.
 
 | File | Written by | Read by |
 |---|---|---|
 | `snapshot.json` | phone | server |
 | `plan.json` | server | phone |
-| `user.md`, `program.md` | server | phone, **rendered, never parsed** |
+| `ACCOUNT.md`, `PROGRAM.md` | server | phone, **rendered, never parsed** |
 
 The files pass through a shared iCloud folder. **The phone is the only writer of
 the record**, so a reliable export is always current: it exports on Finish,
@@ -111,7 +111,7 @@ Session
 
 - **`Session`** has no date: *when* he trained is a fact about the record.
 - **Blocks are ordinals and have no names.** What makes block 3 an accumulation
-  block is a line in `program.md`.
+  block is a line in `PROGRAM.md`.
 - **Every prescribed set is a row**, so a ramp, a drop set and three identical
   sets are one shape.
 - **A performed row exists only if it happened.** There is no `isCompleted` — the

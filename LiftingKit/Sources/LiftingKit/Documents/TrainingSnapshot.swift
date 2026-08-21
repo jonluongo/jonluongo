@@ -5,7 +5,7 @@ import Foundation
 /// **What it does.** Carries the record the other way from `PlanDocument`: the
 /// app writes one, the coach reads it and decides what to prescribe next. It
 /// holds what was asked for, what was done, and when it was exported — and
-/// nothing about the lifter himself, which lives in `user.md` where he can be
+/// nothing about the lifter himself, which lives in `ACCOUNT.md` where he can be
 /// described in words rather than fields.
 ///
 /// **`exportedAt` is the honest half of a cache.** The phone is the only writer

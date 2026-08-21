@@ -161,9 +161,9 @@ public enum ToolCatalog {
         description: """
             Edits one of the two markdown notes the lifter's app renders.
 
-            'user.md' is who he is: what he trains for, his background, his \
+            'ACCOUNT.md' is who he is: what he trains for, his background, his \
             injuries and limits, what he avoids and why, his equipment, and his \
-            bodyweight over time. 'program.md' is why this programme — the \
+            bodyweight over time. 'PROGRAM.md' is why this programme — the \
             approach, what is being progressed, what to watch, and what makes a \
             given block a deload.
 

@@ -6,7 +6,7 @@ import LiftingKit
 ///
 /// **Who he is is not in here any more.** It used to carry his goal, experience,
 /// constraints, equipment, avoid lists, bodyweight and every strength baseline —
-/// nine fields, each one display-only in the app. They are prose in `user.md`
+/// nine fields, each one display-only in the app. They are prose in `ACCOUNT.md`
 /// now, which the coach reads as a resource and writes with `update_notes`.
 /// A paragraph he wrote says more than nine fields he had to fit into.
 ///
@@ -43,13 +43,13 @@ struct ContextReport {
             "lifter": .object([
                 "note": .string(
                     "Who he is, what he trains for, his injuries, his equipment and his "
-                        + "bodyweight are in user.md. Read it as a resource; write to it with "
+                        + "bodyweight are in ACCOUNT.md. Read it as a resource; write to it with "
                         + "update_notes.")
             ]),
             "programme": .object([
                 "note": .string(
                     "Why this programme — the approach, what is being progressed, what makes "
-                        + "a block a deload — is in program.md.")
+                        + "a block a deload — is in PROGRAM.md.")
             ]),
             "where": whereHeIs(sessions),
             "sessionsRecorded": .integer(trained.count),

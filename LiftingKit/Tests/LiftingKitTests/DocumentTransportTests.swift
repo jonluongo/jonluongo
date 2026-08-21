@@ -164,9 +164,9 @@ struct DocumentFolderTests {
             D1 offensive line.
             """
 
-        try folder.writeNote(written, as: .user)
+        try folder.writeNote(written, as: .account)
 
-        #expect(try folder.readNote(.user) == written)
+        #expect(try folder.readNote(.account) == written)
         #expect(try folder.readNote(.program) == nil, "he has written no programme note")
     }
 
@@ -178,12 +178,12 @@ struct DocumentFolderTests {
 
         try folder.writeSnapshot(makeSnapshot())
         try folder.writePlan(makePlan())
-        try folder.writeNote("# The lifter", as: .user)
+        try folder.writeNote("# The lifter", as: .account)
         try folder.writeNote("# This programme", as: .program)
 
         let names = try FileManager.default
             .contentsOfDirectory(atPath: directory.path(percentEncoded: false)).sorted()
-        #expect(names == ["plan.json", "program.md", "snapshot.json", "user.md"])
+        #expect(names == ["ACCOUNT.md", "PROGRAM.md", "plan.json", "snapshot.json"])
     }
 
     @Test("Everything the server writes is something the app is told to watch for")
@@ -255,7 +255,7 @@ struct DocumentFolderTests {
         let directory = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
 
-        #expect(try DocumentFolder(directory: directory).readNote(.user) == nil)
+        #expect(try DocumentFolder(directory: directory).readNote(.account) == nil)
         #expect(try DocumentFolder(directory: directory).readNote(.program) == nil)
     }
 
@@ -270,10 +270,10 @@ struct DocumentFolderTests {
         let directory = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
         try Data("{ this is not markdown, and that is fine".utf8)
-            .write(to: directory.appending(path: NoteFile.user.filename))
+            .write(to: directory.appending(path: NoteFile.account.filename))
 
         #expect(
-            try DocumentFolder(directory: directory).readNote(.user)
+            try DocumentFolder(directory: directory).readNote(.account)
                 == "{ this is not markdown, and that is fine")
     }
 
@@ -321,11 +321,11 @@ struct InMemoryDocumentTransportTests {
 
         try transport.writeSnapshot(snapshot)
         try transport.writePlan(plan)
-        try transport.writeNote("# The lifter", as: .user)
+        try transport.writeNote("# The lifter", as: .account)
 
         #expect(try transport.readSnapshot() == snapshot)
         #expect(try transport.readPlan() == plan)
-        #expect(try transport.readNote(.user) == "# The lifter")
+        #expect(try transport.readNote(.account) == "# The lifter")
     }
 
     @Test("The fake reports an empty transport as nil, the same as a folder does")

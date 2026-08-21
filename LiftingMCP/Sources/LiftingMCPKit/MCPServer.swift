@@ -208,7 +208,7 @@ public struct MCPServer: Sendable {
         what you just learned.
 
         **The record holds no facts about him at all, and that is deliberate.** \
-        Who he is lives in `user.md` — his objective, his background, his \
+        Who he is lives in `ACCOUNT.md` — his objective, his background, his \
         injuries, what he avoids and why, his equipment, his bodyweight. Read it \
         before writing a plan. An unwritten note reads as its template, so \
         "_Not yet stated._" under a heading is the record telling you nobody has \
