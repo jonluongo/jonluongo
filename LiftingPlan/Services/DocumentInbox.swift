@@ -35,7 +35,7 @@ protocol DocumentArrivalWatching: AnyObject {
 ///
 /// Build one with the app's transport, a watcher, the `ModelContext`, and the
 /// loaded catalog; call `start()` once and read `errorMessage` to show what went
-/// wrong. It is the only caller of `PlanImporter` and `ProfileUpdater`, which
+/// wrong. It is the only caller of `PlanImporter`, which
 /// makes this the whole of the app's inbound half of the loop: Claude writes on
 /// the Mac, iCloud carries it, this notices and applies it.
 ///
@@ -58,7 +58,7 @@ protocol DocumentArrivalWatching: AnyObject {
 /// folder announcing itself repeatedly does not write the snapshot repeatedly.
 ///
 /// Depends on: `DocumentTransport` and `ExerciseCatalogProviding` from
-/// `LiftingKit`, `DocumentArrivalWatching`, `PlanImporter`, `ProfileUpdater`,
+/// `LiftingKit`, `DocumentArrivalWatching`, `PlanImporter`,
 /// and the store's `ModelContext`.
 @MainActor
 @Observable
@@ -174,17 +174,9 @@ final class DocumentInbox {
         var applied = false
         do {
             // Nothing waiting is the normal state, not something to report.
-            if let update = try await Self.readProfileUpdate(from: transport) {
-                let isNew = try !ProfileUpdater.isApplied(update, in: context)
-                try ProfileUpdater.apply(update, to: context, catalog: catalog)
-                applied = applied || isNew
-            }
-        } catch {
-            failures.append(Self.describe(error))
-        }
-        do {
             if let document = try await Self.readPlan(from: transport) {
-                let isNew = try PlanImporter.wouldChange(document, in: context)
+                let isNew = try PlanImporter.wouldChange(
+                    document, in: context, catalog: catalog)
                 try PlanImporter.import(document, into: context, catalog: catalog)
                 applied = applied || isNew
             }
@@ -271,11 +263,6 @@ final class DocumentInbox {
 
     /// The same, for the other document. Off the main actor for the same
     /// reason: it reaches the same container resolution.
-    private static func readProfileUpdate(
-        from transport: any DocumentTransport
-    ) async throws -> ProfileUpdate? {
-        try await Task.detached { try transport.readProfileUpdate() }.value
-    }
 }
 
 extension String {

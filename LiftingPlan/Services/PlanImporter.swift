@@ -4,10 +4,12 @@ import LiftingKit
 
 /// Why a plan document could not be imported.
 ///
-/// Two cases, and both are the same kind of thing: the document named something
-/// from a vocabulary the app owns, and the app does not have it. Catch it at the
-/// UI boundary and show `errorDescription` — it names the offending value, which
-/// is what makes the failure fixable. Depends on: `ExerciseID`, `SessionIcon`.
+/// Three cases, and the first two are the same kind of thing: the document named
+/// something from a vocabulary the app owns, and the app does not have it. Catch
+/// it at the UI boundary and show `errorDescription` — it names the offending
+/// value, which is what makes the failure fixable.
+///
+/// Depends on: `ExerciseID`, `SessionIcon`.
 enum PlanImportError: Error, LocalizedError, Equatable {
 
     /// The document prescribed an exercise the catalog does not contain. The
@@ -18,14 +20,12 @@ enum PlanImportError: Error, LocalizedError, Equatable {
     /// value is the first offending name, in document order.
     case unknownIcon(SessionIcon)
 
-    /// The document rewrote a block the lifter has already trained. The
-    /// associated value is that block's ordinal, counting from one.
-    case trainedBlockChanged(Int)
-
-    /// A block in the store has sets logged against it and the store cannot be
-    /// read back as the document it came from, so there is no way to tell
-    /// whether the arriving document changes it. Refused rather than guessed.
-    case unreadableRoutine
+    /// The document rewrote a session the lifter has already been through.
+    ///
+    /// It names the session rather than the block, which the old shape could not
+    /// do: a plan is a flat list of sessions now, so a change to one of them does
+    /// not put the rest of its block out of reach.
+    case trainedSessionChanged(block: Int, ordinal: Int)
 
     var errorDescription: String? {
         switch self {
@@ -35,264 +35,225 @@ enum PlanImportError: Error, LocalizedError, Equatable {
         case .unknownIcon(let icon):
             "This plan marks a session '\(icon.rawValue)', which is not one of the "
                 + "marks this app can draw. Nothing was imported."
-        case .trainedBlockChanged(let ordinal):
-            "This plan changes block \(ordinal), which has already been trained. A set "
-                + "logged against it, or a session marked finished in it, is the record of "
-                + "what happened and cannot be rewritten. Nothing was imported. Send the "
-                + "routine with block \(ordinal) exactly as it stands and the change in a "
-                + "later block."
-        case .unreadableRoutine:
-            "This routine has training logged against it but cannot be read back as the "
-                + "document it came from, so there is no way to tell what this plan "
-                + "changes. Nothing was imported."
+        case .trainedSessionChanged(let block, let ordinal):
+            "This plan changes session \(ordinal) of block \(block), which has already "
+                + "been trained. A set the lifter ticked, or a session he marked finished, "
+                + "is the record of what happened and cannot be rewritten. Nothing was "
+                + "imported. Send that session exactly as it stands, and the change in one "
+                + "he has not reached."
         }
     }
 }
 
-/// Brings a `PlanDocument` — a plan Claude wrote — into the store.
+/// The one place a prescription enters the store.
 ///
-/// Call `import(_:into:catalog:)` with the app's `ModelContext` and the loaded
-/// catalog; it returns the `TrainingPlan` that is now the lifter's current
-/// block. This is the app's half of the loop that `SnapshotExporter` starts,
-/// and the only path by which a plan enters the database.
+/// **What it does.** Takes a decoded `PlanDocument` and writes its sessions into
+/// the store, creating what is new and rewriting what the lifter has not trained.
+/// It records what it was handed and never clamps, floors, caps or defaults a
+/// prescribed value.
 ///
-/// **It does exactly two things beyond decoding: it confirms every `ExerciseID`
-/// exists in the catalog, and every session mark is one this build can draw.**
-/// Not because the plan is distrusted, but because training history is keyed on
-/// exercise identity — an unknown key would split one lift's history into two
-/// unrelated series that can never be rejoined — and because a mark that cannot
-/// be drawn would be taken in and shown as nothing, telling the writer his
-/// choice landed when it did not.
-/// Nothing else is checked and nothing at all is changed: a set count is not
-/// capped, an empty rep range is not filled, a rest is not clamped, a session
-/// length is not floored, and a plan is never rejected for being unbalanced.
-/// Whoever wrote the plan made those calls with more context than this function
-/// will ever have.
+/// **It maps the document straight into the models.** There is no intermediate
+/// value type: `PlanDocument` is already a tree of plain values, and a second
+/// plain-value description of the same prescription would be a third vocabulary
+/// — the shape this project has paid a rewrite to remove once. `RoutineBlueprint`
+/// and `DayBlueprint` were exactly that, built and read inside this file.
 ///
-/// An unknown ID fails the whole import with that ID named and writes nothing,
-/// because a partial import that silently drops a movement is worse than a
-/// clean failure — it looks like a plan.
+/// **This is the only producer, and no second one may be added.** The moment
+/// something else can write a `PlannedSet`, the app can decide what somebody
+/// should train — which is the one thing it does not do.
 ///
-/// **Every week the document states is imported.** A block of eight weeks
-/// becomes eight `TrainingWeek`s in the order written, each with its own days,
-/// its own label and its own deload flag. Nothing repeats a week to fill a
-/// block out. A document whose keys this build does not know never reaches
-/// here at all: it is refused while being read, with the key named — see
-/// `DocumentRefusal`.
+/// **What he has not done is the coach's; what he has done is the record.** A
+/// session with nothing performed and no Finish is rebuilt from whatever the
+/// document now says. One the lifter has been through is refused by ordinal,
+/// with nothing taken in.
 ///
-/// Depends on: `PlanDocument` and `ExerciseCatalogProviding` from LiftingKit,
-/// `RoutineBlueprint`, and the `Store/` models.
+/// **What it depends on.** `PlanDocument` and `DocumentRefusal` from LiftingKit,
+/// the catalog, and the `Store/` models.
 enum PlanImporter {
 
-    /// Imports `document`, supersedes whatever block was current, and saves.
+    /// Where a session sits, which is its identity.
+    private struct Key: Hashable {
+        let block: Int
+        let ordinal: Int
+    }
+
+    /// Takes the document in, or refuses it whole.
     ///
-    /// `importedAt` is when the plan arrived, which becomes the new block's
-    /// start date and the moment the previous block stopped being current. It
-    /// defaults to now and is injectable so tests can be explicit about order.
-    ///
-    /// **A document already in the store is merged, not ignored.** That is what
-    /// makes a week-at-a-time coach possible: he sends the routine again with
-    /// one more block on the end, and it lands beside the blocks already there
-    /// rather than becoming a second routine with the same name. A block he
-    /// revised replaces the stored one; a block that vanished from the document
-    /// is removed; a block already trained may not be touched at all — see
-    /// `merge`.
-    ///
-    /// Throws `PlanImportError.unknownExercise` when the document names an
-    /// exercise the catalog does not have, `PlanImportError.trainedBlockChanged`
-    /// when it rewrites a block with sets logged against it, and
-    /// `PersistenceError.saveFailed` when the write fails.
-    @discardableResult
+    /// Nothing is written until every check has passed: an unknown exercise, an
+    /// unknown mark or a trained session being rewritten all mean nothing lands,
+    /// rather than half a plan landing and the rest being reported as an error.
     static func `import`(
         _ document: PlanDocument,
         into context: ModelContext,
-        catalog: any ExerciseCatalogProviding,
-        importedAt: Date = Date()
-    ) throws -> TrainingPlan {
-        // Validated in full before anything is built, so a document with one
-        // bad ID cannot leave a partially-mapped plan behind.
-        try confirmEveryExerciseExists(in: document, using: catalog)
-        try confirmEveryIconExists(in: document)
-
-        // A document may leave a movement's name out — the catalog owns it, and
-        // both this app and the server that writes plans link the same catalog.
-        // Filled after the IDs are checked, so a wrong ID is reported as a wrong
-        // ID rather than quietly acquiring a name.
-        let document = document.named(using: catalog)
-
-        if let existing = try plan(forDocument: document.id, in: context) {
-            try merge(document, into: existing, in: context)
-            try context.saveOrThrow()
-            return existing
-        }
-
-        let plan = RoutineBlueprint(document: document).makeWorkoutPlan(
-            // The document states which catalog generation its IDs were chosen
-            // from, which is the honest stamp even if this build has a newer
-            // one loaded.
-            catalogVersion: document.catalogVersion,
-            startDate: importedAt
-        )
-        plan.sourceDocumentID = document.id
-
-        try supersedeOpenPlans(in: context, at: importedAt)
-        context.insert(plan)
-        try context.saveOrThrow()
-        return plan
-    }
-
-    /// Brings a routine already in the store up to what the document now says.
-    ///
-    /// **What he has not done is the coach's to change; what he has done is the
-    /// record.** Jon's rule, in his words: *"the coach can change anything
-    /// thats not checked off."* So a block with no completed set in it is
-    /// rebuilt from the document however it now reads, a block the document no
-    /// longer states is removed, and a block with any completed set is compared
-    /// against what the store holds and refused by ordinal if it differs. A set
-    /// he ticked is what happened; a plan that rewrites it is claiming he
-    /// trained something he did not.
-    ///
-    /// **The routine's own facts are not the record and always follow.** Title,
-    /// goal, notes, session length, the days it trains and the catalog it was
-    /// written against are restated from the document on every merge; only what
-    /// happened is protected.
-    ///
-    /// **Unchanged is a no-op.** The same document arriving twice — which is
-    /// ordinary, since the folder is re-read whenever it changes — compares
-    /// equal block for block and nothing is written. That comparison is
-    /// `PlanDocument(reconstructing:)`, the same round trip the export uses, so
-    /// there is one answer to *what does the store say this plan was* rather
-    /// than two that could drift.
-    private static func merge(
-        _ document: PlanDocument, into plan: TrainingPlan, in context: ModelContext
+        catalog: any ExerciseCatalogProviding
     ) throws {
-        let stored = PlanDocument(reconstructing: plan)
-        let blueprint = RoutineBlueprint(document: document)
-        let storedWeeks = plan.orderedWeeks
+        let named = document.named(using: catalog)
+        try confirmEveryExerciseExists(in: named, catalog: catalog)
+        try confirmEveryIconExists(in: named)
 
-        // What the routine is *for* follows the document every time, because
-        // none of it is the record: a goal met and replaced, a longer session, a
-        // note about the next month. Dropping them was the app taking a document
-        // in and quietly keeping half of it, which is the failure this format
-        // refuses everywhere else. When it arrived is the exception — a later
-        // document does not get to restate that.
-        plan.title = blueprint.title
-        plan.goal = blueprint.goal
-        plan.notes = blueprint.notes
-        plan.durationMinutes = blueprint.durationMinutes
-        plan.generatedAt = blueprint.generatedAt
-        plan.catalogVersion = document.catalogVersion
-        plan.weekdays = Set(blueprint.days.map(\.weekday))
+        let stored = try context.fetch(FetchDescriptor<Session>())
+        let existing = Dictionary(
+            stored.map { (Key(block: $0.blockOrdinal, ordinal: $0.ordinal), $0) },
+            uniquingKeysWith: { first, _ in first })
 
-        for (index, week) in storedWeeks.enumerated() where isTrained(week) {
-            guard let asStored = stored?.blocks[safe: index] else {
-                throw PlanImportError.unreadableRoutine
-            }
-            guard document.blocks[safe: index] == asStored else {
-                throw PlanImportError.trainedBlockChanged(index + 1)
-            }
+        // Refuse before writing anything, so a refusal leaves the store as it
+        // was rather than partly rewritten.
+        for prescribed in named.sessions {
+            let key = Key(block: prescribed.blockOrdinal, ordinal: prescribed.ordinal)
+            guard let session = existing[key], session.hasBeenTrained else { continue }
+            guard canonical(PlanDocumentSession(reconstructing: session))
+                != canonical(prescribed)
+            else { continue }
+            throw PlanImportError.trainedSessionChanged(
+                block: prescribed.blockOrdinal, ordinal: prescribed.ordinal)
         }
 
-        for (index, block) in storedWeeks.enumerated() where !isTrained(block) {
-            // Rebuilt rather than edited in place: a block is a tree of days,
-            // exercises and prescribed sets, and reconciling one tree into
-            // another field by field is where a half-applied plan comes from.
-            guard document.blocks[safe: index] != stored?.blocks[safe: index] else { continue }
-            // Nothing in it was logged, but something in it may still be his:
-            // a note is the lifter's own words, not a prescription, and it is
-            // not covered by *the coach can change anything that is not checked
-            // off*. Kept across the rebuild and put back where it belongs.
-            let notes = lifterNotes(in: block)
-            context.delete(block)
-            plan.weeks?.removeAll { $0 === block }
-            if let arriving = blueprint.blocks[safe: index] {
-                let rebuilt = RoutineBlueprint.makeTrainingWeek(arriving, ordinal: index + 1)
-                context.insert(rebuilt)
-                rebuilt.plan = plan
-                restore(notes, in: rebuilt)
-            }
+        for prescribed in named.sessions {
+            let key = Key(block: prescribed.blockOrdinal, ordinal: prescribed.ordinal)
+            let session = existing[key] ?? {
+                let fresh = Session(blockOrdinal: key.block, ordinal: key.ordinal)
+                context.insert(fresh)
+                return fresh
+            }()
+            write(prescribed, into: session, from: named, in: context)
         }
 
-        // `stride` rather than a range: a document that states fewer blocks than
-        // the store holds is ordinary — the coach dropped one — and a reversed
-        // range is a crash rather than an empty loop.
-        for index in stride(from: storedWeeks.count, to: blueprint.blocks.count, by: 1) {
-            guard let arriving = blueprint.blocks[safe: index] else { continue }
-            let added = RoutineBlueprint.makeTrainingWeek(arriving, ordinal: index + 1)
-            context.insert(added)
-            added.plan = plan
-        }
-
-        // A routine that grew is running again: the coach writing next week's
-        // block is the plainest statement there is that the lifter is still on
-        // this routine.
-        if blueprint.blocks.count > storedWeeks.count { plan.completedAt = nil }
+        try context.save()
     }
 
-    /// Where a note sits: which session of the block, which position in it, and
-    /// which movement was there. All three, because a note carried to a
-    /// different movement is worse than a note lost — *my elbow ached* filed
-    /// under a squat he has never done is a sentence about something that never
-    /// happened.
-    private struct NotePlace: Hashable {
-        let weekday: Weekday
-        let order: Int
-        let exerciseID: ExerciseID
-    }
-
-    private static func lifterNotes(in block: TrainingWeek) -> [NotePlace: String] {
-        var notes: [NotePlace: String] = [:]
-        for day in block.orderedDays {
-            for (order, exercise) in day.orderedExercises.enumerated() {
-                guard let note = exercise.lifterNote, !note.isEmpty else { continue }
-                notes[NotePlace(
-                    weekday: day.weekday, order: order,
-                    exerciseID: exercise.exerciseID)] = note
-            }
-        }
-        return notes
-    }
-
-    private static func restore(_ notes: [NotePlace: String], in block: TrainingWeek) {
-        guard !notes.isEmpty else { return }
-        for day in block.orderedDays {
-            for (order, exercise) in day.orderedExercises.enumerated() {
-                let place = NotePlace(
-                    weekday: day.weekday, order: order, exerciseID: exercise.exerciseID)
-                guard let note = notes[place] else { continue }
-                exercise.lifterNote = note
-            }
-        }
-    }
-
-    /// Whether anything in this block is in the record.
+    /// Whether taking this document in would change anything.
     ///
-    /// Two ways it can be, and both are the lifter speaking. A set he ticked is
-    /// the obvious one. **A session he marked finished is the other**, even with
-    /// nothing ticked in it — the app allows that on purpose, since whether he
-    /// is done is his to say and Finish is never disabled, and `TrainingLog`
-    /// reports such a day as a session for the same reason. Counting only the
-    /// ticks let a rewrite delete the day and take his *I did this* with it.
+    /// The inbox asks before applying, so an unchanged document arriving twice
+    /// writes nothing and reports nothing. Compared through the document form,
+    /// which is the same round trip the export uses.
+    static func wouldChange(
+        _ document: PlanDocument, in context: ModelContext,
+        catalog: any ExerciseCatalogProviding
+    ) throws -> Bool {
+        let named = document.named(using: catalog)
+        let stored = try context.fetch(FetchDescriptor<Session>())
+        let existing = Dictionary(
+            stored.map { (Key(block: $0.blockOrdinal, ordinal: $0.ordinal), $0) },
+            uniquingKeysWith: { first, _ in first })
+
+        return named.sessions.contains { prescribed in
+            guard let session = existing[
+                Key(block: prescribed.blockOrdinal, ordinal: prescribed.ordinal)]
+            else { return true }
+            return canonical(PlanDocumentSession(reconstructing: session))
+                != canonical(prescribed)
+        }
+    }
+
+    // MARK: - Writing
+
+    /// Replaces a session's prescription with what the document states.
     ///
-    /// A row seeded on screen and never ticked is neither: it is the app showing
-    /// what was asked for, not the lifter saying he did it.
-    private static func isTrained(_ block: TrainingWeek) -> Bool {
-        block.orderedDays.contains { day in
-            day.completedAt != nil
-                || day.orderedExercises.contains { exercise in
-                    (exercise.loggedSets ?? []).contains { $0.isCompleted }
+    /// **There are no notes to preserve here, and that is new.** The lifter's
+    /// note used to live on the prescription, so rewriting a block meant lifting
+    /// his words out and putting them back. It lives on `PerformedExercise` now
+    /// — the record side — and a session that may be rewritten is by definition
+    /// one he has not trained, so there is nothing of his to move.
+    private static func write(
+        _ prescribed: PlanDocumentSession, into session: Session,
+        from document: PlanDocument, in context: ModelContext
+    ) {
+        session.focus = prescribed.focus
+        session.icon = prescribed.icon
+        session.generatedAt = document.generatedAt
+        session.catalogVersion = document.catalogVersion
+        session.sourceDocumentID = document.id
+
+        for exercise in session.plannedExercises ?? [] { context.delete(exercise) }
+        session.plannedExercises = []
+
+        var order = 0
+        var groupOrdinal = 0
+        for entry in prescribed.entries {
+            switch entry {
+            case .exercise(let stated):
+                let planned = make(stated, order: order, group: nil, rest: stated.restSeconds)
+                planned.session = session
+                context.insert(planned)
+                order += 1
+            case .group(let group):
+                groupOrdinal += 1
+                for (offset, stated) in group.exercises.enumerated() {
+                    // The round's rest belongs to the last member: the clock runs
+                    // after the round, not between the movements in it.
+                    let isLast = offset == group.exercises.count - 1
+                    let planned = make(
+                        stated, order: order, group: groupOrdinal,
+                        rest: isLast ? group.restSeconds : nil)
+                    planned.session = session
+                    context.insert(planned)
+                    order += 1
                 }
+            }
         }
     }
 
-    /// The two checks. Both walk the document in order so the error names the
-    /// first offending value rather than an arbitrary one.
+    /// One prescribed exercise and every set it states.
+    private static func make(
+        _ stated: PlanDocumentExercise, order: Int, group: Int?, rest: Int?
+    ) -> PlannedExercise {
+        let planned = PlannedExercise(
+            exerciseID: stated.exerciseID, order: order,
+            restSeconds: rest, coachNote: stated.coachNote, groupOrdinal: group)
+        planned.sets = stated.sets.enumerated().map { index, set in
+            let prescribed = PlannedSet(
+                setIndex: index, isWarmup: set.isWarmup, load: set.load,
+                intensity: set.intensity, target: set.target)
+            prescribed.exercise = planned
+            return prescribed
+        }
+        return planned
+    }
+
+    // MARK: - Checks
+
+    /// The form both sides of a comparison are put in before being compared.
+    ///
+    /// A stored session does not keep display names — the catalog owns them — so
+    /// reconstructing one gives every movement an empty name while an arriving
+    /// document has them filled in. Clearing both is what makes *unchanged* mean
+    /// unchanged rather than *named differently*.
+    private static func canonical(_ session: PlanDocumentSession) -> PlanDocumentSession {
+        PlanDocumentSession(
+            blockOrdinal: session.blockOrdinal, ordinal: session.ordinal,
+            focus: session.focus, icon: session.icon,
+            entries: session.entries.map(canonical))
+    }
+
+    private static func canonical(_ entry: PlanDocumentEntry) -> PlanDocumentEntry {
+        switch entry {
+        case .exercise(let exercise):
+            .exercise(unnamed(exercise))
+        case .group(let group):
+            .group(PlanDocumentGroup(
+                exercises: group.exercises.map(unnamed), restSeconds: group.restSeconds))
+        }
+    }
+
+    private static func unnamed(_ exercise: PlanDocumentExercise) -> PlanDocumentExercise {
+        PlanDocumentExercise(
+            exerciseID: exercise.exerciseID, displayName: "",
+            restSeconds: exercise.restSeconds, coachNote: exercise.coachNote,
+            sets: exercise.sets)
+    }
+
+    /// Every movement must be one the catalog has.
+    ///
+    /// **This is the one thing the app insists on.** History is keyed by exercise
+    /// identity, so a fabricated key fragments a lift's history irreparably —
+    /// which is not a training decision, it is the difference between a database
+    /// and a pile of text.
     private static func confirmEveryExerciseExists(
-        in document: PlanDocument,
-        using catalog: any ExerciseCatalogProviding
+        in document: PlanDocument, catalog: any ExerciseCatalogProviding
     ) throws {
-        for day in document.blocks.flatMap(\.days) {
-            for exercise in day.exercises where catalog.exercise(id: exercise.exerciseID) == nil {
+        for session in document.sessions {
+            for exercise in session.exercises where catalog.exercise(id: exercise.exerciseID) == nil
+            {
                 throw PlanImportError.unknownExercise(exercise.exerciseID)
             }
         }
@@ -300,78 +261,13 @@ enum PlanImporter {
 
     /// A mark this build cannot draw is refused by name.
     ///
-    /// Taking it in and drawing nothing would tell the writer his choice landed
-    /// when it did not — the same failure a silently dropped key is, and the
-    /// same answer: refuse, and say which one.
+    /// The app must never pick one for him: a glyph inferred from the word
+    /// "Push" is the app deciding what a session trains from words it does not
+    /// control. He chooses from the set the app publishes, or marks nothing.
     private static func confirmEveryIconExists(in document: PlanDocument) throws {
-        for day in document.blocks.flatMap(\.days) {
-            guard let icon = day.icon, !icon.isKnown else { continue }
+        for session in document.sessions {
+            guard let icon = session.icon, !icon.isKnown else { continue }
             throw PlanImportError.unknownIcon(icon)
         }
-    }
-
-    /// Closes every block still running, so the current block is unambiguous.
-    ///
-    /// An import supersedes; it never overwrites. The earlier plan, its days,
-    /// its prescriptions, and every set logged against it stay exactly where
-    /// they were — only the date it stopped being current is written. A block
-    /// the lifter had already finished keeps its own completion date.
-    private static func supersedeOpenPlans(in context: ModelContext, at date: Date) throws {
-        for plan in try context.fetch(FetchDescriptor<TrainingPlan>())
-        where plan.completedAt == nil {
-            plan.completedAt = date
-        }
-    }
-
-    /// Whether importing this document would change anything in the store.
-    ///
-    /// Asked by `DocumentInbox` *before* importing, so it can tell a plan that
-    /// landed from one that was merely announced again — the folder is re-read
-    /// whenever it changes, and the same file arriving twice is ordinary.
-    ///
-    /// It was *is this identity already stored*, which stopped being the same
-    /// question the day a routine could grow: next week's block arrives under
-    /// the identity of the routine it belongs to, and that is a change. The
-    /// answer comes from the same round trip `merge` compares with, so the two
-    /// cannot disagree about what changed.
-    static func wouldChange(_ document: PlanDocument, in context: ModelContext) throws -> Bool {
-        guard let stored = try plan(forDocument: document.id, in: context) else { return true }
-        guard let asStored = PlanDocument(reconstructing: stored) else { return true }
-        // Everything the merge takes from the document, and nothing else. Not
-        // `generatedAt`, which `write_plan` stamps fresh on every call — a
-        // re-sent identical plan would otherwise report as a change and send the
-        // record back out for nothing. Not `version` either: a document from an
-        // older format still says what it says.
-        return asStored.blocks != document.blocks
-            || asStored.title != document.title
-            || asStored.goal != document.goal
-            || asStored.notes != document.notes
-            || asStored.durationMinutes != document.durationMinutes
-    }
-
-    /// The plan already imported from this document, if there is one.
-    ///
-    /// Filtered in memory rather than by predicate: a lifter has a handful of
-    /// blocks, and an optional `UUID` comparison inside `#Predicate` is a
-    /// subtlety this does not need to depend on.
-    private static func plan(
-        forDocument id: UUID,
-        in context: ModelContext
-    ) throws -> TrainingPlan? {
-        try context.fetch(FetchDescriptor<TrainingPlan>())
-            .first { $0.sourceDocumentID == id }
-    }
-}
-
-extension Array {
-
-    /// The element at `index`, or `nil` when the array is shorter than that.
-    ///
-    /// The merge compares two lists of blocks that are deliberately different
-    /// lengths — that is the whole point of a routine that grows — and reads
-    /// them position by position. Bounds-checking each read at the call site
-    /// three times over is what this replaces.
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
     }
 }
