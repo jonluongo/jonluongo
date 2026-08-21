@@ -28,17 +28,12 @@ extension PlanDocument {
     public func named(using catalog: any ExerciseCatalogProviding) -> PlanDocument {
         PlanDocument(
             version: version, id: id, catalogVersion: catalogVersion,
-            generatedAt: generatedAt, title: title, goal: goal,
-            durationMinutes: durationMinutes, notes: notes,
-            blocks: blocks.map { block in
-                PlanDocumentBlock(
-                    label: block.label, isDeload: block.isDeload,
-                    days: block.days.map { day in
-                        PlanDocumentDay(
-                            weekday: day.weekday, focus: day.focus,
-                            durationMinutes: day.durationMinutes, icon: day.icon,
-                            entries: day.entries.map { $0.named(using: catalog) })
-                    })
+            generatedAt: generatedAt,
+            sessions: sessions.map { session in
+                PlanDocumentSession(
+                    blockOrdinal: session.blockOrdinal, ordinal: session.ordinal,
+                    focus: session.focus, icon: session.icon,
+                    entries: session.entries.map { $0.named(using: catalog) })
             })
     }
 }
@@ -59,21 +54,16 @@ extension PlanDocumentEntry {
 
 extension PlanDocumentExercise {
 
+    /// One initializer, so one way to rebuild. The two-branch version this
+    /// replaced existed because an exercise stated its sets as either a count or
+    /// a list, and naming it had to preserve which — every prescribed set is a
+    /// row now, so there is nothing to preserve.
     fileprivate func named(using catalog: any ExerciseCatalogProviding) -> PlanDocumentExercise {
         guard displayName.isEmpty,
             let named = catalog.exercise(id: exerciseID)?.displayName
         else { return self }
-        // Rebuilt through whichever initializer states the sets the way this
-        // exercise states them, so a ramp stays a ramp.
-        if statedSets.isEmpty {
-            return PlanDocumentExercise(
-                exerciseID: exerciseID, displayName: named, sets: sets,
-                repRange: repRange, restSeconds: restSeconds, suggestedLoad: suggestedLoad,
-                intensity: intensity, tempo: tempo, notes: notes)
-        }
         return PlanDocumentExercise(
-            exerciseID: exerciseID, displayName: named, sets: statedSets,
-            repRange: repRange, restSeconds: restSeconds, suggestedLoad: suggestedLoad,
-            intensity: intensity, tempo: tempo, notes: notes)
+            exerciseID: exerciseID, displayName: named, restSeconds: restSeconds,
+            coachNote: coachNote, sets: sets)
     }
 }

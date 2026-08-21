@@ -32,6 +32,24 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
     /// type exists to end.
     case laterVersion(Int, understood: Int)
 
+    /// A plan written in a format older than this build reads.
+    ///
+    /// **This exists for exactly one break, and should not grow another.** The
+    /// standing rule is that a plan is an archive — the coach wrote it, it is
+    /// the only copy, and an older one must go on being read forever. Plan
+    /// format 6 breaks that once: every earlier version stated a routine of
+    /// named blocks of days keyed by weekday, and version 6 has no routine, no
+    /// block label and no weekday, so reading one would mean inventing block
+    /// ordinals from list positions and discarding the weekdays. That is
+    /// interpretation wearing compatibility's clothes, and it would land in the
+    /// store as prescriptions nobody wrote.
+    ///
+    /// It is safe *only* because the store resets at this format, so no earlier
+    /// document has anywhere to land and none is archived. From version 6
+    /// onward the archive rule holds again: a version 7 reader must read a
+    /// version 6 plan.
+    case earlierVersion(Int, understood: Int)
+
     /// A snapshot written in a format this build does not read — in either
     /// direction.
     ///
@@ -78,6 +96,13 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
                 + "reads version \(understood). Nothing was taken in, because reading only the "
                 + "parts this build recognizes would silently discard the rest. Write version "
                 + "\(understood), or update the app."
+        case .earlierVersion(let stated, let understood):
+            "This plan says it is written in format version \(stated), and this build reads "
+                + "version \(understood). Nothing was taken in. Version \(understood) states a "
+                + "flat list of sessions, each saying which block it belongs to and where it "
+                + "sits in that block; there are no routines, no block labels and no weekdays, "
+                + "so there is no honest way to read the older shape into it. Write the plan "
+                + "again as version \(understood)."
         case .snapshotVersionMismatch(let stated, let understood):
             "The training log on disk is written in snapshot format version \(stated), and "
                 + "this server reads version \(understood). Nothing was read, because taking "

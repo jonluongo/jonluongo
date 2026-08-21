@@ -27,7 +27,7 @@ import Foundation
 /// target and a note: a note is for the lifter to read, a target is for the app
 /// to act on, and something the app cannot act on must not be stored where it
 /// will be acted on anyway.
-public enum Target: Equatable, Sendable {
+public enum Target: Hashable, Sendable {
 
     /// Counted. `high` is `nil` for a single count: `5` and `5-5` are the same
     /// instruction, and storing the second puts a bound in the record that
