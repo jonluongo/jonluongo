@@ -265,6 +265,34 @@ Each phase ends green: all three suites and both `-warnings-as-errors` builds.
 The app does not compile between phases 1 and 3; that is expected and is why
 this is a branch.
 
+**No strangler. The unit of change is a layer plus its readers.**
+Corrected on 2026-08-21 after Jon: *"Make sure we are not just cleaning and
+organizing. In many cases a full ground up rebuild may be appropriate."* He was
+right, and the reason is specific: a strangler exists to protect callers that
+must survive untouched, and **these callers do not survive.** Of the nine source
+readers of `PlanDocumentDay`, six are marked *Rewrite* — `PlanDocumentMapping`,
+`RoutineBlueprint`, `PlanDocument`, `TrainingLog`, `LogReportTools`,
+`WritePlanTool+Report`. Migrating them one at a time touches each of them twice,
+and the intermediate state has `SetPrescription` carrying both `repRange` *and* a
+computed `target`: two ways to say one thing, which this project already paid a
+rewrite to remove once. The store resets and nothing is in production, so the
+only thing a halfway house protected was keeping all three targets green at once
+— convenience, not correctness. `58632bf` was reverted for exactly that reason;
+its `isWarmup` work relocates to the type below rather than being lost.
+
+**So the gate moves from the commit to the layer.** A commit changing LiftingKit
+breaks the app and the server by construction, and pretending otherwise is what
+produces halfway houses. Each layer lands with its readers in one coherent
+change, and that change ends with every suite green. The branch is red in
+between, which is what the branch is for.
+
+**The document layer is renamed with it.** Five types say `PlanDocument*` and one
+says `SetPrescription`, which is the same inconsistency the store had. The
+document reads `PlanDocument` → `PlanDocumentSession` → `PlanDocumentExercise` →
+`PlanDocumentSet`, with `PlanDocumentGroup` beside the exercise. `PlanDocumentDay`
+and `SetPrescription` both go — the first because a session has no weekday, the
+second because it never matched its siblings.
+
 **A deletion is not a phase — it trails its last reader.** Checked on
 2026-08-21 rather than assumed: `RoutineCalendar` and `RoutineSchedule` are read
 by `RoutineListing`, and `EquipmentAccess` by `UserProfile`,
