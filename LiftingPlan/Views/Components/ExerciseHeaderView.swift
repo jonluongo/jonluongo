@@ -46,9 +46,13 @@ import LiftingKit
 /// rather than inside the screen that uses it, which is what makes a future
 /// divergence visible.
 struct ExerciseHeaderView: View {
+
+    @Environment(\.exerciseCatalog) private var catalog
+
     let exercise: PlannedExercise
-    /// The lifter's display unit, carried down to the prescription.
-    let unit: MassUnit
+    /// What has been performed of this movement today, or `nil` before anything
+    /// has. It is where the lifter's own note lives.
+    let performed: PerformedExercise?
     var onShowInfo: () -> Void
     var onEditRest: () -> Void
     /// Records a set past the ones prescribed — the fifth he actually did.
@@ -82,16 +86,32 @@ struct ExerciseHeaderView: View {
     /// rule down the panel edge says which two.
     private var eyebrow: String? { paired ? "Superset" : nil }
 
-    private var subtitle: String? {
-        let parts = [
-            PrescriptionSummary.aboveTable(for: exercise),
-            exercise.tempo.flatMap { $0.isEmpty ? nil : "tempo \($0)" },
-        ].compactMap { $0 }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    /// Whether the lifter has written about this movement today.
+    ///
+    /// **The note lives on the record, not the prescription.** It used to sit on
+    /// `PlannedExercise`, which meant his words were governed by the coach's
+    /// rewrite rules — a note on a session he had not trained went when the
+    /// coach rewrote the block.
+    private var hasNote: Bool { performed?.lifterNote?.isEmpty == false }
+
+    /// What the movement is called. **The catalog owns it**, keyed by
+    /// `exerciseID`; the store used to keep a copy, which was a second place for
+    /// a name to live and disagree from. An ID the catalog does not have cannot
+    /// reach here — the importer refuses it — so the fallback is the key itself
+    /// rather than a blank.
+    private var name: String {
+        catalog?.exercise(id: exercise.exerciseID)?.displayName ?? exercise.exerciseID.rawValue
     }
 
+    /// What the exercise asks for above its table.
+    ///
+    /// **Tempo used to sit here**, and it folded into the coach's note: nothing
+    /// parsed it, and two free-text fields on one exercise invited a coin-flip
+    /// about which to write in.
+    private var subtitle: String? { PrescriptionSummary.aboveTable(for: exercise) }
+
     var body: some View {
-        CardHeaderRow(title: exercise.displayName, subtitle: subtitle, eyebrow: eyebrow) {
+        CardHeaderRow(title: name, subtitle: subtitle, eyebrow: eyebrow) {
             Menu {
                 Button { onShowInfo() } label: {
                     Label("About This Exercise", systemImage: "info")
@@ -105,7 +125,7 @@ struct ExerciseHeaderView: View {
                 // of the two is his to write.
                 Button { onWriteNote() } label: {
                     Label(
-                        exercise.lifterNote?.isEmpty == false ? "Edit My Note" : "Add My Note",
+                        hasNote ? "Edit My Note" : "Add My Note",
                         systemImage: "square.and.pencil")
                 }
                 // Warm-up first, extra set last, and the extra set says
@@ -139,7 +159,7 @@ struct ExerciseHeaderView: View {
                     .foregroundStyle(Palette.muted)
                     .contentShape(.rect)
             }
-            .accessibilityLabel("\(exercise.displayName) options")
+            .accessibilityLabel("\(name) options")
         }
     }
 }

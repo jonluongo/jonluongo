@@ -51,21 +51,26 @@ struct ExerciseDetailView: View {
     let unit: MassUnit
 
     @Environment(\.exerciseCatalog) private var catalog
-    @Query(sort: \TrainingPlan.startDate, order: .reverse) private var plans: [TrainingPlan]
+    /// Every performance there has ever been, newest last.
+    ///
+    /// **Queried by movement rather than assembled from plans.** It used to walk
+    /// every routine collecting sets and regroup them by date, because nothing in
+    /// the store sat at the grain the question is asked at. A performance *is*
+    /// that grain, so this is a filter — and it reaches a stated baseline too,
+    /// which the old path could not, since a baseline was a different table.
+    @Query(sort: \PerformedExercise.occurredAt) private var performances: [PerformedExercise]
 
-    /// This exercise's sessions, or `nil` when nothing has been logged against
-    /// it. Built from every plan rather than the one it was opened from: the
-    /// record is the lift's, not the block's.
-    private var trend: ExerciseTrend? {
-        ExerciseTrend.build(from: plans).first { $0.exerciseID == exerciseID }
+    /// This movement's history, or empty when it has never been trained.
+    private var history: [PerformedExercise] {
+        performances.filter { $0.exerciseID == exerciseID }
     }
 
     var body: some View {
         InfoSheet(displayName) {
             ExerciseAboutSections(entry: catalog.exercise(id: exerciseID))
-            if let trend {
-                chart(trend)
-                sessions(trend)
+            if !history.isEmpty {
+                chart(history)
+                sessions(history)
             } else {
                 // A sentence rather than the whole screen: the movement above
                 // it is still worth reading on the day nothing has been logged,
@@ -88,8 +93,8 @@ struct ExerciseDetailView: View {
     /// reads as a flat line at whatever height it happens to sit, which is the
     /// chart claiming a shape the record does not have. Absence stays absence.
     @ViewBuilder
-    private func chart(_ trend: ExerciseTrend) -> some View {
-        let points = loads(trend)
+    private func chart(_ history: [PerformedExercise]) -> some View {
+        let points = loads(history)
         if points.count >= 2 {
             Section {
                 SectionHeading("Heaviest set")
@@ -124,24 +129,21 @@ struct ExerciseDetailView: View {
         }
     }
 
-    private func sessions(_ trend: ExerciseTrend) -> some View {
-        let points = Array(trend.points.reversed())
-        return Section {
+    private func sessions(_ history: [PerformedExercise]) -> some View {
+        Section {
             SectionHeading("Sessions")
             Panel {
-                ForEach(points) { point in
+                ForEach(history.reversed(), id: \.persistentModelID) { performed in
                     HStack {
-                        Text(point.date, format: .dateTime.month().day())
+                        Text(performed.occurredAt, format: .dateTime.month().day())
                             .foregroundStyle(Palette.muted)
                         Spacer()
                         // What the set actually was: `185 lb × 8`, `70 lb ×
                         // 40 m`, `45 s`. It read `× 0` for a carry and `0 reps`
                         // for a hold, because reps was the only measure this
                         // row knew how to say.
-                        if let line = LoggedWorkSummary.text(
-                            load: point.topLoad, reps: point.topReps,
-                            durationSeconds: point.topDurationSeconds,
-                            distance: point.topDistance, unit: unit)
+                        if let top = heaviest(of: performed),
+                            let line = LoggedWorkSummary.text(top)
                         {
                             Text(line).foregroundStyle(Palette.ink)
                         }
@@ -152,6 +154,18 @@ struct ExerciseDetailView: View {
         }
     }
 
+    /// The heaviest working set of one performance, as a plain value.
+    ///
+    /// Heaviest rather than last: it is the one figure a lifter looks for, and
+    /// the order sets were performed in does not say which that is. A
+    /// performance with no load at all has none, which is an absence and not a
+    /// zero.
+    private func heaviest(of performed: PerformedExercise) -> SnapshotPerformedSet? {
+        PerformanceHistory.value(of: performed).sets
+            .filter { !$0.isWarmup }
+            .max { ($0.load?.value ?? 0) < ($1.load?.value ?? 0) }
+    }
+
     /// Only the sessions that carried a load, converted into the display unit,
     /// each tagged with the unbroken run it belongs to.
     ///
@@ -159,20 +173,20 @@ struct ExerciseDetailView: View {
     /// bodyweight work, a set logged without one — produce no entry at all and
     /// increment `run`, so the chart shows a gap where there is no answer
     /// instead of drawing one.
-    private func loads(_ trend: ExerciseTrend) -> [ChartPoint] {
+    private func loads(_ history: [PerformedExercise]) -> [ChartPoint] {
         var result: [ChartPoint] = []
         var run = 0
         var previousWasLoaded = false
-        for point in trend.points {
-            guard let load = point.topLoad else {
+        for performed in history {
+            guard let load = heaviest(of: performed)?.load else {
                 previousWasLoaded = false
                 continue
             }
             if !previousWasLoaded && !result.isEmpty { run += 1 }
             previousWasLoaded = true
             result.append(ChartPoint(
-                date: point.date,
-                value: load.converted(to: unit).value,
+                date: performed.occurredAt,
+                value: load.value,
                 run: run
             ))
         }
