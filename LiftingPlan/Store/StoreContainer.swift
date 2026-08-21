@@ -13,16 +13,11 @@ enum StoreContainer {
     /// Every persisted model. Adding a model without adding it here means it
     /// silently never persists.
     static let schema = Schema([
-        UserProfile.self,
-        ProfileStatement.self,
-        TrainingPlan.self,
-        TrainingWeek.self,
-        WorkoutDay.self,
+        Session.self,
         PlannedExercise.self,
-        PrescribedSet.self,
-        LoggedSet.self,
-        BodyMetric.self,
-        StrengthBaseline.self,
+        PlannedSet.self,
+        PerformedExercise.self,
+        PerformedSet.self,
     ])
 
     /// The production container, backed by the user's private CloudKit database.

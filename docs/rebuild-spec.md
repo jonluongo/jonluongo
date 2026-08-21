@@ -324,6 +324,18 @@ Delete the four profile-document files. The round-trip suite is the gate.
 **Phase 3 — Store.** Five models, new names, `StoreContainer`. Nothing migrates;
 the store resets.
 
+**Phase 3 cannot be verified on its own, and that is a flaw in this order.** The
+models live in the app target, so nothing runs until the app compiles — which
+needs `Services/`, `Presentation/` and `Views/` too. The store's real gate is
+therefore the first moment phases 4 and 6 land. **One assumption is unverified
+until then and should be checked first:** whether SwiftData accepts
+`PlannedSet.target`, a `Codable` enum with associated values, and whether
+CloudKit mirrors it. `Mass` and `IntensityTarget` are already stored as `Codable`
+structs, so `Codable` support is proven; an enum with associated values is not.
+If it is refused, the fallback is storing the encoded form on the model and
+exposing `target` as a computed property — which keeps the type honest at every
+boundary but costs a decode per read.
+
 **Phase 4 — Services.** Importer and blueprint, exporter, outbox with three
 triggers, session log, grouping, order, history. Delete seeding, the profile
 updater, stated facts, store upgrade, the watcher, `DayBlueprint`,
