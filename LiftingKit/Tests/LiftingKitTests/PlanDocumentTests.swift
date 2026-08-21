@@ -63,35 +63,59 @@ struct PlanDocumentTests {
         #expect(decoded.generatedAt == generated)
     }
 
-    @Test("Every session survives, each keeping the block it belongs to")
+    @Test("Every session of the block survives")
     func everySessionSurvives() throws {
-        // Four blocks of three sessions. The count is never stated, so nothing
-        // can claim a length the document does not deliver.
-        let sessions = (1...4).flatMap { block in
-            (1...3).map { ordinal in
-                PlanDocumentSession(
-                    blockOrdinal: block, ordinal: ordinal, focus: "Day \(ordinal)",
-                    entries: [exercise()])
-            }
+        // Six sessions in one block. The count is never stated, so nothing can
+        // claim a length the document does not deliver.
+        let sessions = (1...6).map { ordinal in
+            PlanDocumentSession(
+                blockOrdinal: 3, ordinal: ordinal, focus: "Day \(ordinal)",
+                entries: [exercise()])
         }
         let decoded = try roundTrip(document(sessions: sessions))
 
-        #expect(decoded.sessions.count == 12)
-        #expect(decoded.blockOrdinals == [1, 2, 3, 4])
-        for block in 1...4 {
-            #expect(decoded.sessions(inBlock: block).map(\.ordinal) == [1, 2, 3])
-        }
+        #expect(decoded.sessions.count == 6)
+        #expect(decoded.blockOrdinals == [3], "blocks run continuously; they do not restart")
+        #expect(decoded.sessions(inBlock: 3).map(\.ordinal) == [1, 2, 3, 4, 5, 6])
     }
 
     @Test("A session says where it sits, so the order it arrives in carries no meaning")
     func sessionsAreOrderedByWhatTheyState() throws {
         let decoded = try roundTrip(document(sessions: [
-            PlanDocumentSession(blockOrdinal: 2, ordinal: 2),
-            PlanDocumentSession(blockOrdinal: 1, ordinal: 3),
+            PlanDocumentSession(blockOrdinal: 2, ordinal: 3),
             PlanDocumentSession(blockOrdinal: 2, ordinal: 1),
+            PlanDocumentSession(blockOrdinal: 2, ordinal: 2),
         ]))
-        #expect(decoded.sessions(inBlock: 2).map(\.ordinal) == [1, 2])
-        #expect(decoded.blockOrdinals == [1, 2])
+        #expect(decoded.sessions(inBlock: 2).map(\.ordinal) == [1, 2, 3])
+        #expect(decoded.blockOrdinals == [2])
+    }
+
+    @Test("A plan stating more than one block is refused, naming them")
+    func severalBlocksAreRefused() throws {
+        // **The coach writes a block at a time, and the routine grows.** A
+        // document carrying three blocks is a month written in advance of the
+        // evidence: he is meant to read what happened in the block just
+        // finished before prescribing the next, and that reading is the whole
+        // of what he is for. Refused rather than trimmed to the first block —
+        // taking part of a document in tells the writer it landed when most of
+        // it did not.
+        let error = #expect(throws: DocumentRefusal.self) {
+            try roundTrip(document(sessions: [
+                PlanDocumentSession(blockOrdinal: 1, ordinal: 1),
+                PlanDocumentSession(blockOrdinal: 2, ordinal: 1),
+            ]))
+        }
+        let message = try #require(error?.errorDescription)
+        #expect(message.contains("one block"))
+        #expect(message.contains("1, 2"), "it names what it found")
+        #expect(message.contains("Nothing was taken in"))
+    }
+
+    @Test("A plan with no sessions at all is not a several-blocks refusal")
+    func anEmptyPlanIsAllowedThrough() throws {
+        // Zero blocks is not two. What an empty plan means is the importer's
+        // question, not the format's.
+        #expect(try roundTrip(document(sessions: [])).sessions.isEmpty)
     }
 
     @Test("A session's own facts survive as written")

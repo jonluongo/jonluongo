@@ -142,6 +142,26 @@ extension DocumentRefusal {
                 + "rest after each round.")
     }
 
+    /// Why a plan may state only one block.
+    ///
+    /// **The coach writes a block at a time, and the routine grows.** He is
+    /// meant to read what actually happened in the block just finished before
+    /// prescribing the next — that reading is the whole of what he is for. A
+    /// document carrying three blocks is a month written in advance of the
+    /// evidence, and the two later ones will be rewritten or trained blind.
+    ///
+    /// Refused rather than trimmed to the first block, for the standing reason:
+    /// taking part of a document in tells the writer his prescription landed
+    /// when most of it did not.
+    public static func severalBlocks(_ stated: [Int]) -> DocumentRefusal {
+        .contradiction(
+            "A plan states one block, and this one states \(stated.count) "
+                + "(\(stated.map(String.init).joined(separator: ", "))). Nothing was taken in. "
+                + "Write the next block on its own — blocks run continuously and never restart, "
+                + "so send the one that follows what is already on the phone, and send the block "
+                + "after it once you have seen how this one went.")
+    }
+
     /// Why a group has to hold more than one exercise.
     ///
     /// One exercise performed with rest after it is an exercise, and the format

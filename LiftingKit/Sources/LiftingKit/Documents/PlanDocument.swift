@@ -103,6 +103,14 @@ public struct PlanDocument: Codable, Hashable, Sendable, Identifiable {
         generatedAt = try container.decode(Date.self, forKey: .generatedAt)
         sessions = try container.decodeIfPresent(
             [PlanDocumentSession].self, forKey: .sessions) ?? []
+
+        // **One block per plan.** Read here rather than trusted, because a
+        // document stating three blocks is not a slightly-wrong plan — it is a
+        // coach who wrote the next month before seeing how the first week went.
+        let blocks = Set(sessions.map(\.blockOrdinal)).sorted()
+        guard blocks.count <= 1 else {
+            throw DocumentRefusal.severalBlocks(blocks)
+        }
     }
 
     /// Every block this document states, in order, without repeats.

@@ -48,7 +48,9 @@ extension ToolCatalog {
                 "sessions": array(
                     of: sessionSchema,
                     "Every workout this plan prescribes, in any order — each says where it "
-                        + "sits."),
+                        + "sits. **All of them must belong to the same block.** Write one "
+                        + "block, see how it went, then write the next; a plan naming more "
+                        + "than one block is refused whole."),
                 "catalogVersion": integer(
                     "The catalog version the exercise IDs came from, as list_exercises "
                         + "reported it. Left out, the server states its own."),
@@ -62,7 +64,8 @@ extension ToolCatalog {
             [
                 "blockOrdinal": integer(
                     "Which block this belongs to, from 1. Blocks run continuously and never "
-                        + "restart."),
+                        + "restart, and every session in one plan states the same one — check "
+                        + "recent_sessions for the last block on the phone and send the next."),
                 "ordinal": integer("Where it sits in that block, from 1."),
                 "focus": string(
                     "What to call the day — 'Push', 'Upper A', 'Core & carries'. Left out, "

@@ -76,7 +76,7 @@ struct PlanArchiveTests {
         let first = StoreFixture.plan(blocks: 1, sessionsPerBlock: 1)
         let (folder, _) = try await afterImporting(first, into: context)
 
-        let second = StoreFixture.plan(blocks: 2, sessionsPerBlock: 1)
+        let second = StoreFixture.plan(blocks: 1, sessionsPerBlock: 3)
         try folder.writePlan(second)
         try folder.archivePlan(second)
 
