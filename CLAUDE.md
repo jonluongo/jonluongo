@@ -45,7 +45,7 @@ database and a pile of text.
 |---|---|---|
 | `snapshot.json` | phone | server |
 | `plan.json` | server | phone |
-| `plans/<id>.json` | phone, on import | the archive — every plan ever written |
+| `plans/<id>.json` | phone, on import | the archive — every plan taken in |
 | `user.md`, `program.md` | server | phone, **rendered, never parsed** |
 | `notes/<file>.<timestamp>.md` | server, before each edit | the versions |
 

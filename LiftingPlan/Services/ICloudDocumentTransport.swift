@@ -131,6 +131,13 @@ struct ICloudDocumentTransport: DocumentTransport {
         try documentsFolder().readNote(note)
     }
 
+    /// Keeps a plan that was taken in. The `plans/` folder is created by
+    /// `DocumentFolder`; the container's own Documents folder already exists by
+    /// the time a plan has been read out of it.
+    func archivePlan(_ plan: PlanDocument) throws {
+        try documentsFolder().archivePlan(plan)
+    }
+
     /// The shared folder inside the container, for a caller that has to watch
     /// it. Throws when there is no container to look in.
     func documentsFolder() throws -> DocumentFolder {

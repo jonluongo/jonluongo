@@ -46,6 +46,23 @@ public protocol DocumentTransport: Sendable {
     /// them. The moment a value has to come out of prose, that value belongs in
     /// a table instead.
     func readNote(_ note: NoteFile) throws -> String?
+
+    /// Keeps a plan that was taken in, under its own ID, so the prescription
+    /// survives the block being rewritten.
+    ///
+    /// **`Session.sourceDocumentID` is a pointer, and this is what it points
+    /// at.** Every session records the ID of the document that prescribed it,
+    /// and `plan.json` is replaced by the next plan the coach writes — so
+    /// without this the ID names a document that no longer exists anywhere. A
+    /// plan is an archive: he wrote it, it is the only copy, and the
+    /// prescribed-versus-performed comparison is the coaching signal.
+    ///
+    /// **Writing the same plan twice is not an error and does not rewrite it.**
+    /// The folder is announced whenever anything in it changes, including the
+    /// snapshot this app writes, so a plan is re-read many times. The first copy
+    /// is the one kept — never mutated, by the same reasoning that makes a
+    /// trained prescription permanent.
+    func archivePlan(_ plan: PlanDocument) throws
 }
 
 /// The documents of the loop, living side by side in one directory.
@@ -69,6 +86,10 @@ public struct DocumentFolder: DocumentTransport {
     public static let snapshotFilename = "snapshot.json"
     /// The name the server writes and the app reads.
     public static let planFilename = "plan.json"
+    /// Where plans already taken in are kept, one file per document, named by
+    /// its ID. A folder rather than a suffix on the name, so the two documents
+    /// of the live loop stay the only things at the top level.
+    public static let planArchiveFolder = "plans"
     /// Every file the server writes and the app watches for. A caller that has
     /// to notice arrivals reads this rather than restating the names, so a
     /// document that is written but never watched for cannot happen.
@@ -102,6 +123,46 @@ public struct DocumentFolder: DocumentTransport {
     public func readNote(_ note: NoteFile) throws -> String? {
         guard let data = try contents(of: note.filename) else { return nil }
         return String(data: data, encoding: .utf8)
+    }
+
+    /// Writes `plans/<id>.json`, and leaves it alone ever after.
+    ///
+    /// **The document, not the bytes.** This re-encodes rather than copying
+    /// `plan.json` across, so what is kept is the prescription and not the
+    /// coach's whitespace. The round-trip suite is what says those are the same
+    /// thing; byte-fidelity would only serve forensics about his formatting,
+    /// which nothing needs.
+    ///
+    /// The folder is created on write only, for the same reason the container's
+    /// is: a transport pointed somewhere that does not exist holds no archive,
+    /// and reading must not conjure one.
+    public func archivePlan(_ plan: PlanDocument) throws {
+        let folder = directory.appending(path: Self.planArchiveFolder)
+        let file = folder.appending(path: "\(plan.id.uuidString).json")
+        guard !FileManager.default.fileExists(atPath: file.path(percentEncoded: false)) else {
+            return
+        }
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try PlanDocument.makeEncoder().encode(plan).write(to: file, options: .atomic)
+    }
+
+    /// Every plan kept, newest last, for a reader asking what was prescribed
+    /// before. Empty when none has been archived yet — which is absence, not
+    /// failure, exactly as an unwritten plan is.
+    public func archivedPlans() throws -> [PlanDocument] {
+        let folder = directory.appending(path: Self.planArchiveFolder)
+        let files: [URL]
+        do {
+            files = try FileManager.default.contentsOfDirectory(
+                at: folder, includingPropertiesForKeys: nil)
+        } catch let error as CocoaError where Self.meansNotThere(error) {
+            return []
+        }
+        return try files
+            .filter { $0.pathExtension == "json" }
+            .map { try PlanDocument.makeDecoder().decode(
+                PlanDocument.self, from: try Data(contentsOf: $0)) }
+            .sorted { $0.generatedAt < $1.generatedAt }
     }
 
     // MARK: - The server's direction

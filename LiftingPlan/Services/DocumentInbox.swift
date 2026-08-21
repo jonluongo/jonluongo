@@ -52,6 +52,11 @@ protocol DocumentArrivalWatching: AnyObject {
 /// corrupt document that read as an empty one would leave the lifter staring at
 /// an empty screen with no idea why.
 ///
+/// **A plan taken in is kept**, under its own ID in `plans/`, because
+/// `plan.json` is replaced by the next one the coach writes and
+/// `Session.sourceDocumentID` would otherwise name a document that exists
+/// nowhere. See `DocumentTransport.archivePlan(_:)`.
+///
 /// Re-reading is safe: both documents carry a stable identity and both are
 /// applied once, so they are left in place rather than consumed. Re-applying
 /// an identity already applied changes nothing and announces nothing, so a
@@ -197,6 +202,14 @@ final class DocumentInbox {
                 let isNew = try PlanImporter.wouldChange(
                     document, in: context, catalog: catalog)
                 try PlanImporter.import(document, into: context, catalog: catalog)
+                // **After the import, never before.** The archive is what
+                // `Session.sourceDocumentID` points at, so it must hold every
+                // document that produced sessions and nothing else. A plan
+                // refused by the importer — one rewriting a block already
+                // trained, or naming an exercise the catalog lacks — produced
+                // none, and archiving it would put prescriptions in the record
+                // that the lifter was never given.
+                try await Self.archive(document, in: transport)
                 applied = applied || isNew
             }
         } catch {
@@ -284,6 +297,14 @@ final class DocumentInbox {
         from transport: any DocumentTransport
     ) async throws -> PlanDocument? {
         try await Task.detached { try transport.readPlan() }.value
+    }
+
+    /// Keeps the plan, off the main actor for the same reason the reads are:
+    /// it reaches the same container resolution.
+    private static func archive(
+        _ plan: PlanDocument, in transport: any DocumentTransport
+    ) async throws {
+        try await Task.detached { try transport.archivePlan(plan) }.value
     }
 
     /// The same, for the other document. Off the main actor for the same

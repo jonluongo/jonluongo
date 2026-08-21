@@ -61,6 +61,17 @@ private final class InMemoryDocumentTransport: DocumentTransport, @unchecked Sen
     func readNote(_ note: NoteFile) throws -> String? { notes[note] }
 
     func writeNote(_ text: String, as note: NoteFile) throws { notes[note] = text }
+
+    /// Keeps the first copy of each plan and never replaces it, which is the
+    /// behaviour the folder promises and the thing a caller can get wrong.
+    private(set) var archived: [UUID: PlanDocument] = [:]
+
+    func archivePlan(_ plan: PlanDocument) throws {
+        try lock.withLock {
+            if let failure { throw failure }
+            if archived[plan.id] == nil { archived[plan.id] = plan }
+        }
+    }
 }
 
 // MARK: - Fixtures
@@ -347,4 +358,92 @@ struct InMemoryDocumentTransportTests {
         #expect(try transport.readPlan()?.sessions.first?.focus == "Push")
     }
 
+}
+
+/// What happens to a plan after it has been taken in.
+///
+/// **The defect this closes.** `Session.sourceDocumentID` was stored, exported
+/// and reconstructed while pointing at nothing: `plan.json` is replaced by the
+/// next plan the coach writes, so the document a session named had ceased to
+/// exist anywhere. `CLAUDE.md` and `docs/decided.md` both described the archive
+/// that fixes it; nothing wrote it.
+@Suite("The plan archive")
+struct PlanArchiveTests {
+
+    private func folder() throws -> (DocumentFolder, URL) {
+        let directory = URL.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return (DocumentFolder(directory: directory), directory)
+    }
+
+    @Test("A kept plan is readable back as the document it was")
+    func aKeptPlanReadsBack() throws {
+        let (subject, _) = try folder()
+        let plan = makePlan(focus: "Pull")
+
+        try subject.archivePlan(plan)
+
+        let kept = try #require(try subject.archivedPlans().first)
+        #expect(kept.id == plan.id)
+        #expect(kept.sessions.first?.focus == "Pull")
+    }
+
+    @Test("It is named by the document's own ID, which is what a session records")
+    func theFileIsNamedByTheID() throws {
+        let (subject, directory) = try folder()
+        let plan = makePlan()
+
+        try subject.archivePlan(plan)
+
+        let file = directory
+            .appending(path: DocumentFolder.planArchiveFolder)
+            .appending(path: "\(plan.id.uuidString).json")
+        #expect(FileManager.default.fileExists(atPath: file.path(percentEncoded: false)))
+    }
+
+    @Test("Keeping the same plan twice keeps the first copy and does not throw")
+    func theFirstCopyIsTheOneKept() throws {
+        // The folder is announced whenever anything in it changes, including
+        // the snapshot this app writes, so a plan is re-read many times. A
+        // prescription already taken in is permanent for the same reason a
+        // trained one is.
+        let (subject, _) = try folder()
+        let id = UUID()
+
+        try subject.archivePlan(makePlan(id: id, focus: "Push"))
+        try subject.archivePlan(makePlan(id: id, focus: "Rewritten"))
+
+        let kept = try subject.archivedPlans()
+        #expect(kept.count == 1)
+        #expect(kept.first?.sessions.first?.focus == "Push")
+    }
+
+    @Test("Two plans are two files")
+    func everyPlanIsKept() throws {
+        let (subject, _) = try folder()
+        try subject.archivePlan(makePlan(focus: "Push"))
+        try subject.archivePlan(makePlan(focus: "Pull"))
+
+        #expect(try subject.archivedPlans().count == 2)
+    }
+
+    @Test("A folder with no archive yet reports none rather than failing")
+    func absenceIsNotFailure() throws {
+        // Exactly the state of a lifter who has never been sent a plan, which
+        // must not look like a broken transport.
+        let (subject, _) = try folder()
+        #expect(try subject.archivedPlans().isEmpty)
+    }
+
+    @Test("Archiving does not disturb the plan waiting to be read")
+    func theLivePlanIsUntouched() throws {
+        let (subject, _) = try folder()
+        let plan = makePlan(focus: "Push")
+        try subject.writePlan(plan)
+
+        try subject.archivePlan(plan)
+
+        #expect(try subject.readPlan()?.id == plan.id, "plan.json is still the live document")
+        #expect(try subject.archivedPlans().count == 1)
+    }
 }
