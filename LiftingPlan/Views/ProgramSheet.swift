@@ -1,4 +1,5 @@
 import SwiftUI
+import LiftingKit
 
 /// What this programme is for, in the coach's words.
 ///
@@ -19,7 +20,7 @@ struct ProgramSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                MarkdownView(text: notes?.text(of: .program) ?? NotesStore.Note.program.template)
+                MarkdownView(text: notes?.text(of: .program) ?? NoteFile.program.template)
                     .padding(Spacing.section)
             }
             .background(Palette.surface)

@@ -53,8 +53,12 @@ struct BlockView: View {
                 }
             }
         }
+        // **The stack is what gives the session a bar to hang its X on.**
+        // A `fullScreenCover` presents no navigation of its own, so without this
+        // the toolbar is defined and never drawn — and the lifter has no way out
+        // of the session at all.
         .fullScreenCover(item: $openSession) { session in
-            ActiveWorkoutView(session: session)
+            NavigationStack { ActiveWorkoutView(session: session) }
         }
         .sheet(isPresented: $showingProgram) { ProgramSheet() }
         .sheet(isPresented: $showingAccount) { AccountView() }

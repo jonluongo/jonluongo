@@ -1,4 +1,5 @@
 import SwiftUI
+import LiftingKit
 
 /// Everything on record about the lifter, in his coach's words.
 ///
@@ -23,7 +24,7 @@ struct AccountView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                MarkdownView(text: notes?.text(of: .user) ?? NotesStore.Note.user.template)
+                MarkdownView(text: notes?.text(of: .user) ?? NoteFile.user.template)
                     .padding(Spacing.section)
             }
             .background(Palette.surface)

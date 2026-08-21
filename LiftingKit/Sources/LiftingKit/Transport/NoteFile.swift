@@ -19,4 +19,52 @@ public enum NoteFile: String, Sendable, CaseIterable {
     case program
 
     public var filename: String { "\(rawValue).md" }
+
+    /// What an unwritten note says, and what the coach edits beneath.
+    ///
+    /// **An empty file gives an anchored edit nothing to anchor to.** The
+    /// headings are the anchors: `update_notes` states the text it expects to
+    /// replace, so the coach's first write needs something already there to
+    /// replace. It is also what the app draws before he has written anything —
+    /// a profile that has been told nothing must read as *not known*, never as a
+    /// plausible default.
+    public var template: String {
+        switch self {
+        case .user:
+            """
+            # The lifter
+
+            ## Objective
+            _Not yet stated._
+
+            ## Background
+            _Not yet stated._
+
+            ## Injuries and limits
+            _None on record._
+
+            ## What he avoids, and why
+            _Nothing on record._
+
+            ## Equipment
+            _Not yet stated._
+
+            ## Bodyweight
+            _No readings on record._
+            """
+        case .program:
+            """
+            # This programme
+
+            ## The approach
+            _Not yet stated._
+
+            ## What is being progressed
+            _Not yet stated._
+
+            ## What to watch
+            _Not yet stated._
+            """
+        }
+    }
 }

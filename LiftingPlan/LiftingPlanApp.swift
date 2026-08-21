@@ -41,7 +41,7 @@ struct LiftingPlanApp: App {
     @State private var restPreferences = RestPreferences()
     /// The coach's two markdown notes, mirrored locally so the account screen
     /// works on a phone iCloud cannot reach.
-    @State private var notes = NotesStore(
+    private let notes = NotesStore(
         directory: URL.applicationSupportDirectory.appending(path: "Notes"))
     private let container: ModelContainer
     /// The shared iCloud folder both machines see. The snapshot goes out
@@ -75,7 +75,7 @@ struct LiftingPlanApp: App {
         self.transport = transport
         _documentInbox = State(initialValue: DocumentInbox(
             transport: transport, watcher: UbiquitousDocumentWatcher(),
-            context: container.mainContext, catalog: catalog
+            context: container.mainContext, catalog: catalog, notes: notes
         ))
         _snapshotOutbox = State(initialValue: SnapshotOutbox(
             transport: transport, context: container.mainContext, catalog: catalog

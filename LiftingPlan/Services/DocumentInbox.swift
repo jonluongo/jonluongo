@@ -95,17 +95,22 @@ final class DocumentInbox {
     private let watcher: any DocumentArrivalWatching
     private let context: ModelContext
     private let catalog: any ExerciseCatalogProviding
+    /// Where the coach's notes are copied to. Optional so a test need not supply
+    /// one; the app always does.
+    private let notes: NotesStore?
 
     init(
         transport: any DocumentTransport,
         watcher: any DocumentArrivalWatching,
         context: ModelContext,
-        catalog: any ExerciseCatalogProviding
+        catalog: any ExerciseCatalogProviding,
+        notes: NotesStore? = nil
     ) {
         self.transport = transport
         self.watcher = watcher
         self.context = context
         self.catalog = catalog
+        self.notes = notes
     }
 
     /// Starts watching for documents, and reads what is already waiting.
@@ -172,6 +177,20 @@ final class DocumentInbox {
     func importWaitingDocuments() async {
         var failures: [String] = []
         var applied = false
+        do {
+            // The coach's notes are copied down on every pass. **The container is
+            // the sync channel and the local copy is what the screen reads**, so
+            // a note that arrives and is never mirrored is a note the lifter can
+            // never see — which is exactly what happened until a render caught
+            // it: the account screen drew its template while `user.md` sat in
+            // the folder beside the plan.
+            for note in NoteFile.allCases {
+                guard let text = try await Self.readNote(note, from: transport) else { continue }
+                try notes?.mirror(text, as: note)
+            }
+        } catch {
+            failures.append(Self.describe(error))
+        }
         do {
             // Nothing waiting is the normal state, not something to report.
             if let document = try await Self.readPlan(from: transport) {
@@ -255,6 +274,12 @@ final class DocumentInbox {
     /// Detached rather than a plain `async` call: whether a `nonisolated async`
     /// function leaves the caller's actor depends on the language mode in
     /// force, and this must leave it under every one of them.
+    private static func readNote(
+        _ note: NoteFile, from transport: any DocumentTransport
+    ) async throws -> String? {
+        try await Task.detached { try transport.readNote(note) }.value
+    }
+
     private static func readPlan(
         from transport: any DocumentTransport
     ) async throws -> PlanDocument? {
