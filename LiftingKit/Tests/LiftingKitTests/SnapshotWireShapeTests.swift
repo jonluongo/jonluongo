@@ -31,9 +31,8 @@ struct SnapshotWireShapeTests {
     ) -> PlanDocument {
         PlanDocument(
             id: Self.routineID, catalogVersion: 5, generatedAt: Self.instant,
-            title: "Autumn strength", goal: "Add 20 lb", durationMinutes: 60, notes: notes,
-            days: [PlanDocumentDay(
-                weekday: .monday, focus: "Push", durationMinutes: 60,
+            sessions: [PlanDocumentSession(
+                blockOrdinal: 1, ordinal: 1, focus: notes ?? "Push",
                 entries: entries ?? exercises.map(PlanDocumentEntry.exercise))])
     }
 
@@ -77,15 +76,17 @@ struct SnapshotWireShapeTests {
     func routineCarriesTheDocument() throws {
         let written = document(
             exercises: [PlanDocumentExercise(
-                exerciseID: Self.bench, displayName: "Barbell Bench Press", sets: 3,
-                repRange: "5", restSeconds: 180)],
+                exerciseID: Self.bench, displayName: "Barbell Bench Press",
+                restSeconds: 180,
+                sets: Array(repeating: PlanDocumentSet(
+                    target: .repetitions(low: 5, high: nil)), count: 3))],
             notes: "Take the deload.")
         let routines = try #require(
             try object(snapshot(document: written))["routines"] as? [[String: Any]])
         let carried = try #require(routines.first?["document"] as? [String: Any])
 
-        #expect(carried["title"] as? String == "Autumn strength")
-        #expect(carried["notes"] as? String == "Take the deload.")
+        let sessions = try #require(carried["sessions"] as? [[String: Any]])
+        #expect(sessions.first?["focus"] as? String == "Take the deload.")
         // The document's own version travels with it, so a reader knows which
         // format the prescription inside was written in.
         #expect(carried["version"] as? Int == PlanDocument.currentVersion)
@@ -97,10 +98,12 @@ struct SnapshotWireShapeTests {
         let written = document(entries: [.group(PlanDocumentGroup(
             exercises: [
                 PlanDocumentExercise(
-                    exerciseID: Self.bench, displayName: "Barbell Bench Press", sets: 3),
+                    exerciseID: Self.bench, displayName: "Barbell Bench Press",
+                    sets: [PlanDocumentSet(), PlanDocumentSet(), PlanDocumentSet()]),
                 PlanDocumentExercise(
                     exerciseID: ExerciseID(rawValue: "barbell-curl"),
-                    displayName: "Barbell Curl", sets: 3),
+                    displayName: "Barbell Curl",
+                    sets: [PlanDocumentSet(), PlanDocumentSet(), PlanDocumentSet()]),
             ],
             restSeconds: 90))])
         let data = try TrainingSnapshot.makeEncoder().encode(snapshot(document: written))
@@ -216,12 +219,12 @@ struct SnapshotWireShapeTests {
               "generatedAt": "2023-11-14T22:13:20Z",
               "routines": [{
                 "document": {
-                  "version": 4, "id": "3E7F7E2E-2B47-4C51-9E58-52C1D1F0A0B1",
+                  "version": 6, "id": "3E7F7E2E-2B47-4C51-9E58-52C1D1F0A0B1",
                   "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
-                  "title": "Autumn strength",
-                  "weeks": [{"days": [{"weekday": 2, "exercises": [
+                  "sessions": [{"blockOrdinal": 1, "ordinal": 1, "focus": "Push",
+                    "entries": [
                     {"exerciseID": "barbell-bench-press", "displayName": "Bench",
-                     "sets": 3, "repRange": "5"}]}]}]
+                     "sets": [{"target": "5"}]}]}]
                 },
                 "startDate": "2023-11-14T22:13:20Z",
                 "sessions": [{"blockOrdinal": 1, "weekday": 2}]
@@ -238,7 +241,7 @@ struct SnapshotWireShapeTests {
 
         let read = try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
         #expect(read.routines.count == 1)
-        #expect(read.routines.first?.document.title == "Autumn strength")
+        #expect(read.routines.first?.document.sessions.first?.focus == "Push")
         #expect(read.routines.first?.sessions.first?.completedAt == nil)
         #expect(read.log.count == 1)
         #expect(read.log.first?.reps == 5)

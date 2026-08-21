@@ -58,6 +58,11 @@ public struct PlanDocumentSession: Codable, Hashable, Sendable {
         icon = try container.decodeIfPresent(SessionIcon.self, forKey: .icon)
         entries = try container.decodeIfPresent([PlanDocumentEntry].self, forKey: .entries) ?? []
     }
+
+    /// Every movement this session prescribes, flat and in order, whatever it
+    /// was grouped into. Read this when the grouping does not matter — checking
+    /// each `ExerciseID` against the catalog, say — and `entries` when it does.
+    public var exercises: [PlanDocumentExercise] { entries.flatMap(\.exercises) }
 }
 
 /// One movement of a session, and how it is to be performed.

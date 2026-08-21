@@ -19,7 +19,7 @@ struct SessionIconWireTests {
     private func exercise() -> PlanDocumentExercise {
         PlanDocumentExercise(
             exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
-            displayName: "Barbell Bench Press", sets: 3, repRange: "5")
+            displayName: "Barbell Bench Press", sets: Array(repeating: PlanDocumentSet(target: Target(shorthand: "5")), count: 3))
     }
 
     private func decodedPlan(_ json: String) throws -> PlanDocument {
@@ -32,39 +32,38 @@ struct SessionIconWireTests {
     func iconSurvivesTheWire() throws {
         let document = PlanDocument(
             id: UUID(), catalogVersion: 5, generatedAt: Self.instant,
-            days: [PlanDocumentDay(
-                weekday: .monday, focus: "Push", icon: .intervals,
-                exercises: [exercise()])])
+            sessions: [PlanDocumentSession(
+                blockOrdinal: 1, ordinal: 1, focus: "Push", icon: .intervals,
+                entries: [.exercise(exercise())])])
 
         let data = try PlanDocument.makeEncoder().encode(document)
         let object = try #require(
             try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let weeks = try #require(object["blocks"] as? [[String: Any]])
-        let days = try #require(weeks.first?["days"] as? [[String: Any]])
+        let days = try #require(object["sessions"] as? [[String: Any]])
         #expect(days.first?["icon"] as? String == "intervals")
 
         let read = try PlanDocument.makeDecoder().decode(PlanDocument.self, from: data)
-        #expect(read.blocks.first?.days.first?.icon == .intervals)
+        #expect(read.sessions.first?.icon == .intervals)
     }
 
     @Test("A day that chose no mark writes no key, and reads back as none")
     func absentIconWritesNothing() throws {
         let document = PlanDocument(
             id: UUID(), catalogVersion: 5, generatedAt: Self.instant,
-            days: [PlanDocumentDay(weekday: .monday, focus: "Push",
-                                   exercises: [exercise()])])
+            sessions: [PlanDocumentSession(
+                blockOrdinal: 1, ordinal: 1, focus: "Push",
+                entries: [.exercise(exercise())])])
 
         let data = try PlanDocument.makeEncoder().encode(document)
         let object = try #require(
             try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let weeks = try #require(object["blocks"] as? [[String: Any]])
-        let days = try #require(weeks.first?["days"] as? [[String: Any]])
+        let days = try #require(object["sessions"] as? [[String: Any]])
 
         // Absence stays absence: a `null` would be the app writing "no mark" as
         // a value, which is a different statement from having chosen none.
         #expect(days.first?.keys.contains("icon") == false)
         #expect(try decodedPlan(String(decoding: data, as: UTF8.self))
-            .blocks.first?.days.first?.icon == nil)
+            .sessions.first?.icon == nil)
     }
 
     // MARK: - Read the way he writes it
@@ -73,17 +72,17 @@ struct SessionIconWireTests {
     func handWrittenPlanIsRead() throws {
         let plan = try decodedPlan("""
         {
-          "version": 1, "id": "9F1E6B1C-0000-4000-8000-000000000001",
+          "version": 6, "id": "9F1E6B1C-0000-4000-8000-000000000001",
           "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
-          "weeks": [{ "days": [{
-            "weekday": 2, "focus": "Conditioning", "icon": "intervals",
-            "exercises": [{ "exerciseID": "barbell-bench-press",
-                            "displayName": "Bench", "sets": 3, "repRange": "5" }]
-          }]}]
+          "sessions": [{
+            "blockOrdinal": 1, "ordinal": 1, "focus": "Conditioning", "icon": "intervals",
+            "entries": [{ "exerciseID": "barbell-bench-press",
+                          "displayName": "Bench", "sets": [{"target": "5"}] }]
+          }]
         }
         """)
 
-        #expect(plan.blocks.first?.days.first?.icon == .intervals)
+        #expect(plan.sessions.first?.icon == .intervals)
     }
 
     @Test("A mark this build does not know still arrives, so it can be refused by name")
@@ -93,17 +92,17 @@ struct SessionIconWireTests {
         // the coach got wrong into a plan that silently drew nothing.
         let plan = try decodedPlan("""
         {
-          "version": 1, "id": "9F1E6B1C-0000-4000-8000-000000000002",
+          "version": 6, "id": "9F1E6B1C-0000-4000-8000-000000000002",
           "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
-          "weeks": [{ "days": [{
-            "weekday": 2, "icon": "deadlift",
-            "exercises": [{ "exerciseID": "barbell-bench-press",
-                            "displayName": "Bench", "sets": 3, "repRange": "5" }]
-          }]}]
+          "sessions": [{
+            "blockOrdinal": 1, "ordinal": 1, "icon": "deadlift",
+            "entries": [{ "exerciseID": "barbell-bench-press",
+                          "displayName": "Bench", "sets": [{"target": "5"}] }]
+          }]
         }
         """)
 
-        let icon = try #require(plan.blocks.first?.days.first?.icon)
+        let icon = try #require(plan.sessions.first?.icon)
         #expect(icon.rawValue == "deadlift")
         #expect(icon.isKnown == false)
     }
@@ -112,17 +111,17 @@ struct SessionIconWireTests {
     func planWithoutTheKeyStillReads() throws {
         let plan = try decodedPlan("""
         {
-          "version": 1, "id": "9F1E6B1C-0000-4000-8000-000000000003",
+          "version": 6, "id": "9F1E6B1C-0000-4000-8000-000000000003",
           "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
-          "weeks": [{ "days": [{
-            "weekday": 2, "focus": "Push",
-            "exercises": [{ "exerciseID": "barbell-bench-press",
-                            "displayName": "Bench", "sets": 3, "repRange": "5" }]
-          }]}]
+          "sessions": [{
+            "blockOrdinal": 1, "ordinal": 1, "focus": "Push",
+            "entries": [{ "exerciseID": "barbell-bench-press",
+                          "displayName": "Bench", "sets": [{"target": "5"}] }]
+          }]
         }
         """)
 
-        #expect(plan.blocks.first?.days.first?.icon == nil)
+        #expect(plan.sessions.first?.icon == nil)
     }
 
     @Test("A key this format does not have is still refused, and named")
@@ -133,7 +132,7 @@ struct SessionIconWireTests {
         #expect(throws: DocumentRefusal.self) {
             try decodedPlan("""
             {
-              "version": 1, "id": "9F1E6B1C-0000-4000-8000-000000000004",
+              "version": 6, "id": "9F1E6B1C-0000-4000-8000-000000000004",
               "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
               "weeks": [{ "days": [{
                 "weekday": 2, "ikon": "strength",
@@ -154,10 +153,9 @@ struct SessionIconWireTests {
         // there is one place a session's mark is written, and it is the place
         // the coach wrote it.
         let document = PlanDocument(
-            id: UUID(), catalogVersion: 5, generatedAt: Self.instant, title: "Block",
-            days: [PlanDocumentDay(
-                weekday: .monday, focus: "Push", durationMinutes: 60, icon: .strength,
-                exercises: [])])
+            id: UUID(), catalogVersion: 5, generatedAt: Self.instant,
+            sessions: [PlanDocumentSession(
+                blockOrdinal: 1, ordinal: 1, focus: "Push", icon: .strength)])
         let snapshot = TrainingSnapshot(
             catalogVersion: 5, generatedAt: Self.instant,
             routines: [SnapshotRoutine(document: document, startDate: Self.instant)])
@@ -167,11 +165,10 @@ struct SessionIconWireTests {
             try JSONSerialization.jsonObject(with: data) as? [String: Any])
         let routines = try #require(object["routines"] as? [[String: Any]])
         let plan = try #require(routines.first?["document"] as? [String: Any])
-        let weeks = try #require(plan["blocks"] as? [[String: Any]])
-        let days = try #require(weeks.first?["days"] as? [[String: Any]])
+        let days = try #require(plan["sessions"] as? [[String: Any]])
         #expect(days.first?["icon"] as? String == "strength")
 
         let read = try TrainingSnapshot.makeDecoder().decode(TrainingSnapshot.self, from: data)
-        #expect(read.routines.first?.document.blocks.first?.days.first?.icon == .strength)
+        #expect(read.routines.first?.document.sessions.first?.icon == .strength)
     }
 }

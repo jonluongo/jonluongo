@@ -17,15 +17,19 @@ struct PlanDocumentGroupTests {
         _ id: String, sets: Int = 3, repRange: String = "12-15", restSeconds: Int? = nil
     ) -> PlanDocumentExercise {
         PlanDocumentExercise(
-            exerciseID: ExerciseID(rawValue: id), displayName: id, sets: sets,
-            repRange: repRange, restSeconds: restSeconds
+            exerciseID: ExerciseID(rawValue: id), displayName: id,
+            restSeconds: restSeconds,
+            sets: Array(
+                repeating: PlanDocumentSet(target: Target(shorthand: repRange)),
+                count: sets)
         )
     }
 
     private func document(entries: [PlanDocumentEntry]) -> PlanDocument {
         PlanDocument(
             id: UUID(), catalogVersion: 5, generatedAt: Self.instant,
-            days: [PlanDocumentDay(weekday: .monday, focus: "Push", entries: entries)]
+            sessions: [PlanDocumentSession(
+                blockOrdinal: 1, ordinal: 1, focus: "Push", entries: entries)]
         )
     }
 
@@ -42,20 +46,20 @@ struct PlanDocumentGroupTests {
     private func mixedDayJSON(groupRest: String = "\"restSeconds\": 90,") -> String {
         """
         {
-          "version": 4, "catalogVersion": 5,
+          "version": 6, "catalogVersion": 5,
           "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
           "generatedAt": "2023-11-14T22:13:20Z",
-          "days": [{
-            "weekday": 2,
-            "exercises": [
+          "sessions": [{
+            "blockOrdinal": 1, "ordinal": 1,
+            "entries": [
               {"exerciseID": "barbell-bench-press", "displayName": "Bench",
-               "sets": 4, "repRange": "6-8", "restSeconds": 180},
+               "restSeconds": 180, "sets": [{"target": "6-8"}]},
               {\(groupRest)
                "group": [
                  {"exerciseID": "dumbbell-fly", "displayName": "Fly",
-                  "sets": 3, "repRange": "12-15"},
+                  "sets": [{"target": "12-15"}]},
                  {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown",
-                  "sets": 3, "repRange": "12-15"}
+                  "sets": [{"target": "12-15"}]}
                ]}
             ]
           }]
@@ -63,9 +67,8 @@ struct PlanDocumentGroupTests {
         """
     }
 
-    private func day(of document: PlanDocument) throws -> PlanDocumentDay {
-        let week = try #require(document.blocks.first)
-        return try #require(week.days.first)
+    private func day(of document: PlanDocument) throws -> PlanDocumentSession {
+        try #require(document.sessions.first)
     }
 
     // MARK: - The shape
@@ -139,36 +142,15 @@ struct PlanDocumentGroupTests {
         let text = try #require(String(data: data, encoding: .utf8))
 
         #expect(!text.contains("\"group\""), "nothing about grouping appears on an ungrouped day")
-        #expect(!text.contains("\"entries\""), "the key is still 'exercises'")
-        #expect(text.contains("\"exercises\""))
+        #expect(text.contains("\"entries\""), "a session states entries, grouped or not")
     }
 
-    @Test("A plan written before groups existed still imports")
-    func earlierDocumentStillImports() throws {
-        let json = """
-        {
-          "version": 3, "catalogVersion": 5,
-          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
-          "generatedAt": "2023-11-14T22:13:20Z",
-          "days": [{"weekday": 2, "exercises": [
-            {"exerciseID": "barbell-bench-press", "displayName": "Bench", "sets": 5,
-             "restSeconds": 180}
-          ]}]
-        }
-        """
-        let day = try day(of: try decoded(json))
-
-        #expect(day.exercises.count == 1)
-        #expect(day.entries.first?.group == nil)
-        #expect(day.exercises.first?.restSeconds == 180)
-    }
-
-    @Test("The format states version 5, and a later one is still refused whole")
-    func versionIsFiveAndSkewIsRefused() {
-        #expect(PlanDocument.currentVersion == 5)
-        #expect(throws: DocumentRefusal.laterVersion(6, understood: 5)) {
+    @Test("The format states version 6, and a later one is still refused whole")
+    func versionIsSixAndSkewIsRefused() {
+        #expect(PlanDocument.currentVersion == 6)
+        #expect(throws: DocumentRefusal.laterVersion(7, understood: 6)) {
             try decoded("""
-            {"version": 6, "catalogVersion": 5,
+            {"version": 7, "catalogVersion": 5,
              "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
              "generatedAt": "2023-11-14T22:13:20Z"}
             """)
@@ -181,14 +163,14 @@ struct PlanDocumentGroupTests {
     func restInsideAGroupIsRefused() throws {
         let json = """
         {
-          "version": 4, "catalogVersion": 5,
+          "version": 6, "catalogVersion": 5,
           "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
           "generatedAt": "2023-11-14T22:13:20Z",
-          "days": [{"weekday": 2, "exercises": [
+          "sessions": [{"blockOrdinal": 1, "ordinal": 1, "entries": [
             {"restSeconds": 90, "group": [
-              {"exerciseID": "dumbbell-fly", "displayName": "Fly", "sets": 3,
+              {"exerciseID": "dumbbell-fly", "displayName": "Fly", "sets": [{}],
                "restSeconds": 45},
-              {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown", "sets": 3}
+              {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown", "sets": [{}]}
             ]}
           ]}]
         }
@@ -205,12 +187,12 @@ struct PlanDocumentGroupTests {
     func groupOfOneIsRefused() throws {
         let json = """
         {
-          "version": 4, "catalogVersion": 5,
+          "version": 6, "catalogVersion": 5,
           "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
           "generatedAt": "2023-11-14T22:13:20Z",
-          "days": [{"weekday": 2, "exercises": [
+          "sessions": [{"blockOrdinal": 1, "ordinal": 1, "entries": [
             {"restSeconds": 90, "group": [
-              {"exerciseID": "dumbbell-fly", "displayName": "Fly", "sets": 3}
+              {"exerciseID": "dumbbell-fly", "displayName": "Fly", "sets": [{}]}
             ]}
           ]}]
         }
@@ -226,10 +208,10 @@ struct PlanDocumentGroupTests {
     func emptyGroupIsRefused() throws {
         let json = """
         {
-          "version": 4, "catalogVersion": 5,
+          "version": 6, "catalogVersion": 5,
           "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
           "generatedAt": "2023-11-14T22:13:20Z",
-          "days": [{"weekday": 2, "exercises": [{"group": []}]}]
+          "sessions": [{"blockOrdinal": 1, "ordinal": 1, "entries": [{"group": []}]}]
         }
         """
         #expect(throws: DocumentRefusal.self) { try decoded(json) }
@@ -239,13 +221,13 @@ struct PlanDocumentGroupTests {
     func unknownKeyOnAGroupIsRefused() throws {
         let json = """
         {
-          "version": 4, "catalogVersion": 5,
+          "version": 6, "catalogVersion": 5,
           "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
           "generatedAt": "2023-11-14T22:13:20Z",
-          "days": [{"weekday": 2, "exercises": [
+          "sessions": [{"blockOrdinal": 1, "ordinal": 1, "entries": [
             {"group": [
-              {"exerciseID": "dumbbell-fly", "displayName": "Fly", "sets": 3},
-              {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown", "sets": 3}
+              {"exerciseID": "dumbbell-fly", "displayName": "Fly", "sets": [{}]},
+              {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown", "sets": [{}]}
             ], "rounds": 3}
           ]}]
         }
@@ -259,13 +241,13 @@ struct PlanDocumentGroupTests {
     func unknownKeyInsideAMemberIsRefused() throws {
         let json = """
         {
-          "version": 4, "catalogVersion": 5,
+          "version": 6, "catalogVersion": 5,
           "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
           "generatedAt": "2023-11-14T22:13:20Z",
-          "days": [{"weekday": 2, "exercises": [
+          "sessions": [{"blockOrdinal": 1, "ordinal": 1, "entries": [
             {"group": [
-              {"exerciseID": "dumbbell-fly", "displayName": "Fly", "sets": 3, "superset": true},
-              {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown", "sets": 3}
+              {"exerciseID": "dumbbell-fly", "displayName": "Fly", "sets": [{}], "superset": true},
+              {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown", "sets": [{}]}
             ]}
           ]}]
         }
@@ -279,16 +261,16 @@ struct PlanDocumentGroupTests {
     func nestedGroupIsRefused() throws {
         let json = """
         {
-          "version": 4, "catalogVersion": 5,
+          "version": 6, "catalogVersion": 5,
           "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
           "generatedAt": "2023-11-14T22:13:20Z",
-          "days": [{"weekday": 2, "exercises": [
+          "sessions": [{"blockOrdinal": 1, "ordinal": 1, "entries": [
             {"group": [
               {"group": [
-                {"exerciseID": "dumbbell-fly", "displayName": "Fly", "sets": 3},
-                {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown", "sets": 3}
+                {"exerciseID": "dumbbell-fly", "displayName": "Fly", "sets": [{}]},
+                {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown", "sets": [{}]}
               ]},
-              {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown", "sets": 3}
+              {"exerciseID": "cable-rope-pushdown", "displayName": "Pushdown", "sets": [{}]}
             ]}
           ]}]
         }

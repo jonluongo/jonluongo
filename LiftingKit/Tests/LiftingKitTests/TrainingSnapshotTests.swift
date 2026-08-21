@@ -108,20 +108,18 @@ struct TrainingSnapshotTests {
     ) -> TrainingSnapshot {
         let exercise = PlanDocumentExercise(
             exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
-            displayName: "Barbell Bench Press", sets: 3, repRange: "5",
-            restSeconds: restSeconds,
-            suggestedLoad: Mass(value: 100, unit: .kilograms),
-            tempo: "3-0-1-0", notes: "Pause the last rep"
+            displayName: "Barbell Bench Press", restSeconds: restSeconds,
+            coachNote: "Pause the last rep. Three down, explode up.",
+            sets: [PlanDocumentSet(
+                target: .repetitions(low: 5, high: nil),
+                load: Mass(value: 100, unit: .kilograms))]
         )
         let routine = SnapshotRoutine(
             document: PlanDocument(
                 id: Self.routineID, catalogVersion: 5, generatedAt: Self.instant,
-                title: "Strength block", goal: "Bigger bench", durationMinutes: 60,
-                blocks: [PlanDocumentBlock(
-                    label: "Accumulation", isDeload: false,
-                    days: [PlanDocumentDay(
-                        weekday: .monday, focus: "Push", durationMinutes: 60,
-                        exercises: [exercise])])]),
+                sessions: [PlanDocumentSession(
+                    blockOrdinal: 1, ordinal: 1, focus: "Push",
+                    entries: [.exercise(exercise)])]),
             startDate: Self.instant,
             sessions: [SnapshotSession(
                 blockOrdinal: 1, weekday: .monday, completedAt: Self.instant)]
@@ -163,9 +161,8 @@ struct TrainingSnapshotTests {
     /// routine carries.
     private func firstExercise(in snapshot: TrainingSnapshot) throws -> PlanDocumentExercise {
         let routine = try #require(snapshot.routines.first)
-        let week = try #require(routine.document.blocks.first)
-        let day = try #require(week.days.first)
-        return try #require(day.entries.flatMap(\.exercises).first)
+        let session = try #require(routine.document.sessions.first)
+        return try #require(session.entries.flatMap(\.exercises).first)
     }
 
     // MARK: - Round trip
@@ -214,7 +211,7 @@ struct TrainingSnapshotTests {
 
         // The set was logged in pounds and the prescription written in kilograms.
         #expect(try firstLoggedSet(in: decoded).load?.unit == .pounds)
-        #expect(exercise.suggestedLoad == Mass(value: 100, unit: .kilograms))
+        #expect(exercise.sets.first?.load == Mass(value: 100, unit: .kilograms))
         #expect(decoded.profile?.bodyweight == Mass(value: 182, unit: .pounds))
         #expect(decoded.baselines.first?.load == Mass(value: 225, unit: .pounds))
     }

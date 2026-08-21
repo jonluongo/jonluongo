@@ -100,23 +100,23 @@ private func makeSnapshot(catalogVersion: Int = 5) -> TrainingSnapshot {
     )
 }
 
-private func makePlan(id: UUID = UUID(), title: String = "Strength block") -> PlanDocument {
+private func makePlan(id: UUID = UUID(), focus: String = "Push") -> PlanDocument {
     PlanDocument(
-        id: id, catalogVersion: 5, generatedAt: instant, title: title,
-        goal: "Bigger bench", durationMinutes: 60,
-        notes: "Keep pressing volume moderate.",
-        days: [
-            PlanDocumentDay(
-                weekday: .monday, focus: "Push", durationMinutes: 60,
-                exercises: [
-                    PlanDocumentExercise(
+        id: id, catalogVersion: 5, generatedAt: instant,
+        sessions: [
+            PlanDocumentSession(
+                blockOrdinal: 1, ordinal: 1, focus: focus,
+                entries: [
+                    .exercise(PlanDocumentExercise(
                         exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
-                        displayName: "Barbell Bench Press", sets: 3, repRange: "5",
-                        restSeconds: 180, suggestedLoad: Mass(value: 225, unit: .pounds),
-                        tempo: "3-0-1-0", notes: "Pause the last rep"
-                    )
-                ]
-            )
+                        displayName: "Barbell Bench Press", restSeconds: 180,
+                        coachNote: "Pause the last rep. Three down, explode up.",
+                        sets: [
+                            PlanDocumentSet(
+                                target: .repetitions(low: 5, high: nil),
+                                load: Mass(value: 225, unit: .pounds))
+                        ]))
+                ])
         ]
     )
 }
@@ -356,7 +356,7 @@ struct InMemoryDocumentTransportTests {
 
         try transport.writeSnapshot(makeSnapshot())
 
-        #expect(try transport.readPlan()?.title == "Strength block")
+        #expect(try transport.readPlan()?.sessions.first?.focus == "Push")
     }
 
     /// A key that has been retired reads rather than refusing the document
