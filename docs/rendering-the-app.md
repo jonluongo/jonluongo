@@ -80,7 +80,7 @@ Make the plan with the real thing rather than by hand: drive
 written one proves the format does, and the refusals will tell you when you get
 a key or an exercise ID wrong.
 
-## Six things that cost an hour each
+## Eight things that cost an hour each
 
 **`RENDER=x xcrun simctl launch` does not reach the app.** The prefix is
 `SIMCTL_CHILD_`. Without it the variable goes to `simctl` and the app sees
@@ -108,6 +108,18 @@ routine you imported is still current. That is useful when you want history and
 misleading when you want a fresh screen — an empty state will not appear over a
 store that holds a plan. `xcrun simctl erase` is the only clean slate, and it
 takes the notification dialog with it.
+
+**Capturing a screenshot is not looking at one.** Three shots — a warm-up row,
+the spent state, an exercise note — were taken in one firing, reported as
+rendered, and not opened until several firings later. The file appearing on disk
+proves the simulator was alive, nothing more. If a screen is worth a screenshot
+it is worth the read call; if it is not worth the read call, do not claim it was
+rendered.
+
+**A note at the foot of a long list is off the bottom of the screen.** The
+*every session is logged* line sits under the last block, which on a three-block
+routine is well past the fold, and there is no way to scroll. Seed a shorter
+plan — one block, one day — when the thing being checked lives at the end.
 
 **Judge colour by measurement, not by eye.** The olive `⋯` was found by cropping
 the glyph and taking the most saturated pixel — 3 in light, 80 in dark. Two
