@@ -244,6 +244,18 @@ a profile that predates the dates carrying no dates rather than invented ones,
 which is what the unit test claims and this is the same claim against a store
 that actually migrated.
 
+**On the phone itself, the store opens.** Once the device was unlocked the app
+was launched over its existing store — the one carrying CloudKit records written
+against the old schema — and was still running twelve seconds later. That is
+worth exactly what it proves and no more: `LiftingPlanApp.init` calls
+`fatalError` when the container will not open, so surviving launch means the
+migration did not throw. It does **not** prove the rows came across, because a
+store that opens empty also survives launch, and there is no way from here to
+read the phone's container or see its screen. The simulator's in-place upgrade
+is what shows the data intact; the device shows the same schema change does not
+refuse to open against real CloudKit metadata. Between them the risk is small,
+and the remaining check is one look at the phone.
+
 **The dated statements were driven the same way on 2026-08-20, and the
 distinction holds through real files.** Two `profile-update.json` documents were
 written by hand — a March one stating a constraint and an experience, an August
