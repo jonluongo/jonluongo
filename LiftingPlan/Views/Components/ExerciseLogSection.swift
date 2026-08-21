@@ -39,6 +39,10 @@ struct ExerciseLogSection: View {
     let previous: SnapshotPerformedExercise?
     var onRecord: (TrainingSlot, Mass?, Int?, Int?, Distance?) -> Void
     var onTakeBack: (TrainingSlot) -> Void
+    /// Opens the sheet he writes his note in. Wired here rather than to the
+    /// header's menu, so the control that writes the note sits where the note
+    /// lands.
+    var onWriteNote: () -> Void = {}
     /// Whether this movement is performed inside a group.
     var paired: Bool = false
     /// Whether the session has been marked finished.
@@ -65,25 +69,104 @@ struct ExerciseLogSection: View {
             if let coachNote = exercise.coachNote, !coachNote.isEmpty {
                 note(coachNote, isLifters: false)
             }
-            // **His own, under the coach's, and in his own ink.** The two say
-            // different things — the coach's is detail on the work, this is what
-            // happened while doing it — so they are two lines rather than one,
-            // and the darker of them is the one he wrote.
-            if let mine = performed?.lifterNote, !mine.isEmpty {
-                note(mine, isLifters: true)
-            }
+            // **His own, under the coach's, and always present.** The two say
+            // different things — the coach's is detail on the work in front of
+            // him, this is what happened while doing it — so they are two lines
+            // rather than one.
+            //
+            // Writing one was an item in the header's overflow menu: three taps
+            // from a thought he had mid-set, behind a control that gave no sign
+            // it held anything about notes. The line he reads his note on is the
+            // line he writes it from, and when he has not written one it says so
+            // rather than being absent.
+            lifterNote
         }
     }
 
-    /// A line at the foot of the panel: the coach's in support grey, the
-    /// lifter's in ink. Neither is labelled — a note in a training log is either
-    /// the plan's or his, and the one he typed is the one that reads like him.
-    private func note(_ text: String, isLifters: Bool) -> some View {
-        Text(text)
-            .font(.supersetSupport)
-            .foregroundStyle(isLifters ? Palette.ink : Palette.muted)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, PanelMetrics.edge)
-            .padding(.top, Spacing.standard)
+    /// His note, or the invitation to write one — the same line either way.
+    ///
+    /// A finished session still opens the sheet: what he wrote about a movement
+    /// is his, and finishing is a statement about the training rather than about
+    /// his account of it.
+    @ViewBuilder
+    private var lifterNote: some View {
+        let mine = performed?.lifterNote
+        Button(action: onWriteNote) {
+            note(mine?.isEmpty == false ? mine ?? "" : "Add a note",
+                 isLifters: true,
+                 isPrompt: mine?.isEmpty != false)
+        }
+        .buttonStyle(.plain)
     }
+
+    /// A line at the foot of the panel, marked with who wrote it.
+    ///
+    /// **The coach's is the darker one, and it used to be the other way round.**
+    /// The reasoning behind the old order was that the note he typed should read
+    /// like him — but weight on a screen is not authorship, it is what to read
+    /// first. The coach's note is an instruction about the work in front of him;
+    /// his own is a record of work already done. The one he still has to act on
+    /// is the one that carries the ink.
+    ///
+    /// **The glyph says whose, the weight says which to read.** Colour alone was
+    /// doing both jobs and doing neither clearly: two grey-ish lines at the foot
+    /// of a panel, and no way to tell at a glance which was the prescription.
+    ///
+    /// **Said to him, or written by him — and both marks are outlines at the
+    /// same weight.** A filled bubble against a hairline pencil was two line
+    /// weights in one pair, which read as an oversight rather than a
+    /// distinction.
+    ///
+    /// **Four pairs were rendered before this one, and the size decided it.**
+    /// These marks draw at subheadline, so a glyph that reads on a symbol sheet
+    /// can be a smudge here:
+    ///
+    /// - `bubble.left` / `bubble.right` — mirroring one glyph is the cleanest
+    ///   single axis available, and every messaging app already teaches which
+    ///   side is yours. But the tail carrying the entire difference is a couple
+    ///   of points wide, so rendered they were the same mark twice. A variation
+    ///   the eye cannot resolve distinguishes nothing.
+    /// - `clipboard` — thin, and a rounded rectangle standing beside
+    ///   `square.and.pencil`, so the pair shared a silhouette.
+    /// - `person.bust` — collapses to a chess pawn at this size.
+    /// - `text.bubble` — legible, but says *a message* rather than *from him*.
+    ///
+    /// `person.bubble` keeps a person in it at 14 points, which is the one thing
+    /// the mark has to say. There is no whistle in SF Symbols, and no
+    /// third-party set is coming: see the icon rules in CLAUDE.md.
+    ///
+    /// **A prompt is the same line, not a different one.** *Add a note* draws
+    /// exactly where his note will draw, in the same ink and behind the same
+    /// mark, so writing one changes the words and moves nothing.
+    private func note(_ text: String, isLifters: Bool, isPrompt: Bool = false) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: Spacing.snug) {
+            Image(systemName: isLifters ? "square.and.pencil" : "person.bubble")
+                .imageScale(.small)
+                .frame(width: Self.noteGlyphWidth, alignment: .center)
+                .accessibilityHidden(true)
+            Text(text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .font(.supersetSupport)
+        .foregroundStyle(isLifters ? Palette.muted : Palette.ink)
+        .padding(.horizontal, PanelMetrics.edge)
+        .padding(.top, Spacing.standard)
+        // The whole line is the target, not the words: a tap anywhere along it
+        // opens the sheet, which is what makes an empty prompt reachable.
+        .frame(minHeight: isLifters ? TapTarget.minimum : 0, alignment: .leading)
+        .contentShape(.rect)
+        // The glyph is decoration to a reader who cannot see it; the sentence
+        // has to say whose note this is, since that is what the mark conveys.
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            isLifters
+                ? (isPrompt ? "Add your note" : "Your note. \(text)")
+                : "Coach's note. \(text)")
+        .accessibilityAddTraits(isLifters ? .isButton : [])
+    }
+
+    /// Fixed so both notes' text starts on the same column — a pencil and a
+    /// speech bubble are not the same width, and ragged left edges on two
+    /// stacked lines read as a mistake.
+    private static let noteGlyphWidth: CGFloat = 16
 }

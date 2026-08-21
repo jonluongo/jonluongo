@@ -34,6 +34,12 @@ struct ExerciseAboutSections: View {
     var body: some View {
         if let entry {
             Section {
+                // **Named like every other section on the page.** *How to
+                // perform it*, *Heaviest set* and *Sessions* all say what they
+                // are; this panel alone opened unlabelled, so the screen began
+                // with a table of facts about nothing stated and the first
+                // heading a reader met belonged to the second section.
+                SectionHeading("About")
                 let facts = ExerciseAbout.facts(for: entry)
                 Panel {
                     ForEach(facts) { fact in

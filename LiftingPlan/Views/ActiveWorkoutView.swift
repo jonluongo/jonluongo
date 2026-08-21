@@ -303,7 +303,6 @@ struct ActiveWorkoutView: View {
             // a label floating over a table that happens to be beneath it.
             ExerciseHeaderView(
                 exercise: exercise,
-                performed: performed(for: exercise),
                 onShowInfo: { infoExercise = exercise },
                 // Rest is prescribed per exercise and per group, so the menu
                 // edits whichever this movement is trained under.
@@ -313,7 +312,6 @@ struct ActiveWorkoutView: View {
                 },
                 onAddSet: { write { try log.addSet(to: exercise, warmup: false) } },
                 onAddWarmup: { write { try log.addSet(to: exercise, warmup: true) } },
-                onWriteNote: { noteExercise = exercise },
                 isLocked: isLogged,
                 paired: paired
             )
@@ -333,6 +331,7 @@ struct ActiveWorkoutView: View {
                     showNext(after: slot, in: group)
                 },
                 onTakeBack: { slot in write { try log.takeBack(slot) } },
+                onWriteNote: { noteExercise = exercise },
                 paired: paired,
                 isLocked: isLogged
             )

@@ -50,16 +50,12 @@ struct ExerciseHeaderView: View {
     @Environment(\.exerciseCatalog) private var catalog
 
     let exercise: PlannedExercise
-    /// What has been performed of this movement today, or `nil` before anything
-    /// has. It is where the lifter's own note lives.
-    let performed: PerformedExercise?
     var onShowInfo: () -> Void
     var onEditRest: () -> Void
     /// Records a set past the ones prescribed — the fifth he actually did.
     var onAddSet: () -> Void
     var onAddWarmup: () -> Void
     /// Opens the lifter's own note about performing this movement today.
-    var onWriteNote: () -> Void
     /// Whether the session has been marked finished. Adding work to a session
     /// that is over is an edit to the record, so those two items go; reading
     /// about the movement, setting the clock and writing what happened are not,
@@ -86,14 +82,6 @@ struct ExerciseHeaderView: View {
     /// rule down the panel edge says which two.
     private var eyebrow: String? { paired ? "Superset" : nil }
 
-    /// Whether the lifter has written about this movement today.
-    ///
-    /// **The note lives on the record, not the prescription.** It used to sit on
-    /// `PlannedExercise`, which meant his words were governed by the coach's
-    /// rewrite rules — a note on a session he had not trained went when the
-    /// coach rewrote the block.
-    private var hasNote: Bool { performed?.lifterNote?.isEmpty == false }
-
     /// What the movement is called. **The catalog owns it**, keyed by
     /// `exerciseID`; the store used to keep a copy, which was a second place for
     /// a name to live and disagree from. An ID the catalog does not have cannot
@@ -118,15 +106,6 @@ struct ExerciseHeaderView: View {
                 }
                 Button { onEditRest() } label: {
                     Label("Rest Timer", systemImage: "timer")
-                }
-                // His own words about performing it, which the record keeps and
-                // the coach reads. Named for what he does rather than for what
-                // it is: *note* is what the coach's is called too, and only one
-                // of the two is his to write.
-                Button { onWriteNote() } label: {
-                    Label(
-                        hasNote ? "Edit My Note" : "Add My Note",
-                        systemImage: "square.and.pencil")
                 }
                 // Warm-up first, extra set last, and the extra set says
                 // *extra*: "Add Set" beside "Add Warmup Set" read as though one
@@ -157,6 +136,13 @@ struct ExerciseHeaderView: View {
                     // in light and olive in dark, the same control in two
                     // colours. Every colour in this app is one of Style's own.
                     .foregroundStyle(Palette.muted)
+                    // **Fill the frame before taking the shape from it.**
+                    // `CardHeaderRow` gives this control 44 points square, but
+                    // the shape was being taken from the glyph inside it — about
+                    // seventeen points of ellipsis — so three quarters of the
+                    // target the layout had reserved did nothing. It read as a
+                    // control that only sometimes worked.
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .contentShape(.rect)
             }
             .accessibilityLabel("\(name) options")
