@@ -1,12 +1,14 @@
 import Foundation
 import LiftingKit
 
-// What `write_plan` accepts, as Claude sees it before calling.
+// What `write_plan` accepts, as the coach sees it before calling.
 //
-// In its own file because it is the largest thing this server advertises and
-// the only one with real structure: a block holds weeks, a week holds days, a
-// day holds prescriptions. The nesting is the vocabulary — a plan that could
-// only say one week could not say a deload, a wave, or a progression.
+// In its own file because it is the largest thing this server advertises and the
+// only one with real structure. **The structure got flatter.** A plan was a
+// routine holding blocks holding days keyed by weekday, each day holding
+// exercises whose sets were either a count or a list. It is a list of sessions:
+// each says which block it belongs to and where it sits in that block, and each
+// exercise states every set it prescribes.
 
 extension ToolCatalog {
 
@@ -15,233 +17,125 @@ extension ToolCatalog {
         title: "Write plan",
         description: """
             Writes plan.json into the shared folder, replacing any plan waiting \
-            there, and returns the plan as it was written. Send one entry in \
-            'blocks' for every block of the routine — a block is a week of \
-            training and they may differ, which is how a ramp, a wave, or a \
-            deload is written; nothing here repeats or fills in a block you did \
-            not send. Prefer writing one block at a time: send 'routineID' — \
-            the id the context resource reports for the routine he is on — \
-            together with every block already in it plus the new one, and the \
-            routine grows rather than being replaced. Blocks he has not trained \
-            yet are yours to rewrite freely; a block holding a set he ticked or \
-            a session he marked finished is the record of what he did, and a \
-            plan that changes one is refused by the app naming that block. Leave 'routineID' out to \
-            start a new routine, which closes the one he is on — that is a \
-            change of programme, not the next block of this one. The context \
-            resource says 'nothingPrescribedBeyond' when he has finished \
-            everything written so far, which is when the next block is due. Every exerciseID is checked \
-            against the catalog first; one bad ID fails the whole call with \
-            that ID named and writes nothing. A key this format does not have \
-            also fails the call, with the key named, rather than being dropped. \
-            An exercise's 'sets' is a number when every set is the same work and \
-            a list when they differ — that is how a drop set, a ramp, a back-off \
-            set or a per-set note is written. An entry in a day's 'exercises' is \
-            either one exercise or one group — {"group": [ … ], "restSeconds": \
-            90} — which is how a superset, a tri-set or a giant set is written: \
-            the movements are performed back to back and the rest comes after \
-            the round, so the group states the rest and the exercises inside it \
-            state none. Group only when you mean it; nothing here groups \
-            anything on its own. 'intensity' states how hard the \
-            work should be, on whatever scale you work in; it is recorded as \
-            written and never converted or bounded. Work that is not counted in \
-            reps is prescribed in 'repRange' as the measure it actually is: held \
-            for time — '30 seconds', '1:30' — or carried over a distance — \
-            '40 metres', '20 yd'. The app logs each in its own unit, so neither a \
-            plank nor a carry ever lands in the log or in volume_by_muscle as \
-            repetitions. Everything else is recorded exactly as you write it — no \
-            set count, rest, rep range, load, or effort target is adjusted.
+            there, and returns the plan as it was written.
+
+            Send one entry in 'sessions' for every workout. Each states its \
+            'blockOrdinal' — which block it belongs to — and its 'ordinal' \
+            within that block. Blocks run continuously and never restart, so \
+            block 4 follows block 3 whatever happened in between; the context \
+            resource reports the block and session he is on.
+
+            **Write one block at a time.** Send the sessions of the block he has \
+            not reached, and they land beside what is already there. A session \
+            he has not trained is yours to rewrite freely; one holding a set he \
+            ticked, or that he marked finished, is the record of what he did, \
+            and a plan that changes it is refused naming that session.
+
+            **A block has no name and no deload flag.** What makes block 3 an \
+            accumulation block, or a deload, is something you write in \
+            program.md with update_notes — it is prose, and prose says it better \
+            than a label.
+
+            **Every set is stated.** There is no set count and no exercise-level \
+            rep range: a ramp, a drop set and three identical sets are all just \
+            lists of sets. Warm-ups are marked as they are prescribed.
+
+            **When he trains is not something a plan says.** There is no weekday \
+            here. He does session 2 of block 3 when he does it.
             """,
         inputSchema: object(
             [
-                "routineID": string(
-                    "The routine to add these blocks to, as the context resource "
-                        + "reports it. Send every block the routine already holds "
-                        + "along with the new one. Leave it out to start a new "
-                        + "routine, which closes the one he is on."),
-                "title": string("Short name for the block, e.g. 'Autumn strength'."),
-                "goal": string("What the block is for, in your words."),
-                "durationMinutes": integer("How long a session in this block runs."),
-                "notes": string("Anything the lifter should read alongside the plan."),
-                "blocks": array(
-                    of: blockSchema,
-                    "The routine's blocks, in the order they are to be trained. A "
-                        + "routine of a single block is one entry. How long the "
-                        + "routine runs is how many you send."),
+                "sessions": array(
+                    of: sessionSchema,
+                    "Every workout this plan prescribes, in any order — each says where it "
+                        + "sits."),
+                "catalogVersion": integer(
+                    "The catalog version the exercise IDs came from, as list_exercises "
+                        + "reported it. Left out, the server states its own."),
             ],
-            required: ["blocks"]
-        )
+            required: ["sessions"])
     )
 
-    private static let blockSchema = object([
-        "label": string(
-            "What you call this week, e.g. 'Accumulation'. Omit if the week has no name."),
-        "isDeload": boolean("Whether this week is a deload. Omit if it is not."),
-        "days": array(
-            of: daySchema,
-            "This week's training days. A day with no exercises is a rest day."),
-    ])
-
-    private static let daySchema = object(
-        [
-            "weekday": weekday(
-                "The day, as a name ('monday') or as Calendar's numbering where "
-                    + "1 is Sunday and 7 is Saturday."),
-            "focus": string("Short label such as 'Push'."),
-            "durationMinutes": integer("How long this session runs."),
-            "icon": enumerated(
-                SessionIcon.all.map(\.rawValue),
-                "The mark this session carries in the app's list of days. Choose "
-                    + "the one that fits what the session actually is; omit it "
-                    + "and the row carries no mark, which is fine. A name not on "
-                    + "this list fails the call rather than being ignored. The "
-                    + "app draws each name as a symbol of its own choosing, so "
-                    + "pick by meaning, not by picture."),
-            "exercises": array(
-                of: entrySchema,
-                "The work, in the order to do it. Each entry is one exercise, or "
-                    + "one group of exercises performed back to back."),
-        ],
-        required: ["weekday"]
-    )
-
-    /// One entry of a day: an exercise, or a group of them.
-    ///
-    /// The group holds its exercises rather than labelling them, so there is no
-    /// way to write half a grouping — no two exercises at opposite ends of a day
-    /// claiming one group, and no group of one. It is the same choice `sets`
-    /// makes: one key, two shapes, and no way to disagree with itself.
-    private static let entrySchema: JSONValue = [
-        "description": .string(
-            "One exercise, or a group of two or more performed back to back as a "
-                + "superset, tri-set or giant set."),
-        "anyOf": [exerciseSchema, groupSchema],
-    ]
-
-    /// A superset, tri-set or giant set. Two or more exercises, and the rest
-    /// that follows the round rather than any set inside it.
-    private static let groupSchema = object(
-        [
-            "group": array(
-                of: exerciseSchema,
-                "Two or more exercises, in the order they are performed within "
-                    + "each round. The lifter does one set of each, in this order, then "
-                    + "rests, then goes again — so the count of sets each of them "
-                    + "prescribes is the number of rounds. A group of one is refused; "
-                    + "that is just an exercise."),
-            "restSeconds": integer(
-                "Rest after each round. Omit if you are not prescribing rest. This "
-                    + "is the group's rest, and the only rest a group has: an exercise "
-                    + "inside a group stating 'restSeconds' of its own is refused, "
-                    + "because a rest between the movements of a round is a rest "
-                    + "nobody takes."),
-        ],
-        required: ["group"]
-    )
-
-    private static let exerciseSchema = object(
-        [
-            "exerciseID": string("A real ID from list_exercises."),
-            "displayName": string(
-                "Optional. The catalog's name is used when this is left out, which is "
-                    + "the ordinary case — the name is display only, and both this server "
-                    + "and the app read it from the same catalog."),
-            "sets": [
-                "description": .string(
-                    "How many sets, or which ones. Write a number when every set is "
-                        + "the same work — '3' with repRange '8-12' is three sets of "
-                        + "8-12, and you do not repeat yourself. Write a list when the "
-                        + "sets differ: a drop set, a ramp, a back-off set, a set with "
-                        + "its own note. A listed set that states nothing of its own is "
-                        + "prescribed what this exercise prescribes, so a ramp needs "
-                        + "only the loads."),
-                "anyOf": [
-                    ["type": "integer"],
-                    ["type": "array", "items": setSchema],
-                ],
+    /// One workout.
+    private static var sessionSchema: JSONValue {
+        object(
+            [
+                "blockOrdinal": integer(
+                    "Which block this belongs to, from 1. Blocks run continuously and never "
+                        + "restart."),
+                "ordinal": integer("Where it sits in that block, from 1."),
+                "focus": string(
+                    "What to call the day — 'Push', 'Upper A', 'Core & carries'. Left out, "
+                        + "the app says where it sits instead of inventing a name."),
+                "icon": enumerated(
+                    SessionIcon.all.map(\.rawValue),
+                    "A mark for the day, from this list. Leave it out rather than guessing: "
+                        + "a name the app cannot draw is refused, and a day you marked "
+                        + "nothing carries nothing."),
+                "entries": array(
+                    of: entrySchema,
+                    "The movements in the order they are trained. An entry is one exercise, "
+                        + "or a group performed as rounds. A session with no entries is a "
+                        + "rest day."),
             ],
-            "repRange": string(
-                "The target as written, e.g. '8-12' or '5'. Applies to every set "
-                    + "that does not state its own. Omit if you are not prescribing "
-                    + "one. Write a hold as the time it is — '30 seconds', '45s', "
-                    + "'1:30' — and a carry as the distance it is — '40 m', "
-                    + "'40 metres', '50-100 yd'. The lifter logs each in the unit it "
-                    + "was prescribed in: a hold is logged in seconds rather than "
-                    + "reps and a carry in the distance it covered, because the log "
-                    + "records a rep count, a duration and a distance as three "
-                    + "separate things. volume_by_muscle reports all three apart, so "
-                    + "no hold and no carry is ever counted as a repetition. A "
-                    + "distance keeps the "
-                    + "unit you wrote it in and is never converted — "
-                    + distanceUnits + " are read; a unit outside that list is shown to "
-                    + "him exactly as written but cannot be logged, so prescribe a "
-                    + "carry in one of them if you want the distance recorded."),
-            "restSeconds": integer("Rest between sets. Omit if not prescribing rest."),
-            "suggestedLoad": massSchema(
-                "The load to work with. Applies to every set that does not state "
-                    + "its own. Omit to leave it to the lifter."),
-            "intensity": intensitySchema(
-                "How hard this work should be. Applies to every set that does not "
-                    + "state its own. Omit if you are not prescribing an effort."),
-            "tempo": string("Rep tempo such as '3-0-1-0'."),
-            "notes": string("Anything specific to this movement."),
-        ],
-        required: ["exerciseID", "sets"]
-    )
-
-    /// The distance units this build can read out of a prescription and log,
-    /// named in the schema so the writer can see them before he writes one.
-    /// Assembled from `DistanceUnit.known` rather than typed out again, so the
-    /// list Claude reads is the list the reader actually reads.
-    private static let distanceUnits =
-        DistanceUnit.known.map { "'\($0.rawValue)'" }.joined(separator: ", ")
-
-    /// One set of a prescription whose sets differ. Everything is optional:
-    /// `{}` is a legitimate set, meaning "the same as this exercise prescribes".
-    private static let setSchema = object([
-        "repRange": string(
-            "This set's target, e.g. '5', 'AMRAP', a hold such as '30 seconds', or "
-                + "a carry such as '40 m'. Omit to use the exercise's."),
-        "suggestedLoad": massSchema("This set's load. Omit to use the exercise's."),
-        "intensity": intensitySchema("How hard this set should be. Omit to use the exercise's."),
-        "notes": string("Anything about this set alone, e.g. 'last set to failure'."),
-    ])
-
-    private static func massSchema(_ description: String) -> JSONValue {
-        [
-            "type": "object",
-            "description": .string(description),
-            "properties": [
-                "value": ["type": "number"],
-                "unit": ["type": "string", "enum": ["kg", "lb"]],
-            ],
-            "required": ["value", "unit"],
-        ]
+            required: ["blockOrdinal", "ordinal"])
     }
 
-    /// A prescribed effort. `scale` is required and is not a closed list — the
-    /// three named below are the ones this build recognizes, and a scale it has
-    /// never heard of is recorded intact rather than refused. Nothing converts
-    /// between scales or bounds a value, so write the target as you would say
-    /// it: '8', '8-9', '75'.
-    private static func intensitySchema(_ description: String) -> JSONValue {
-        [
-            "type": "object",
-            "description": .string(description),
-            "properties": [
-                "scale": [
-                    "type": "string",
-                    "description": .string(
-                        "What the value is measured in. Commonly "
-                            + IntensityScale.known.map(\.rawValue).joined(separator: ", ")
-                            + ". Another scale is recorded as written."),
-                ],
-                "value": [
-                    "type": "string",
-                    "description": .string(
-                        "The target exactly as you would write it. A range stays a range."),
-                ],
-            ],
-            "required": ["scale", "value"],
-        ]
+    /// An exercise, or a group of them.
+    private static var entrySchema: JSONValue {
+        object([
+            "exerciseID": string(
+                "The catalog's ID, verbatim from list_exercises. Never invent one: history "
+                    + "is keyed on exercise identity, and an ID the catalog does not have is "
+                    + "refused with nothing taken in."),
+            "displayName": string(
+                "What to call it. Left out, the catalog's own name is filled in at both "
+                    + "ends — send one only if you have a reason to differ."),
+            "restSeconds": integer(
+                "How long to rest after this movement. Left out, no clock runs, which is "
+                    + "the honest answer when you did not say."),
+            "coachNote": string(
+                "Anything to say about the movement — a cue, a tempo such as '3-0-1-0', "
+                    + "what to watch. One note per movement; if it is about one set, say so "
+                    + "in words."),
+            "sets": array(of: setSchema, "Every set, in order."),
+            // **A group holds exercises, not entries.** A group of groups is not
+            // a thing anyone performs, and describing one recursively would
+            // invite a plan nobody can train.
+            "group": array(
+                of: object([
+                    "exerciseID": string("The catalog's ID, verbatim from list_exercises."),
+                    "displayName": string("What to call it. Left out, the catalog names it."),
+                    "coachNote": string("Anything to say about this movement."),
+                    "sets": array(of: setSchema, "Every set, in order."),
+                ]),
+                "Two or more movements performed as rounds, resting after the round. State "
+                    + "the round's rest as this entry's 'restSeconds'; a movement inside a "
+                    + "group may not state its own, and one that does is refused."),
+        ])
+    }
+
+    /// One prescribed set.
+    private static var setSchema: JSONValue {
+        object([
+            "target": string(
+                "What the set asks for: a count ('5', '8-12'), a hold ('45s', '30-45s'), a "
+                    + "carry ('40m', '20-30yd'), or 'AMRAP'. One measure per set, read once "
+                    + "— a carry is never counted as reps. Text this server cannot read is "
+                    + "refused rather than stored."),
+            "load": object([
+                "value": string("The number on the bar."),
+                "unit": enumerated(MassUnit.allCases.map(\.rawValue), "lb or kg."),
+            ]),
+            "intensity": object([
+                "scale": enumerated(
+                    IntensityScale.known.map(\.rawValue),
+                    "How hard, on whatever scale you work in."),
+                "value": string("The value on that scale — '8', '8-9', '80'."),
+            ]),
+            "isWarmup": boolean(
+                "Whether this is a warm-up. Warm-ups are not counted as working volume and "
+                    + "are not part of a round."),
+        ])
     }
 }

@@ -67,377 +67,170 @@ func fixtureCatalog(version: Int = 5) throws -> ExerciseCatalog {
     return ExerciseCatalog(exercises: exercises, version: version)
 }
 
-// MARK: - The snapshot
+// MARK: - The record
 
-func fixtureProfile(
-    experience: ExperienceLevel? = .intermediate,
-    availableEquipment: [EquipmentType]? = [
-        .bodyweight, .barbell, .dumbbell, .plate, .band, .kettlebell,
-        .medicineBall, .machine, .cable, .ezBar, .trapBar, .sled, .cardioMachine, .other,
-    ],
-    avoidedPatterns: [MovementPattern] = [],
-    avoidedExercises: [ExerciseID] = [],
-    goal: String = "Add 20 lb to the bench",
-    constraints: String = "Left shoulder is touchy overhead",
-    appliedProfileUpdateID: UUID? = nil,
-    /// When each fact was last stated. Defaulted so the fixture reads as a
-    /// lifter whose facts were stated at different times, which is the ordinary
-    /// case and the one the dates exist for.
-    statedAt: [String: Date] = ["goal": daysAgo(60), "constraints": daysAgo(400)]
-) -> SnapshotProfile {
-    SnapshotProfile(
-        displayUnit: .pounds,
-        experience: experience,
-        availableEquipment: availableEquipment,
-        goal: goal,
-        constraints: constraints,
-        bodyweight: Mass(value: 182, unit: .pounds),
-        avoidedPatterns: avoidedPatterns,
-        avoidedExercises: avoidedExercises,
-        preferredDurationMinutes: 60,
-        appliedProfileUpdateID: appliedProfileUpdateID,
-        statedAt: statedAt
-    )
+/// Building the record these suites ask questions of.
+///
+/// **One builder, and it is two lists.** The old fixtures assembled a routine of
+/// blocks of days keyed by weekday, then a flat log of sets keyed back to it —
+/// 445 lines, most of it keeping the two in step. A snapshot is sessions and
+/// performances now, each stating its own coordinates, so a fixture is what you
+/// want to ask about and nothing else.
+
+func fixtureSet(
+    _ target: Target? = .repetitions(low: 5, high: nil),
+    load: Double? = 100, warmup: Bool = false, rpe: String? = nil
+) -> PlanDocumentSet {
+    PlanDocumentSet(
+        target: target,
+        load: load.map { Mass(value: $0, unit: .kilograms) },
+        intensity: rpe.map { IntensityTarget(scale: .rpe, value: $0) },
+        isWarmup: warmup)
 }
 
-// MARK: - Building a block
-
-// A block is written as a `PlanDocument` and the work against it as a flat log,
-// so a fixture has to produce both and keep them keyed to each other. These
-// builders mirror the nesting the fixtures used to be written in — set, then
-// exercise, then day, then block — and hand back the two halves the wire
-// carries.
-
-/// One logged set, before it knows where it sits. `Fixture.day` gives it its
-/// position, which is the only thing it cannot know about itself.
-struct FixtureSet {
-    var index: Int
-    var pounds: Double?
-    var reps: Int
-    var date: Date
-    var warmup = false
-    var completed = true
-    var durationSeconds: Int?
-    var distance: Distance?
+func fixtureExercise(
+    _ id: String = "barbell-bench-press", sets: [PlanDocumentSet] = [fixtureSet()],
+    rest: Int? = 180, note: String? = nil
+) -> PlanDocumentExercise {
+    PlanDocumentExercise(
+        exerciseID: ExerciseID(rawValue: id), displayName: "",
+        restSeconds: rest, coachNote: note, sets: sets)
 }
 
-func set(
-    _ index: Int, _ pounds: Double?, _ reps: Int, at date: Date,
-    warmup: Bool = false, completed: Bool = true,
-    durationSeconds: Int? = nil, distance: Distance? = nil
-) -> FixtureSet {
-    FixtureSet(
-        index: index, pounds: pounds, reps: reps, date: date, warmup: warmup,
-        completed: completed, durationSeconds: durationSeconds, distance: distance)
+func fixtureSession(
+    block: Int = 1, ordinal: Int = 1, focus: String = "Push",
+    icon: SessionIcon? = nil, entries: [PlanDocumentEntry] = [.exercise(fixtureExercise())],
+    finished: Date? = nil
+) -> SnapshotSession {
+    SnapshotSession(
+        prescription: PlanDocumentSession(
+            blockOrdinal: block, ordinal: ordinal, focus: focus, icon: icon, entries: entries),
+        finishedAt: finished,
+        generatedAt: daysAgo(40))
 }
 
-/// One movement of a day: what was prescribed, and what was logged against it.
-struct FixtureExercise {
-    var exercise: PlanDocumentExercise
-    var logged: [FixtureSet]
+func fixturePerformedSet(
+    index: Int = 0, load: Double? = 100, reps: Int? = 5,
+    seconds: Int? = nil, distance: Distance? = nil,
+    warmup: Bool = false, at when: Date = daysAgo(2)
+) -> SnapshotPerformedSet {
+    SnapshotPerformedSet(
+        setIndex: index, isWarmup: warmup,
+        load: load.map { Mass(value: $0, unit: .kilograms) },
+        reps: reps, durationSeconds: seconds, distance: distance, completedAt: when)
 }
 
-func prescribed(
-    _ id: String, _ name: String, order: Int = 0, sets: Int, reps: String,
-    load: Double?, rest: Int?, intensity: IntensityTarget? = nil,
-    logged: [FixtureSet] = []
-) -> FixtureExercise {
-    FixtureExercise(
-        exercise: PlanDocumentExercise(
-            exerciseID: ExerciseID(rawValue: id), displayName: name, sets: sets,
-            repRange: reps, restSeconds: rest,
-            suggestedLoad: load.map { Mass(value: $0, unit: .pounds) },
-            intensity: intensity),
-        logged: logged)
-}
-
-/// One prescribed day and everything logged on it.
-struct FixtureDay {
-    var day: PlanDocumentDay
-    var completedAt: Date?
-    /// The day's sets, each already knowing which movement it belongs to.
-    var logged: [(order: Int, set: FixtureSet)]
-}
-
-func fixtureDay(
-    weekday: Weekday, focus: String = "", durationMinutes: Int? = nil,
-    completedAt: Date? = nil, exercises: [FixtureExercise] = [],
-    groups: [PlanDocumentGroup] = []
-) -> FixtureDay {
-    let entries = exercises.map { PlanDocumentEntry.exercise($0.exercise) }
-        + groups.map(PlanDocumentEntry.group)
-    var logged: [(order: Int, set: FixtureSet)] = []
-    for (order, exercise) in exercises.enumerated() {
-        logged += exercise.logged.map { (order, $0) }
-    }
-    return FixtureDay(
-        day: PlanDocumentDay(
-            weekday: weekday, focus: focus, durationMinutes: durationMinutes,
-            entries: entries),
-        completedAt: completedAt, logged: logged)
-}
-
-/// A block: the document, the sessions the record knows about, and the log.
-func fixtureRoutine(
-    id: UUID = UUID(), title: String, goal: String = "", startDate: Date,
-    completedAt: Date? = nil, durationMinutes: Int? = nil, catalogVersion: Int = 5,
-    blocks: [(label: String?, isDeload: Bool, days: [FixtureDay])]
-) -> (routine: SnapshotRoutine, log: [LoggedSetRecord]) {
-    var sessions: [SnapshotSession] = []
-    var log: [LoggedSetRecord] = []
-    for (index, block) in blocks.enumerated() {
-        let ordinal = index + 1
-        for day in block.days {
-            sessions.append(SnapshotSession(
-                blockOrdinal: ordinal, weekday: day.day.weekday, completedAt: day.completedAt))
-            let byOrder = day.day.entries.flatMap(\.exercises)
-            for (order, set) in day.logged {
-                guard byOrder.indices.contains(order) else { continue }
-                log.append(LoggedSetRecord(
-                    routineID: id, blockOrdinal: ordinal, weekday: day.day.weekday,
-                    exerciseOrder: order, exerciseID: byOrder[order].exerciseID,
-                    setIndex: set.index, isWarmup: set.warmup, isCompleted: set.completed,
-                    completedAt: set.date,
-                    load: set.pounds.map { Mass(value: $0, unit: .pounds) },
-                    reps: set.reps, durationSeconds: set.durationSeconds,
-                    distance: set.distance))
-            }
-        }
-    }
-    let routine = SnapshotRoutine(
-        document: PlanDocument(
-            id: id, catalogVersion: catalogVersion, generatedAt: startDate,
-            title: title, goal: goal, durationMinutes: durationMinutes,
-            blocks: blocks.map {
-                PlanDocumentBlock(label: $0.label, isDeload: $0.isDeload, days: $0.days.map(\.day))
-            }),
-        startDate: startDate, completedAt: completedAt, sessions: sessions)
-    return (routine, log)
-}
-
-/// The finished block: one full-body day, thirty days ago.
-private func basePlan() -> (routine: SnapshotRoutine, log: [LoggedSetRecord]) {
-    let day = daysAgo(30)
-    return fixtureRoutine(
-        title: "Base block", goal: "Get the lifts moving", startDate: daysAgo(60),
-        completedAt: daysAgo(14), durationMinutes: 50,
-        blocks: [(
-            label: "Introduction", isDeload: false,
-            days: [
-                fixtureDay(
-                    weekday: .monday, focus: "Full body", durationMinutes: 50,
-                    completedAt: day,
-                    exercises: [
-                        prescribed(
-                            "barbell-bench-press", "Barbell Bench Press",
-                            sets: 3, reps: "5", load: 215, rest: 180,
-                            logged: [
-                                set(0, 135, 5, at: day, warmup: true),
-                                set(1, 215, 5, at: day),
-                                set(2, 215, 5, at: day),
-                                set(3, 215, 5, at: day),
-                            ]),
-                        prescribed(
-                            "barbell-squat", "Barbell Squat",
-                            sets: 3, reps: "5", load: 275, rest: 210,
-                            logged: [
-                                set(0, 275, 5, at: day),
-                                set(1, 275, 5, at: day),
-                                set(2, 275, 5, at: day),
-                            ]),
-                    ])
-            ])])
-}
-
-/// The running block: a pull day four days ago, a push day two days ago, and a
-/// second week that has been prescribed but not trained.
-private func currentPlan() -> (routine: SnapshotRoutine, log: [LoggedSetRecord]) {
-    let pullDay = daysAgo(4)
-    let pushDay = daysAgo(2)
-    return fixtureRoutine(
-        title: "Autumn strength", goal: "Add 20 lb to the bench", startDate: daysAgo(14),
-        durationMinutes: 60,
-        blocks: [
-            (label: "Accumulation", isDeload: false, days: [
-                fixtureDay(
-                    weekday: .thursday, focus: "Pull", durationMinutes: 60,
-                    completedAt: pullDay,
-                    exercises: [
-                        prescribed(
-                            "barbell-bent-over-row", "Barbell Bent Over Row",
-                            sets: 3, reps: "8", load: 185, rest: 120,
-                            logged: [
-                                set(0, 95, 8, at: pullDay, warmup: true),
-                                set(1, 185, 8, at: pullDay),
-                                set(2, 185, 8, at: pullDay),
-                                set(3, 185, 7, at: pullDay),
-                            ]),
-                        prescribed(
-                            "lat-pulldown", "Lat Pulldown",
-                            sets: 3, reps: "12", load: 120, rest: 90,
-                            logged: [
-                                set(0, 120, 12, at: pullDay),
-                                set(1, 120, 12, at: pullDay),
-                                set(2, 120, 12, at: pullDay),
-                            ]),
-                    ]),
-                fixtureDay(
-                    weekday: .monday, focus: "Push", durationMinutes: 60,
-                    completedAt: pushDay,
-                    exercises: [
-                        prescribed(
-                            "barbell-bench-press", "Barbell Bench Press",
-                            sets: 3, reps: "5", load: 225, rest: 180,
-                            // The effort the plan asked for, so it can be read
-                            // beside the reps and load actually logged. Nobody
-                            // is asked to rate a set.
-                            intensity: IntensityTarget(scale: .rpe, value: "8"),
-                            logged: [
-                                set(0, 135, 5, at: pushDay, warmup: true),
-                                set(1, 225, 5, at: pushDay),
-                                set(2, 225, 5, at: pushDay),
-                                set(3, 225, 4, at: pushDay),
-                                // On screen but never finished.
-                                set(4, 225, 0, at: pushDay, completed: false),
-                            ]),
-                        prescribed(
-                            "barbell-curl", "Barbell Curl",
-                            sets: 3, reps: "10", load: 65, rest: 60,
-                            logged: [
-                                set(0, 65, 10, at: pushDay),
-                                set(1, 65, 10, at: pushDay),
-                                set(2, 65, 10, at: pushDay),
-                            ]),
-                    ]),
-            ]),
-            (label: "Accumulation", isDeload: false, days: [
-                fixtureDay(
-                    weekday: .monday, focus: "Push", durationMinutes: 60,
-                    exercises: [
-                        prescribed(
-                            "barbell-bench-press", "Barbell Bench Press",
-                            sets: 3, reps: "5", load: 230, rest: 180)
-                    ])
-            ]),
-        ])
+func fixturePerformance(
+    _ id: String = "barbell-bench-press", block: Int? = 1, ordinal: Int? = 1,
+    at when: Date = daysAgo(2), source: PerformanceSource = .logged,
+    note: String? = nil, sets: [SnapshotPerformedSet] = [fixturePerformedSet()]
+) -> SnapshotPerformedExercise {
+    SnapshotPerformedExercise(
+        exerciseID: ExerciseID(rawValue: id), occurredAt: when, source: source,
+        blockOrdinal: block, sessionOrdinal: ordinal, lifterNote: note, sets: sets)
 }
 
 func fixtureSnapshot(
-    profile: SnapshotProfile? = fixtureProfile(),
-    blocks: [(routine: SnapshotRoutine, log: [LoggedSetRecord])]? = nil,
-    catalogVersion: Int = 5
+    sessions: [SnapshotSession] = [fixtureSession()],
+    performances: [SnapshotPerformedExercise] = [fixturePerformance()],
+    exportedAt: Date = daysAgo(1), catalogVersion: Int = 5
 ) -> TrainingSnapshot {
-    let built = blocks ?? [basePlan(), currentPlan()]
-    return TrainingSnapshot(
-        catalogVersion: catalogVersion,
-        generatedAt: daysAgo(1),
-        profile: profile,
-        bodyMetrics: [
-            SnapshotBodyMetric(date: daysAgo(30), bodyweight: Mass(value: 178, unit: .pounds)),
-            SnapshotBodyMetric(date: daysAgo(2), bodyweight: Mass(value: 182, unit: .pounds)),
-        ],
-        baselines: [
-            SnapshotBaseline(
-                exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
-                load: Mass(value: 205, unit: .pounds), reps: 5, recordedAt: daysAgo(90))
-        ],
-        routines: built.map(\.routine),
-        log: built.flatMap(\.log).sorted { $0.completedAt < $1.completedAt }
-    )
+    TrainingSnapshot(
+        exportedAt: exportedAt, catalogVersion: catalogVersion,
+        sessions: sessions, performances: performances)
 }
 
-// MARK: - The transport
+// MARK: - The folder, in memory
 
-/// The shared folder, in memory.
+/// A stand-in for the shared folder, so a tool can be tested without a disk.
 ///
-/// Holds whatever snapshot it was given and remembers the plan last written to
-/// it, and can be told to fail, so a tool's handling of "nothing yet", "here is
-/// the data", and "the folder is broken" can all be covered without a disk or
-/// an iCloud account.
+/// **It keeps what was written**, because most of what these suites assert is
+/// what the coach's call actually put on the wire — a plan he cannot read back
+/// is a plan he cannot check.
 final class InMemoryDocuments: TrainingDocuments, @unchecked Sendable {
-    private let lock = NSLock()
-    private var snapshot: TrainingSnapshot?
-    private var written: PlanDocument?
-    private var writtenProfileUpdate: ProfileUpdate?
-    private var failure: (any Error)?
 
-    struct Broken: Error, LocalizedError {
-        var errorDescription: String? { "the volume is not readable" }
-    }
+    var snapshot: TrainingSnapshot?
+    var writtenPlan: PlanDocument?
+    /// What `write_plan` last put on the wire. Named for what a suite asks it.
+    var lastWrittenPlan: PlanDocument? { writtenPlan }
+    var notes: [NoteFile: String] = [:]
+    /// Every version kept before an edit, oldest first.
+    var keptCopies: [(note: NoteFile, text: String)] = []
+    /// Set to make a write fail, for the paths that report one.
+    var writeFailure: (any Error)?
+    /// Set to make reading the record fail, which is a different thing from
+    /// there being no record: one is a folder nobody has written to yet, and the
+    /// other is a folder that cannot be reached. A tool that reported them the
+    /// same way would tell a coach the lifter has never trained.
+    var readFailure: (any Error)?
 
-    init(snapshot: TrainingSnapshot? = nil) {
+    init(snapshot: TrainingSnapshot? = nil, notes: [NoteFile: String] = [:]) {
         self.snapshot = snapshot
+        self.notes = notes
     }
-
-    var snapshotLocation: String { "/fixture/Documents/snapshot.json" }
-    var planLocation: String { "/fixture/Documents/plan.json" }
-    var profileUpdateLocation: String { "/fixture/Documents/profile-update.json" }
-
-    var lastWrittenPlan: PlanDocument? { lock.withLock { written } }
-    var lastWrittenProfileUpdate: ProfileUpdate? { lock.withLock { writtenProfileUpdate } }
-
-    func breakTransport() { lock.withLock { failure = Broken() } }
 
     func readSnapshot() throws -> TrainingSnapshot? {
-        try lock.withLock {
-            if let failure { throw failure }
-            return snapshot
-        }
+        if let readFailure { throw readFailure }
+        return snapshot
     }
 
     func writePlan(_ plan: PlanDocument) throws {
-        try lock.withLock {
-            if let failure { throw failure }
-            written = plan
-        }
+        if let writeFailure { throw writeFailure }
+        writtenPlan = plan
     }
 
-    func writeProfileUpdate(_ update: ProfileUpdate) throws {
-        try lock.withLock {
-            if let failure { throw failure }
-            writtenProfileUpdate = update
-        }
+    func readNote(_ note: NoteFile) throws -> String? { notes[note] }
+
+    func writeNote(_ text: String, as note: NoteFile) throws {
+        if let writeFailure { throw writeFailure }
+        notes[note] = text
     }
 
-    func readProfileUpdate() throws -> ProfileUpdate? {
-        try lock.withLock {
-            if let failure { throw failure }
-            return writtenProfileUpdate
-        }
+    func keepCopy(of text: String, as note: NoteFile) throws {
+        keptCopies.append((note: note, text: text))
     }
+
+    var snapshotLocation: String { "in memory" }
+    var planLocation: String { "in memory" }
 }
 
-extension PlanDocument {
-
-    /// Every training day of the block, in order, for an assertion that does
-    /// not care which week a day sits in.
-    var everyDay: [PlanDocumentDay] { blocks.flatMap(\.days) }
+/// A stand-in failure for the folder being unreachable.
+enum TransportFailure: Error, LocalizedError {
+    case unreachable
+    var errorDescription: String? { "The shared folder could not be read." }
 }
 
-// MARK: - Calling a tool in a test
-
+/// A runner over an in-memory folder, with the clock stopped.
+///
+/// The clock is fixed because a report that states how old the record is cannot
+/// be asserted against a moving `now`.
 func makeRunner(
     documents: any TrainingDocuments,
     catalog: (any ExerciseCatalogProviding)? = nil,
-    delivery: ToolRunner.DeliveryProspect = .onItsWay
+    catalogVersion: Int = 5
 ) throws -> ToolRunner {
     ToolRunner(
         documents: documents,
-        catalog: try catalog ?? fixtureCatalog(),
+        catalog: try catalog ?? fixtureCatalog(version: catalogVersion),
         now: { referenceNow },
-        delivery: { _ in delivery }
-    )
+        delivery: { _ in .onItsWay })
 }
 
+// MARK: - Reading an outcome
+
+/// What a suite asks of a tool's answer.
+///
+/// **Both are optional and exactly one is ever non-nil**, which is the assertion
+/// most of these suites are really making: a tool that fails must not also
+/// report, because an empty report reads as a lifter with no history rather than
+/// as a question that could not be answered.
 extension ToolOutcome {
 
-    /// The report inside, or `nil` when the tool failed.
     var report: JSONValue? {
         if case .report(let value) = self { return value }
         return nil
     }
 
-    /// The failure message inside, or `nil` when the tool reported.
     var failureMessage: String? {
         if case .failure(let message) = self { return message }
         return nil

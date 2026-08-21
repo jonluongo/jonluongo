@@ -10,10 +10,14 @@ import LiftingKit
 @Suite("No snapshot yet")
 struct MissingSnapshotTests {
 
+    /// The tools that read the record.
+    ///
+    /// **`list_exercises` is not one of them.** The catalog is bundled, so it
+    /// answers the same whether or not the app has ever written anything — and a
+    /// coach who cannot see the exercise IDs cannot write a first plan, which is
+    /// exactly the moment there is no record to read.
     private static let readingTools = [
-        ToolCatalog.listExercises, ToolCatalog.exerciseHistory,
-        ToolCatalog.recentSessions, ToolCatalog.volumeByMuscle,
-        ToolCatalog.unstatedFacts,
+        ToolCatalog.exerciseHistory, ToolCatalog.recentSessions, ToolCatalog.volumeByMuscle,
     ]
 
     @Test("Every reading tool fails rather than reporting an empty result",
@@ -51,7 +55,7 @@ struct MissingSnapshotTests {
     @Test("A snapshot that is there but unreadable is told apart from one that is absent")
     func brokenTransportIsNotAbsence() throws {
         let documents = InMemoryDocuments(snapshot: fixtureSnapshot())
-        documents.breakTransport()
+        documents.readFailure = TransportFailure.unreachable
         let runner = try makeRunner(documents: documents)
 
         let message = try #require(
@@ -69,16 +73,16 @@ struct MissingSnapshotTests {
         let outcome = runner.call(
             ToolCatalog.writePlan,
             arguments: [
-                "title": "First block",
-                "days": [[
-                    "weekday": "monday",
-                    "exercises": [[
-                        "exerciseID": "barbell-squat", "displayName": "Barbell Squat", "sets": 3,
+                "sessions": [[
+                    "blockOrdinal": 1, "ordinal": 1, "focus": "First block",
+                    "entries": [[
+                        "exerciseID": "barbell-squat",
+                        "sets": [["target": "5"], ["target": "5"], ["target": "5"]],
                     ]],
                 ]],
             ])
 
         #expect(outcome.failureMessage == nil)
-        #expect(documents.lastWrittenPlan?.title == "First block")
+        #expect(documents.lastWrittenPlan?.sessions.first?.focus == "First block")
     }
 }

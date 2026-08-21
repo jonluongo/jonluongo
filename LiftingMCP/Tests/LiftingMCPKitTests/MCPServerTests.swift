@@ -65,15 +65,17 @@ struct MCPServerTests {
 
     // MARK: - The tools
 
-    @Test("tools/list advertises exactly the seven tools, each with a schema")
+    @Test("tools/list advertises exactly the six tools, each with a schema")
     func toolsListIsComplete() throws {
         let tools = try #require(
             try ask(try makeServer(), request("tools/list"))?["result"]?["tools"]?.arrayValue)
         let names = tools.compactMap { $0["name"]?.stringValue }.sorted()
 
+        // `update_profile` and `unstated_facts` went with the profile: who he
+        // is is prose in user.md, edited with `update_notes`.
         #expect(names == [
-            "exercise_history", "list_exercises", "recent_sessions", "unstated_facts",
-            "update_profile", "volume_by_muscle", "write_plan",
+            "exercise_history", "list_exercises", "recent_sessions",
+            "update_notes", "volume_by_muscle", "write_plan",
         ])
         #expect(tools.allSatisfy { $0["inputSchema"]?["type"]?.stringValue == "object" })
         #expect(tools.allSatisfy { $0["description"]?.stringValue?.isEmpty == false })
@@ -152,7 +154,10 @@ struct MCPServerTests {
         let contents = try #require(response["result"]?["contents"]?.arrayValue)
 
         #expect(contents.first?["uri"] == .string(MCPServer.contextResourceURI))
-        #expect(try #require(contents.first?["text"]?.stringValue).contains("Autumn strength"))
+        // **The record's own date leads it.** A coach reading a summary needs to
+        // know when it was written before he believes any of it — that is the
+        // failure this whole resource is shaped around.
+        #expect(try #require(contents.first?["text"]?.stringValue).contains("exportedAt"))
     }
 
     @Test("Reading a resource this server does not have is an error, not empty text")

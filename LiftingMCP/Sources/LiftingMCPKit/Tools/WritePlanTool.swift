@@ -38,21 +38,15 @@ extension ToolRunner {
     /// block is the first; changing programme is the second, and nothing has to
     /// guess which was meant.
     func writePlan(_ arguments: JSONValue) -> ToolOutcome {
-        guard arguments["blocks"] != nil || arguments["weeks"] != nil
-            || arguments["days"] != nil
-        else {
+        guard arguments["sessions"] != nil else {
             return .failure(
-                "write_plan needs a 'blocks' array — one entry per block of the routine, each "
-                    + "with its own 'days'. A routine of a single block is one entry. A day with "
-                    + "no exercises is a rest day and is fine; leaving the routine's training out "
+                "write_plan needs a 'sessions' array — one entry per workout, each stating "
+                    + "which block it belongs to and where it sits in that block. A session "
+                    + "with no entries is a rest day and is fine; leaving the training out "
                     + "entirely is not a plan, so nothing was written.")
         }
 
         var fields = arguments.objectValue ?? [:]
-        switch Self.normalizedTraining(in: fields) {
-        case .normalized(let normalized): fields = normalized
-        case .refused(let message): return .failure(message)
-        }
         fields["version"] = .integer(PlanDocument.currentVersion)
         // A stated routine has to be a routine: a malformed id silently
         // becoming a fresh one would start a new routine and supersede the one
@@ -227,117 +221,5 @@ extension ToolRunner {
         return nil
     }
 
-    // MARK: - Weekdays, however they were written
 
-    /// The call's fields with every weekday written as the number `Weekday`
-    /// decodes from, wherever the block stated its training.
-    ///
-    /// A routine may state `blocks`, each with its own days, or bare `days` for
-    /// a routine of one. Both are normalized here so the document decoder sees
-    /// one shape; stating more than one is left to the decoder, which refuses
-    /// it. `weeks` is the same list under the name the format used before
-    /// version 5 — accepted and carried through unchanged, so a coach who
-    /// learned the old word mid-conversation is not refused for it.
-    private static func normalizedTraining(
-        in fields: [String: JSONValue]
-    ) -> FieldNormalization {
-        var fields = fields
-        for key in ["blocks", "weeks"] {
-            guard let blocks = fields[key]?.arrayValue else { continue }
-            var normalized: [JSONValue] = []
-            for block in blocks {
-                guard var members = block.objectValue else {
-                    // Not an object at all: leave it for the decoder, whose
-                    // complaint about the shape is the accurate one.
-                    normalized.append(block)
-                    continue
-                }
-                if let days = members["days"]?.arrayValue {
-                    switch normalizedDays(days) {
-                    case .normalized(let days): members["days"] = days
-                    case .refused(let message): return .refused(message)
-                    }
-                }
-                normalized.append(.object(members))
-            }
-            fields[key] = .array(normalized)
-        }
-        if let days = fields["days"]?.arrayValue {
-            switch normalizedDays(days) {
-            case .normalized(let days): fields["days"] = days
-            case .refused(let message): return .refused(message)
-            }
-        }
-        return .normalized(fields)
-    }
-
-    private static func normalizedDays(_ days: [JSONValue]) -> DayNormalization {
-        var normalized: [JSONValue] = []
-        for day in days {
-            switch normalizeWeekday(in: day) {
-            case .normalized(let day): normalized.append(day)
-            case .refused(let message): return .refused(message)
-            }
-        }
-        return .normalized(.array(normalized))
-    }
-
-    /// Turns a day's `weekday` into the number `Weekday` decodes from.
-    ///
-    /// `Weekday` is stored as `Calendar`'s 1-based numbering, which is exact
-    /// and easy to get wrong from memory, so a name is accepted too. This
-    /// translates at the edge rather than loosening the shared type — the phone
-    /// and the server must keep decoding the document identically.
-    private static func normalizeWeekday(in day: JSONValue) -> DayNormalization {
-        var fields = day.objectValue ?? [:]
-        guard let raw = day["weekday"] else {
-            return .refused(
-                "Every day needs a 'weekday', written as a name ('monday') or as Calendar's "
-                    + "numbering where 1 is Sunday and 7 is Saturday. Nothing was written.")
-        }
-        if let number = raw.intValue {
-            guard Weekday(rawValue: number) != nil else {
-                return .refused(
-                    "'\(number)' is not a weekday. Use 1 for Sunday through 7 for Saturday, or "
-                        + "write the name. Nothing was written.")
-            }
-            fields["weekday"] = .integer(number)
-            return .normalized(.object(fields))
-        }
-        guard let name = raw.stringValue, let weekday = Weekday.named(name) else {
-            return .refused(
-                "'\(raw.stringValue ?? "that value")' is not a weekday. Write a name such as "
-                    + "'monday', or Calendar's numbering where 1 is Sunday and 7 is Saturday. "
-                    + "Nothing was written.")
-        }
-        fields["weekday"] = .integer(weekday.rawValue)
-        return .normalized(.object(fields))
-    }
-}
-
-/// What rewriting part of a call produced: the part with every weekday now the
-/// number the document decodes, or a sentence saying why it could not be.
-///
-/// A local result type rather than `Result`, because the failure here is a
-/// message for Claude rather than an `Error` anything catches.
-private enum Normalization<Value> {
-    case normalized(Value)
-    case refused(String)
-}
-
-private typealias FieldNormalization = Normalization<[String: JSONValue]>
-private typealias DayNormalization = Normalization<JSONValue>
-
-extension Weekday {
-
-    /// The weekday a name refers to, full or abbreviated, in any casing.
-    ///
-    /// Lives here rather than on `Weekday` in `LiftingKit` because it exists
-    /// for one reason — accepting a day written in prose at the MCP boundary —
-    /// and the shared type should keep exactly one way to decode.
-    static func named(_ name: String) -> Weekday? {
-        let needle = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        return allCases.first { $0.fullName.lowercased() == needle }
-            ?? allCases.first { $0.shortName.lowercased() == needle }
-    }
 }

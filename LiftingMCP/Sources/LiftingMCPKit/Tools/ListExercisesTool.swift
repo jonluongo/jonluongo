@@ -15,10 +15,12 @@ extension ToolRunner {
         let query = arguments["query"]?.stringValue?.lowercased()
         let pattern = arguments["pattern"]?.stringValue.map { MovementPattern(rawValue: $0) }
         let equipment = arguments["equipment"]?.stringValue.map { EquipmentType(rawValue: $0) }
+        let muscle = arguments["muscle"]?.stringValue.map { MuscleGroup(rawValue: $0) }
 
         var filter = ExerciseFilter()
         if let pattern { filter.patterns = [pattern] }
         if let equipment { filter.equipment = [equipment] }
+        if let muscle { filter.muscles = [muscle] }
         var matches = catalog.exercises(matching: filter)
         if let query, !query.isEmpty {
             matches = matches.filter {

@@ -29,7 +29,8 @@ struct SharedFolderTests {
         let outcome = try makeRunner(documents: folder)
             .call(ToolCatalog.recentSessions, arguments: [:])
 
-        #expect(try #require(outcome.report)["totalSessions"] == 3)
+        // The fixture holds one session with one performance against it.
+        #expect(try #require(outcome.report)["sessionCount"] == 1)
     }
 
     @Test("A plan the server wrote lands on disk under the name the app reads")
@@ -41,13 +42,16 @@ struct SharedFolderTests {
         let outcome = try makeRunner(documents: folder).call(
             ToolCatalog.writePlan,
             arguments: [
-                "title": "Autumn strength",
-                "days": [[
-                    "weekday": "monday",
-                    "exercises": [[
-                        "exerciseID": "barbell-squat", "displayName": "Barbell Squat",
-                        "sets": 5, "repRange": "3", "restSeconds": 240,
-                        "suggestedLoad": ["value": 315.0, "unit": "lb"],
+                "sessions": [[
+                    "blockOrdinal": 1, "ordinal": 1, "focus": "Lower",
+                    "entries": [[
+                        "exerciseID": "barbell-squat", "restSeconds": 240,
+                        "sets": .array(Array(
+                            repeating: [
+                                "target": "3",
+                                "load": ["value": 315.0, "unit": "lb"],
+                            ] as JSONValue,
+                            count: 5)),
                     ]],
                 ]],
             ])
@@ -56,11 +60,12 @@ struct SharedFolderTests {
         // Read back through the app's own side of the transport, so this is the
         // real decode the phone performs and not a second one written here.
         let read = try #require(try folder.readPlan())
-        #expect(read.title == "Autumn strength")
-        #expect(read.everyDay.first?.weekday == .monday)
-        #expect(read.everyDay.first?.exercises.first?.sets == 5)
-        #expect(read.everyDay.first?.exercises.first?.suggestedLoad
-            == Mass(value: 315, unit: .pounds))
+        let session = try #require(read.sessions.first)
+        #expect(session.blockOrdinal == 1)
+        #expect(session.focus == "Lower")
+        let exercise = try #require(session.exercises.first)
+        #expect(exercise.sets.count == 5)
+        #expect(exercise.sets.first?.load == Mass(value: 315, unit: .pounds))
     }
 
     @Test("A folder that does not exist reads as no snapshot rather than as an error")
@@ -146,11 +151,17 @@ struct BundledCatalogTests {
         let outcome = runner.call(
             ToolCatalog.writePlan,
             arguments: [
-                "days": [[
-                    "weekday": "monday",
-                    "exercises": .array(
+                // Block 2: the fixture has a performance against block 1
+                // session 1, and rewriting a session he has trained is refused —
+                // which is the rule working, not the test being awkward.
+                "sessions": [[
+                    "blockOrdinal": 2, "ordinal": 1,
+                    "entries": .array(
                         ids.map {
-                            ["exerciseID": .string($0), "displayName": .string($0), "sets": 3]
+                            [
+                                "exerciseID": .string($0),
+                                "sets": [["target": "5"]],
+                            ]
                         }),
                 ]]
             ])
