@@ -57,6 +57,22 @@ struct SessionFinishSection: View {
         "\(unlogged) set\(unlogged == 1 ? "" : "s") not logged. Finish anyway?"
     }
 
+    /// Bumped when a session is finished, so the haptic fires on the act rather
+    /// than on the state — `isLogged` also flips when a plan arrives or the
+    /// screen is rebuilt, and a phone that buzzes because a view redrew is worse
+    /// than one that never buzzes.
+    @State private var finishes = 0
+
+    /// True for a beat after finishing, so the button confirms before it becomes
+    /// the way back.
+    ///
+    /// **CLAUDE.md: an action keeps the same name through the whole flow.**
+    /// *Finish workout* was pressed and the button immediately read *Mark as
+    /// Unfinished* — an undo affordance, which is the one thing that cannot
+    /// double as a confirmation. Nothing on the screen ever said the thing had
+    /// happened, which is what *it sadly fades away* was describing.
+    @State private var justFinished = false
+
     var body: some View {
         Section {
             // **One control, in one place, in both states.** The finished
@@ -67,16 +83,20 @@ struct SessionFinishSection: View {
             // session is logged is said by the record and by the panels above,
             // which are already on the recorded ground.
             PrimaryActionButton(
-                title: isLogged ? "Mark as Unfinished" : "Finish workout",
-                systemImage: isLogged ? "arrow.uturn.backward" : "checkmark",
+                title: justFinished
+                    ? "Finished" : (isLogged ? "Mark as Unfinished" : "Finish workout"),
+                systemImage: justFinished
+                    ? "checkmark" : (isLogged ? "arrow.uturn.backward" : "checkmark"),
                 // Taking a session back is a correction, not an action the
                 // screen is for, so it carries no fill at all. Finishing one
                 // with sets unticked is a question rather than a refusal, so it
                 // keeps the shape and loses the colour.
-                prominence: isLogged ? .quiet : (unloggedSetCount > 0 ? .tentative : .primary),
+                prominence: justFinished
+                    ? .recorded
+                    : (isLogged ? .quiet : (unloggedSetCount > 0 ? .tentative : .primary)),
                 action: {
                     if isLogged { return onUnfinish() }
-                    if unloggedSetCount > 0 { asking = true } else { onFinish() }
+                    if unloggedSetCount > 0 { asking = true } else { finish() }
                 })
             .accessibilityHint(
                 isLogged ? "Takes this session back to unfinished"
@@ -85,14 +105,42 @@ struct SessionFinishSection: View {
                 Self.question(unloggedSetCount), isPresented: $asking,
                 titleVisibility: .visible
             ) {
-                Button("Finish workout") { onFinish() }
+                Button("Finish workout") { finish() }
                 Button("Keep going", role: .cancel) {}
             }
+            // **The record arriving is the reward, so it is worth watching
+            // arrive.** Finishing used to be a cut: the panels above were
+            // suddenly on the recorded ground and the button was suddenly a
+            // different word, with nothing between. The same change on a spring
+            // reads as the session landing — and the haptic is `.success`,
+            // which is the one iOS reserves for a thing completing.
+            .sensoryFeedback(.success, trigger: finishes)
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(
                 top: Spacing.major, leading: Spacing.section,
                 bottom: Spacing.snug, trailing: Spacing.section))
+        }
+    }
+
+    /// Finishes the session as one animated moment.
+    ///
+    /// The wash under every panel, the button's word and its fill all change on
+    /// the same spring, so they read as one event rather than three redraws that
+    /// happened to coincide. `onFinish` is the caller's write; the animation is
+    /// this section's, because this is where the press happened.
+    private func finish() {
+        finishes += 1
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.72)) {
+            onFinish()
+            justFinished = true
+        }
+        // Long enough to read, short enough that it is a beat rather than a
+        // state. The button is the way back after it, which is what a finished
+        // session's control is for.
+        Task {
+            try? await Task.sleep(for: .seconds(1.4))
+            withAnimation(.snappy) { justFinished = false }
         }
     }
 }

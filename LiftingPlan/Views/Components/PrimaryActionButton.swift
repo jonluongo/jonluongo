@@ -59,6 +59,12 @@ struct PrimaryActionButton: View {
         /// the most weight; the word alone gives it the least, and the
         /// confirmation that follows is where the deciding actually happens.
         case danger
+        /// The beat after an act lands: the highlighter, with the word in ink on
+        /// it. **This is the one place the accent belongs on a button** — it
+        /// means *in the record*, and for the second after finishing that is
+        /// exactly what the button is reporting. It is not an action; nothing
+        /// happens if it is pressed during it.
+        case recorded
     }
 
     let title: String
@@ -96,6 +102,7 @@ struct PrimaryActionButton: View {
     private var fill: Color {
         switch prominence {
         case .primary: Palette.ink
+        case .recorded: Palette.accent
         case .tentative: Palette.rule
         case .quiet, .danger: .clear
         }
@@ -107,6 +114,7 @@ struct PrimaryActionButton: View {
     private var foreground: Color {
         switch prominence {
         case .primary: Palette.onInk
+        case .recorded: Palette.onAccent
         case .tentative, .quiet: Palette.ink
         case .danger: Palette.destructive
         }

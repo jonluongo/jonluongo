@@ -97,10 +97,17 @@ struct SetRowView: View {
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .disabled(isLocked)
+        // **Not `.disabled`, which dims what it touches.** A finished session's
+        // marks came out olive-on-olive — the recorded wash showing through a
+        // greyed-out tick — and a mark states a *fact*: the set was done, and it
+        // is not less done because the session was closed. The fields beside it
+        // keep `.disabled`, because an input that cannot be typed into should
+        // look like one. `toggle()` refuses the tap either way.
+        .allowsHitTesting(!isLocked)
         .frame(width: SetTableMetrics.checkColumnWidth)
         .accessibilityLabel(slot.isDone ? "Recorded, \(slot.identity.spoken)"
                                         : "Record \(slot.identity.spoken)")
+        .accessibilityHint(isLocked ? "This session is finished" : "")
     }
 
     private func toggle() {
