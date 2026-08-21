@@ -284,3 +284,54 @@ struct RestTimerNotificationTests {
         #expect(center.authorizationRequests == 1, "asking again every set is asking him nothing")
     }
 }
+
+/// What the ring does when the rest is adjusted mid-countdown.
+///
+/// **`−15` moved nothing.** The denominator was recomputed as
+/// `total + seconds`, so subtracting took fifteen seconds off both what is left
+/// and what it is a fraction of — the same ratio, and a ring that sat still
+/// while the number under it dropped. Adding is the only direction that
+/// lengthens the rest, so it is the only direction that may grow the total.
+@MainActor
+@Suite("Adjusting a rest")
+struct RestAdjustmentTests {
+
+    private func running(_ seconds: Int) -> RestTimerModel {
+        let timer = RestTimerModel(cue: ScreenLockedCue(center: FakeNotificationCenter()))
+        timer.start(seconds: seconds, context: "Bench")
+        return timer
+    }
+
+    @Test("Taking time off moves the ring forward")
+    func subtractingAdvancesTheRing() {
+        let timer = running(180)
+        #expect(timer.progress == 0, "nothing elapsed yet")
+
+        timer.addTime(-15)
+
+        #expect(timer.remaining == 165)
+        #expect(timer.progress > 0, "a shorter rest is a rest further through")
+    }
+
+    @Test("Adding time lengthens the rest rather than rewinding past its start")
+    func addingGrowsTheWhole() {
+        let timer = running(180)
+        timer.addTime(15)
+
+        #expect(timer.remaining == 195)
+        #expect(timer.total == 195, "the rest it is a fraction of got longer")
+        #expect(timer.progress == 0, "and none of the longer rest is behind him")
+    }
+
+    @Test("Taking time off twice keeps moving it")
+    func repeatedSubtractionKeepsMoving() {
+        // The defect was invisible on one press and stayed invisible on ten.
+        let timer = running(180)
+        timer.addTime(-15)
+        let once = timer.progress
+        timer.addTime(-15)
+
+        #expect(timer.progress > once)
+        #expect(timer.total == 180, "the rest never got shorter than it started")
+    }
+}

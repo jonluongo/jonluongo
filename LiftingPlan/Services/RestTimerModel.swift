@@ -99,8 +99,13 @@ final class RestTimerModel {
         let proposedEnd = current.addingTimeInterval(TimeInterval(seconds))
         endDate = max(proposedEnd, minimumEnd)
         recomputeRemaining()
-        // Keep the ring's denominator consistent with the new length.
-        total = max(remaining, total + seconds)
+        // **The denominator grows and never shrinks.** It was
+        // `max(remaining, total + seconds)`, which on `−15` took fifteen off the
+        // top and fifteen off what is left — the same fraction of the same
+        // rest, so the ring did not move at all. Taking time off means *more* of
+        // the rest is behind him, and the ring has to say so; only adding time
+        // lengthens the rest it is a fraction of.
+        total = max(remaining, total)
         cue.arm(after: remaining, context: contextLabel)
     }
 
