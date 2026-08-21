@@ -82,30 +82,34 @@ struct RefusalMessageTests {
         }
         """
 
-    // MARK: - The user is told something he can act on
+    // MARK: - The user gets one short line
 
-    @Test("A refused plan tells the user what happened and what to do about it")
-    func refusalIsAddressedToTheLifter() async throws {
+    @Test("A refusal reaches the user as one short line, not a format lesson")
+    func aRefusalIsShort() async throws {
+        // **The coach has already been told.** `write_plan` decodes the document
+        // and hands the full refusal back at the moment he writes it, so the
+        // paragraph naming the key, its location and the remedy has already
+        // reached the one person who can act on it. Repeating it on the phone
+        // filled an alert with instructions for somebody else.
         let message = try await messageAfterReading(Self.planFromAnEarlierBuild)
 
-        #expect(message.contains("Show your coach this"))
-        #expect(
-            message.contains("Nothing you have logged has changed"),
-            "the first thing he will wonder is whether his log survived")
+        #expect(message.count < 90, "\(message.count) characters: \(message)")
+        #expect(!message.contains("Nothing was taken in"))
+        #expect(!message.contains("Update the app"), "that sentence is written for the coach")
     }
 
-    @Test("The sentence written for the plan's author is kept, so relaying it is the fix")
-    func authorsSentenceSurvives() async throws {
+    @Test("It still says which failure this is, by the number that identifies it")
+    func theReasonIsNamed() async throws {
+        // Short is not vague. Two refusals must not read alike, or the user
+        // cannot tell his coach which one he is looking at.
         let message = try await messageAfterReading(Self.planFromAnEarlierBuild)
 
         #expect(message.contains("version 5"))
         #expect(message.contains("version 6"))
-        #expect(message.contains("write the plan again as version 6"),
-                "the user relays this, so it has to say what the coach must do")
     }
 
-    @Test("An unknown key still names the key, underneath something the user can use")
-    func unknownKeyIsStillNamed() async throws {
+    @Test("An unknown key is named, and nothing else is")
+    func unknownKeyIsNamed() async throws {
         let message = try await messageAfterReading("""
             {
               "version": 6, "id": "5C5C4C51-9E15-4F35-8D9F-0F1D2B3A4C5D",
@@ -114,12 +118,12 @@ struct RefusalMessageTests {
             }
             """)
 
-        #expect(message.contains("'dropSets'"))
-        #expect(message.contains("Show your coach this"))
+        #expect(message.contains("dropSets"))
+        #expect(message.count < 90, "\(message)")
     }
 
-    @Test("An exercise the catalog does not have reads the same way")
-    func unknownExerciseIsFramedToo() async throws {
+    @Test("An exercise the catalog does not have is named the same way")
+    func unknownExerciseIsNamed() async throws {
         let message = try await messageAfterReading("""
             {
               "version": 6, "id": "5C5C4C51-9E15-4F35-8D9F-0F1D2B3A4C5D",
@@ -132,20 +136,21 @@ struct RefusalMessageTests {
             """)
 
         #expect(message.contains("moon-press"))
-        #expect(message.contains("Show your coach this"))
+        #expect(message.count < 90, "\(message)")
     }
 
-    @Test("A document from a later format keeps its own remedy, which he can act on himself")
-    func laterVersionKeepsItsRemedy() async throws {
-        let message = try await messageAfterReading("""
+    @Test("Two different refusals do not read alike")
+    func refusalsAreTellableApart() async throws {
+        let version = try await messageAfterReading(Self.planFromAnEarlierBuild)
+        let key = try await messageAfterReading("""
             {
-              "version": 99, "id": "5C5C4C51-9E15-4F35-8D9F-0F1D2B3A4C5D",
-              "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z", "weeks": []
+              "version": 6, "id": "5C5C4C51-9E15-4F35-8D9F-0F1D2B3A4C5D",
+              "catalogVersion": 5, "generatedAt": "2023-11-14T22:13:20Z",
+              "dropSets": true, "sessions": []
             }
             """)
 
-        #expect(message.contains("Update the app"))
-        #expect(message.contains("Show your coach this"))
+        #expect(version != key)
     }
 
     // MARK: - Everything else is left alone
@@ -155,7 +160,7 @@ struct RefusalMessageTests {
         let message = try await messageAfterReading("{ this is not JSON at all")
 
         #expect(
-            !message.contains("Show your coach this"),
-            "a malformed file is not a plan a coach can be shown and asked to fix")
+            message.contains("JSON") || message.contains("data"),
+            "a malformed file is not a refusal — it is shown as whatever it was: \(message)")
     }
 }

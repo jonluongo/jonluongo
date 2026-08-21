@@ -106,6 +106,35 @@ public enum DocumentRefusal: Error, LocalizedError, Equatable, Sendable {
         }
     }
 
+    /// The refusal in a few words, for somebody who cannot act on it.
+    ///
+    /// **`message` is written to whoever wrote the document; this is written to
+    /// whoever is holding the phone.** They are different people wanting
+    /// different things: the coach needs the key, the location and the remedy,
+    /// and gets all three from `write_plan` at the moment he writes — the tool
+    /// decodes the document and hands the full sentence back before anything is
+    /// written. Relaying that same paragraph onto the phone was a second copy,
+    /// addressed to the one person who cannot rewrite the plan, and it filled
+    /// the alert.
+    ///
+    /// So this says only which kind of thing went wrong, and the number or name
+    /// that identifies it — enough to tell one failure from another, and short
+    /// enough to read.
+    public var summary: String {
+        switch self {
+        case .unknownKey(let key, _):
+            "It uses ‘\(key)’, which this app does not know."
+        case .versionMismatch(let stated, let understood):
+            "It is version \(stated); this app reads version \(understood)."
+        case .snapshotVersionMismatch(let stated, let understood):
+            "The log is version \(stated); this server reads version \(understood)."
+        case .contradiction:
+            "It states something this format cannot hold."
+        case .unreadableValue:
+            "A value in it could not be read."
+        }
+    }
+
     /// Where a key sat, as a phrase, or nothing at all for the top level.
     private static func said(_ location: String) -> String {
         location.isEmpty ? "" : " (at \(location))"

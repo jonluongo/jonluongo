@@ -37,9 +37,14 @@ struct HistoryView: View {
                 if blocks.isEmpty {
                     // The ordinary state of somebody on their first block, which
                     // must not read as a failure to load.
+                    //
+                    // **It names the missing object, and so does the mark.**
+                    // *Nothing finished yet* said no more than *nothing*; what is
+                    // absent is finished blocks, and the glyph is the stack they
+                    // will make rather than a picture of a person lifting.
                     ContentUnavailableView(
-                        "Nothing finished yet",
-                        systemImage: "figure.strengthtraining.traditional",
+                        "No finished blocks yet",
+                        systemImage: "rectangle.stack",
                         description: Text("Blocks you have finished show up here."))
                 } else {
                     list

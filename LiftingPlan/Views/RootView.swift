@@ -43,7 +43,7 @@ struct RootView: View {
         // Something that could not be read is shown rather than swallowed: an
         // unreadable document otherwise looks identical to not having been sent
         // one, and the user would wait for something that already arrived.
-        .alert("Couldn't read what arrived", isPresented: inboxErrorAlert) {
+        .alert("Couldn't read the plan", isPresented: inboxErrorAlert) {
             Button("OK", role: .cancel) { documentInbox?.dismissError() }
         } message: {
             Text(documentInbox?.errorMessage ?? "")

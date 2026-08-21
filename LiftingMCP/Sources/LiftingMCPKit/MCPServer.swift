@@ -25,7 +25,14 @@ import Foundation
 /// Depends on: `ToolRunner`, `ToolCatalog`, and `JSONValue`.
 public struct MCPServer: Sendable {
 
-    public static let name = "liftingplan"
+    /// **The name a client shows beside the connector, and the app's own.** It
+    /// was `liftingplan` — the Xcode project's name, which is not the product's
+    /// and is not what anyone reading a connector list would recognise. The
+    /// project, the bundle identifier and the iCloud container all keep the old
+    /// name because renaming them orphans the container; nothing forces this to.
+    public static let name = "Superset"
+    /// What the connector says it is, under the name.
+    public static let title = "Superset — your training log and plan writer"
     public static let version = "1.0.0"
 
     /// What this server answers with when the client asks for something it does
@@ -99,7 +106,14 @@ public struct MCPServer: Sendable {
         return [
             "protocolVersion": .string(agreed ?? Self.preferredProtocolVersion),
             "capabilities": ["tools": [:], "resources": [:]],
-            "serverInfo": ["name": .string(Self.name), "version": .string(Self.version)],
+            // `title` is what a client shows a human; `name` is what it keys
+            // on. Both are sent, because a client that shows only the name must
+            // still show something a reader recognises.
+            "serverInfo": [
+                "name": .string(Self.name),
+                "title": .string(Self.title),
+                "version": .string(Self.version),
+            ],
             "instructions": .string(Self.instructions),
         ]
     }

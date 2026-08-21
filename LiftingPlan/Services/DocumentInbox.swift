@@ -241,27 +241,23 @@ final class DocumentInbox {
     /// Claude and useless in an alert on a phone: the person reading it cannot
     /// rewrite the plan.
     ///
-    /// **He gets one line, and it is the two things he needs.** Nothing he
-    /// logged is gone, and the fix is to show this to his coach. The preamble
-    /// used to run four lines — *could not read whole*, *none of it was taken
-    /// in*, *nothing has changed*, *showing what it says below is the quickest
-    /// fix, and it will be clear from there what to change* — which said the
-    /// same thing three ways and pushed the only actionable sentence, the
-    /// author's, off the first screen. The author's sentence is kept underneath
-    /// unaltered, because relaying it *is* the fix.
+    /// **He gets one short line, because the coach has already been told.**
+    /// `write_plan` decodes the document and hands the full refusal back at the
+    /// moment it is written — the key, where it sat, and what to send instead —
+    /// so a plan reaching the phone at all has passed that. Relaying the same
+    /// paragraph here was a second copy addressed to the only person who cannot
+    /// rewrite it, and it filled the alert with a format lesson. What is left
+    /// says which kind of thing went wrong and the number or name identifying
+    /// it, which is enough to tell one failure from another and to repeat.
     ///
     /// Anything that is not a refusal of a document — a folder that cannot be
     /// reached, a file that is not JSON — is shown as it is. Those are already
     /// about the phone rather than about the plan.
     private static func describe(_ error: any Error) -> String {
-        guard let addressedToTheAuthor = Self.authorFacingMessage(of: error) else {
+        guard let addressedToTheAuthor = Self.shortReason(of: error) else {
             return (error as? any LocalizedError)?.errorDescription ?? error.localizedDescription
         }
-        return """
-            Nothing you have logged has changed. Show your coach this:
-
-            \(addressedToTheAuthor)
-            """
+        return addressedToTheAuthor
     }
 
     /// The sentence a refusal addresses to whoever wrote the document, or `nil`
@@ -270,10 +266,10 @@ final class DocumentInbox {
     /// The two cases are the two ways a document is turned away: refused while
     /// being read, by the rule both clients share, or refused on import for
     /// naming an exercise that does not exist.
-    private static func authorFacingMessage(of error: any Error) -> String? {
+    private static func shortReason(of error: any Error) -> String? {
         switch error {
-        case let refusal as DocumentRefusal: refusal.message
-        case let failure as PlanImportError: failure.errorDescription
+        case let refusal as DocumentRefusal: refusal.summary
+        case let failure as PlanImportError: failure.summary
         default: nil
         }
     }

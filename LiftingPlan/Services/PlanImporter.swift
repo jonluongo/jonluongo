@@ -27,6 +27,20 @@ enum PlanImportError: Error, LocalizedError, Equatable {
     /// not put the rest of its block out of reach.
     case trainedSessionChanged(block: Int, ordinal: Int)
 
+    /// The failure in a few words, for the alert on the phone. The coach gets
+    /// the full sentence from `write_plan` when he writes; this only has to tell
+    /// one failure from another. See `DocumentRefusal.summary`.
+    var summary: String {
+        switch self {
+        case .unknownExercise(let id):
+            "It prescribes ‘\(id.rawValue)’, which is not in the exercise catalog."
+        case .unknownIcon(let icon):
+            "It marks a session ‘\(icon.rawValue)’, which this app cannot draw."
+        case .trainedSessionChanged(let block, let ordinal):
+            "It rewrites block \(block), session \(ordinal), which is already trained."
+        }
+    }
+
     var errorDescription: String? {
         switch self {
         case .unknownExercise(let id):

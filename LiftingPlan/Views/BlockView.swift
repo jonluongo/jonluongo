@@ -64,8 +64,14 @@ struct BlockView: View {
                 Button { showingAccount = true } label: {
                     Label("Account", systemImage: "person")
                 }
-                // Last, because it is the one that looks backwards: the two
-                // before it are about the training in front of him.
+            }
+            // **A capsule of its own, because it is a different kind of thing.**
+            // The two before it open what the coach wrote about the training in
+            // front of him; this one leaves the present entirely. Grouped with
+            // them it read as a third document. `ToolbarSpacer` is what splits
+            // one glass capsule into two.
+            ToolbarSpacer(.fixed, placement: .topBarTrailing)
+            ToolbarItem(placement: .topBarTrailing) {
                 Button { showingHistory = true } label: {
                     Label("History", systemImage: "clock")
                 }
@@ -180,11 +186,16 @@ struct SessionRow: View {
 /// plan is an object — the coach writes one, it arrives, and until it does there
 /// is nothing to show. The heading is the fact, the line under it is the one
 /// action, and the type is named for the same thing the heading is.
+///
+/// **The mark is the missing object too, not a person.** It drew a figure
+/// lifting, which is a picture of the activity rather than of what is absent —
+/// the same mistake the words were making. `rectangle.stack` is a stack of
+/// panels: the blocks that will be here, and the shape the list itself takes.
 private struct NoPlanView: View {
     var body: some View {
         ContentUnavailableView(
-            "No plan yet",
-            systemImage: "figure.strengthtraining.traditional",
+            "No workout plan yet",
+            systemImage: "rectangle.stack",
             description: Text("Ask your coach for a block and it will show up here."))
     }
 }
