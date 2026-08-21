@@ -93,15 +93,21 @@ struct RestTimerTests {
 struct RestTimerNotificationTests {
 
     @Test("A refused permission is reported rather than discarded")
-    func refusedPermissionIsReported() async {
+    func refusedPermissionIsReported() async throws {
         let center = FakeNotificationCenter()
         center.authorizationAnswer = .success(false)
         let timer = ScreenLockedCue(center: center)
 
         await timer.requestAuthorization()
 
-        let message = timer.errorMessage
-        #expect(message?.contains("screen locks") == true)
+        // **What it says, not the words it says it in.** This asserted the
+        // phrase *screen locks* and broke when the notice was cut to one line,
+        // which is a test holding a copy edit hostage. What has to be true is
+        // that the failure reaches him at all, names the consequence, and stays
+        // short enough to read above the bar it sits on.
+        let message = try #require(timer.errorMessage)
+        #expect(message.contains("locked"))
+        #expect(message.count < 60, "\(message.count) characters: \(message)")
     }
 
     @Test("A granted permission reports nothing")

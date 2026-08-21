@@ -95,12 +95,20 @@ struct SessionFinishSection: View {
                     ? .recorded
                     : (isLogged ? .quiet : (unloggedSetCount > 0 ? .tentative : .primary)),
                 action: {
+                    // **The beat is a report, not a control.** `isLogged` is
+                    // already true while it shows, so without this the button
+                    // reading *Finished* called `onUnfinish()` — undoing, on the
+                    // press, the exact thing it was confirming. The doc comment
+                    // on `Prominence.recorded` claimed this behaviour before the
+                    // code did it.
+                    if justFinished { return }
                     if isLogged { return onUnfinish() }
                     if unloggedSetCount > 0 { asking = true } else { finish() }
                 })
             .accessibilityHint(
-                isLogged ? "Takes this session back to unfinished"
-                    : "Marks this session as logged")
+                justFinished ? "This session is finished"
+                    : (isLogged ? "Takes this session back to unfinished"
+                        : "Marks this session as logged"))
             .confirmationDialog(
                 Self.question(unloggedSetCount), isPresented: $asking,
                 titleVisibility: .visible
