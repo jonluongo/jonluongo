@@ -98,6 +98,29 @@ struct BlockHistoryTests {
         #expect(ordinals == [1])
     }
 
+    @Test("A block written ahead of the current one is still shown")
+    func aFutureBlockIsNotHidden() throws {
+        // The coach is not supposed to write one — a plan states one block and
+        // the format refuses more — but a block that exists and is drawn
+        // nowhere is worse than one that is early: prescriptions on the phone
+        // that no screen admits to.
+        let context = try store(blocks: 1)
+        try addBlock(2, sessions: 2, to: context)
+        try addBlock(3, sessions: 2, to: context)
+        let all = try StoreFixture.sessions(in: context)
+
+        #expect(BlockHistory.currentOrdinal(of: all) == 1)
+        #expect(BlockHistory.upcoming(of: all).map(\.ordinal) == [2, 3],
+                "ahead of him, in the order he will reach them")
+    }
+
+    @Test("Nothing is upcoming when he is on the last block")
+    func theLastBlockHasNothingAhead() throws {
+        let context = try store(blocks: 1)
+        let all = try StoreFixture.sessions(in: context)
+        #expect(BlockHistory.upcoming(of: all).isEmpty)
+    }
+
     // MARK: - What a finished block is called
 
     @Test("A block is headed by the days it was trained over")

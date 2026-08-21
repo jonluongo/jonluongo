@@ -34,6 +34,20 @@ enum BlockHistory {
             .sorted { $0.ordinal < $1.ordinal }
     }
 
+    /// Blocks ahead of the one he is on, in the order he will reach them.
+    ///
+    /// **The coach is not supposed to write one, and the app shows it anyway.**
+    /// A plan states one block and the format refuses more, so the ordinary way
+    /// to end up here is not through the front door. But a block that exists and
+    /// is drawn nowhere is worse than one that is merely early: it is
+    /// prescriptions on the phone that nothing on screen admits to. Refusing at
+    /// the boundary is how the app says *do not do this*; hiding what got
+    /// through is how it loses track of what it holds.
+    static func upcoming(of sessions: [Session]) -> [(ordinal: Int, sessions: [Session])] {
+        guard let ordinal = currentOrdinal(of: sessions) else { return [] }
+        return SessionListing.blocks(of: sessions).filter { $0.ordinal > ordinal }
+    }
+
     /// The blocks behind him, **newest first** — the way anything read backwards
     /// is listed, and the opposite of the training list, which reads forwards
     /// because that is the order it will be done in.

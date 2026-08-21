@@ -84,6 +84,29 @@ struct BlockView: View {
         .sheet(isPresented: $showingHistory) { HistoryView() }
     }
 
+    /// One block's sessions as rows. Shared by the block he is on and any ahead
+    /// of it, so an early block is drawn exactly as the current one is — it is
+    /// the same thing, further off.
+    @ViewBuilder
+    private func rows(_ sessions: [Session]) -> some View {
+        ForEach(sessions, id: \.persistentModelID) { session in
+            let standing = SessionListing.standing(of: session, current: current)
+            Button { openSession = session } label: {
+                SessionRow(session: session, standing: standing)
+            }
+            // **One session, one panel.** They shared a panel and were divided
+            // by a hairline; the gap between panels says the same thing without
+            // a line, and a finished session can then be coloured rather than
+            // only marked.
+            //
+            // `fillsPanel` because the panel *is* the row here. The default row
+            // inset is `contentInset` — the room content gets inside a panel —
+            // so applying it to the panel itself indented every one twice.
+            .panelRow(fillsPanel: true, isRecorded: standing == .finished)
+            .listRowSeparator(.hidden)
+        }
+    }
+
     private var list: some View {
         List {
             // **The block he is on, and nothing else.** Every block ever
@@ -93,22 +116,17 @@ struct BlockView: View {
             // record, and a record is looked up rather than scrolled past —
             // `HistoryView` holds it.
             Section(SessionListing.blockTitle(BlockHistory.currentOrdinal(of: sessions) ?? 1)) {
-                ForEach(BlockHistory.current(of: sessions), id: \.persistentModelID) { session in
-                    let standing = SessionListing.standing(of: session, current: current)
-                    Button { openSession = session } label: {
-                        SessionRow(session: session, standing: standing)
-                    }
-                    // **One session, one panel.** They shared a panel and were
-                    // divided by a hairline; the gap between panels says the
-                    // same thing without a line, and a finished session can then
-                    // be coloured rather than only marked.
-                    //
-                    // `fillsPanel` because the panel *is* the row here. The
-                    // default row inset is `contentInset` — the room content
-                    // gets inside a panel — so applying it to the panel itself
-                    // indented every one of them twice.
-                    .panelRow(fillsPanel: true, isRecorded: standing == .finished)
-                    .listRowSeparator(.hidden)
+                rows(BlockHistory.current(of: sessions))
+            }
+            // **A block he has not reached yet is still ahead of him.** The
+            // coach writes one block at a time and the format refuses a document
+            // stating two, so this is not the ordinary path — but a block that
+            // exists and is drawn nowhere is worse than one that is early:
+            // prescriptions on the phone that no screen admits to. The refusal
+            // is where *do not do this* is said; the list only reports.
+            ForEach(BlockHistory.upcoming(of: sessions), id: \.ordinal) { block in
+                Section(SessionListing.blockTitle(block.ordinal)) {
+                    rows(block.sessions)
                 }
             }
         }
