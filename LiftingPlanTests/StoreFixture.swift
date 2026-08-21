@@ -43,22 +43,35 @@ enum StoreFixture {
             sets: Array(repeating: set(), count: count))
     }
 
-    /// A plan of `blocks` blocks with `sessionsPerBlock` sessions in each, every
-    /// session prescribing the same movement.
+    /// One block of `sessions` sessions, every one prescribing the same movement.
+    ///
+    /// **One block, because a plan states one block** — the format refuses a
+    /// document naming more than one. A suite that needs several imports several
+    /// plans, which is what the coach does.
     static func plan(
-        blocks: Int = 1, sessionsPerBlock: Int = 1,
+        block: Int = 1, sessions count: Int = 1,
         entries: [PlanDocumentEntry] = [.exercise(exercise())],
         id: UUID = UUID()
     ) -> PlanDocument {
         PlanDocument(
             id: id, catalogVersion: 5, generatedAt: instant,
-            sessions: (1...blocks).flatMap { block in
-                (1...sessionsPerBlock).map { ordinal in
-                    PlanDocumentSession(
-                        blockOrdinal: block, ordinal: ordinal,
-                        focus: "Day \(ordinal)", entries: entries)
-                }
+            sessions: (1...count).map { ordinal in
+                PlanDocumentSession(
+                    blockOrdinal: block, ordinal: ordinal,
+                    focus: "Day \(ordinal)", entries: entries)
             })
+    }
+
+    /// A store holding `blocks` blocks of `sessionsPerBlock` sessions, imported
+    /// one plan at a time the way the coach writes them.
+    static func imported(blocks: Int, sessionsPerBlock: Int) throws -> ModelContext {
+        let context = try context()
+        let catalog = try catalog()
+        for block in 1...blocks {
+            try PlanImporter.import(
+                plan(block: block, sessions: sessionsPerBlock), into: context, catalog: catalog)
+        }
+        return context
     }
 
     /// Takes a plan in, and hands back the store it landed in.

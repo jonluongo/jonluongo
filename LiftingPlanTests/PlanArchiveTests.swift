@@ -53,7 +53,7 @@ struct PlanArchiveTests {
     @Test("Importing a plan keeps it, under the ID its sessions record")
     func anImportedPlanIsKept() async throws {
         let context = ModelContext(try StoreContainer.inMemory())
-        let plan = StoreFixture.plan(blocks: 1, sessionsPerBlock: 2)
+        let plan = StoreFixture.plan(sessions: 2)
 
         let (folder, inbox) = try await afterImporting(plan, into: context)
 
@@ -73,10 +73,10 @@ struct PlanArchiveTests {
     func anEarlierPlanOutlivesTheLiveDocument() async throws {
         // This is the whole point: the live file is a mailbox, not a record.
         let context = ModelContext(try StoreContainer.inMemory())
-        let first = StoreFixture.plan(blocks: 1, sessionsPerBlock: 1)
+        let first = StoreFixture.plan(sessions: 1)
         let (folder, _) = try await afterImporting(first, into: context)
 
-        let second = StoreFixture.plan(blocks: 1, sessionsPerBlock: 3)
+        let second = StoreFixture.plan(block: 2, sessions: 3)
         try folder.writePlan(second)
         try folder.archivePlan(second)
 

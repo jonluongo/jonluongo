@@ -32,6 +32,7 @@ struct BlockView: View {
     @State private var openSession: Session?
     @State private var showingProgram = false
     @State private var showingAccount = false
+    @State private var showingHistory = false
 
     var body: some View {
         Group {
@@ -58,6 +59,11 @@ struct BlockView: View {
                 Button { showingAccount = true } label: {
                     Label("Account", systemImage: "person")
                 }
+                // Last, because it is the one that looks backwards: the two
+                // before it are about the training in front of him.
+                Button { showingHistory = true } label: {
+                    Label("History", systemImage: "clock")
+                }
             }
         }
         // **The stack is what gives the session a bar to hang its X on.**
@@ -69,30 +75,34 @@ struct BlockView: View {
         }
         .sheet(isPresented: $showingProgram) { ProgramSheet() }
         .sheet(isPresented: $showingAccount) { AccountView() }
+        .sheet(isPresented: $showingHistory) { HistoryView() }
     }
 
     private var list: some View {
         List {
-            ForEach(SessionListing.blocks(of: sessions), id: \.ordinal) { block in
-                Section(SessionListing.blockTitle(block.ordinal)) {
-                    ForEach(block.sessions, id: \.persistentModelID) { session in
-                        let standing = SessionListing.standing(
-                            of: session, current: current)
-                        Button { openSession = session } label: {
-                            SessionRow(session: session, standing: standing)
-                        }
-                        // **One session, one panel.** They shared a panel and
-                        // were divided by a hairline; the gap between panels
-                        // says the same thing without a line, and a finished
-                        // session can then be coloured rather than only marked.
-                        //
-                        // `fillsPanel` because the panel *is* the row here. The
-                        // default row inset is `contentInset` — the room content
-                        // gets inside a panel — so applying it to the panel
-                        // itself indented every one of them twice.
-                        .panelRow(fillsPanel: true, isRecorded: standing == .finished)
-                        .listRowSeparator(.hidden)
+            // **The block he is on, and nothing else.** Every block ever
+            // prescribed was listed here, so the answer to *what am I doing*
+            // moved further down the screen every week and the top of the app
+            // filled up with training that is over. What is finished is a
+            // record, and a record is looked up rather than scrolled past —
+            // `HistoryView` holds it.
+            Section(SessionListing.blockTitle(BlockHistory.currentOrdinal(of: sessions) ?? 1)) {
+                ForEach(BlockHistory.current(of: sessions), id: \.persistentModelID) { session in
+                    let standing = SessionListing.standing(of: session, current: current)
+                    Button { openSession = session } label: {
+                        SessionRow(session: session, standing: standing)
                     }
+                    // **One session, one panel.** They shared a panel and were
+                    // divided by a hairline; the gap between panels says the
+                    // same thing without a line, and a finished session can then
+                    // be coloured rather than only marked.
+                    //
+                    // `fillsPanel` because the panel *is* the row here. The
+                    // default row inset is `contentInset` — the room content
+                    // gets inside a panel — so applying it to the panel itself
+                    // indented every one of them twice.
+                    .panelRow(fillsPanel: true, isRecorded: standing == .finished)
+                    .listRowSeparator(.hidden)
                 }
             }
         }
@@ -110,7 +120,7 @@ struct BlockView: View {
 /// recorded mark and an unfinished one carries nothing — the same distinction
 /// everywhere it appears, rather than one glyph for the block being trained and
 /// another for one behind him, which was two subjects in one slot.
-private struct SessionRow: View {
+struct SessionRow: View {
 
     let session: Session
     let standing: SessionListing.Standing

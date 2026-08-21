@@ -157,9 +157,9 @@ struct PlanImportTests {
     @Test("A block the coach adds lands beside the one already there")
     func laterBlocksAppend() throws {
         // This is what lets him write a week at a time.
-        let context = try StoreFixture.imported(StoreFixture.plan(blocks: 1))
+        let context = try StoreFixture.imported(StoreFixture.plan(block: 1))
         try PlanImporter.import(
-            StoreFixture.plan(blocks: 2), into: context, catalog: try catalog())
+            StoreFixture.plan(block: 2), into: context, catalog: try catalog())
 
         #expect(try StoreFixture.sessions(in: context).map(\.blockOrdinal) == [1, 2])
     }

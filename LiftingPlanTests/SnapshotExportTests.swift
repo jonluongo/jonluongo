@@ -24,8 +24,7 @@ struct SnapshotExportTests {
 
     @Test("Every session of every block survives the export, with its exercises")
     func nothingIsDropped() throws {
-        let context = try StoreFixture.imported(
-            StoreFixture.plan(blocks: 3, sessionsPerBlock: 3))
+        let context = try StoreFixture.imported(blocks: 3, sessionsPerBlock: 3)
 
         let snapshot = try exported(context)
 
@@ -44,8 +43,7 @@ struct SnapshotExportTests {
     func aLongBlockSurvives() throws {
         // Deliberately past any batch a fetch might return in one go: the
         // original defect looked exactly like a limit somewhere.
-        let context = try StoreFixture.imported(
-            StoreFixture.plan(blocks: 1, sessionsPerBlock: 40))
+        let context = try StoreFixture.imported(blocks: 1, sessionsPerBlock: 40)
         #expect(try exported(context).sessions.count == 40)
     }
 
