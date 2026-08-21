@@ -36,9 +36,45 @@ struct RootView: View {
     /// it happens.
     @State private var exportFailure: String?
 
+    @Environment(RestTimerModel.self) private var restTimer
+
+    @Query(sort: [SortDescriptor(\Session.blockOrdinal), SortDescriptor(\Session.ordinal)])
+    private var sessions: [Session]
+
+    /// **The session cover is presented here rather than from the list**, so the
+    /// bar that returns to it and the screen it returns to are siblings. A cover
+    /// presented one level down would sit above the bar, and the bar would have
+    /// no way to raise the thing it points at.
+    @State private var openSession: Session?
+
+    /// The session underway, read off the record rather than remembered.
+    private var underway: Session? { SessionProgress.underway(in: sessions) }
+
     var body: some View {
         NavigationStack {
-            BlockView()
+            BlockView(openSession: $openSession)
+        }
+        // **The way back into a workout, from wherever he wandered off to.**
+        // Leaving the session used to stop the clock, because the bar, the ±15
+        // and the skip were all on the screen he had just left — a rest running
+        // behind a screen that is gone is an alarm with nothing behind it. The
+        // answer is not to end the rest, it is to keep it reachable.
+        //
+        // Drawn only when the cover is down: inside the session the same bar is
+        // already on screen, and two would be one too many.
+        .safeAreaInset(edge: .bottom) {
+            if let underway, openSession == nil {
+                RestTimerBar(
+                    restTimer: restTimer,
+                    sessionTitle: SessionListing.sessionTitle(underway),
+                    startedAt: underway.startedAt,
+                    lastLoggedAt: underway.lastPerformedAt
+                ) { openSession = underway }
+            }
+        }
+        .animation(.snappy, value: underway?.persistentModelID)
+        .fullScreenCover(item: $openSession) { session in
+            NavigationStack { ActiveWorkoutView(session: session) }
         }
         // Something that could not be read is shown rather than swallowed: an
         // unreadable document otherwise looks identical to not having been sent

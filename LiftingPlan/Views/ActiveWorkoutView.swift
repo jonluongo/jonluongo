@@ -160,7 +160,10 @@ struct ActiveWorkoutView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                if restTimer.isRunning {
+                // **It stays when the countdown ends.** It used to appear on the
+                // first tick and vanish on the last, so the surface tying the
+                // screen to the session blinked in and out between every set.
+                if session.startedAt != nil && session.finishedAt == nil {
                     // The bar is the clock in a glance; tapping it is the clock
                     // to look at, with the next set under it. Rest is the one
                     // moment in a session with nothing else to do, which is why
@@ -170,7 +173,12 @@ struct ActiveWorkoutView: View {
                     // whole thing in a button put `−15`, `+15` and skip inside
                     // another button, and a tap on one of those is then a tap
                     // whose meaning depends on which the system decides it hit.
-                    RestTimerBar(restTimer: restTimer) { showingRest = true }
+                    RestTimerBar(
+                        restTimer: restTimer,
+                        sessionTitle: SessionListing.sessionTitle(session),
+                        startedAt: session.startedAt,
+                        lastLoggedAt: session.lastPerformedAt
+                    ) { showingRest = true }
                 }
             }
             .sheet(isPresented: $showingRest) {
@@ -186,15 +194,13 @@ struct ActiveWorkoutView: View {
                     onTakeBack: { slot in write { try log.takeBack(slot) } })
             }
             .animation(.snappy, value: restTimer.isRunning)
-            // **Leaving the session ends the rest.** The clock and the three
-            // alerts it arms belong to this screen — the bar, the ±15 and the
-            // skip are all on it — so a rest left running after the screen
-            // closes is an alarm the user has no way to reach: it fires
-            // minutes later against a session he already left, with nothing on
-            // screen tying the sound to anything. On disappearing rather than on
-            // the X, because there is one way out today and there is no reason
-            // for the next one to have to remember this.
-            .onDisappear { restTimer.stop() }
+            // **Leaving the session no longer ends the rest.** It used to
+            // stop on the way out, because the bar, the ±15 and the skip were
+            // all on this screen — so a rest outliving it was an alarm the user
+            // had no way to reach. `RootView` draws the same bar now, so the
+            // clock is reachable wherever he went, and stopping it here would
+            // end a rest he is still taking because he walked to the water
+            // fountain.
             .alert("Couldn't save", isPresented: errorAlertBinding) {
                 Button("OK", role: .cancel) {}
             } message: {

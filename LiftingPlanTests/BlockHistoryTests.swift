@@ -148,3 +148,57 @@ struct BlockHistoryTests {
         #expect(BlockHistory.dateRange(of: all) != nil)
     }
 }
+
+/// Whether a session is underway, which is what puts the bar on screen anywhere
+/// in the app.
+///
+/// **It is read off the record rather than remembered.** A flag on a view would
+/// not survive the screen being dismissed, and would lie after the app was
+/// killed mid-workout — which is exactly when the way back matters.
+@MainActor
+@Suite("A session underway")
+struct SessionProgressTests {
+
+    private func store() throws -> ModelContext {
+        try StoreFixture.imported(blocks: 1, sessionsPerBlock: 3)
+    }
+
+    @Test("A session nothing has been logged against is not underway")
+    func openingOneIsNotStartingIt() throws {
+        // He looked at it. Putting a bar on screen for that would offer a way
+        // back into something he never began.
+        let all = try StoreFixture.sessions(in: try store())
+        #expect(SessionProgress.underway(in: all) == nil)
+    }
+
+    @Test("A session with a set logged against it is underway")
+    func loggingStartsIt() throws {
+        let context = try store()
+        let all = try StoreFixture.sessions(in: context)
+        let log = SessionLog(
+            session: all[1], context: context,
+            restTimer: RestTimerModel(), restPreferences: RestPreferences())
+        try log.record(
+            try #require(SessionOrder.trainingOrder(of: all[1]).first),
+            load: Mass(value: 100, unit: .pounds), reps: 5,
+            durationSeconds: nil, distance: nil as Distance?)
+
+        #expect(SessionProgress.underway(in: all)?.ordinal == 2)
+    }
+
+    @Test("A finished session is over, not underway")
+    func finishingEndsIt() throws {
+        let context = try store()
+        let all = try StoreFixture.sessions(in: context)
+        let log = SessionLog(
+            session: all[0], context: context,
+            restTimer: RestTimerModel(), restPreferences: RestPreferences())
+        try log.record(
+            try #require(SessionOrder.trainingOrder(of: all[0]).first),
+            load: Mass(value: 100, unit: .pounds), reps: 5,
+            durationSeconds: nil, distance: nil as Distance?)
+        try log.finish()
+
+        #expect(SessionProgress.underway(in: all) == nil)
+    }
+}

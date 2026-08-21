@@ -29,7 +29,9 @@ struct BlockView: View {
     /// record rather than about a block.
     private var current: Session? { SessionListing.current(in: sessions) }
 
-    @State private var openSession: Session?
+    /// Presented by `RootView`, so the bar that returns to a session and the
+    /// session itself are siblings rather than one on top of the other.
+    @Binding var openSession: Session?
     @State private var showingProgram = false
     @State private var showingAccount = false
     @State private var showingHistory = false
@@ -76,13 +78,6 @@ struct BlockView: View {
                     Label("History", systemImage: "clock")
                 }
             }
-        }
-        // **The stack is what gives the session a bar to hang its X on.**
-        // A `fullScreenCover` presents no navigation of its own, so without this
-        // the toolbar is defined and never drawn — and the user has no way out
-        // of the session at all.
-        .fullScreenCover(item: $openSession) { session in
-            NavigationStack { ActiveWorkoutView(session: session) }
         }
         .sheet(isPresented: $showingProgram) { ProgramSheet() }
         .sheet(isPresented: $showingAccount) { AccountView() }

@@ -209,6 +209,27 @@ they are until there is a tested migration.
 | A right-aligned value that wraps | `Add size to my chest and back without losing / the squat`, the tail stranded against the right edge. `FactRow` offers the one-line arrangement first and the wrapping one when it does not fit. |
 
 ## Settled by investigation
+**The rest no longer ends when the session screen closes, and the reasoning that
+said it should was half right.** *Leaving the session ends the rest* was recorded
+because the bar, the ±15 and the skip all lived on that screen, so a rest running
+behind a screen that was gone was an alarm with nothing behind it. That cost is
+real. **The answer is not to end the rest, it is to make it reachable** — Jon:
+*"when i leave the workout I should still have access to that popup if im mid
+workout it shouldnt go away."* `RootView` draws the same bar, so the clock and
+its controls follow him wherever he went.
+
+**The bar also stops disappearing when the countdown ends.** It appeared on the
+first tick and vanished on the last, so the one surface tying the app to the
+session in progress blinked in and out between every set. Two states, one axis —
+whether a clock is running: *resting* is the ring with ±15 and skip; *between
+sets* is the session's name, how long he has been training, and a chevron back
+into it.
+
+**Underway is read off the record, not remembered.** A session is underway
+because something is logged against it and it is not finished — so the bar
+survives the app being killed mid-workout, which is exactly when the way back
+matters, and no screen can leak the state by forgetting to clear a flag.
+
 **`ExerciseResolver` is deleted, and the lean toward wiring it in was wrong.**
 It sat open as *delete 286 lines, or wire it into `list_exercises`*, with the
 assistant leaning wire-in twice. Reading its API settles it against that:
