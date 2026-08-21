@@ -47,6 +47,23 @@ public protocol DocumentTransport: Sendable {
     /// a table instead.
     func readNote(_ note: NoteFile) throws -> String?
 
+    /// Replaces one of the coach's notes with the user's correction, keeping
+    /// what it replaced.
+    ///
+    /// **The coach writes these and the user may still fix one.** A fact about
+    /// his own body that is wrong is wrong whoever typed it, and waiting for the
+    /// next conversation to correct a name or a date is the app making him ask
+    /// permission to be accurate. The file stays the unit — he edits the
+    /// markdown the coach edits, not a form the app invents — so there is one
+    /// shape of edit and nothing to reconcile.
+    ///
+    /// **It writes to the shared folder, not the local mirror.** A correction
+    /// the coach never sees is worse than none: he would go on prescribing
+    /// against the thing that was wrong, and the next mirror down would erase
+    /// the fix. The prior version is kept beside it first, by the same rule that
+    /// keeps one before every anchored edit.
+    func writeNote(_ text: String, as note: NoteFile) throws
+
     /// Keeps a plan that was taken in, under its own ID, so the prescription
     /// survives the block being rewritten.
     ///

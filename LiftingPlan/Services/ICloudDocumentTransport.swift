@@ -131,6 +131,24 @@ struct ICloudDocumentTransport: DocumentTransport {
         try documentsFolder().readNote(note)
     }
 
+    /// Writes the user's correction into the shared folder, keeping what it
+    /// replaced.
+    ///
+    /// **The copy is taken before the write, from the folder rather than from
+    /// the screen.** What is on screen came through the local mirror and may be
+    /// a pass behind; the file is what the coach will read next, so the file is
+    /// what has to be preserved. A note that has never been written has nothing
+    /// to keep, and that is not a failure.
+    func writeNote(_ text: String, as note: NoteFile) throws {
+        let folder = try documentsFolder()
+        try FileManager.default.createDirectory(
+            at: folder.url, withIntermediateDirectories: true)
+        if let existing = try folder.readNote(note) {
+            try folder.keepCopy(of: existing, as: note)
+        }
+        try folder.writeNote(text, as: note)
+    }
+
     /// Keeps a plan that was taken in. The `plans/` folder is created by
     /// `DocumentFolder`; the container's own Documents folder already exists by
     /// the time a plan has been read out of it.

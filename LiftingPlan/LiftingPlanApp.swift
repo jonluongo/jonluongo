@@ -52,6 +52,7 @@ struct LiftingPlanApp: App {
     /// is ever asked for.
     @State private var documentInbox: DocumentInbox
     /// Writes the snapshot out, and remembers when it could not.
+    @State private var transportBox: DocumentTransportBox
     @State private var snapshotOutbox: SnapshotOutbox
 
     init() {
@@ -77,6 +78,7 @@ struct LiftingPlanApp: App {
             transport: transport, watcher: UbiquitousDocumentWatcher(),
             context: container.mainContext, catalog: catalog, notes: notes
         ))
+        _transportBox = State(initialValue: DocumentTransportBox(transport))
         _snapshotOutbox = State(initialValue: SnapshotOutbox(
             transport: transport, context: container.mainContext, catalog: catalog
         ))
@@ -89,6 +91,7 @@ struct LiftingPlanApp: App {
                 .environment(restTimer)
                 .environment(restPreferences)
                 .environment(notes)
+                .environment(transportBox)
                 .environment(documentInbox)
                 .environment(snapshotOutbox)
                 .task {
