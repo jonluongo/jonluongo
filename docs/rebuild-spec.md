@@ -265,10 +265,22 @@ Each phase ends green: all three suites and both `-warnings-as-errors` builds.
 The app does not compile between phases 1 and 3; that is expected and is why
 this is a branch.
 
-**Phase 1 — Domain.** `Target` and its parser. Delete `EquipmentAccess`,
-`RoutineCalendar`, `RoutineSchedule`; strip `Weekday` and `ExperienceLevel` from
-`TrainingEnums`. Tests lead: the parse-and-refuse suite is the highest-value one
-in the rebuild.
+**A deletion is not a phase — it trails its last reader.** Checked on
+2026-08-21 rather than assumed: `RoutineCalendar` and `RoutineSchedule` are read
+by `RoutineListing`, and `EquipmentAccess` by `UserProfile`,
+`ProfileUpdate+Coding`, `TrainingEnums`, `Taxonomies` and
+`ProfileArguments+Facts`. Deleting any of them in phase 1 would break the build
+in three targets at once, and a phase that ends red cannot be verified. So each
+file goes in the phase that removes its last reader, and the inventory's verdict
+says *what* happens to a file, not *when*.
+
+**Phase 1 — Domain. ✅ `f58265d`.** `Target` and its parser, purely additive:
+LiftingKit 317 → 332, everything else untouched. The old readers stay until the
+documents stop using them.
+
+**Phase 1a — the deletions this enables**, taken with phase 2: `RepRange`,
+`WorkDuration` and `WorkDistance` lose their public surface once `SetPrescription`
+holds a `Target`.
 
 **Phase 2 — Documents.** `PlanDocument` v6, `TrainingSnapshot` v6,
 `SetPrescription`, `SnapshotRoutine`, the new refusal cases, transport paths.
