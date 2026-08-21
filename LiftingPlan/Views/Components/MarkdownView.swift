@@ -9,24 +9,37 @@ import SwiftUI
 /// **It renders and never parses.** Nothing is read *out* of the text. No value
 /// is extracted, because the moment one has to be, it belongs in a table.
 ///
-/// **What it depends on.** `SectionHeading`, `Palette` and `Spacing`. It holds
-/// no state.
+/// **What it depends on.** `Palette`, `Spacing` and the type ramp. It holds no
+/// state, and it draws its own headings rather than borrowing the list one — see
+/// `line(_:)` for why that mattered.
 struct MarkdownView: View {
 
     let text: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.section) {
-            ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
+        // **Spacing is per block, not one gap repeated.** An even rhythm put the
+        // same air above a heading as below it, so a heading floated between the
+        // passage it ended and the one it introduced and the page read as a list
+        // of unrelated lines. A heading belongs to what follows it: it gets the
+        // major gap above and its prose sits close underneath.
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
                 line(block)
+                    .padding(.top, index == 0 ? 0 : space(above: block))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// One drawn thing.
+    ///
+    /// **`#` and `##` are one case, deliberately.** They drew as two and looked
+    /// identical, because both resolved to the same type role — a distinction
+    /// the code claimed and the screen did not. These documents already carry
+    /// their one title in the sheet's navigation bar, which is why the templates
+    /// stopped writing an `#` of their own; anything the coach heads a passage
+    /// with is a section within that, whatever depth he happens to type.
     private enum Block {
-        case title(String)
         case heading(String)
         case paragraph(String)
     }
@@ -62,7 +75,7 @@ struct MarkdownView: View {
                 blocks.append(.heading(String(trimmed.dropFirst(3))))
             } else if trimmed.hasPrefix("# ") {
                 flush()
-                blocks.append(.title(String(trimmed.dropFirst(2))))
+                blocks.append(.heading(String(trimmed.dropFirst(2))))
             } else {
                 paragraph.append(trimmed)
             }
@@ -71,15 +84,31 @@ struct MarkdownView: View {
         return blocks
     }
 
+    /// What separates this block from the one above it. Never applied to the
+    /// first, which sits against the top of whatever presents it.
+    private func space(above block: Block) -> CGFloat {
+        switch block {
+        case .heading: Spacing.major
+        case .paragraph: Spacing.snug
+        }
+    }
+
+    /// **A heading is drawn here rather than by `SectionHeading`.** That one is a
+    /// list component: it carries `PanelMetrics.inset` so a name and the edge of
+    /// the panel it names share a line, plus `listRow` insets, background and
+    /// separator. Inside this scroll view the list modifiers did nothing and the
+    /// inset stacked on top of the container's own padding — so every heading on
+    /// the lifter's page and the programme's sat indented from the prose beneath
+    /// it, and nothing on either screen shared a left edge. One component, two
+    /// screens, one defect.
     @ViewBuilder
     private func line(_ block: Block) -> some View {
         switch block {
-        case .title(let text):
+        case .heading(let text):
             Text(text)
                 .font(.supersetHeading)
                 .foregroundStyle(Palette.ink)
-        case .heading(let text):
-            SectionHeading(text)
+                .frame(maxWidth: .infinity, alignment: .leading)
         case .paragraph(let text):
             Text(attributed(text))
                 .font(.supersetBody)
