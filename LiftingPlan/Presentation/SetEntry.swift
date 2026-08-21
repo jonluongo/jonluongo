@@ -3,7 +3,7 @@ import LiftingKit
 
 /// What a set row's two fields show, and what a lifter's typing means.
 ///
-/// **What it does.** Translates between a `LoggedSet`'s stored values and the
+/// **What it does.** Translates between a `PerformedSet`'s stored values and the
 /// strings in the row's weight and work fields — both directions, for all four
 /// things a row can record: a load, a rep count, a hold in seconds, and a carry
 /// over a distance.

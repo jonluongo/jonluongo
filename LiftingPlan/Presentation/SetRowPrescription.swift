@@ -1,79 +1,69 @@
 import Foundation
 import LiftingKit
 
-/// What one row of a set table is shown besides the two numbers the lifter
-/// types: what the plan asked of that set, and what he did on it last time.
+/// What one row of a set table shows besides the two numbers the lifter types.
 ///
-/// **What it does.** Answers the four questions a row asks — what this exercise's
-/// work is measured in, what the plan prescribed for *this* set, what an empty
-/// weight field should show, and what the previous session recorded. Each is
-/// per set rather than per exercise, so a ramp shows the load of the set being
-/// logged rather than one figure standing in for all of them.
+/// **What it does.** Turns a row's prescription into the two placeholders in
+/// front of him: what to put on the bar, and what to do with it.
 ///
-/// **How it is used.** `ExerciseLogSection` builds one per exercise — including
-/// each member of a group, which is drawn by the same section — then asks it for
-/// each row. One type rather than a copy of these rules per caller, so a row
-/// inside a group and a row on its own cannot come to read a prescription
-/// differently.
+/// **A row is its prescription, so there is nothing to look up.** This used to
+/// take a working number and find the matching entry in a derived list, because
+/// a row was a seeded record and the prescription was reconstructed beside it.
+/// A row is a `PlannedSet` now; `TrainingSlot` carries it, and the mapping is
+/// gone.
 ///
-/// **What it depends on.** `WorkPrescription` and `PerformanceHistory` for the
-/// readings, `PlannedExercise` and `TrainingPlan` from Store, and `MassUnit`
-/// from LiftingKit. It writes nothing and invents nothing: an absent
-/// prescription stays absent, which in a field is an empty field.
+/// **Nothing is converted.** A load is drawn in the unit it was prescribed in,
+/// exactly as `Mass` keeps it — the display unit that used to convert here was a
+/// fact about the lifter, and it lives in `user.md` with the rest of him.
+///
+/// **A placeholder is never a value.** The prescription reaches him without the
+/// app claiming he lifted it, and nothing is logged until he types.
+///
+/// **What it depends on.** `Target` and `Mass` from LiftingKit, `TrainingSlot`,
+/// and one previous performance. It writes nothing: an absent prescription stays
+/// absent, which in a field is an empty field.
 struct SetRowPrescription {
 
-    let exercise: PlannedExercise
-    /// Every block, for the one question that reaches outside this session:
-    /// what he did on this movement last time.
-    let plans: [TrainingPlan]
-    /// The lifter's display unit, which a prescribed load is converted into for
-    /// display and nothing else.
-    let unit: MassUnit
+    let slot: TrainingSlot
+    /// What he did on this movement last time, for the one field a prescription
+    /// may leave blank. `nil` the first time.
+    let previous: SnapshotPerformedExercise?
 
-    /// What this exercise's work is measured in — reps, seconds, or a distance
-    /// in the unit it was prescribed in. It comes from the prescription and
-    /// nothing else.
-    var measure: WorkMeasure { WorkPrescription.measure(of: exercise) }
+    /// What this row's work is measured in — counted, held, or carried. It comes
+    /// from the prescription and nothing else, never from what was typed.
+    ///
+    /// A row the coach set no target for is counted, which is what the field has
+    /// always been and what the row is drawn beside.
+    var measure: WorkMeasure { slot.planned.target?.measure ?? .repetitions }
 
-    /// Every set the plan prescribed, in order and stated in full.
-    var prescribedSets: [SetPrescription] { exercise.prescribedSets }
-
-    /// What the plan asked of the working set at `workingNumber`, or `nil` when
-    /// it asked for nothing about it — a warmup, or a set the lifter added past
-    /// the ones prescribed. Nothing is stretched to cover an extra set: a fourth
-    /// row under a three-set prescription is his own, not the plan's.
-    func prescription(forWorkingNumber workingNumber: Int, isWarmup: Bool) -> SetPrescription? {
-        guard !isWarmup, prescribedSets.indices.contains(workingNumber - 1) else { return nil }
-        return prescribedSets[workingNumber - 1]
+    /// What the empty weight field shows: the load this set was prescribed, and
+    /// nothing when none was.
+    ///
+    /// Empty rather than a dash: a placeholder is a hint about what to type, and
+    /// a dash hints at nothing while making a fresh table look broken.
+    var loadPlaceholder: String {
+        if let load = slot.planned.load { return load.value.compactString }
+        return previousLoad
     }
 
-    /// What an empty weight field shows: the load this set was prescribed, in
-    /// the lifter's display unit, and nothing when none was. A placeholder
-    /// rather than a value, so the prescription reaches him without the app
-    /// claiming he lifted it.
-    ///
-    /// Empty rather than `—`: a placeholder is a hint about what to type, and a
-    /// dash hints at nothing while making a fresh table look broken.
-    func loadTarget(_ prescription: SetPrescription?) -> String {
-        guard let load = prescription?.suggestedLoad else { return "" }
-        return load.converted(to: unit).value.compactString
+    /// What the empty work field shows: the target as the coach wrote it —
+    /// `8-12`, `45s`, `40m`, `AMRAP`.
+    var workPlaceholder: String {
+        slot.planned.target?.shorthand ?? ""
     }
 
-    /// What an empty weight field shows when the plan named no load: what he put
-    /// on the bar for this set last time, or nothing at all the first time.
+    /// What he put on the bar for this set last time, where the coach named no
+    /// load.
     ///
-    /// **The prescription always wins.** This is asked only where Claude
-    /// prescribed no load, so it never stands in front of a figure he wrote — it
-    /// fills a field that would otherwise be blank, with the one number a lifter
-    /// would have looked up anyway. It is a placeholder and never a value: the
-    /// app is not claiming he lifted it, and nothing is logged until he types.
-    func previousLoad(workingIndex: Int, isWarmup: Bool) -> String {
-        guard !isWarmup, workingIndex >= 0 else { return "" }
-        let previous = PerformanceHistory.latestHistory(
-            for: exercise.exerciseID, excluding: exercise, from: plans
-        )?.recentSets ?? []
-        guard workingIndex < previous.count,
-            let load = previous[workingIndex].load?.converted(to: unit), load.value > 0
+    /// **The prescription always wins.** This fills a field that would otherwise
+    /// be blank, with the one number a lifter would have looked up anyway. It is
+    /// asked only where nothing was prescribed, so it never stands in front of a
+    /// figure the coach wrote.
+    private var previousLoad: String {
+        guard !slot.planned.isWarmup, let previous else { return "" }
+        let index = slot.workingNumber - 1
+        guard previous.sets.indices.contains(index),
+            let load = previous.sets[index].load, load.value > 0
         else { return "" }
         return load.value.compactString
     }
