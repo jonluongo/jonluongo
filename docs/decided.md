@@ -54,8 +54,15 @@ becoming a second routine with the same name.
 **What he has not done is the coach's; what he has done is the record.** Jon's
 rule, in his words: *"the coach can change anything thats not checked off."* A
 block with no completed set is rebuilt from the arriving document however it
-now reads, a block the document no longer states is removed, and a block with
-any completed set is refused by ordinal if the document changes it. The
+now reads, and a block with any completed set is refused by ordinal if the
+document changes it.
+
+**A block the document omits is *not* removed, and this row used to say it was.**
+That was true of the importer before the rebuild; the rebuilt one upserts by
+(block, ordinal) and never deletes a session the document is silent about.
+Checked on 2026-08-21 before enforcing one-block-at-a-time, which would have been
+destructive if the old behaviour had survived: sending block 2 on its own would
+have taken block 1 with it. The
 comparison is `PlanDocument(reconstructing:)` — the same round trip the export
 uses — so an unchanged document arriving twice writes nothing.
 
@@ -209,6 +216,24 @@ they are until there is a tested migration.
 | A right-aligned value that wraps | `Add size to my chest and back without losing / the squat`, the tail stranded against the right edge. `FactRow` offers the one-line arrangement first and the wrapping one when it does not fit. |
 
 ## Settled by investigation
+**The whole loop was run end to end on 2026-08-21, with real files, and it
+works.** Every part of it had been proven separately; nobody had ever run one
+plan through all of it. The coach wrote a three-session block with the release
+binary; the phone imported it and archived the document under its own ID; the
+sessions were trained at real loads and finished; backgrounding the app exported
+`snapshot.json`; and the server's own tools read that file back and reported
+block 1, *Push*, finished, `barbell-bench-press` at 225 lb × 5. `recent_sessions`
+and `volume_by_muscle` both answered from it.
+
+**Two things that check confirmed rather than found.** The archive writes one
+file per import, in the real folder, on the real path. And a working set carries
+no `isWarmup` key on the wire — the `null` that appears in a *tool's report* is
+the report's own shape, not the file's, which holds exactly
+`completedAt, load, reps, setIndex`.
+
+**What is still untested is the only part a machine cannot do**: Jon training
+against a plan he asked for, on the phone, over days.
+
 **The loop reaches the Mac. It always did, and the tool was crying wolf.** This
 file recorded it as broken — *`brctl status` reports `SYNC DISABLED (app not
 installed)`* — and every part of that was checked on 2026-08-21 and is wrong.
@@ -466,7 +491,6 @@ looks identical to a settled one afterwards. Anything answered moves up into
 
 | What | What it needs | Where it stands |
 |---|---|---|
-| The loop reaching the Mac at all | iCloud storage freed (**101 KB left**), and a Mac app bundle claiming `iCloud.com.jonluongo.LiftingPlan` | Both halves are his. `brctl status` reports `SYNC DISABLED (app not installed)`; the write half is proven by driving the release binary, and every layer reports the failure honestly — the phone's *Couldn't Share Your Log*, the server's missing-snapshot message, `write_plan`'s delivery note. None of it is fixed. |
 | Dated statements, step 4 | Which of three phrasings the account page uses | Steps 1–3 shipped on 2026-08-20 — the phone keeps a date per fact, the wire carries it, both tools describe it. What is left is the screen: each fact carrying its date the way `Bodyweight · Aug 20, 2026` already does, and the baseline rows saying they are starting points rather than current bests. The spec is `docs/superpowers/specs/2026-08-20-dated-statements-design.md`. |
 | `reps` optional | Part of the same decision, taken separately | A set prescribed as a range and ticked without typing logs `0 reps`, which the coach reads as a completed working set at `185 lb × 0`. `durationSeconds` and `distance` are already optional for this exact reason. |
 | Time Sensitive Notifications | A capability toggle on the App ID in the developer portal | The rest timer asks for it; a build claiming the entitlement without it is **refused at signing** — checked, not assumed. The code states the intent and starts being honoured the day it is on. |
