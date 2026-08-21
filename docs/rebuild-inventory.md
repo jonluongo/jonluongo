@@ -121,7 +121,7 @@ Keep 1 · Rewrite 5 · Delete 6 · Add 1
 | `PlanDocumentMapping.swift` | 148 | **Rewrite** | Reconstruction follows the new document |
 | `PlanImporter.swift` | 378 | **Rewrite** | Merge keys on block ordinal, not routine id |
 | `ProfileUpdater.swift` | 249 | **Delete** | No profile to update |
-| `RestPreferences.swift` | 232 | **Read** | One app-wide switch is decided; whether 232 lines survive it is not |
+| `RestPreferences.swift` | 232 | **Keep** | Already `UserDefaults`, keyed by `ExerciseID`, device-only — and structurally unable to reach `SnapshotExporter` |
 | `RestTimerModel.swift` | 184 | **Keep** | Counts down what was prescribed |
 | `RoutineBlueprint.swift` | 288 | **Rewrite** | The only seam a plan enters by; still one producer |
 | `ScreenLockedCue.swift` | 210 | **Keep** | Notification half, untouched by the schema |
@@ -135,7 +135,7 @@ Keep 1 · Rewrite 5 · Delete 6 · Add 1
 | `StoreUpgrade.swift` | 43 | **Delete** | The store resets; nothing to carry |
 | `UbiquitousDocumentWatcher.swift` | 134 | **Keep** | Still watches for `plan.json` |
 
-Keep 3 · Rewrite 12 · Delete 5 · Read 1
+Keep 4 · Rewrite 12 · Delete 5
 
 ### `Presentation/` — 21 files
 
@@ -193,7 +193,7 @@ Keep 2 · Rewrite 7 · Add 1
 | `ExerciseAboutSections.swift` | 67 | **Keep** |
 | `ExerciseHeaderView.swift` | 146 | **Rewrite** — tempo folds into the note |
 | `ExerciseLogSection.swift` | 152 | **Rewrite** |
-| `ExerciseRestSheet.swift` | 194 | **Read** — depends on `RestPreferences` |
+| `ExerciseRestSheet.swift` | 194 | **Keep** — depends on `LifterRest` and `RestPrescription`, never on the store |
 | `FactRow.swift` | 63 | **Delete** — the account's fact rows go |
 | `InfoSheet.swift` | 42 | **Keep** |
 | `LifterNoteSheet.swift` | 75 | **Keep** |
@@ -212,7 +212,7 @@ Keep 2 · Rewrite 7 · Add 1
 | `Style.swift` | 512 | **Keep** |
 | `TimerRing.swift` | 91 | **Keep** |
 
-Keep 17 · Rewrite 6 · Delete 1 · Read 1
+Keep 18 · Rewrite 6 · Delete 1
 
 ### Root
 
@@ -251,7 +251,7 @@ Keep 7 · Rewrite 5 · Delete 3 · Add 1
 |---|---|---|---|
 | `ExerciseCatalog.swift` | 177 | **Keep** | Gains conditioning entries in the JSON, not the code |
 | `ExerciseResolver.swift` | 187 | **Delete** | 187 lines, a full suite, zero callers — open since before this |
-| `PlanDocumentNaming.swift` | 80 | **Read** | Fills in display names; the store no longer keeps them, the document may |
+| `PlanDocumentNaming.swift` | 80 | **Keep** | Two callers — `PlanImporter.swift:121` and `WritePlanTool.swift:92`. The document keeps `displayName` even though the store drops it |
 
 ### `Documents/` — 13 files
 
@@ -330,7 +330,7 @@ listed individually; each maps to a source verdict above.
 `ProfileUpdateTests`, `RoutineCalendarTests`, `ProfileFactsToolTests`,
 `UnstatedFactsTests`, `UpdateProfileTests`, `NulledSeriesTests`,
 `SessionPhrasingTests` (weekday half), `BlockSelectionTests` (deload half),
-`RestPreferenceTests` *(pending the `RestPreferences` read)*.
+`RestPreferenceTests` is **kept**, not deleted.
 
 **Rewrite (roughly 45).** Everything touching the store shape, the plan
 document, the snapshot, prescriptions, supersets or the log — including all four
@@ -359,10 +359,10 @@ three-session store exported whole, asserting all nine survive.
 
 | | Keep | Rewrite | Delete | Read | Add |
 |---|---|---|---|---|---|
-| App | 30 | 41 | 16 | 2 | 2 |
-| LiftingKit | 12 | 12 | 7 | 1 | 1 |
+| App | 32 | 41 | 16 | 0 | 2 |
+| LiftingKit | 13 | 12 | 7 | 0 | 1 |
 | LiftingMCP | 5 | 10 | 5 | 0 | 1 |
-| **Source total** | **47** | **63** | **28** | **3** | **4** |
+| **Source total** | **50** | **63** | **28** | **0** | **4** |
 
 **28 files delete outright.** Roughly 4,600 lines of source and a further 3,000
 of tests, none of which anything will read.
@@ -371,10 +371,23 @@ of tests, none of which anything will read.
 
 ## Before code is written
 
-**Three files need opening.** `RestPreferences.swift` and its sheet — one
-app-wide switch is decided, whether 232 lines survive it is not. And
-`PlanDocumentNaming.swift`, which fills in display names the store no longer
-keeps.
+**The three unclassified files were read on 2026-08-21, and all three keep.**
+`RestPreferences` is already exactly the design the rebuild wanted — `UserDefaults`,
+keyed by `ExerciseID`, on this device only, with a doc comment noting that it
+*cannot* reach `SnapshotExporter`, so the guarantee is structural rather than
+remembered. The app-wide `isClockOn` lives there already, and the per-exercise
+*length* override is the lifter's own choice, which CLAUDE.md keeps. Its sheet
+touches `LifterRest` and `RestPrescription` and never the store.
+`PlanDocumentNaming` has two real callers, `PlanImporter.swift:121` and
+`WritePlanTool.swift:92` — the first grep missed them because the entry point is
+`.named(using:)` rather than the type's name, which is worth remembering: a
+grep for a type does not find its extension methods.
+
+**One design consequence.** Dropping `displayName` from the *store* does not
+drop it from the *document*: the coach may state a name, `PlanDocumentNaming`
+fills in the rest from the catalog at both ends, and the app resolves what it
+draws from the catalog. Those are three different things and only the middle one
+was ever a stored column.
 
 **Six schema questions are answered** in `decided.md`; none block the start.
 
