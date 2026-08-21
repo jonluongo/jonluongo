@@ -43,7 +43,12 @@ struct BlockView: View {
             }
         }
         .background(Palette.surface)
-        .navigationTitle("Training")
+        // **No title.** *Training* named the app on the app's only screen —
+        // a word that never varies, in the largest type on the page, above the
+        // one thing that does. The block heading is the first line now, which
+        // is the first thing that is actually information. The stack stays: the
+        // toolbar and the session's cover both hang off it.
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 // **Both marks are bare outlines, and that is the whole reason
@@ -167,11 +172,18 @@ struct SessionRow: View {
 /// **It states the situation and asks for nothing.** There is no button here: a
 /// plan arrives from a conversation with the coach, and a control offering to
 /// make one would be the app deciding what somebody should train.
+/// What the app says before a plan exists.
+///
+/// **It names what is missing and who supplies it.** *No training yet* described
+/// the app's own state and told the user nothing: he has not stopped training,
+/// and nothing on the screen said a plan is something his coach writes or how
+/// one arrives. The heading is the fact, the line under it is the one action —
+/// which is the shape every empty state in this app takes.
 private struct NoTrainingView: View {
     var body: some View {
         ContentUnavailableView(
-            "No training yet",
+            "No plan yet",
             systemImage: "figure.strengthtraining.traditional",
-            description: Text("Your coach has not written a block yet."))
+            description: Text("Ask your coach for a block and it will show up here."))
     }
 }

@@ -40,7 +40,7 @@ struct HistoryView: View {
                     ContentUnavailableView(
                         "Nothing finished yet",
                         systemImage: "figure.strengthtraining.traditional",
-                        description: Text("Blocks you have trained through show up here."))
+                        description: Text("Blocks you have finished show up here."))
                 } else {
                     list
                 }
