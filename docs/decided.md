@@ -172,7 +172,7 @@ they are until there is a tested migration.
 
 | Rejected | What happened |
 |---|---|
-| A week strip / calendar on Home | Rested on an invented start date and showed intent where the log records fact. `WeekStrip` and the screen that drew it are gone. **`RoutineCalendar` and `BlockSelection` are not** — the first dates a routine for the list, the second names a block and answers which one he is on. This row said all three had gone, which would have had a later session deleting live code. |
+| A week strip / calendar on Home | Rested on an invented start date and showed intent where the log records fact. `WeekStrip` and the screen that drew it are gone. **`RoutineCalendar` and `BlockSelection` are not** — the first dates a routine for the list, the second names a block and answers which one he is on. This row said all three had gone, which would have had a later session deleting live code. **Superseded on 2026-08-21: all three are now genuinely gone.** The backend rebuild removed the last caller — `span(of:)` dated a block behind him, and sessions no longer carry a date at all — leaving `RoutineCalendar` and `RoutineSchedule` referencing only each other. The warning above still stands as method: a mutual-reference island reads as live to any grep, and the way to tell is to ask which caller is *outside* the island. |
 | `Finish` in the top-right corner | That is where iOS puts *dismiss*. It was pressed as a way out and marked an untouched session as trained. |
 | A green Finish button | Green marks what the record holds — a ticked set, a logged session. The button is the act that creates that, not the fact. It also put a second saturated colour in a one-accent palette. |
 | `Done` buttons on sheets | The platform dismisses sheets already; the button was chrome for an existing behaviour. All sheets use the grabber. |
@@ -209,6 +209,21 @@ they are until there is a tested migration.
 | A right-aligned value that wraps | `Add size to my chest and back without losing / the squat`, the tail stranded against the right edge. `FactRow` offers the one-line arrangement first and the wrapping one when it does not fit. |
 
 ## Settled by investigation
+**The dead code left by a deleted screen is islands, not strays.** The sweep of
+2026-08-21 removed about 590 lines in three rings, and every one of them reads as
+*live* to a reference count. `RoutineCalendar` and `RoutineSchedule` call only
+each other — the rebuild took the last outside caller when sessions stopped
+carrying dates. `Equipment`, the four-tier enum, exists to be expanded by
+`EquipmentAccess` and by nothing else; both were the profile-era answer to *what
+do you own*, which is prose in `user.md` now. `ExperienceLevel` was the profile's
+*how long have you trained*, and is **not** what draws the About page's
+*Difficulty* row — that is the separate `Difficulty` taxonomy, which is why the
+two are documented as deliberately distinct. `CoachNoteView` and `ProgressRule`
+were plain orphans.
+
+**The method, since a grep clears all of it.** Count references *outside the
+declaring file*, then ask whether the survivors are all inside one ring. Asking
+only "is this mentioned anywhere" keeps every island alive forever.
 
 **Supersets are expressible and always were.** Claude reported on 2026-08-18 that
 "the plan format has no superset field. No grouping, no pairing." That is not

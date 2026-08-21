@@ -55,10 +55,9 @@ public struct EquipmentType: ExtensibleTaxonomy {
     public static let suspension = EquipmentType(rawValue: "suspension")
     public static let sled = EquipmentType(rawValue: "sled")
     public static let cardioMachine = EquipmentType(rawValue: "cardio machine")
-    /// A swimming pool. Absent from every `EquipmentAccess` shorthand tier, and
-    /// rightly so — nothing about "full gym" says there is a pool in the
-    /// building. A lifter who has one says he owns it, and swim work becomes
-    /// available to him and to nobody else.
+    /// A swimming pool. What the lifter has access to is prose in `user.md`,
+    /// so nothing here has to guess whether "full gym" means there is a pool in
+    /// the building.
     public static let pool = EquipmentType(rawValue: "pool")
     public static let other = EquipmentType(rawValue: "other")
 
@@ -145,39 +144,6 @@ public struct Difficulty: ExtensibleTaxonomy {
     public static let advanced = Difficulty(rawValue: "advanced")
 
     public static let known: [Difficulty] = [.beginner, .intermediate, .advanced]
-}
-
-/// How much training a lifter has behind him, in the words he used.
-///
-/// Read it from a profile or a `ProfileUpdate`; `known` is what this build
-/// recognizes and is what a picker should suggest — never what it accepts. "I am
-/// coming back after two years off" is a true and useful answer, and a
-/// vocabulary that could not hold it would force whoever recorded it to pick one
-/// of three words that say something else.
-///
-/// **Deliberately not `Difficulty`, although they share three words.**
-/// `Difficulty` grades a *movement*: how much skill and control it asks for, as
-/// stated by the bundled catalog. This grades a *person*, from what he said
-/// about himself. Merging them would put sentences about a lifter into the
-/// vocabulary a catalog picker offers, and would ask a lifter to describe
-/// himself in the grades a catalog happens to use on exercises.
-///
-/// They are canonicalized the same way, so where the vocabularies do overlap the
-/// values compare equal instead of being kept apart by casing — which is what
-/// lets a reader weigh a movement's difficulty against the lifter's experience
-/// at all. Drawing that comparison is the reader's job; nothing here draws it,
-/// and nothing here ranks one level above another.
-///
-/// Depends on: `ExtensibleTaxonomy`.
-public struct ExperienceLevel: ExtensibleTaxonomy {
-    public let rawValue: String
-    public init(rawValue: String) { self.rawValue = Self.canonicalized(rawValue) }
-
-    public static let beginner = ExperienceLevel(rawValue: "beginner")
-    public static let intermediate = ExperienceLevel(rawValue: "intermediate")
-    public static let advanced = ExperienceLevel(rawValue: "advanced")
-
-    public static let known: [ExperienceLevel] = [.beginner, .intermediate, .advanced]
 }
 
 /// The broad kind of work — lifting, cardio, or stretching.

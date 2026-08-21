@@ -46,25 +46,4 @@ struct TaxonomyTests {
         #expect(exotic.rawValue == "elite")
         #expect(!exotic.isKnown)
     }
-
-    @Test("Experience a closed enum could not hold survives intact")
-    func experienceIsOpen() throws {
-        let described = try JSONDecoder().decode(
-            ExperienceLevel.self,
-            from: Data("\"returning after two years off\"".utf8))
-        #expect(described.rawValue == "returning after two years off")
-        #expect(!described.isKnown)
-
-        let data = try JSONEncoder().encode(described)
-        #expect(String(decoding: data, as: UTF8.self) == "\"returning after two years off\"")
-    }
-
-    @Test("Experience and difficulty are separate vocabularies that can still be compared")
-    func experienceComparesWithDifficulty() {
-        // The old enum spelled its levels "Beginner" and the catalog spelled
-        // them "beginner", so a lifter's experience could never be weighed
-        // against a movement's difficulty at all.
-        #expect(ExperienceLevel(rawValue: "Beginner").rawValue == Difficulty.beginner.rawValue)
-        #expect(ExperienceLevel.known.map(\.rawValue) == Difficulty.known.map(\.rawValue))
-    }
 }

@@ -18,9 +18,8 @@ struct CatalogAuditCorrectionsTests {
         try ExerciseCatalog.bundled()
     }
 
-    /// `.bodyweight` is the tier a lifter with nothing gets
-    /// (`EquipmentAccess.bodyweightTier` is exactly `[.bodyweight]`), so it is
-    /// a promise: hand this to someone in a hotel room and they can do it.
+    /// `.bodyweight` is a promise: hand this to someone in a hotel room and
+    /// they can do it.
     /// The generator's `defaultEquipment` breaks that promise silently — a
     /// slug no equipment keyword matches ships as `bodyweight` whether or not
     /// the movement needs anything.

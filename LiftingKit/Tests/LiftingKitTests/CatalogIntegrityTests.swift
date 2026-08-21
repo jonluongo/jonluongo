@@ -424,11 +424,9 @@ struct CatalogIntegrityTests {
     }
 
     /// Swimming requires a pool. These entries must never ship as
-    /// `.bodyweight`, which would let a bodyweight-only lifter be handed a
-    /// swim workout. There is no equipment-access tier that grants `.pool`
-    /// yet (see `EquipmentAccess`), so these are correctly modeled but
-    /// currently unreachable by plan generation — that gap is covered by
-    /// `EquipmentAccessTests.poolIsNotYetReachableByAnyTier`, not here.
+    /// `.bodyweight`, which would tell a reader that a lifter with nothing can
+    /// do them. What he actually has access to is prose in `user.md` and the
+    /// coach reads it; the catalog's job is only to state what a movement needs.
     @Test("No swimming entry is tagged bodyweight")
     func swimmingRequiresEquipment() throws {
         let catalog = try loaded()
