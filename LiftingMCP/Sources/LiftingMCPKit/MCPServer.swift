@@ -35,6 +35,41 @@ public struct MCPServer: Sendable {
     public static let title = "Superset — your training log and plan writer"
     public static let version = "1.0.0"
 
+    /// What a client shows for this connector: the name it keys on, the title a
+    /// reader sees, and the mark beside it.
+    ///
+    /// **The icon is the app's own, taken from the app's own asset.** It is
+    /// composed from the two layers of `Superset.icon` and filled with
+    /// `Palette.accent`, so the connector cannot drift from the thing on the
+    /// Home Screen — there is one mark and one copy of it.
+    ///
+    /// A `data:` URI rather than a link: a connector that has to fetch its own
+    /// icon over the network is a connector that shows nothing when the network
+    /// is not there, and this is seven kilobytes.
+    static var serverInfo: JSONValue {
+        var info: [String: JSONValue] = [
+            "name": .string(name),
+            "title": .string(title),
+            "version": .string(version),
+        ]
+        if let mark = markDataURI {
+            info["icons"] = .array([
+                .object(["src": .string(mark), "mimeType": .string("image/png"),
+                         "sizes": .array([.string("256x256")])])
+            ])
+        }
+        return .object(info)
+    }
+
+    /// The mark as a `data:` URI, or `nil` when the resource cannot be found —
+    /// which is a connector without a picture, not a connector that fails.
+    private static let markDataURI: String? = {
+        guard let url = Bundle.module.url(forResource: "superset-mark", withExtension: "png"),
+            let data = try? Data(contentsOf: url)
+        else { return nil }
+        return "data:image/png;base64,\(data.base64EncodedString())"
+    }()
+
     /// What this server answers with when the client asks for something it does
     /// not know. Every version listed is served by the same six methods; the
     /// differences between them do not reach a server this small.
@@ -109,11 +144,7 @@ public struct MCPServer: Sendable {
             // `title` is what a client shows a human; `name` is what it keys
             // on. Both are sent, because a client that shows only the name must
             // still show something a reader recognises.
-            "serverInfo": [
-                "name": .string(Self.name),
-                "title": .string(Self.title),
-                "version": .string(Self.version),
-            ],
+            "serverInfo": Self.serverInfo,
             "instructions": .string(Self.instructions),
         ]
     }

@@ -25,6 +25,11 @@ let package = Package(
         .target(
             name: "LiftingMCPKit",
             dependencies: [.product(name: "LiftingKit", package: "LiftingKit")],
+            // The mark a client draws beside the connector. Bundled rather than
+            // base64'd into a source file, for the same reason the catalog is a
+            // resource: an asset is not code, and ten kilobytes of it in a
+            // string literal is a file nobody can read or replace.
+            resources: [.copy("Resources/superset-mark.png")],
             // Unlike LiftingKit, nothing consumes this package from Xcode, so
             // there is no `-suppress-warnings` to collide with and the
             // project's warnings-are-errors standard can be declared here.

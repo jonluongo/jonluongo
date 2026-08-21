@@ -195,3 +195,44 @@ struct MCPServerTests {
         #expect(response["id"] == 7)
     }
 }
+
+/// How the connector introduces itself.
+///
+/// **A client draws this before any tool runs**, so it is the one thing a reader
+/// sees whether or not the loop is working — and it was announcing itself as
+/// `liftingplan`, the Xcode project's name, which is neither the product's name
+/// nor anything a reader would recognise in a list of connectors.
+@Suite("The connector's identity")
+struct ServerIdentityTests {
+
+    @Test("It answers with the product's name, its title, and its mark")
+    func identityIsComplete() throws {
+        let info = MCPServer.serverInfo
+        guard case .object(let fields) = info else {
+            Issue.record("serverInfo is not an object"); return
+        }
+        #expect(fields["name"] == .string("Superset"))
+        #expect(fields["title"] != nil, "a title is what a human reads")
+        #expect(fields["version"] != nil)
+    }
+
+    @Test("The mark is a self-contained PNG, not a link")
+    func theMarkTravelsWithIt() throws {
+        // A connector that fetches its own icon shows nothing when the network
+        // is not there — and this one runs beside a loop whose whole problem
+        // has been things not arriving.
+        guard case .object(let fields) = MCPServer.serverInfo,
+            case .array(let icons)? = fields["icons"],
+            case .object(let first)? = icons.first,
+            case .string(let src)? = first["src"]
+        else { Issue.record("no icon in serverInfo"); return }
+
+        #expect(src.hasPrefix("data:image/png;base64,"))
+        #expect(first["mimeType"] == .string("image/png"))
+
+        let encoded = String(src.dropFirst("data:image/png;base64,".count))
+        let bytes = try #require(Data(base64Encoded: encoded))
+        #expect(bytes.prefix(4) == Data([0x89, 0x50, 0x4E, 0x47]), "a real PNG")
+        #expect(bytes.count > 1000, "not an empty placeholder")
+    }
+}
