@@ -7,8 +7,13 @@ import SwiftUI
 /// blinked in and out between every set. The clock running out is not the bar
 /// being finished with — it is the answer changing from *how long left* to
 /// *go*. Resting is the ring counting down with ±15 and skip beside it; **rest
-/// over is a whole ring with a check in it**, and no controls, because there is
+/// over reads `0:00` in a whole ring** with no controls, because there is
 /// nothing left to add fifteen seconds to.
+///
+/// **The words are an instruction, not a status.** *Rest over* described the
+/// clock; *Get to work* is what the clock is for — the bar exists to tell him
+/// when to lift again, and an app that has his attention for one second should
+/// spend it on the thing to do.
 ///
 /// **And it survives leaving the session.** `RootView` draws it too, so the way
 /// back into a workout is on screen wherever he wandered off to — which is what
@@ -87,7 +92,12 @@ struct RestTimerBar: View {
                 isRunning: restTimer.isRunning,
                 isComplete: !restTimer.isRunning,
                 size: 52,
-                lineWidth: 5,
+                // **Thinner than the full-size ring, not just smaller.** At five
+                // points on a 52pt badge the stroke was a tenth of the diameter
+                // — a heavy hoop with a number crammed inside it — where the
+                // same width on the 200pt ring is a hairline by proportion. The
+                // bar is a glance; the ring should read as a dial, not a donut.
+                lineWidth: 3,
                 // Support rather than Metric: the countdown has to fit inside a
                 // 52pt ring, and "59:59" at Metric does not. What matters is
                 // that it is a text style at all, so it grows when the user's
@@ -105,7 +115,7 @@ struct RestTimerBar: View {
             // It is still carried by the notification, which is the case where
             // he is *not* looking at this screen and the name is the whole
             // point — `Next up: Barbell Bench Press`.
-            Text(restTimer.isRunning ? "Resting" : "Rest over")
+            Text(restTimer.isRunning ? "Resting" : "Get to work")
                 .font(.supersetTitle)
                 .foregroundStyle(Palette.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)

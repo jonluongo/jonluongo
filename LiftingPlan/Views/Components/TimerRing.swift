@@ -25,9 +25,11 @@ struct TimerRing: View {
     var progress: Double
     var timeText: String
     var isRunning: Bool
-    /// Whether the rest has run out. **A whole ring with a check in it**, rather
-    /// than the empty ring a countdown ends on: an empty circle reads as *not
-    /// started*, and the one thing this has to say at that moment is *done*.
+    /// Whether the rest has run out. **A whole ring reading `0:00`**, rather
+    /// than the empty ring a countdown drains to: an empty circle reads as *not
+    /// started*, which is the opposite of what has happened. The figure stays a
+    /// figure — this is a clock in both states, and a clock that has run out
+    /// says zero.
     var isComplete: Bool = false
     /// The ring's diameter at the default text size. It is multiplied by the
     /// user's text scale, so the ring and the time inside it grow together.
@@ -66,6 +68,13 @@ struct TimerRing: View {
                 )
                 .rotationEffect(.degrees(-90))
                 .animation(.linear(duration: 0.25), value: progress)
+            // **The finished ring reads `0:00`, not a tick.** A check was
+            // tried here twice — as an SF Symbol, which no weight could match to
+            // a five-point stroke, and then as a path stroked at the ring's own
+            // width, which matched exactly and was still the wrong thing. On
+            // Jon's call the ring is a clock in both states, and a clock that
+            // has run out says zero. `formattedRemaining` already does.
+            //
             // The time, and nothing else. It carried a `REST`/`READY` word
             // under the figure behind a `showsLabel` flag that all three call
             // sites passed `false` — the bar says *Resting* in its own words
@@ -73,22 +82,14 @@ struct TimerRing: View {
             // parameter with one possible value is not a choice, and the word
             // it guarded had not been drawn on a screen in this app for as long
             // as every caller has been passing `false`.
-            if isComplete {
-                Image(systemName: "checkmark")
-                    .font(font)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Palette.ink)
-                    .accessibilityHidden(true)
-            } else {
-                Text(timeText)
-                    .font(font)
-                    .contentTransition(.numericText())
-                    .lineLimit(1)
-                    // The ring is a circle: text that outgrows its chord shrinks
-                    // rather than spilling over the stroke.
-                    .minimumScaleFactor(0.6)
-                    .padding(.horizontal, lineWidth * textScale)
-            }
+            Text(timeText)
+                .font(font)
+                .contentTransition(.numericText())
+                .lineLimit(1)
+                // The ring is a circle: text that outgrows its chord shrinks
+                // rather than spilling over the stroke.
+                .minimumScaleFactor(0.6)
+                .padding(.horizontal, lineWidth * textScale)
         }
         .frame(width: scaledSize, height: scaledSize)
     }

@@ -141,13 +141,17 @@ final class ScreenLockedCue {
         "rest-timer-finished-\(index)"
     }
 
-    private static let refusedMessage =
-        "Notifications are off, so the rest timer can't alert you once the screen locks. "
-            + "Turn them on in Settings if you want the cue in your pocket."
+    /// **One line.** It ran to three — *notifications are off*, *the timer can't
+    /// alert you*, *turn them on in Settings*, *if you want the cue in your
+    /// pocket* — which made the longest copy on the session screen a caption
+    /// about a setting, sitting directly above the bar it is about. The cause
+    /// and the consequence in one clause is the whole of what he needs; Settings
+    /// is where notifications live and he knows that.
+    private static let refusedMessage = "Notifications off — no alert when locked."
 
     private static func describe(_ error: any Error) -> String {
         let reason = (error as? any LocalizedError)?.errorDescription ?? error.localizedDescription
-        return "The rest timer can't alert you once the screen locks: \(reason)"
+        return "No alert when locked: \(reason)"
     }
 }
 
