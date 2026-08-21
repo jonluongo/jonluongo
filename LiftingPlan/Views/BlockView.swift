@@ -155,18 +155,19 @@ struct SessionRow: View {
             if let icon = session.icon { SessionIconView(icon: icon) }
             Text(SessionListing.sessionTitle(session))
                 .font(.supersetTitle)
-                // **Emphasis by taking it away, not by adding it.** The session
-                // he is on looked exactly like one three weeks out, so opening
-                // the app to train meant counting down the list to find today.
-                // The standing was computed and spent entirely on the
-                // accessibility label — the screen reader knew and the screen
-                // did not.
+                // **Every session in the block is a session, at full strength.**
+                // A later one used to recede to `muted` so the one he was on
+                // could be found — which was worth doing when this screen listed
+                // every block ever prescribed and today was somewhere down it.
+                // The front page is one block now: three or four rows, all of
+                // them his to train this week, and greying two thirds of a short
+                // list makes most of the screen look disabled to save a glance
+                // that is no longer needed.
                 //
-                // Nothing is added to say it: what is behind him is already
-                // coloured and marked, and what is ahead of him recedes. No new
-                // glyph, no second use of the accent, which has one job in this
-                // app and keeps it.
-                .foregroundStyle(standing == .upcoming ? Palette.muted : Palette.ink)
+                // What is *behind* him still reads differently, and needs no
+                // help from the type: the panel is on the recorded wash and
+                // carries the mark.
+                .foregroundStyle(Palette.ink)
             Spacer(minLength: Spacing.snug)
             // `showsEmpty: false` — a list marks only what is done. An outline
             // on every unfinished row puts a box beside every session, and a
