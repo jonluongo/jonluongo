@@ -9,7 +9,7 @@ import Foundation
 /// prescribed it.
 ///
 /// **`finishedAt` is the only event on it.** Everything else the lifter did is a
-/// `SnapshotPerformance`, which is a fact about the record rather than about the
+/// `SnapshotPerformedExercise`, which is a fact about the record rather than about the
 /// prescription. A session can be finished with nothing performed, which is why
 /// it cannot be derived.
 ///
@@ -71,8 +71,14 @@ public struct SnapshotSession: Codable, Hashable, Sendable {
 /// **It never carries an aggregate.** Set count, top set, volume and estimated
 /// 1RM are computed from `sets`. A stored copy can disagree with them.
 ///
+/// **It is named for the row it is, not for the idea of one.** It was
+/// `SnapshotPerformance` until an audit caught it: `Performance` is an
+/// abstraction noun, and this project's naming rule bans them for exactly the
+/// reason `ExercisePerformance` was rejected in the store. It mirrors
+/// `PerformedExercise` because it *is* that row, on the wire.
+///
 /// **What it depends on.** `ExerciseID`, `PerformanceSource`.
-public struct SnapshotPerformance: Codable, Hashable, Sendable {
+public struct SnapshotPerformedExercise: Codable, Hashable, Sendable {
 
     /// The movement performed.
     public let exerciseID: ExerciseID

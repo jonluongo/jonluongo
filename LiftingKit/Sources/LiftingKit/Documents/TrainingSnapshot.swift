@@ -58,14 +58,14 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     public let sessions: [SnapshotSession]
     /// Every exercise performed, flat, each carrying its own sets and the
     /// coordinates of the session it belongs to.
-    public let performances: [SnapshotPerformance]
+    public let performances: [SnapshotPerformedExercise]
 
     public init(
         version: Int = TrainingSnapshot.currentVersion,
         exportedAt: Date,
         catalogVersion: Int,
         sessions: [SnapshotSession] = [],
-        performances: [SnapshotPerformance] = []
+        performances: [SnapshotPerformedExercise] = []
     ) {
         self.version = version
         self.exportedAt = exportedAt
@@ -97,7 +97,7 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
         catalogVersion = try container.decode(Int.self, forKey: .catalogVersion)
         sessions = try container.decodeIfPresent([SnapshotSession].self, forKey: .sessions) ?? []
         performances = try container.decodeIfPresent(
-            [SnapshotPerformance].self, forKey: .performances) ?? []
+            [SnapshotPerformedExercise].self, forKey: .performances) ?? []
     }
 
     /// Every block the record knows about, in order.
@@ -112,7 +112,7 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
 
     /// Every performance of one movement, oldest first — what a coach means by
     /// *how has this lift gone*.
-    public func performances(of exerciseID: ExerciseID) -> [SnapshotPerformance] {
+    public func performances(of exerciseID: ExerciseID) -> [SnapshotPerformedExercise] {
         performances.filter { $0.exerciseID == exerciseID }
             .sorted { $0.occurredAt < $1.occurredAt }
     }

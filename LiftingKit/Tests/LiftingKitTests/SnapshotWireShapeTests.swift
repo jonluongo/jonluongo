@@ -16,7 +16,7 @@ struct SnapshotWireShapeTests {
     private let bench = ExerciseID(rawValue: "barbell-bench-press")
 
     private func snapshot(
-        sessions: [SnapshotSession] = [], performances: [SnapshotPerformance] = []
+        sessions: [SnapshotSession] = [], performances: [SnapshotPerformedExercise] = []
     ) -> TrainingSnapshot {
         TrainingSnapshot(
             exportedAt: Self.instant, catalogVersion: 5,
@@ -80,7 +80,7 @@ struct SnapshotWireShapeTests {
     @Test("A performance holds its sets, rather than the log holding one row per set")
     func performancesNestTheirSets() throws {
         let written = try object(snapshot(performances: [
-            SnapshotPerformance(
+            SnapshotPerformedExercise(
                 exerciseID: bench, occurredAt: Self.instant, blockOrdinal: 1, sessionOrdinal: 1,
                 sets: [
                     SnapshotPerformedSet(setIndex: 0, reps: 5, completedAt: Self.instant),
@@ -103,7 +103,7 @@ struct SnapshotWireShapeTests {
         // `null` is the app saying "no value" as a value, which is a different
         // statement from having none. A reader cannot tell them apart later.
         let written = try object(snapshot(performances: [
-            SnapshotPerformance(
+            SnapshotPerformedExercise(
                 exerciseID: bench, occurredAt: Self.instant,
                 sets: [SnapshotPerformedSet(setIndex: 0, completedAt: Self.instant)])
         ]))
@@ -121,7 +121,7 @@ struct SnapshotWireShapeTests {
     @Test("A working set writes no warm-up marker")
     func aWorkingSetWritesNothing() throws {
         let written = try text(snapshot(performances: [
-            SnapshotPerformance(
+            SnapshotPerformedExercise(
                 exerciseID: bench, occurredAt: Self.instant,
                 sets: [SnapshotPerformedSet(setIndex: 0, reps: 5, completedAt: Self.instant)])
         ]))

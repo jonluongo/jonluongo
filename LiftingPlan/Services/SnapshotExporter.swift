@@ -54,8 +54,8 @@ enum SnapshotExporter {
     /// readable with no session behind it — a log that stops making sense when a
     /// plan is deleted is not a log. A stated baseline has none, and that is the
     /// honest answer rather than a zero.
-    private static func snapshot(of performed: PerformedExercise) -> SnapshotPerformance {
-        SnapshotPerformance(
+    private static func snapshot(of performed: PerformedExercise) -> SnapshotPerformedExercise {
+        SnapshotPerformedExercise(
             exerciseID: performed.exerciseID,
             occurredAt: performed.occurredAt,
             source: performed.source,

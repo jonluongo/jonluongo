@@ -32,8 +32,8 @@ struct TrainingSnapshotTests {
 
     private func performance(
         source: PerformanceSource = .logged, block: Int? = 1, ordinal: Int? = 1
-    ) -> SnapshotPerformance {
-        SnapshotPerformance(
+    ) -> SnapshotPerformedExercise {
+        SnapshotPerformedExercise(
             exerciseID: bench, occurredAt: Self.instant, source: source,
             blockOrdinal: block, sessionOrdinal: ordinal, lifterNote: "Felt heavy.",
             sets: [SnapshotPerformedSet(
@@ -42,7 +42,7 @@ struct TrainingSnapshotTests {
     }
 
     private func snapshot(
-        sessions: [SnapshotSession] = [], performances: [SnapshotPerformance] = []
+        sessions: [SnapshotSession] = [], performances: [SnapshotPerformedExercise] = []
     ) -> TrainingSnapshot {
         TrainingSnapshot(
             exportedAt: Self.later, catalogVersion: 5,
@@ -151,9 +151,9 @@ struct TrainingSnapshotTests {
 
     @Test("Performances of one lift read oldest first")
     func historyIsOrdered() throws {
-        let older = SnapshotPerformance(exerciseID: bench, occurredAt: Self.instant)
-        let newer = SnapshotPerformance(exerciseID: bench, occurredAt: Self.later)
-        let other = SnapshotPerformance(
+        let older = SnapshotPerformedExercise(exerciseID: bench, occurredAt: Self.instant)
+        let newer = SnapshotPerformedExercise(exerciseID: bench, occurredAt: Self.later)
+        let other = SnapshotPerformedExercise(
             exerciseID: ExerciseID(rawValue: "barbell-squat"), occurredAt: Self.later)
 
         let read = try roundTrip(snapshot(performances: [newer, other, older]))
@@ -172,7 +172,7 @@ struct TrainingSnapshotTests {
                 completedAt: Self.instant),
         ]
         let read = try roundTrip(snapshot(performances: [
-            SnapshotPerformance(exerciseID: bench, occurredAt: Self.instant, sets: sets)
+            SnapshotPerformedExercise(exerciseID: bench, occurredAt: Self.instant, sets: sets)
         ]))
         let performed = try #require(read.performances.first)
 
@@ -187,7 +187,7 @@ struct TrainingSnapshotTests {
         // and ticked without a number reached the coach as a completed working
         // set at 185 lb by 0.
         let read = try roundTrip(snapshot(performances: [
-            SnapshotPerformance(
+            SnapshotPerformedExercise(
                 exerciseID: bench, occurredAt: Self.instant,
                 sets: [SnapshotPerformedSet(
                     setIndex: 0, load: Mass(value: 185, unit: .pounds),
@@ -212,7 +212,7 @@ struct TrainingSnapshotTests {
     @Test("Warm-ups are told apart from work on the record side too")
     func warmupsAreDistinguished() throws {
         let read = try roundTrip(snapshot(performances: [
-            SnapshotPerformance(
+            SnapshotPerformedExercise(
                 exerciseID: bench, occurredAt: Self.instant,
                 sets: [
                     SnapshotPerformedSet(setIndex: 0, isWarmup: true, completedAt: Self.instant),

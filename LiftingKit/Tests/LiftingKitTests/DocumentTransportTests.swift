@@ -84,7 +84,7 @@ private func makeSnapshot(catalogVersion: Int = 5) -> TrainingSnapshot {
         exportedAt: instant,
         catalogVersion: catalogVersion,
         performances: [
-            SnapshotPerformance(
+            SnapshotPerformedExercise(
                 exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
                 occurredAt: instant, blockOrdinal: 1, sessionOrdinal: 1,
                 sets: [SnapshotPerformedSet(

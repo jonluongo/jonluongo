@@ -2,35 +2,6 @@ import Foundation
 import SwiftData
 import LiftingKit
 
-/// One performed set, reduced to a plain value with no SwiftData attached.
-///
-/// **Why it is not the model.** A `PerformedSet` belongs to a `ModelContext` and
-/// carries a graph behind it; a row that only has to *draw* what was lifted last
-/// time should not hold one. Every measure is optional here for the same reason
-/// it is on the model: `nil` is *he did not say*, and a number is *he did that
-/// much*.
-struct SetRecord: Equatable {
-    var load: Mass?
-    var reps: Int?
-    var durationSeconds: Int?
-    var distance: Distance?
-}
-
-/// What a movement's last time looked like.
-///
-/// **The grain is a performance, not a set.** *How did bench go last time* is
-/// one answer with several sets in it, which is what `PerformedExercise` was
-/// added to the store to say. Reading it as a flat run of sets meant every
-/// caller regrouping them by date first.
-struct ExerciseHistory: Equatable {
-    var exerciseID: ExerciseID
-    var occurredAt: Date
-    /// The working sets, in order. Warm-ups are left out here rather than
-    /// filtered by each caller: *what did he lift last time* is a question about
-    /// work, and a warm-up in the answer reads as a lighter session.
-    var sets: [SetRecord]
-}
-
 /// What has been performed, answered from the store.
 ///
 /// **What it does.** Reports the last time a movement was trained, and every
@@ -52,7 +23,7 @@ enum PerformanceHistory {
     static func mostRecent(
         _ exerciseID: ExerciseID, before moment: Date = .distantFuture,
         in context: ModelContext
-    ) throws -> ExerciseHistory? {
+    ) throws -> SnapshotPerformedExercise? {
         try performances(of: exerciseID, in: context)
             .last { $0.occurredAt < moment }
     }
@@ -65,11 +36,11 @@ enum PerformanceHistory {
     /// lifter starting from nothing.
     static func performances(
         of exerciseID: ExerciseID, in context: ModelContext
-    ) throws -> [ExerciseHistory] {
+    ) throws -> [SnapshotPerformedExercise] {
         try context.fetch(FetchDescriptor<PerformedExercise>())
             .filter { $0.exerciseID == exerciseID }
             .sorted { $0.occurredAt < $1.occurredAt }
-            .map(history(of:))
+            .map(value(of:))
     }
 
     /// Every movement that has ever been performed, each once.
@@ -78,17 +49,29 @@ enum PerformanceHistory {
         return Array(Set(performed.map(\.exerciseID))).sorted { $0.rawValue < $1.rawValue }
     }
 
-    /// One stored performance as a plain value.
-    static func history(of performed: PerformedExercise) -> ExerciseHistory {
-        ExerciseHistory(
+    /// One stored performance as plain values.
+    ///
+    /// **The value type is the wire's, not a third one.** `SnapshotPerformedExercise`
+    /// already *is* the plain-value form of a performed exercise, exactly as
+    /// `PlanDocumentSession` is for a prescription — and a screen and a coach
+    /// asking the same question deserve the same answer. A private `SetRecord`
+    /// here was a second shape for one idea, and it carried a word this domain
+    /// has already spoken for: to a lifter, a record is a PR.
+    static func value(of performed: PerformedExercise) -> SnapshotPerformedExercise {
+        SnapshotPerformedExercise(
             exerciseID: performed.exerciseID,
             occurredAt: performed.occurredAt,
-            sets: performed.workingSets.map(record(of:)))
+            source: performed.source,
+            blockOrdinal: performed.session?.blockOrdinal,
+            sessionOrdinal: performed.session?.ordinal,
+            lifterNote: performed.lifterNote,
+            sets: performed.orderedSets.map(value(of:)))
     }
 
-    private static func record(of set: PerformedSet) -> SetRecord {
-        SetRecord(
-            load: set.load, reps: set.reps,
-            durationSeconds: set.durationSeconds, distance: set.distance)
+    private static func value(of set: PerformedSet) -> SnapshotPerformedSet {
+        SnapshotPerformedSet(
+            setIndex: set.setIndex, isWarmup: set.isWarmup, load: set.load,
+            reps: set.reps, durationSeconds: set.durationSeconds,
+            distance: set.distance, completedAt: set.completedAt)
     }
 }
