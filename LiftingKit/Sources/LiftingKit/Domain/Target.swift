@@ -64,7 +64,21 @@ extension Target {
     /// reader looking for one would report the set as unreadable rather than as
     /// what it plainly says.
     private static let toFailureWords: Set<String> = [
-        "amrap", "to failure", "failure", "max reps", "max", "as many as possible",
+        "amrap", "to failure", "failure", "max reps", "as many as possible",
+    ]
+
+    /// The only words that may sit beside a rep count. Everything else means
+    /// the number is not a rep count, whatever the number looks like.
+    ///
+    /// **This is a whitelist, and it has to be.** `WorkDistance` reports no unit
+    /// for a word it does not know, so before this, `"40furlongs"` fell through
+    /// to `RepRange`, which found the 40 and reported forty repetitions — a
+    /// carry landing in the rep column, which is the exact defect `WorkMeasure`
+    /// exists to prevent, and which then propagates into every volume total the
+    /// coach reads. A coach who states a unit this build has never heard of gets
+    /// a refusal naming it, not a number nobody performed.
+    private static let repWords: Set<String> = [
+        "rep", "reps", "repetition", "repetitions", "x",
     ]
 
     /// Reads a target from the shorthand a coach writes — `"8-12"`, `"45s"`,
@@ -97,6 +111,11 @@ extension Target {
                 unit: unit)
             return
         }
+
+        let words = trimmed.lowercased()
+            .split(whereSeparator: { !$0.isLetter })
+            .map(String.init)
+        guard words.allSatisfy(Self.repWords.contains) else { return nil }
 
         let reps = RepRange(trimmed)
         guard !reps.isEmpty else { return nil }

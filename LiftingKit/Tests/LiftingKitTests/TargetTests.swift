@@ -157,6 +157,36 @@ struct TargetTests {
         }
     }
 
+
+    @Test("A unit this build has never heard of is refused, never read as reps")
+    func anUnknownUnitNeverBecomesReps() {
+        // Found by probing, not by reading: `WorkDistance` reports no unit for a
+        // word it does not know, so `"40furlongs"` fell through to `RepRange`,
+        // which found the 40 and called it forty repetitions. That is a carry
+        // landing in the rep column — the exact thing `WorkMeasure` exists to
+        // prevent — and it then flows into every volume total the coach reads.
+        for text in ["40furlongs", "40 furlongs", "3 laps", "5 blocks"] {
+            #expect(Target(shorthand: text) == nil, "\(text)")
+        }
+    }
+
+    @Test("A rep count may be written with the words that mean reps, and no others")
+    func repWordsAreAWhitelist() throws {
+        for text in ["8-12 reps", "8-12reps", "5 rep", "5x"] {
+            let target = try #require(Target(shorthand: text), "\(text)")
+            #expect(target.measure == .repetitions, "\(text)")
+        }
+    }
+
+    @Test("Bare max is not a prescription this build claims to understand")
+    func bareMaxIsRefused() {
+        // "max" is as likely to mean the heaviest load as the most reps, and
+        // guessing which would be the app deciding how hard to train. "max reps"
+        // says it; "max" does not.
+        #expect(Target(shorthand: "max") == nil)
+        #expect(Target(shorthand: "max reps") == .repetitionsToFailure)
+    }
+
     // MARK: - What it says on screen
 
     @Test("A target is written back the way a coach would write it")
@@ -176,4 +206,5 @@ struct TargetTests {
             #expect(Target(shorthand: target.shorthand) == target, "\(text)")
         }
     }
+
 }

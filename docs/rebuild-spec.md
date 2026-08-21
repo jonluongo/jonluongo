@@ -278,9 +278,16 @@ says *what* happens to a file, not *when*.
 LiftingKit 317 → 332, everything else untouched. The old readers stay until the
 documents stop using them.
 
-**Phase 1a — the deletions this enables**, taken with phase 2: `RepRange`,
-`WorkDuration` and `WorkDistance` lose their public surface once `SetPrescription`
-holds a `Target`.
+**What `Target` makes dead, and exactly when.** Checked by grep on
+2026-08-21, not estimated. `WorkMeasure.init(_ text: String)` has three callers,
+all in `WorkPrescription.swift`, which is a **Delete** — so that initialiser has
+**zero** callers after phase 6 and goes with it; leaving it would be a second
+way to answer a question the stored `Target` already answers. `RepRange`,
+`WorkDuration` and `WorkDistance` are constructed only in `HoldPrescription`,
+`RepPrescription`, `WorkPrescription` — all Deletes — and in `WorkMeasure`
+itself, so after phase 6 their only caller is `Target` and their `public`
+surface drops to `internal`. Nothing is dead before then: phase 1 is additive
+and every one of those readers is still live.
 
 **Phase 2 — Documents.** `PlanDocument` v6, `TrainingSnapshot` v6,
 `SetPrescription`, `SnapshotRoutine`, the new refusal cases, transport paths.
