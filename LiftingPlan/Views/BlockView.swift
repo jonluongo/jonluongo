@@ -39,7 +39,7 @@ struct BlockView: View {
     var body: some View {
         Group {
             if sessions.isEmpty {
-                NoPlanView()
+                NoBlockView()
             } else {
                 list
             }
@@ -196,20 +196,26 @@ struct SessionRow: View {
 ///
 /// **It names what is missing, and what is missing has to be a thing.**
 /// *No training yet* put a mass noun where a count noun belongs: there is no
-/// such object as *a training*, so the sentence never says what is absent. A
-/// plan is an object — the coach writes one, it arrives, and until it does there
-/// is nothing to show. The heading is the fact, the line under it is the one
-/// action, and the type is named for the same thing the heading is.
+/// such object as *a training*, so the sentence never says what is absent.
+///
+/// **And it is the same thing the rest of the app calls it.** The heading said
+/// *workout plan* while the line under it asked for a *block*, and the screen
+/// behind them both is headed *Block 1* — two words for one object, in adjacent
+/// sentences, which is how a third one gets invented. A plan is the document the
+/// coach writes and states one block; a block is what the user is shown, what
+/// `HistoryView` counts in *No finished blocks yet*, and so what is absent here.
+/// The heading is the fact, the line under it is the one action, and the type is
+/// named for the same thing the heading is.
 ///
 /// **The mark is the missing object too, not a person.** It drew a figure
 /// lifting, which is a picture of the activity rather than of what is absent —
 /// the same mistake the words were making. `rectangle.stack` is a stack of
 /// panels: the blocks that will be here, and the shape the list itself takes.
-private struct NoPlanView: View {
+private struct NoBlockView: View {
     var body: some View {
         ContentUnavailableView(
-            "No workout plan yet",
+            "No training block yet",
             systemImage: "rectangle.stack",
-            description: Text("Ask your coach for a block and it will show up here."))
+            description: Text("Ask your coach for one and it will show up here."))
     }
 }

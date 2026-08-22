@@ -51,24 +51,33 @@ public enum NoteFile: String, Sendable, CaseIterable {
     /// replace. It is also what the app draws before the coach has written
     /// anything — a record that has been told nothing must read as *not known*,
     /// never as a plausible default.
+    ///
+    /// **One condition, one sentence.** The five account sections said *None on
+    /// record*, *Not yet stated* and *Nothing on record* for the identical
+    /// state — nothing written — and rendered together they read as three
+    /// different states with a difference the reader goes looking for and does
+    /// not find. `PROGRAM.md` already said one thing five times; both notes say
+    /// it now. That the line repeats is not an obstacle to editing it: an
+    /// anchored edit quotes the heading with the line under it, which is what
+    /// `update_notes` asks for and what makes each one unique.
     public var template: String {
         switch self {
         case .account:
             """
             ## Constraints
-            _None on record._
+            _Not yet stated._
 
             ## Background
             _Not yet stated._
 
             ## Other activity
-            _Nothing on record._
+            _Not yet stated._
 
             ## Recovery
             _Not yet stated._
 
             ## Technique notes
-            _Nothing on record._
+            _Not yet stated._
             """
         case .program:
             """
