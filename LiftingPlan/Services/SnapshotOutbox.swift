@@ -94,7 +94,8 @@ final class SnapshotOutbox {
         do {
             // On the main actor, where reading the container's context belongs.
             let snapshot = try SnapshotExporter.export(
-                from: context, catalogVersion: catalog.version
+                from: context, catalogVersion: catalog.version,
+                refused: RefusalRecord().current
             )
             // Off it, where resolving iCloud belongs.
             try await Self.write(snapshot, through: transport)

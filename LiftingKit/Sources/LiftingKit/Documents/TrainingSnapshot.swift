@@ -50,7 +50,10 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// was the one place the old word could not simply be edited out of a
     /// comment. Bumped rather than renamed quietly, because a reader handed the
     /// old key would refuse it as unknown and report the wrong problem.
-    public static let currentVersion = 7
+    /// 8 carries `refused`: the phone's answer when it turns a plan away. A
+    /// reader handed that key without knowing it would refuse the whole snapshot
+    /// as unknown and report the wrong problem, which is what a version is for.
+    public static let currentVersion = 8
 
     /// The format version of this document, as written.
     public let version: Int
@@ -65,23 +68,31 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
     /// Every exercise performed, flat, each carrying its own sets and the
     /// coordinates of the session it belongs to.
     public let performances: [SnapshotPerformedExercise]
+    /// The last plan the phone refused, or `nil` when the last one was taken in.
+    ///
+    /// **The only thing the phone says back that is not a fact about training.**
+    /// A refusal the coach never hears is a prescription he believes landed, and
+    /// the block he writes next is built on it.
+    public let refused: SnapshotRefusal?
 
     public init(
         version: Int = TrainingSnapshot.currentVersion,
         exportedAt: Date,
         catalogVersion: Int,
         sessions: [SnapshotSession] = [],
-        performances: [SnapshotPerformedExercise] = []
+        performances: [SnapshotPerformedExercise] = [],
+        refused: SnapshotRefusal? = nil
     ) {
         self.version = version
         self.exportedAt = exportedAt
         self.catalogVersion = catalogVersion
         self.sessions = sessions
         self.performances = performances
+        self.refused = refused
     }
 
     private enum CodingKeys: String, CodingKey, CaseIterable {
-        case version, exportedAt, catalogVersion, sessions, performances
+        case version, exportedAt, catalogVersion, sessions, performances, refused
     }
 
     /// **A snapshot is refused in both directions, and a plan is not.** A plan is
@@ -104,6 +115,7 @@ public struct TrainingSnapshot: Codable, Hashable, Sendable {
         sessions = try container.decodeIfPresent([SnapshotSession].self, forKey: .sessions) ?? []
         performances = try container.decodeIfPresent(
             [SnapshotPerformedExercise].self, forKey: .performances) ?? []
+        refused = try container.decodeIfPresent(SnapshotRefusal.self, forKey: .refused)
     }
 
     /// Every block the record knows about, in order.

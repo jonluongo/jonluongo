@@ -164,3 +164,101 @@ struct RefusalMessageTests {
             "a malformed file is not a refusal — it is shown as whatever it was: \(message)")
     }
 }
+
+/// What the phone says back to the *coach* when it turns a plan away.
+///
+/// **There are two checkpoints and he is present at only one.** `write_plan`
+/// refuses a format error or an invented ID while he is still there. The phone
+/// refuses the thing only the phone knows — a plan rewriting a session already
+/// trained — long after the server answered *written*. Until the refusal rode
+/// out with the snapshot, it reached an alert on a phone he cannot see and
+/// stopped: he went on prescribing against a block that had never landed.
+@MainActor
+@Suite("What a refusal says to the coach")
+struct RefusalToTheCoachTests {
+
+    /// Defaults of this test's own, so a record never leaks between suites or
+    /// into the device the tests run on.
+    private func record() -> RefusalRecord {
+        RefusalRecord(defaults: try! #require(UserDefaults(suiteName: UUID().uuidString)))
+    }
+
+    private func folder() throws -> DocumentFolder {
+        let url = URL.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return DocumentFolder(directory: url)
+    }
+
+    /// Puts `plan` in the folder, reads it in, and answers what was written down.
+    private func afterReading(
+        _ plan: PlanDocument, into context: ModelContext, record: RefusalRecord
+    ) async throws -> SnapshotRefusal? {
+        let folder = try folder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        try folder.writePlan(plan)
+        let watcher = ManualWatcher()
+        let inbox = DocumentInbox(
+            transport: folder, watcher: watcher, context: context,
+            catalog: try ExerciseCatalog.bundled(), refusals: record)
+
+        inbox.start()
+        await watcher.announceArrival()
+        return record.current
+    }
+
+    @Test("A plan rewriting a trained session is written down for the coach")
+    func theRefusalOnlyThePhoneCanMakeIsCarried() async throws {
+        // The one refusal `write_plan` cannot make: the server has no idea what
+        // has been ticked.
+        let context = try StoreFixture.context()
+        let catalog = try StoreFixture.catalog()
+        try PlanImporter.import(
+            StoreFixture.plan(block: 1, sessions: 1), into: context, catalog: catalog)
+        let session = try #require(try StoreFixture.sessions(in: context).first)
+        session.finishedAt = Date()
+
+        let rewritten = StoreFixture.plan(
+            block: 1, sessions: 1,
+            entries: [.exercise(StoreFixture.exercise(sets: 5))])
+        let refused = try await afterReading(rewritten, into: context, record: record())
+
+        let reason = try #require(refused?.reason)
+        #expect(reason.contains("block 1"), "\(reason)")
+        #expect(reason.contains("already been trained"), "\(reason)")
+        #expect(reason.count > 90, "the coach gets the sentence he can act on, not the short line")
+    }
+
+    @Test("A plan that lands clears what stood against the last one")
+    func acceptanceClearsIt() async throws {
+        // Left in place it would report a refusal he has already fixed, every
+        // time he asked what was going on.
+        let record = record()
+        record.current = SnapshotRefusal(at: Date(), reason: "something older")
+
+        let refused = try await afterReading(
+            StoreFixture.plan(block: 1, sessions: 1),
+            into: try StoreFixture.context(), record: record)
+
+        #expect(refused == nil)
+    }
+
+    @Test("Nothing waiting leaves the record alone")
+    func silenceIsNotAcceptance() async throws {
+        // An empty folder is the normal state. Treating it as a plan landing
+        // would clear a refusal the coach has not fixed.
+        let record = record()
+        let standing = SnapshotRefusal(at: Date(), reason: "still true")
+        record.current = standing
+
+        let folder = try folder()
+        defer { try? FileManager.default.removeItem(at: folder.url) }
+        let watcher = ManualWatcher()
+        let inbox = DocumentInbox(
+            transport: folder, watcher: watcher, context: try StoreFixture.context(),
+            catalog: try ExerciseCatalog.bundled(), refusals: record)
+        inbox.start()
+        await watcher.announceArrival()
+
+        #expect(record.current == standing)
+    }
+}

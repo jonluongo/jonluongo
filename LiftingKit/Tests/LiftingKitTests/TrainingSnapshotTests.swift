@@ -42,11 +42,12 @@ struct TrainingSnapshotTests {
     }
 
     private func snapshot(
-        sessions: [SnapshotSession] = [], performances: [SnapshotPerformedExercise] = []
+        sessions: [SnapshotSession] = [], performances: [SnapshotPerformedExercise] = [],
+        refused: SnapshotRefusal? = nil
     ) -> TrainingSnapshot {
         TrainingSnapshot(
             exportedAt: Self.later, catalogVersion: 5,
-            sessions: sessions, performances: performances)
+            sessions: sessions, performances: performances, refused: refused)
     }
 
     private func roundTrip(_ snapshot: TrainingSnapshot) throws -> TrainingSnapshot {
@@ -67,7 +68,7 @@ struct TrainingSnapshotTests {
         // stop the export going stale; it stops a stale read being convincing.
         let read = try roundTrip(snapshot())
         #expect(read.exportedAt == Self.later)
-        #expect(read.version == 7)
+        #expect(read.version == 8)
         #expect(read.catalogVersion == 5)
     }
 
@@ -230,7 +231,7 @@ struct TrainingSnapshotTests {
         // a cache the phone rewrites whenever the record changes, so an old one
         // is a stale file rather than history — and reading it half-way would
         // report a user who has trained less than he has.
-        for stated in [6, 8] {
+        for stated in [7, 9] {
             let error = #expect(throws: DocumentRefusal.self, "\(stated)") {
                 try decoded("""
                     {"version": \(stated), "exportedAt": "2023-11-14T22:13:20Z",
@@ -239,15 +240,33 @@ struct TrainingSnapshotTests {
             }
             let message = try #require(error?.errorDescription)
             #expect(message.contains("\(stated)"))
-            #expect(message.contains("7"))
+            #expect(message.contains("8"))
         }
+    }
+
+    @Test("A refused plan travels with the record, and its absence is silence")
+    func aRefusalReachesTheCoach() throws {
+        // **The phone's only way to answer back.** `write_plan` refuses a format
+        // error while the coach is still there; a plan rewriting a session
+        // already trained is refused on the phone, long after he has gone. Until
+        // this rode along, that refusal reached an alert on a phone he cannot
+        // see and stopped there, and he went on prescribing against a block that
+        // had never landed.
+        let refusal = SnapshotRefusal(
+            at: Self.later,
+            reason: "This plan changes session 2 of block 3, which has already been trained.")
+        let read = try roundTrip(snapshot(refused: refusal))
+
+        #expect(read.refused == refusal)
+        #expect(try roundTrip(snapshot()).refused == nil,
+                "no refusal standing is nothing said, not an empty one")
     }
 
     @Test("A key this format does not have is refused, naming it")
     func anUnknownKeyIsRefused() throws {
         let error = #expect(throws: DocumentRefusal.self) {
             try decoded("""
-                {"version": 7, "exportedAt": "2023-11-14T22:13:20Z",
+                {"version": 8, "exportedAt": "2023-11-14T22:13:20Z",
                  "catalogVersion": 5, "profile": {"goal": "Get strong"}}
                 """)
         }

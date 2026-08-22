@@ -72,6 +72,24 @@ to be guessed at. `nothingPrescribedBeyond` in the context resource is the cue
 that the next block is due; the routine page says the same thing to the user
 in words.
 
+**A refusal the phone makes is carried back to the coach in the snapshot.**
+Added 2026-08-21. There are two checkpoints and the coach is present at only
+one: `write_plan` decodes the document and refuses a format error or an invented
+ID while he is still there, and he fixes it in the same breath. The phone
+refuses the one thing the server cannot see — a plan rewriting a session already
+trained, which only the store knows about — and it does so long after
+`write_plan` answered *written*. Until this, that refusal reached an alert on a
+phone he cannot see and stopped: he believed a block was prescribed that the
+phone had thrown away whole, and the only witness was the user, who would have
+had to relay it by hand. `TrainingSnapshot.refused` carries it, the context
+resource reports it first because it changes what the rest of the report means,
+and `RefusalRecord` keeps it in `UserDefaults` — not the store, which is the
+user's record and syncs, and this is one phone's answer about one document.
+Cleared when a plan lands, and left alone when nothing is waiting, since an
+empty folder is the normal state and not an acceptance. **This is also why the
+user's alert stays short**: the person who can act on the detail now receives
+the detail.
+
 **`write_plan` guides one block at a time and does not enforce it.** A four-week
 plan written in one go is still a plan somebody may want, and a schema that
 refused it would be the server making a training decision.

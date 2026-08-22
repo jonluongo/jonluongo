@@ -26,17 +26,24 @@ enum SnapshotExporter {
     ///
     /// `exportedAt` is the caller's clock rather than this function's, so a test
     /// can state the instant and the app can state the moment it wrote the file.
+    /// - Parameter refused: the plan the phone last turned away, if one stands.
+    ///   **It is not read out of the store, because it is not part of the
+    ///   record** — nothing was taken in, so there is nothing in the store to
+    ///   find. It is the phone's answer about a document, carried here so the
+    ///   coach hears it; see `RefusalRecord`.
     static func export(
         from context: ModelContext,
         catalogVersion: Int,
-        exportedAt: Date = Date()
+        exportedAt: Date = Date(),
+        refused: SnapshotRefusal? = nil
     ) throws -> TrainingSnapshot {
         TrainingSnapshot(
             exportedAt: exportedAt,
             catalogVersion: catalogVersion,
             sessions: try context.fetch(FetchDescriptor<Session>()).map(snapshot(of:)),
             performances: try context.fetch(FetchDescriptor<PerformedExercise>())
-                .map(snapshot(of:)))
+                .map(snapshot(of:)),
+            refused: refused)
     }
 
     /// One session: what was prescribed, and the two facts the store adds.

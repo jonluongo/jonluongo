@@ -22,6 +22,14 @@ struct MCPServerTests {
         ["jsonrpc": "2.0", "id": id, "method": .string(method), "params": params]
     }
 
+    /// The context resource as the coach receives it.
+    private func contextText(of server: MCPServer) throws -> String {
+        let params: JSONValue = ["uri": .string(MCPServer.contextResourceURI)]
+        let answer = try ask(server, request("resources/read", params))
+        let contents = try #require(answer?["result"]?["contents"]?.arrayValue)
+        return try #require(contents.first?["text"]?.stringValue)
+    }
+
     // MARK: - The handshake
 
     @Test("initialize answers with a protocol version, capabilities and a name")
@@ -79,6 +87,35 @@ struct MCPServerTests {
         ])
         #expect(tools.allSatisfy { $0["inputSchema"]?["type"]?.stringValue == "object" })
         #expect(tools.allSatisfy { $0["description"]?.stringValue?.isEmpty == false })
+    }
+
+    @Test("A plan the phone refused is the first thing the context says")
+    func aRefusalReachesTheCoach() throws {
+        // **The coach is absent at the checkpoint that catches this.**
+        // `write_plan` refuses a format error while he is still there; the phone
+        // refuses a plan rewriting a session already trained, long after the
+        // server answered *written*. Before this, that refusal reached an alert
+        // on a phone he cannot see and stopped there — and he went on
+        // prescribing against a block that had never landed.
+        let refusal = SnapshotRefusal(
+            at: daysAgo(1),
+            reason: "This plan changes session 2 of block 3, which has already been trained.")
+        let server = MCPServer(
+            runner: try makeRunner(
+                documents: InMemoryDocuments(snapshot: fixtureSnapshot(refused: refusal))))
+
+        let text = try contextText(of: server)
+
+        #expect(text.contains("planRefused"))
+        #expect(text.contains("already been trained"))
+        #expect(text.contains("took none of it in"), "and what that means for the record below")
+    }
+
+    @Test("A record with nothing refused says nothing about refusals")
+    func silenceWhenThereIsNothingToSay() throws {
+        let text = try contextText(of: try makeServer())
+
+        #expect(!text.contains("planRefused"), "an empty key is a question he has to answer")
     }
 
     @Test("The published schema does not promise a shape the decoder refuses")

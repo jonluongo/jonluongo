@@ -221,11 +221,13 @@ public struct DocumentFolder: DocumentTransport {
     /// piling up among them make the one folder a person has to read to see
     /// what the loop is doing unreadable, for files nothing reads back. The
     /// plan archive is in `plans/` for the same reason.
-    /// **Stamped to the millisecond, because two edits land in one second.**
-    /// A coach fixing two sections of a note makes two tool calls back to back,
-    /// and at second precision the second copy overwrote the first — leaving one
-    /// backup that keeps being overwritten, which is the thing this is named to
-    /// avoid.
+    /// **A name already taken is never written over.** A coach fixing two
+    /// sections of a note makes two tool calls back to back, and a timestamp —
+    /// at any precision — can name both. Going from seconds to milliseconds made
+    /// the collision rarer and left it there, which is worse than either fixing
+    /// it or not: a version that vanishes once a month is one nobody knows to
+    /// look for. The stamp is what a person reads; the suffix is what guarantees
+    /// the copy survives, and it appears only when it has to.
     public func keepCopy(of text: String, as note: NoteFile) throws {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -234,7 +236,22 @@ public struct DocumentFolder: DocumentTransport {
         let folder = directory.appending(path: Self.noteVersionFolder)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         try Data(text.utf8).write(
-            to: folder.appending(path: "\(note.basename).\(stamp).md"), options: .atomic)
+            to: Self.unusedName(in: folder, base: "\(note.basename).\(stamp)"),
+            options: .atomic)
+    }
+
+    /// `base.md`, or `base-2.md`, `base-3.md` — the first that is free.
+    private static func unusedName(in folder: URL, base: String) -> URL {
+        let first = folder.appending(path: "\(base).md")
+        guard FileManager.default.fileExists(atPath: first.path(percentEncoded: false)) else {
+            return first
+        }
+        for suffix in 2... {
+            let candidate = folder.appending(path: "\(base)-\(suffix).md")
+            guard FileManager.default.fileExists(
+                atPath: candidate.path(percentEncoded: false)) else { return candidate }
+        }
+        return first
     }
 
     public func writeNote(_ text: String, as note: NoteFile) throws {

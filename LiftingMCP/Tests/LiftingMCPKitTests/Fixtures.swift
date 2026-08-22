@@ -133,11 +133,12 @@ func fixturePerformance(
 func fixtureSnapshot(
     sessions: [SnapshotSession] = [fixtureSession()],
     performances: [SnapshotPerformedExercise] = [fixturePerformance()],
-    exportedAt: Date = daysAgo(1), catalogVersion: Int = 5
+    exportedAt: Date = daysAgo(1), catalogVersion: Int = 5,
+    refused: SnapshotRefusal? = nil
 ) -> TrainingSnapshot {
     TrainingSnapshot(
         exportedAt: exportedAt, catalogVersion: catalogVersion,
-        sessions: sessions, performances: performances)
+        sessions: sessions, performances: performances, refused: refused)
 }
 
 // MARK: - The folder, in memory

@@ -103,14 +103,19 @@ final class DocumentInbox {
     /// Where the coach's notes are copied to. Optional so a test need not supply
     /// one; the app always does.
     private let notes: NotesStore?
+    /// Where a refused plan is written down so the next snapshot can carry it
+    /// back to the coach, who is not here when the phone turns one away.
+    private let refusals: RefusalRecord
 
     init(
         transport: any DocumentTransport,
         watcher: any DocumentArrivalWatching,
         context: ModelContext,
         catalog: any ExerciseCatalogProviding,
-        notes: NotesStore? = nil
+        notes: NotesStore? = nil,
+        refusals: RefusalRecord = RefusalRecord()
     ) {
+        self.refusals = refusals
         self.transport = transport
         self.watcher = watcher
         self.context = context
@@ -210,10 +215,22 @@ final class DocumentInbox {
                 // none, and archiving it would put prescriptions in the record
                 // that the user was never given.
                 try await Self.archive(document, in: transport)
+                // Taken in, so whatever stood against the last one no longer
+                // does. Left in place it would report a refusal the coach has
+                // already fixed, every time he asked.
+                refusals.current = nil
                 applied = applied || isNew
             }
         } catch {
             failures.append(Self.describe(error))
+            // **The one thing the coach is not already told.** A format refusal
+            // he saw at `write_plan`, because the server decodes the document
+            // before writing it. A plan rewriting a session already trained is
+            // refused *here* and nowhere else — the store is the only thing that
+            // knows what was ticked — and until this was written down, the
+            // refusal reached an alert on a phone he cannot see and stopped. He
+            // went on building on a block that had never landed.
+            refusals.current = SnapshotRefusal(at: Date(), reason: Self.forTheAuthor(error))
         }
         // A transport that cannot be reached at all fails both reads with the
         // same sentence; saying it twice would read as two separate problems.
@@ -253,6 +270,20 @@ final class DocumentInbox {
     /// Anything that is not a refusal of a document — a folder that cannot be
     /// reached, a file that is not JSON — is shown as it is. Those are already
     /// about the phone rather than about the plan.
+    /// The same failure said to whoever wrote the document, at full length.
+    ///
+    /// **The mirror of `describe`, and the reason both exist.** The user gets a
+    /// line he can repeat; the coach gets the sentence he can act on — which
+    /// session, which block, and what to send instead. Length costs him nothing
+    /// and costs the user the whole alert.
+    private static func forTheAuthor(_ error: any Error) -> String {
+        switch error {
+        case let refusal as DocumentRefusal: refusal.message
+        default: (error as? any LocalizedError)?.errorDescription
+            ?? error.localizedDescription
+        }
+    }
+
     private static func describe(_ error: any Error) -> String {
         guard let addressedToTheAuthor = Self.shortReason(of: error) else {
             return (error as? any LocalizedError)?.errorDescription ?? error.localizedDescription

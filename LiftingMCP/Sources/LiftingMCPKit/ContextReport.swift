@@ -32,6 +32,24 @@ struct ContextReport {
     /// How many recent sessions ride along before the tools take over.
     static let carriedSessions = 5
 
+    /// The plan the phone turned away, or nothing when the last one landed.
+    ///
+    /// **The only thing in this report that is not about training.** The coach
+    /// is present when `write_plan` refuses a document and absent when the phone
+    /// does — and the phone refuses the one thing the server cannot see, a plan
+    /// rewriting a session already trained. This is where he finds that out.
+    private var refusal: JSONValue {
+        guard let refused = snapshot.refused else { return .null }
+        return .object([
+            "at": .date(refused.at),
+            "reason": .string(refused.reason),
+            "note": .string(
+                "The phone refused this plan and took none of it in. Nothing below "
+                    + "reflects it. Fix what the reason names and call "
+                    + "\(ToolCatalog.writePlan) again."),
+        ])
+    }
+
     func build() -> JSONValue {
         let sessions = TrainingLog.sessions(in: snapshot)
         let trained = TrainingLog.trained(in: snapshot)
@@ -40,17 +58,20 @@ struct ContextReport {
             "exportedAt": .date(snapshot.exportedAt),
             "recordAgeDays": .integer(ageInDays),
             "catalogVersion": .integer(snapshot.catalogVersion),
-            "user": .object([
-                "note": .string(
-                    "Who he is, what he trains for, his injuries, his equipment and his "
-                        + "bodyweight are in ACCOUNT.md. Read it as a resource; write to it with "
-                        + "update_notes.")
-            ]),
-            "programme": .object([
-                "note": .string(
-                    "Why this programme — the approach, what is being progressed, what makes "
-                        + "a block a deload — is in PROGRAM.md.")
-            ]),
+            // **What each note holds is stated once, beside the templates that
+            // create the sections.** Written out here as well, it had drifted
+            // the same way `update_notes` had — promising the coach that
+            // `ACCOUNT.md` held his equipment, which moved to `PROGRAM.md` when
+            // the sections were reworked.
+            "notes": .object(Dictionary(
+                uniqueKeysWithValues: NoteFile.allCases.map {
+                    ($0.basename, JSONValue.string($0.guidance))
+                })),
+            // **Said before anything else, because it changes what the rest
+            // means.** A refusal standing here says the plan he last wrote is
+            // not in the record below — so the block he thinks he prescribed is
+            // absent, and planning the next one on top of it would compound it.
+            "planRefused": refusal,
             "where": whereHeIs(sessions),
             "sessionsRecorded": .integer(trained.count),
             "recent": .array(trained.prefix(Self.carriedSessions).map(Self.summary)),

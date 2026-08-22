@@ -143,7 +143,7 @@ struct SnapshotWireShapeTests {
     func aHandWrittenSnapshotReads() throws {
         let data = Data("""
             {
-              "version": 7,
+              "version": 8,
               "exportedAt": "2023-11-14T22:13:20Z",
               "catalogVersion": 5,
               "sessions": [{
@@ -180,7 +180,7 @@ struct SnapshotWireShapeTests {
     @Test("An unknown key inside a performance is refused, naming it")
     func anUnknownKeyInsideAPerformanceIsRefused() throws {
         let data = Data("""
-            {"version": 7, "exportedAt": "2023-11-14T22:13:20Z", "catalogVersion": 5,
+            {"version": 8, "exportedAt": "2023-11-14T22:13:20Z", "catalogVersion": 5,
              "performances": [{"exerciseID": "barbell-bench-press",
                                "occurredAt": "2023-11-14T22:13:20Z",
                                "weekday": 2, "sets": []}]}

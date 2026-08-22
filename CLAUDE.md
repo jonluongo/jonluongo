@@ -43,7 +43,7 @@ database and a pile of text.
 
 | File | Written by | Read by |
 |---|---|---|
-| `snapshot.json` | phone | server |
+| `snapshot.json` | phone | server — the record, and any plan the phone refused |
 | `plan.json` | server | phone |
 | `plans/<id>.json` | phone, on import | the archive — every plan taken in |
 | `ACCOUNT.md`, `PROGRAM.md` | server | phone, **rendered, never parsed** |
@@ -351,8 +351,17 @@ noun phrase — no article, no pronoun, no sentence.
 
 **An error names what happened and what to do, in that order, and stops.** It
 does not apologise, restate itself, or explain the format to somebody who cannot
-act on it. A refusal written for the coach is relayed to the user verbatim
-underneath one line of his own, because relaying it *is* the fix.
+act on it.
+
+**A refusal is answered to its author, and the user is not him.** He gets one
+short line — which failure, and the name or number identifying it — because he
+did not write the plan and cannot rewrite it. The refusal *as written for the
+coach* goes to the coach: `write_plan` hands it back at the moment he writes,
+and for the one refusal the server cannot make — a plan rewriting a session
+already trained, which only the store knows about — the phone writes it into the
+snapshot as `refused` and the context resource reports it. **A refusal only the
+user is told is a prescription the coach believes landed**, and the block he
+writes next is built on it.
 
 **Warnings are errors.** Swift 6 language mode, strict concurrency.
 
