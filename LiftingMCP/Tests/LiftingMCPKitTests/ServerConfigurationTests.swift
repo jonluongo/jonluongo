@@ -169,6 +169,23 @@ struct ReportNullTests {
                 "the one that works")
     }
 
+    @Test("Both subscripts read a null as absent, as they both claim to")
+    func nullReadsAsAbsentEitherWay() {
+        // **They disagreed, two lines apart, documented as companions.** The
+        // member subscript guards and returns `nil` as a bare statement, where
+        // `Optional`'s nil literal wins. The index one used
+        // `value == .null ? nil : value`, where Swift unifies both branches at
+        // `JSONValue` — so `nil` was `JSONValue.null` and it handed back
+        // `Optional.some(.null)` for an element it said was absent.
+        let object: JSONValue = .object(["a": .null, "b": .integer(1)])
+        let array: JSONValue = .array([.null, .integer(2)])
+
+        #expect(object["a"] == nil)
+        #expect(object["b"] == .integer(1))
+        #expect(array[0] == nil, "an explicit null element reads as absent")
+        #expect(array[1] == .integer(2))
+    }
+
     @Test("The JSON-RPC wire keeps its nulls, where they are protocol")
     func theWireIsUntouched() throws {
         let message: JSONValue = .object(["id": .null, "method": .string("ping")])

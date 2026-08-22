@@ -75,8 +75,15 @@ extension JSONValue {
     /// exercise — reads as one chain rather than breaking into `arrayValue`.
     public subscript(index: Int) -> JSONValue? {
         guard case .array(let values) = self, values.indices.contains(index) else { return nil }
-        let value = values[index]
-        return value == .null ? nil : value
+        // **`guard`, not `value == .null ? nil : value`.** Written as a ternary
+        // this returned `Optional.some(.null)` for a null element — Swift
+        // unifies both branches at `JSONValue`, where `nil` is
+        // `JSONValue.null`, and wraps the result. The member subscript above
+        // reads correctly only because its `return nil` is a bare statement, at
+        // which point `Optional`'s own nil literal wins. Two lines apart,
+        // documented as companions, and they disagreed.
+        guard values[index] != .null else { return nil }
+        return values[index]
     }
 
     /// The strings in an array member, tolerating a bare string in place of a
