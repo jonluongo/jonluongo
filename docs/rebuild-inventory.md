@@ -201,7 +201,7 @@ Keep 2 · Rewrite 7 · Add 1
 | `NoteRow.swift` | 30 | **Keep** |
 | `PanelRow.swift` | 179 | **Keep** |
 | `PrimaryActionButton.swift` | 137 | **Keep** |
-| `ProgressRule.swift` | 37 | **Keep** |
+| `ProgressRule.swift` | 37 | ~~Keep~~ — **deleted in `52a804e`**: the screen that drew it went in the rebuild and nothing replaced the call. |
 | `RecordedMark.swift` | 54 | **Keep** |
 | `RestTimerBar.swift` | 131 | **Keep** |
 | `SectionHeading.swift` | 47 | **Keep** |
