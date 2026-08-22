@@ -148,6 +148,17 @@ struct SessionRow: View {
 
     let session: Session
     let standing: SessionListing.Standing
+    /// Whether tapping this row opens the session.
+    ///
+    /// **The chevron is the claim, so it is drawn only where the claim is
+    /// true.** `HistoryView` states in its own comment that a finished block is
+    /// read-only and says so *by not being a button* — and then drew the mark
+    /// that means *this opens*, on a row that opened nothing. A chevron that
+    /// leads nowhere is the same failure as a label naming a control that is not
+    /// there. Every row on the block being trained does open, which is why this
+    /// defaults to true and why the contradiction survived being rendered.
+    var opens: Bool = true
+
     var body: some View {
         HStack(spacing: Spacing.standard) {
             // A day he marked nothing carries nothing: a glyph the app chose
@@ -173,7 +184,7 @@ struct SessionRow: View {
             // on every unfinished row puts a box beside every session, and a
             // mark that appears everywhere distinguishes nothing.
             RecordedMark(isRecorded: standing == .finished, showsEmpty: false)
-            DisclosureChevron()
+            if opens { DisclosureChevron() }
         }
         .padding(.horizontal, PanelMetrics.edge)
         // **Tall enough not to read as a pill.** One row in a panel with the

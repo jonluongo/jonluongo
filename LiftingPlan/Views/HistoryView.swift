@@ -69,7 +69,7 @@ struct HistoryView: View {
                         // button.** A finished block is the record; opening a
                         // session from here would offer to log against work
                         // already done.
-                        SessionRow(session: session, standing: .finished)
+                        SessionRow(session: session, standing: .finished, opens: false)
                             .panelRow(fillsPanel: true, isRecorded: true)
                             .listRowSeparator(.hidden)
                     }
