@@ -27,6 +27,11 @@ extension ToolCatalog {
         ["type": "string", "description": .string(description)]
     }
 
+    /// A fractional number — a load of 2.5 kg is a number, not an integer.
+    static func number(_ description: String) -> JSONValue {
+        .object(["type": "number", "description": .string(description)])
+    }
+
     static func integer(_ description: String) -> JSONValue {
         ["type": "integer", "description": .string(description)]
     }
@@ -84,11 +89,4 @@ extension ToolCatalog {
         ]
     }
 
-    /// A day, as either of the two ways a weekday is legibly written.
-    static func weekday(_ description: String) -> JSONValue {
-        [
-            "description": .string(description),
-            "anyOf": [["type": "string"], ["type": "integer"]],
-        ]
-    }
 }

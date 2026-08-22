@@ -183,6 +183,32 @@ struct PlanDocumentGroupTests {
         #expect(message.contains("Nothing was taken in"))
     }
 
+    @Test("An exercise with no display name is named by its ID, not by nothing")
+    func aRefusalNamesTheExerciseEvenWithoutADisplayName() throws {
+        // **The ordinary case.** `displayName` is optional — the catalog fills
+        // it in at both ends — so the coach usually sends only an ID. Reading
+        // the name straight produced *a rest on '' alone*: a refusal that named
+        // nothing, about a group he would then have to find by hand. Its
+        // sibling above always sent a name, which is how this survived.
+        let json = """
+        {
+          "version": 6, "catalogVersion": 5,
+          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "sessions": [{"blockOrdinal": 1, "ordinal": 1, "entries": [
+            {"restSeconds": 90, "group": [
+              {"exerciseID": "dumbbell-fly", "sets": [{}], "restSeconds": 45},
+              {"exerciseID": "cable-rope-pushdown", "sets": [{}]}
+            ]}
+          ]}]
+        }
+        """
+        let refusal = #expect(throws: DocumentRefusal.self) { try decoded(json) }
+        let message = try #require(refusal?.message)
+        #expect(message.contains("dumbbell-fly"), "named by its ID: \(message)")
+        #expect(!message.contains("''"), "and never by nothing: \(message)")
+    }
+
     @Test("A group of one is not a group, and is refused as such")
     func groupOfOneIsRefused() throws {
         let json = """

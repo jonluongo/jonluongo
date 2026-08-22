@@ -93,9 +93,14 @@ extension ToolRunner {
         default:
             detail = "\(error)"
         }
-        return "That plan could not be read, so nothing was written: \(detail) Every exercise "
-            + "needs 'exerciseID' and 'sets'; every day needs 'weekday'; every "
-            + "week needs 'days'."
+        // **It names what happened and stops.** This used to append a list of
+        // what the format requires — *every day needs 'weekday'; every week
+        // needs 'days'* — keys that went when the format flattened into
+        // sessions. It was advice that would itself have been refused as
+        // unknown. The path above already names the field and where it sits,
+        // and the schema is published with the tool; a blanket requirements
+        // list restated on every failure earns nothing back.
+        return "That plan could not be read, so nothing was written: \(detail)"
     }
 
     private static func location(_ context: DecodingError.Context) -> String {

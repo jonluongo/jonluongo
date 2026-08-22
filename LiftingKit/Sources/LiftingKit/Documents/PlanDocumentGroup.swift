@@ -129,8 +129,15 @@ public struct PlanDocumentGroup: Codable, Hashable, Sendable {
                 stated: exercises.count, location: decoder.documentLocation)
         }
         if let resting = exercises.first(where: { $0.restSeconds != nil }) {
+            // **Named by its ID when it carries no display name**, which is the
+            // ordinary case: `displayName` is optional and the catalog fills it
+            // in at both ends. Reading it straight produced *a rest on '' alone*
+            // — a refusal that named nothing, about a group the coach would then
+            // have to find by hand.
             throw DocumentRefusal.restInsideGroup(
-                exercise: resting.displayName, location: decoder.documentLocation)
+                exercise: resting.displayName.isEmpty
+                    ? resting.exerciseID.rawValue : resting.displayName,
+                location: decoder.documentLocation)
         }
     }
 }

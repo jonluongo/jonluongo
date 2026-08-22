@@ -81,6 +81,53 @@ struct MCPServerTests {
         #expect(tools.allSatisfy { $0["description"]?.stringValue?.isEmpty == false })
     }
 
+    @Test("The published schema does not promise a shape the decoder refuses")
+    func theSchemaAgreesWithTheDecoder() throws {
+        // **A coach can only send what the schema says.** `load.value` was
+        // declared a string beside `intensity.value`, which really is one — two
+        // adjacent fields of the same name, identically written, decoding
+        // differently. `Mass.value` is a `Double`, so a coach who followed the
+        // published schema and sent "185" was told his load had the wrong type,
+        // every time, with nothing in the message pointing at the schema as the
+        // thing that was wrong.
+        //
+        // Asserted as agreement rather than as a literal: the declared type is
+        // read out of the schema and then actually decoded.
+        let tools = try #require(
+            try ask(try makeServer(), request("tools/list"))?["result"]?["tools"]?.arrayValue)
+        let writePlan = try #require(tools.first { $0["name"]?.stringValue == "write_plan" })
+        func properties(of schema: JSONValue) throws -> JSONValue {
+            try #require(schema["properties"])
+        }
+        func items(_ schema: JSONValue, _ key: String) throws -> JSONValue {
+            try #require(try properties(of: schema)[key]?["items"])
+        }
+        let session = try items(try #require(writePlan["inputSchema"]), "sessions")
+        let entry = try items(session, "entries")
+        let set = try properties(of: try items(entry, "sets"))
+
+        #expect(set["load"]?["properties"]?["value"]?["type"]?.stringValue == "number")
+        #expect(set["intensity"]?["properties"]?["value"]?["type"]?.stringValue == "string")
+
+        // And a document written that way is one the decoder takes.
+        let json = """
+        {
+          "version": 6, "catalogVersion": 5,
+          "id": "0FD1FF67-1C2F-4E45-9BD8-9F1E6A5F0A21",
+          "generatedAt": "2023-11-14T22:13:20Z",
+          "sessions": [{"blockOrdinal": 1, "ordinal": 1, "entries": [
+            {"exerciseID": "dumbbell-fly", "sets": [
+              {"load": {"value": 62.5, "unit": "kg"},
+               "intensity": {"scale": "rpe", "value": "8-9"}}
+            ]}
+          ]}]
+        }
+        """
+        let plan = try PlanDocument.makeDecoder().decode(
+            PlanDocument.self, from: try #require(json.data(using: .utf8)))
+        #expect(plan.sessions.first?.exercises.first?.sets.first?.load?.value == 62.5)
+    }
+
     @Test("No tool concludes anything about training — that is Claude's job, not the server's")
     func nothingRecommends() throws {
         let tools = try #require(

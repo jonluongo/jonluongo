@@ -126,8 +126,14 @@ extension ToolCatalog {
                     + "carry ('40m', '20-30yd'), or 'AMRAP'. One measure per set, read once "
                     + "— a carry is never counted as reps. Text this server cannot read is "
                     + "refused rather than stored."),
+            // **A load is a number and an intensity is text**, which is why
+            // they are not written alike here despite both being called
+            // 'value'. `Mass.value` is a `Double`; declaring it a string had
+            // the schema promise a shape the decoder refused, so a coach who
+            // followed the published schema was told his load had the wrong
+            // type. An intensity really is text — it carries '8-9' and '80'.
             "load": object([
-                "value": string("The number on the bar."),
+                "value": number("The number on the bar — 185, or 62.5."),
                 "unit": enumerated(MassUnit.allCases.map(\.rawValue), "lb or kg."),
             ]),
             "intensity": object([
