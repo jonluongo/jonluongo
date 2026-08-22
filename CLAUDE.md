@@ -305,11 +305,19 @@ weight, scale with Dynamic Type, and follow the appearance. There is no icon set
 that meaningfully covers 412 movements, so per-exercise glyphs would be guesswork
 about what a lift *is*.
 
-**Design tokens live in three files, and component metrics live with their
-component.** `Palette` holds every colour, `Typography` the type roles, `Layout`
-the spacing, radii and tap targets. A constant used by exactly one component
-lives beside it — `SetTableMetrics` sat four hundred lines from the row that read
-it, and was behind two defects in one week.
+**Design tokens live in `Style.swift`, and a constant one component owns lives
+with that component.** `Palette` holds every colour, an extension on `Font` the
+type roles, and `Spacing`, `Radius` and `TapTarget` the gaps, corners and the
+minimum a finger can hit. `PanelMetrics` and `SetTableMetrics` are there too
+because each is read by several components, and a figure two callers share has
+to live where neither owns it.
+
+*(Corrected 2026-08-22. This said tokens live in **three** files and named
+`Typography` and `Layout`; there is one file and neither type has ever existed
+in this repo. The rule was unfollowable as written, and the audit that found it
+also found `ProgressMetrics` still in `Style.swift` with nothing left to read
+it — `ProgressRule` was deleted in `52a804e` and its one figure stayed behind.
+A token whose component is gone is dead the moment the component is.)*
 
 **Extensible taxonomies, not closed enums.** Muscle groups, equipment, movement
 patterns and categories are raw-value-backed structs with static constants.

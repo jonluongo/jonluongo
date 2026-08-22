@@ -472,15 +472,6 @@ enum SetTableMetrics {
         bottom: Spacing.tight, trailing: PanelMetrics.contentInset)
 }
 
-/// The one figure the progress rule needs.
-enum ProgressMetrics {
-
-    /// How tall the filled track is. Thin enough to read as a rule under a line
-    /// of text rather than as a component of its own — the fraction is support
-    /// for the words above it, not the subject of the row.
-    static let height: CGFloat = 4
-}
-
 /// The geometry every panel shares.
 ///
 /// It lives here rather than in `SetTableMetrics` because a panel is not a set
