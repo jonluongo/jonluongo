@@ -84,7 +84,7 @@ struct SessionFinishSection: View {
             // which are already on the recorded ground.
             PrimaryActionButton(
                 title: justFinished
-                    ? "Finished" : (isLogged ? "Mark as Unfinished" : "Finish workout"),
+                    ? "Finished" : (isLogged ? "Mark as unfinished" : "Finish workout"),
                 systemImage: justFinished
                     ? "checkmark" : (isLogged ? "arrow.uturn.backward" : "checkmark"),
                 // Taking a session back is a correction, not an action the

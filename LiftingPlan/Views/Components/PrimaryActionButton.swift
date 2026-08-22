@@ -137,7 +137,7 @@ struct PrimaryActionButton: View {
         PrimaryActionButton(
             title: "Finish workout", systemImage: "checkmark", prominence: .tentative) {}
         PrimaryActionButton(
-            title: "Mark as Unfinished", systemImage: "arrow.uturn.backward",
+            title: "Mark as unfinished", systemImage: "arrow.uturn.backward",
             prominence: .quiet) {}
     }
     .padding()
