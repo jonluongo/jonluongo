@@ -435,6 +435,56 @@ struct PlanArchiveTests {
         #expect(try subject.archivedPlans().isEmpty)
     }
 
+    // MARK: - The version kept before an edit
+
+    @Test("The version kept before an edit goes in the versions folder, not the root")
+    func aKeptNoteIsNotLooseInTheRoot() throws {
+        // **The container root is what a person reads to see what the loop is
+        // doing** — four names, both machines looking for them. One copy per
+        // edit accumulates there without bound, for files nothing reads back.
+        // Untested, this had drifted from the format the project documents.
+        let (subject, directory) = try folder()
+        try subject.writeNote("# Account\n\n## Recovery\n- Sleeps six.\n", as: .account)
+
+        try subject.keepCopy(of: "# Account\n\n## Recovery\n- Sleeps six.\n", as: .account)
+
+        let root = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+        #expect(root.contains(NoteFile.account.filename), "the live note stays where it is")
+        #expect(root.filter { $0.hasSuffix(".md") } == [NoteFile.account.filename],
+                "and it is the only markdown loose in the root: \(root)")
+
+        let kept = try FileManager.default.contentsOfDirectory(
+            atPath: directory.appending(path: DocumentFolder.noteVersionFolder).path)
+        #expect(kept.count == 1)
+        #expect(kept.allSatisfy { $0.hasPrefix(NoteFile.account.basename) })
+    }
+
+    @Test("Two edits keep two versions rather than overwriting one backup")
+    func everyVersionIsKept() throws {
+        // **The same note, twice, as fast as the machine goes.** A coach fixing
+        // two sections makes two tool calls back to back; at second precision
+        // the second copy landed on the first's name and the intermediate
+        // version was gone — one backup that keeps being overwritten, which is
+        // what keeping a *dated* copy exists to avoid.
+        let (subject, directory) = try folder()
+        try subject.keepCopy(of: "first", as: .account)
+        try subject.keepCopy(of: "second", as: .account)
+
+        let kept = try FileManager.default.contentsOfDirectory(
+            atPath: directory.appending(path: DocumentFolder.noteVersionFolder).path)
+        #expect(kept.count == 2, "\(kept)")
+    }
+
+    @Test("Keeping a copy does not disturb the note being read")
+    func theLiveNoteIsUntouched() throws {
+        let (subject, _) = try folder()
+        try subject.writeNote("live", as: .account)
+
+        try subject.keepCopy(of: "live", as: .account)
+
+        #expect(try subject.readNote(.account) == "live")
+    }
+
     @Test("Archiving does not disturb the plan waiting to be read")
     func theLivePlanIsUntouched() throws {
         let (subject, _) = try folder()

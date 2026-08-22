@@ -107,6 +107,8 @@ public struct DocumentFolder: DocumentTransport {
     /// its ID. A folder rather than a suffix on the name, so the two documents
     /// of the live loop stay the only things at the top level.
     public static let planArchiveFolder = "plans"
+    /// Where the version kept before each note edit goes.
+    public static let noteVersionFolder = "notes"
     /// Every file the server writes and the app watches for. A caller that has
     /// to notice arrivals reads this rather than restating the names, so a
     /// document that is written but never watched for cannot happen.
@@ -205,18 +207,34 @@ public struct DocumentFolder: DocumentTransport {
     /// edit.** Prose has no refusal machinery of its own, so the guard is at the
     /// other end: `update_notes` states the text it expects to replace and is
     /// refused if that text is not there.
-    /// Keeps the version about to be replaced, beside the note itself.
+    /// Keeps the version about to be replaced, in the versions folder.
     ///
     /// **A few kilobytes against losing what the coach wrote.** An anchored edit
     /// is the guard — it refuses when the text it expects is not there — and
     /// this is the backstop for anything it still gets wrong. Named by the
     /// moment it was kept, so the folder reads as a history rather than as one
     /// backup that keeps being overwritten.
+    ///
+    /// **It goes in `notes/`, not beside the live file.** One copy per edit
+    /// accumulates without bound, and the container root is where the loop's
+    /// live documents are — the four names both machines look for. Dated copies
+    /// piling up among them make the one folder a person has to read to see
+    /// what the loop is doing unreadable, for files nothing reads back. The
+    /// plan archive is in `plans/` for the same reason.
+    /// **Stamped to the millisecond, because two edits land in one second.**
+    /// A coach fixing two sections of a note makes two tool calls back to back,
+    /// and at second precision the second copy overwrote the first — leaving one
+    /// backup that keeps being overwritten, which is the thing this is named to
+    /// avoid.
     public func keepCopy(of text: String, as note: NoteFile) throws {
-        let stamp = ISO8601DateFormatter().string(from: Date())
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let stamp = formatter.string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
+        let folder = directory.appending(path: Self.noteVersionFolder)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         try Data(text.utf8).write(
-            to: directory.appending(path: "\(note.basename).\(stamp).md"), options: .atomic)
+            to: folder.appending(path: "\(note.basename).\(stamp).md"), options: .atomic)
     }
 
     public func writeNote(_ text: String, as note: NoteFile) throws {

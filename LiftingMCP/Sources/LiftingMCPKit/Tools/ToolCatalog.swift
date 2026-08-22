@@ -158,22 +158,27 @@ public enum ToolCatalog {
     static let updateNotesDefinition = ToolDefinition(
         name: updateNotes,
         title: "Update notes",
+        // **What belongs in each note is stated once, beside the templates that
+        // create the sections.** This paragraph used to be written out here as
+        // well, and had drifted: it told the coach `ACCOUNT.md` held *what he
+        // trains for* and *his equipment* — both of which moved to `PROGRAM.md`
+        // when the sections were reworked — and to append under *Injuries and
+        // limits* and *Bodyweight*, neither of which exists any more. A second
+        // copy of a description is a second thing to keep true, and this one was
+        // not. `NoteFile.guidance` is the copy that ships with the headings.
         description: """
             Edits one of the two markdown notes the user's app renders.
 
-            'ACCOUNT.md' is who he is: what he trains for, his background, his \
-            injuries and limits, what he avoids and why, his equipment, and his \
-            bodyweight over time. 'PROGRAM.md' is why this programme — the \
-            approach, what is being progressed, what to watch, and what makes a \
-            given block a deload.
+            \(NoteFile.allCases.map { "'\($0.filename)' — \($0.guidance)" }
+                .joined(separator: "\n\n"))
 
             This is an anchored edit, not a rewrite. State 'oldText' exactly as \
             it appears and it is replaced by 'newText'. If 'oldText' is not \
             found, or is found more than once, nothing is written — read the \
             note first rather than guessing at it.
 
-            Append rather than replace under 'Injuries and limits' and \
-            'Bodyweight': those are dated observations, and the earlier ones are \
+            Append rather than replace where a section accrues: 'Constraints' \
+            and 'Background' hold dated observations, and the earlier ones are \
             the history.
             """,
         inputSchema: object([
