@@ -73,10 +73,14 @@ enum SetEntry {
     /// measure it was prescribed in. One field, one measure, chosen by the
     /// prescription and never by what happens to be stored.
     static func workText(of record: PerformedSet, measure: WorkMeasure) -> String {
+        // **Asked of the prescription, then read from the record.** The field
+        // shown is the one the prescription named; a record whose measure
+        // differs — which nothing can now write — shows nothing rather than a
+        // figure under the wrong unit.
         switch measure {
-        case .repetitions: text(forReps: record.reps)
-        case .time: text(forSeconds: record.durationSeconds)
-        case .distance: text(for: record.distance)
+        case .repetitions: text(forReps: record.work?.reps)
+        case .time: text(forSeconds: record.work?.durationSeconds)
+        case .distance: text(for: record.work?.carried)
         }
     }
 

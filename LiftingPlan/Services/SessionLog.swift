@@ -64,8 +64,7 @@ struct SessionLog {
         let performed = PerformedSet(
             setIndex: slot.planned?.setIndex ?? (performance.sets ?? []).count,
             isWarmup: slot.isWarmup,
-            load: load, reps: work.reps, durationSeconds: work.durationSeconds,
-            distance: work.carried, completedAt: moment)
+            load: load, work: work, completedAt: moment)
         performed.planned = slot.planned
         performed.exercise = performance
         context.insert(performed)

@@ -71,7 +71,7 @@ enum PerformanceHistory {
     private static func value(of set: PerformedSet) -> SnapshotPerformedSet {
         SnapshotPerformedSet(
             setIndex: set.setIndex, isWarmup: set.isWarmup, load: set.load,
-            reps: set.reps, durationSeconds: set.durationSeconds,
-            distance: set.distance, completedAt: set.completedAt)
+            reps: set.work?.reps, durationSeconds: set.work?.durationSeconds,
+            distance: set.work?.carried, completedAt: set.completedAt)
     }
 }

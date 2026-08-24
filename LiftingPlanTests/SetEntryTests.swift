@@ -269,9 +269,10 @@ struct RecordedMeasureTests {
         try log(session, context).record(slot, work: .time(seconds: 45))
 
         let performed = try #require(slot.exercise.session?.performedExercises?.first?.sets?.first)
-        #expect(performed.durationSeconds == 45)
-        #expect(performed.reps == nil, "a hold is not a count")
-        #expect(performed.distance == nil)
+        // **One assertion says all three things now.** A typed value that
+        // equals `.time` cannot also hold a count, which is the invariant the
+        // three separate columns could only be checked for.
+        #expect(performed.work == .time(seconds: 45))
     }
 
     @Test("A carry is written as a distance, in the unit it was prescribed in")
@@ -280,9 +281,8 @@ struct RecordedMeasureTests {
         try log(session, context).record(slot, work: .distance(Distance(value: 40, unit: .metres)))
 
         let performed = try #require(slot.exercise.session?.performedExercises?.first?.sets?.first)
-        #expect(performed.distance?.unit == .metres)
-        #expect(performed.reps == nil, "forty metres is not forty reps")
-        #expect(performed.durationSeconds == nil)
+        #expect(performed.work == .distance(Distance(value: 40, unit: .metres)),
+                "forty metres is not forty reps, and keeps the unit it was prescribed in")
     }
 
     @Test("A count is written as reps")
@@ -291,9 +291,7 @@ struct RecordedMeasureTests {
         try log(session, context).record(slot, work: .repetitions(8))
 
         let performed = try #require(slot.exercise.session?.performedExercises?.first?.sets?.first)
-        #expect(performed.reps == 8)
-        #expect(performed.durationSeconds == nil)
-        #expect(performed.distance == nil)
+        #expect(performed.work == .repetitions(8))
     }
 
     @Test("A ticked set that said no figure records the tick, not a zero")
@@ -304,7 +302,11 @@ struct RecordedMeasureTests {
         try log(session, context).record(slot, work: .repetitions(nil))
 
         let performed = try #require(slot.exercise.session?.performedExercises?.first?.sets?.first)
-        #expect(performed.reps == nil)
+        // **`nil`, and the measure is not kept.** Which measure a blank set
+        // was performed in is a fact the prescription already states, and
+        // storing it here would be the same fact in two places. The row's
+        // existence is what says the set happened.
+        #expect(performed.work == nil)
     }
 
     @Test("Every case of WorkDone fills exactly one field")

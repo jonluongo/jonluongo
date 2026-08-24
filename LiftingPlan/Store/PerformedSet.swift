@@ -36,14 +36,55 @@ final class PerformedSet {
     var isWarmup: Bool = false
     /// What was on the bar. `nil` for bodyweight, and `nil` when he did not say.
     var load: Mass?
-    /// How many. `nil` when he ticked the set without stating a count — which is
-    /// not the same as doing none, and is why this is optional rather than zero.
-    var reps: Int?
-    /// How long it was held. `nil` when it was not timed.
-    var durationSeconds: Int?
-    /// How far it was carried, in the unit it was prescribed in. Never
-    /// converted: forty metres and forty yards are different work.
-    var distance: Distance?
+    /// The figure, in whichever column its measure uses. **Private, exactly as
+    /// `PlannedSet`'s four target columns are** — read `work` instead.
+    ///
+    /// Three peer optionals can say *45 seconds and 8 reps*, which is a set
+    /// logged two ways and therefore logged wrong. Nothing produces that any
+    /// more, because `WorkDone` closed the write path — but a store that can
+    /// still hold it is a store whose invariant lives in the callers, and its
+    /// mirror table solved this properly. `PlannedSet` keeps four raw columns
+    /// behind one typed `target`; this keeps three behind one typed `work`, and
+    /// the exclusive setter is what makes the illegal state unreachable rather
+    /// than merely unwritten.
+    ///
+    /// `nil` in all three is a set he ticked without stating a figure, which is
+    /// not the same as stating none.
+    private var reps: Int?
+    private var durationSeconds: Int?
+    /// In the unit it was prescribed in. Never converted: forty metres and
+    /// forty yards are different work.
+    private var distance: Distance?
+
+    /// What the set came to, in the one measure it was performed in.
+    ///
+    /// **The interface; the three columns are implementation.** Setting it
+    /// writes exactly one and clears the other two, so a row cannot state two
+    /// measures however a caller is written.
+    ///
+    /// **`nil` means no figure was stated**, not that nothing happened — the
+    /// row's existence is what says it happened. **This does not round-trip
+    /// `.repetitions(nil)` as itself**, and that is deliberate rather than
+    /// lossy: *which* measure a blank set was performed in is a fact about the
+    /// prescription, which already states it, and storing it here would be the
+    /// same fact in two places. A set the user added with no figure and no
+    /// prescription behind it is the one case that cannot be recovered, and it
+    /// carries nothing worth recovering.
+    var work: WorkDone? {
+        get {
+            // The setter writes at most one of these, so this reads whichever
+            // it wrote. The order is a formality, not a precedence rule.
+            if let reps { return .repetitions(reps) }
+            if let durationSeconds { return .time(seconds: durationSeconds) }
+            if let distance { return .distance(distance) }
+            return nil
+        }
+        set {
+            reps = newValue?.reps
+            durationSeconds = newValue?.durationSeconds
+            distance = newValue?.carried
+        }
+    }
     /// The moment the set was recorded. Consecutive values are what rest taken
     /// is derived from.
     var completedAt: Date = Date()
@@ -55,16 +96,15 @@ final class PerformedSet {
 
     init(
         setIndex: Int = 0, isWarmup: Bool = false, load: Mass? = nil,
-        reps: Int? = nil, durationSeconds: Int? = nil, distance: Distance? = nil,
-        completedAt: Date = Date()
+        work: WorkDone? = nil, completedAt: Date = Date()
     ) {
         self.setIndex = setIndex
         self.isWarmup = isWarmup
         self.load = load
-        self.reps = reps
-        self.durationSeconds = durationSeconds
-        self.distance = distance
         self.completedAt = completedAt
+        // Through the setter, so there is one place that decides which column a
+        // measure lands in and it cannot be bypassed at construction.
+        self.work = work
     }
 
     /// Whether this set counts toward progression: work rather than a warm-up.
