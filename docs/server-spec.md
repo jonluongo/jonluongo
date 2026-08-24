@@ -117,8 +117,8 @@ carry it as faithfully as a file did.
    exists precisely because a resource that fails to resolve looks like an empty
    catalog rather than an error, so **running the package suites on Linux is the
    check**, not just building them.
-2. HTTP shell for the server; the stdio one stays for local work. **Split in
-   two on purpose, and the first half is built** (`HTTPEndpoint`): every rule
+2. ~~HTTP shell for the server~~ **Done.** The stdio shell stays for local work.
+   Split in two on purpose (`HTTPEndpoint` + `superset-server`): every rule
    about what a client may send and what comes back is decided and tested with
    no socket, so the library that eventually opens the port inherits no
    decisions. **That library is the project's first external dependency and is
@@ -126,10 +126,25 @@ carry it as faithfully as a file did.
    bringing five packages "into a project that otherwise has none", while naming
    the condition to revisit: *if the surface ever grows past this file*. Going
    from a local tool to a hosted server is that condition. The candidates are
-   Hummingbird (small, async-native, purpose-built for this) or swift-nio
-   directly (one repo, more code here); Vapor is too much for one endpoint.
+   **Settled on swift-nio, against the first recommendation, on measurement.**
+   Hummingbird was recommended believing its graph was small; resolved, it is
+   **24 packages** — TLS, HTTP/2, certificates, ASN.1, crypto, an HTTP *client*,
+   tracing, metrics — for one POST endpoint behind a proxy that already
+   terminates TLS. swift-nio with `NIOHTTP1` is **4**, all from `apple/`, which
+   is fewer than the five that got the MCP SDK rejected, and the HTTP/1.1 codec
+   comes with it so nothing parses HTTP by hand. **It is confined to the
+   `superset-server` target**: `LiftingMCPKit` and `LiftingKit` still link
+   nothing third-party, so the whole tested core stays portable.
 3. ~~Server-side `TrainingDocuments` on a volume.~~ **Done, by already being
    done** — see the table. It is configuration, not code.
-4. **Auth, once Jon has ruled.**
+4. **Auth: the interface is settled, the issuer is not.** Every request must
+   present `Authorization: Bearer <token>`, compared in constant time, and
+   **the server exits rather than starting without a secret** — a server that
+   comes up open is the failure that looks like success. What *mints* the token
+   is still open, and `HTTPEndpoint.Authorization` is the seam that lets it
+   change without touching a rule. The app's bootstrap is the unsolved half:
+   a secret baked into the binary is not acceptable, and the app asks the user
+   nothing about training — a one-time sign-in is a different category and is
+   the exception to argue for when it comes to that.
 5. The app's HTTP transport, and delete what iCloud leaves behind.
 6. Register the connector, and run the loop end to end from the phone.
