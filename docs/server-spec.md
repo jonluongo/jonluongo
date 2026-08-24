@@ -1,6 +1,8 @@
 # The server the phone talks to
 
-> **Status: proposed, nothing built.** Written 2026-08-24 after Jon's call that
+> **Status: proposed. One piece built — `HTTPEndpoint`, step 2's first half.**
+> Everything else here is still a proposal, and **auth is waiting on Jon**.
+> Written 2026-08-24 after Jon's call that
 > the destination is phone-only — Claude on the phone, Superset on the phone,
 > the Mac disposable. Read `decided.md` first; this supersedes nothing in it
 > except the transport.
@@ -108,7 +110,17 @@ carry it as faithfully as a file did.
 
 1. Confirm the Linux build for real, in Fly's remote builder — free, and the
    one fact still assumed rather than checked.
-2. HTTP shell for the server; the stdio one stays for local work.
+2. HTTP shell for the server; the stdio one stays for local work. **Split in
+   two on purpose, and the first half is built** (`HTTPEndpoint`): every rule
+   about what a client may send and what comes back is decided and tested with
+   no socket, so the library that eventually opens the port inherits no
+   decisions. **That library is the project's first external dependency and is
+   not mine to choose** — `MCPServer`'s own comment rejects the official SDK for
+   bringing five packages "into a project that otherwise has none", while naming
+   the condition to revisit: *if the surface ever grows past this file*. Going
+   from a local tool to a hosted server is that condition. The candidates are
+   Hummingbird (small, async-native, purpose-built for this) or swift-nio
+   directly (one repo, more code here); Vapor is too much for one endpoint.
 3. Server-side `TrainingDocuments` on a volume.
 4. **Auth, once Jon has ruled.**
 5. The app's HTTP transport, and delete what iCloud leaves behind.

@@ -272,7 +272,7 @@ private enum RPCOutcome {
 }
 
 /// The JSON-RPC 2.0 codes this server uses.
-private enum RPCErrorCode: Int {
+enum RPCErrorCode: Int {
     case parseError = -32700
     case invalidRequest = -32600
     case methodNotFound = -32601
