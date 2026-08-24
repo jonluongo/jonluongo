@@ -52,7 +52,7 @@ here.
 |---|---|
 | `MCPServer` and every tool | **None.** |
 | stdio shell | Replaced by an HTTP shell: one POST endpoint that hands the body to `handle(line:)` and returns the answer. |
-| `TrainingDocuments` conformance | A directory on a Fly volume. `DocumentFolder` is already exactly this and may port unchanged. |
+| `TrainingDocuments` conformance | **None — checked 2026-08-24.** `DocumentFolder` already conforms, in an extension in `LiftingMCPKit`; its directory is *injected* rather than resolved, so a volume path is just an argument; every Foundation call it makes (`contentsOfDirectory`, `createDirectory`, `fileExists`, atomic writes) is Linux-safe; and `DocumentTransportTests` already exercises it against a plain temp directory, which is what a volume is. `ServerConfiguration` already takes the path by `--documents` or `LIFTINGPLAN_DOCUMENTS_DIR`. |
 | App's `DocumentTransport` | New HTTP conformance replacing `ICloudDocumentTransport`. |
 | `UbiquitousDocumentWatcher` | **Deleted.** A watcher exists because iCloud arrives whenever it likes; the phone can ask. |
 | Arrival model | The app polls on foreground and after finishing, instead of being told. |
@@ -109,7 +109,14 @@ carry it as faithfully as a file did.
 ## Order
 
 1. Confirm the Linux build for real, in Fly's remote builder — free, and the
-   one fact still assumed rather than checked.
+   one fact still assumed rather than checked. **Two things to watch when it
+   runs, both narrow.** `ISO8601DateFormatter` with `.withFractionalSeconds`
+   names the kept copy of a note; it is not on any wire, so a Linux difference
+   costs a filename and not a document. And the catalog resolves through
+   `Bundle.module`, which SwiftPM generates on Linux too — `CatalogIntegrityTests`
+   exists precisely because a resource that fails to resolve looks like an empty
+   catalog rather than an error, so **running the package suites on Linux is the
+   check**, not just building them.
 2. HTTP shell for the server; the stdio one stays for local work. **Split in
    two on purpose, and the first half is built** (`HTTPEndpoint`): every rule
    about what a client may send and what comes back is decided and tested with
@@ -121,7 +128,8 @@ carry it as faithfully as a file did.
    from a local tool to a hosted server is that condition. The candidates are
    Hummingbird (small, async-native, purpose-built for this) or swift-nio
    directly (one repo, more code here); Vapor is too much for one endpoint.
-3. Server-side `TrainingDocuments` on a volume.
+3. ~~Server-side `TrainingDocuments` on a volume.~~ **Done, by already being
+   done** — see the table. It is configuration, not code.
 4. **Auth, once Jon has ruled.**
 5. The app's HTTP transport, and delete what iCloud leaves behind.
 6. Register the connector, and run the loop end to end from the phone.

@@ -420,3 +420,9 @@ So a green line with a plausible count is not evidence that everything ran —
 **compare the count against the last known total**, and re-run when it has
 dropped. A number that has gone down while the code has not is the only signal
 there is, and it looks exactly like success.
+
+**It happened again on 2026-08-24** — `153 tests in 29 suites passed`, twenty-two
+short of 175, on sources that had not been touched since the run before it; two
+immediate re-runs both reported 175. So it recurs, it is not a fixed shortfall,
+and the suite count stays right while the test count drops. The procedure above
+is the whole defence: read the number, and re-run when it falls.

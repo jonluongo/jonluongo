@@ -311,6 +311,15 @@ becomes HTTP to a hosted server and iCloud leaves entirely; see
 were wrong**, because they optimised a stepping stone: the lesson is to ask
 what the destination is before repairing the route.
 
+**A second, checked 2026-08-24: the server's storage step is already done.**
+`DocumentFolder` conforms to `TrainingDocuments` in an extension, takes its
+directory as an argument rather than resolving one, uses only Linux-safe
+Foundation calls, and is already tested against a plain temporary directory —
+which is exactly what a hosted volume is. `ServerConfiguration` already accepts
+the path. A planned step turned out to be configuration, and the reason is the
+same one below: seams that were drawn for testability turn out to be seams for
+portability.
+
 **One fact makes the move cheap, and it was checked rather than assumed.**
 `LiftingKit` and `LiftingMCPKit` import nothing but Foundation and each other —
 every ubiquity call, the `NSMetadataQuery` watcher and the upload-failure
