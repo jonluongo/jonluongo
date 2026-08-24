@@ -127,9 +127,10 @@ extension ToolRunner {
             "setIndex": .integer(set.setIndex),
             "isWarmup": set.isWarmup ? .bool(true) : .null,
             "load": .mass(set.load),
-            "reps": set.reps.map { .integer($0) } ?? .null,
-            "durationSeconds": set.durationSeconds.map { .integer($0) } ?? .null,
-            "distance": .distance(set.distance),
+            // Read off the one measure, so the report cannot state two.
+            "reps": set.work?.reps.map { .integer($0) } ?? .null,
+            "durationSeconds": set.work?.durationSeconds.map { .integer($0) } ?? .null,
+            "distance": .distance(set.work?.carried),
             "completedAt": .date(set.completedAt),
         ])
     }

@@ -15,38 +15,34 @@ struct LoggedWorkSummaryTests {
     /// zero, because the model could not express *he did not say* — so a carry
     /// fixture passed `reps: 0` and the row it produced said `× 0`, which is the
     /// defect this suite exists to guard against.
-    private func line(
-        load: Mass? = nil, reps: Int? = nil, seconds: Int? = nil,
-        distance: Distance? = nil
-    ) -> String? {
+    private func line(load: Mass? = nil, _ work: WorkDone? = nil) -> String? {
         LoggedWorkSummary.text(
             SnapshotPerformedSet(
-                setIndex: 0, load: load, reps: reps, durationSeconds: seconds,
-                distance: distance, completedAt: .distantPast))
+                setIndex: 0, load: load, work: work, completedAt: .distantPast))
     }
 
     @Test("A counted set is a load and a count")
     func countedSet() {
-        #expect(line(load: Mass(value: 185, unit: .pounds), reps: 8) == "185 lb × 8")
+        #expect(line(load: Mass(value: 185, unit: .pounds), .repetitions(8)) == "185 lb × 8")
     }
 
     @Test("A carry is a load and a distance, in the unit it was logged in")
     func carriedSet() {
         let line = line(
-            load: Mass(value: 70, unit: .pounds), reps: nil,
-            distance: Distance(value: 40, unit: .metres))
+            load: Mass(value: 70, unit: .pounds),
+            .distance(Distance(value: 40, unit: .metres)))
 
         #expect(line == "70 lb × 40 m", "not 70 lb × 0")
     }
 
     @Test("A hold with no load is seconds, not zero repetitions")
     func heldSet() {
-        #expect(line(reps: nil, seconds: 45) == "45 s")
+        #expect(line(.time(seconds: 45)) == "45 s")
     }
 
     @Test("A counted set with no load is a count")
     func bodyweightSet() {
-        #expect(line(reps: 12) == "12")
+        #expect(line(.repetitions(12)) == "12")
     }
 
     @Test("Nothing converts: a load and a distance are both read as recorded")
@@ -58,7 +54,7 @@ struct LoggedWorkSummaryTests {
         // and a record that canonicalized would misreport what was lifted.
         let line = line(
             load: Mass(value: 100, unit: .kilograms),
-            distance: Distance(value: 50, unit: .yards))
+            .distance(Distance(value: 50, unit: .yards)))
 
         #expect(line == "100 kg × 50 yd")
     }

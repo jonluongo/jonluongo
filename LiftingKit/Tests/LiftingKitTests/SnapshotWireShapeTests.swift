@@ -83,8 +83,8 @@ struct SnapshotWireShapeTests {
             SnapshotPerformedExercise(
                 exerciseID: bench, occurredAt: Self.instant, blockOrdinal: 1, sessionOrdinal: 1,
                 sets: [
-                    SnapshotPerformedSet(setIndex: 0, reps: 5, completedAt: Self.instant),
-                    SnapshotPerformedSet(setIndex: 1, reps: 5, completedAt: Self.instant),
+                    SnapshotPerformedSet(setIndex: 0, work: .repetitions(5), completedAt: Self.instant),
+                    SnapshotPerformedSet(setIndex: 1, work: .repetitions(5), completedAt: Self.instant),
                 ])
         ]))
         let performances = try #require(written["performances"] as? [[String: Any]])
@@ -123,7 +123,7 @@ struct SnapshotWireShapeTests {
         let written = try text(snapshot(performances: [
             SnapshotPerformedExercise(
                 exerciseID: bench, occurredAt: Self.instant,
-                sets: [SnapshotPerformedSet(setIndex: 0, reps: 5, completedAt: Self.instant)])
+                sets: [SnapshotPerformedSet(setIndex: 0, work: .repetitions(5), completedAt: Self.instant)])
         ]))
         #expect(!written.contains("isWarmup"))
     }
@@ -173,7 +173,7 @@ struct SnapshotWireShapeTests {
         #expect(read.sessions.first?.prescription.focus == "Push")
         #expect(read.sessions.first?.isFinished == false)
         #expect(read.performances.count == 1)
-        #expect(read.performances.first?.sets.first?.reps == 5)
+        #expect(read.performances.first?.sets.first?.work?.reps == 5)
         #expect(read.performances.first?.sets.first?.load == Mass(value: 225, unit: .pounds))
     }
 

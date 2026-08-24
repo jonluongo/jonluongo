@@ -150,26 +150,28 @@ public struct SnapshotPerformedSet: Codable, Hashable, Sendable {
     public let isWarmup: Bool
     /// What was on the bar. `nil` for bodyweight, and `nil` when he did not say.
     public let load: Mass?
-    /// How many. `nil` when he did not state a count.
-    public let reps: Int?
-    /// How long it was held. `nil` when it was not timed.
-    public let durationSeconds: Int?
-    /// How far it was carried, in the unit prescribed. Never converted.
-    public let distance: Distance?
+    /// What the set came to, in the one measure it was performed in.
+    ///
+    /// **One value, three wire keys.** The file still carries `reps`,
+    /// `durationSeconds` and `distance` as separate optional keys — the format
+    /// is unchanged and no version moves — but the Swift type holds them as the
+    /// single measure they are, so a report cannot be built that states two and
+    /// a file that states two is refused rather than read around.
+    ///
+    /// `nil` is a set ticked without a figure, which is not a set of none.
+    public let work: WorkDone?
     /// The moment it was recorded. Consecutive values are what rest actually
     /// taken is derived from, which is truer than what a timer counted.
     public let completedAt: Date
 
     public init(
-        setIndex: Int, isWarmup: Bool = false, load: Mass? = nil, reps: Int? = nil,
-        durationSeconds: Int? = nil, distance: Distance? = nil, completedAt: Date
+        setIndex: Int, isWarmup: Bool = false, load: Mass? = nil,
+        work: WorkDone? = nil, completedAt: Date
     ) {
         self.setIndex = setIndex
         self.isWarmup = isWarmup
         self.load = load
-        self.reps = reps
-        self.durationSeconds = durationSeconds
-        self.distance = distance
+        self.work = work
         self.completedAt = completedAt
     }
 
@@ -183,10 +185,28 @@ public struct SnapshotPerformedSet: Codable, Hashable, Sendable {
         setIndex = try container.decode(Int.self, forKey: .setIndex)
         isWarmup = try container.decodeIfPresent(Bool.self, forKey: .isWarmup) ?? false
         load = try container.decodeIfPresent(Mass.self, forKey: .load)
-        reps = try container.decodeIfPresent(Int.self, forKey: .reps)
-        durationSeconds = try container.decodeIfPresent(Int.self, forKey: .durationSeconds)
-        distance = try container.decodeIfPresent(Distance.self, forKey: .distance)
         completedAt = try container.decode(Date.self, forKey: .completedAt)
+
+        // **Refused rather than read around.** Reading the first of two and
+        // dropping the rest is the failure that reports success: a hold counted
+        // as reps inflates every volume total after it and nothing says so.
+        let setIndexForError = setIndex
+        let reps = try container.decodeIfPresent(Int.self, forKey: .reps)
+        let seconds = try container.decodeIfPresent(Int.self, forKey: .durationSeconds)
+        let carried = try container.decodeIfPresent(Distance.self, forKey: .distance)
+        let stated = [
+            reps.map { _ in "reps" }, seconds.map { _ in "durationSeconds" },
+            carried.map { _ in "distance" },
+        ].compactMap { $0 }
+        guard stated.count <= 1 else {
+            throw DocumentRefusal.severalMeasures(
+                stated: stated, setIndex: setIndexForError,
+                location: decoder.documentLocation)
+        }
+        if let reps { work = .repetitions(reps) }
+        else if let seconds { work = .time(seconds: seconds) }
+        else if let carried { work = .distance(carried) }
+        else { work = nil }
     }
 
     /// Written by hand so a working set carries no `"isWarmup": false`, matching
@@ -198,9 +218,10 @@ public struct SnapshotPerformedSet: Codable, Hashable, Sendable {
         try container.encode(setIndex, forKey: .setIndex)
         if isWarmup { try container.encode(true, forKey: .isWarmup) }
         try container.encodeIfPresent(load, forKey: .load)
-        try container.encodeIfPresent(reps, forKey: .reps)
-        try container.encodeIfPresent(durationSeconds, forKey: .durationSeconds)
-        try container.encodeIfPresent(distance, forKey: .distance)
+        // From the one value, so the file cannot state two.
+        try container.encodeIfPresent(work?.reps, forKey: .reps)
+        try container.encodeIfPresent(work?.durationSeconds, forKey: .durationSeconds)
+        try container.encodeIfPresent(work?.carried, forKey: .distance)
         try container.encode(completedAt, forKey: .completedAt)
     }
 }

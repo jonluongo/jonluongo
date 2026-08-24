@@ -110,14 +110,13 @@ func fixtureSession(
 }
 
 func fixturePerformedSet(
-    index: Int = 0, load: Double? = 100, reps: Int? = 5,
-    seconds: Int? = nil, distance: Distance? = nil,
+    index: Int = 0, load: Double? = 100, work: WorkDone? = .repetitions(5),
     warmup: Bool = false, at when: Date = daysAgo(2)
 ) -> SnapshotPerformedSet {
     SnapshotPerformedSet(
         setIndex: index, isWarmup: warmup,
         load: load.map { Mass(value: $0, unit: .kilograms) },
-        reps: reps, durationSeconds: seconds, distance: distance, completedAt: when)
+        work: work, completedAt: when)
 }
 
 func fixturePerformance(

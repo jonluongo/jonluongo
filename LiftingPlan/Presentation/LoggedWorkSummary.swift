@@ -40,11 +40,16 @@ enum LoggedWorkSummary {
     /// only a stated number prints, and a stated zero prints as zero, because
     /// somebody said it.
     private static func work(_ set: SnapshotPerformedSet) -> String? {
-        if let reps = set.reps { return "\(reps)" }
-        if let seconds = set.durationSeconds { return "\(seconds) s" }
-        // `Distance` writes itself, so a carry reads the same here as it does
-        // anywhere else the record is shown.
-        if let distance = set.distance { return distance.description }
-        return nil
+        // **A switch rather than a chain of guesses.** The chain read `reps`
+        // first and would have shown a count for a set that also stated
+        // seconds; the record can no longer say both, and this can no longer
+        // pick. `Distance` writes itself, so a carry reads the same here as it
+        // does anywhere else the record is shown.
+        switch set.work {
+        case .repetitions(let count): return count.map { "\($0)" }
+        case .time(let held): return held.map { "\($0) s" }
+        case .distance(let carried): return carried?.description
+        case nil: return nil
+        }
     }
 }

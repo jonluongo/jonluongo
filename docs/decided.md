@@ -72,6 +72,23 @@ to be guessed at. `nothingPrescribedBeyond` in the context resource is the cue
 that the next block is due; the routine page says the same thing to the user
 in words.
 
+**A set states one measure, and all three boundaries enforce it separately.**
+Added 2026-08-24, finishing what `WorkDone` began. The write path was closed
+first, then the store, then the wire — and the three are deliberately not one
+mechanism, because they fail differently. A **caller** can be written wrong, so
+`SessionLog.record` takes a single typed value. A **store** can be reached by a
+future caller, so `PerformedSet`'s three columns went private behind one `work`
+whose setter clears the others — mirroring `PlannedSet.target`, which had solved
+this already; that asymmetry between two tables named `Planned{X}` and
+`Performed{X}` was the finding. A **file** can be corrupt or hand-edited in a way
+no Swift type prevents, so `SnapshotPerformedSet` refuses one that states two,
+naming both keys and the set. **Reading the first of two is the silent failure**:
+a hold counted as reps inflates every volume total after it and no report says
+so. The wire format did not change — still three optional keys — so no version
+moved. **A load beside a distance is not two measures**, and there is a test
+saying so, because a weighted carry is one measure performed against a weight and
+refusing it would be the rule misreading what a set is.
+
 **A refusal the phone makes is carried back to the coach in the snapshot.**
 Added 2026-08-21. There are two checkpoints and the coach is present at only
 one: `write_plan` decodes the document and refuses a format error or an invented

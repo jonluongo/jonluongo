@@ -19,10 +19,16 @@ struct WorkTotals {
 
     mutating func add(_ set: SnapshotPerformedSet) {
         sets += 1
-        reps += set.reps ?? 0
-        seconds += set.durationSeconds ?? 0
-        if let carried = set.distance {
-            distance[carried.unit, default: 0] += carried.value
+        // **Exhaustive, so a set lands in exactly one total.** Three separate
+        // reads could each fire for the same set if the record ever stated two
+        // measures; a switch cannot, and a fourth measure will not compile here
+        // until it has been told which total it belongs to.
+        switch set.work {
+        case .repetitions(let count): reps += count ?? 0
+        case .time(let held): seconds += held ?? 0
+        case .distance(let carried):
+            if let carried { distance[carried.unit, default: 0] += carried.value }
+        case nil: break
         }
     }
 

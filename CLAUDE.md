@@ -271,13 +271,25 @@ honestly or refuse — never invent one.
 
 **A set is counted, held, or carried, and no two of them are the same number.**
 `Target` says which, read once at the document boundary and never re-guessed.
-`WorkMeasure` gives the single answer everything binds to — one value with three
-cases, never a set of booleans that could say two things at once. A performed set
-carries `reps`, `durationSeconds` and `distance` as separate fields, and which
-one a row writes is decided by what was prescribed, never by what was typed.
-Nothing may add seconds or metres into a rep total. A distance keeps the unit it
-was prescribed in and is never converted, exactly as `Mass` keeps its own. A hold
-that was not timed and a carry that did not happen are `nil`, never zero.
+`WorkMeasure` names which one a prescription asks for and `WorkDone` carries what
+a set came to — one value with three cases each, never a set of booleans that
+could say two things at once. Which measure a row writes is decided by what was
+prescribed, never by what was typed. Nothing may add seconds or metres into a rep
+total. A distance keeps the unit it was prescribed in and is never converted,
+exactly as `Mass` keeps its own. A hold that was not timed and a carry that did
+not happen are `nil`, never zero.
+
+**The rule is held at three boundaries, and none of them trusts the others.**
+`SessionLog.record` takes a `WorkDone`, so a caller cannot hand over two.
+`PerformedSet` keeps `reps`, `durationSeconds` and `distance` as **private**
+columns behind one `work`, whose setter clears the other two — the same shape
+`PlannedSet` uses for `target`, because CloudKit forbids non-optional stored
+properties and SwiftData silently drops a Codable enum, so the invariant lives in
+the accessor and a round-trip test guards the crossing. And
+`SnapshotPerformedSet` **refuses** a file whose set states two, naming both and
+the set, because a file can be corrupt or hand-edited in a way the store cannot.
+Reading the first of two and dropping the rest would count a hold as reps and
+inflate every total after it, with nothing in any report saying so.
 
 Adding a fourth measure means adding a case to `WorkMeasure`, which will not
 compile until every place that logs one has been told what to do with it.

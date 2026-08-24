@@ -79,9 +79,7 @@ enum SnapshotExporter {
             setIndex: set.setIndex,
             isWarmup: set.isWarmup,
             load: set.load,
-            reps: set.work?.reps,
-            durationSeconds: set.work?.durationSeconds,
-            distance: set.work?.carried,
+            work: set.work,
             completedAt: set.completedAt)
     }
 }

@@ -158,6 +158,25 @@ extension DocumentRefusal {
                 + "rest after each round.")
     }
 
+    /// Why a performed set may state only one measure.
+    ///
+    /// **A set measured two ways is a set logged wrong**, which is the whole
+    /// reason `WorkMeasure` is one value rather than three booleans. The phone
+    /// cannot write one — `PerformedSet.work` clears the other columns — so a
+    /// file that states two is corrupt or was edited by hand, and reading it
+    /// would report a number nobody performed into every total that follows.
+    /// Read around, it is the silent kind of wrong: a hold counted as reps
+    /// inflates volume and nothing in the report says so.
+    public static func severalMeasures(
+        stated: [String], setIndex: Int, location: String
+    ) -> DocumentRefusal {
+        .contradiction(
+            "A performed set states \(stated.joined(separator: " and "))"
+                + "\(said(location)), at set \(setIndex + 1): that is one set measured two "
+                + "ways, and there is no telling which of them happened. Nothing was taken "
+                + "in. A set is counted, held, or carried, and states exactly one.")
+    }
+
     /// Why a plan may state only one block.
     ///
     /// **The coach writes a block at a time, and the routine grows.** He is

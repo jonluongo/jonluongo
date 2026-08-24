@@ -89,8 +89,7 @@ private func makeSnapshot(catalogVersion: Int = 5) -> TrainingSnapshot {
                 exerciseID: ExerciseID(rawValue: "barbell-bench-press"),
                 occurredAt: instant, blockOrdinal: 1, sessionOrdinal: 1,
                 sets: [SnapshotPerformedSet(
-                    setIndex: 0, load: Mass(value: 225, unit: .pounds), reps: 5,
-                    completedAt: instant)])
+                    setIndex: 0, load: Mass(value: 225, unit: .pounds), work: .repetitions(5), completedAt: instant)])
         ]
     )
 }

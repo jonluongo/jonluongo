@@ -37,8 +37,7 @@ struct TrainingSnapshotTests {
             exerciseID: bench, occurredAt: Self.instant, source: source,
             blockOrdinal: block, sessionOrdinal: ordinal, userNote: "Felt heavy.",
             sets: [SnapshotPerformedSet(
-                setIndex: 0, load: Mass(value: 225, unit: .pounds), reps: 5,
-                completedAt: Self.instant)])
+                setIndex: 0, load: Mass(value: 225, unit: .pounds), work: .repetitions(5), completedAt: Self.instant)])
     }
 
     private func snapshot(
@@ -123,7 +122,7 @@ struct TrainingSnapshotTests {
 
         #expect(performed.exerciseID == bench)
         #expect(performed.sets.count == 1)
-        #expect(performed.sets.first?.reps == 5)
+        #expect(performed.sets.first?.work?.reps == 5)
         #expect(performed.userNote == "Felt heavy.")
     }
 
@@ -147,7 +146,7 @@ struct TrainingSnapshotTests {
         #expect(stated.source == .stated)
         #expect(stated.blockOrdinal == nil)
         #expect(stated.sessionOrdinal == nil)
-        #expect(stated.sets.first?.reps == 5, "he still did it; nobody watched")
+        #expect(stated.sets.first?.work?.reps == 5, "he still did it; nobody watched")
     }
 
     @Test("Performances of one lift read oldest first")
@@ -166,20 +165,81 @@ struct TrainingSnapshotTests {
     @Test("A hold, a carry and a count stay in their own fields")
     func measuresNeverMix() throws {
         let sets = [
-            SnapshotPerformedSet(setIndex: 0, reps: 8, completedAt: Self.instant),
-            SnapshotPerformedSet(setIndex: 1, durationSeconds: 45, completedAt: Self.instant),
+            SnapshotPerformedSet(setIndex: 0, work: .repetitions(8), completedAt: Self.instant),
+            SnapshotPerformedSet(setIndex: 1, work: .time(seconds: 45), completedAt: Self.instant),
             SnapshotPerformedSet(
-                setIndex: 2, distance: Distance(value: 40, unit: .metres),
-                completedAt: Self.instant),
+                setIndex: 2, work: .distance(Distance(value: 40, unit: .metres)), completedAt: Self.instant),
         ]
         let read = try roundTrip(snapshot(performances: [
             SnapshotPerformedExercise(exerciseID: bench, occurredAt: Self.instant, sets: sets)
         ]))
         let performed = try #require(read.performances.first)
 
-        #expect(performed.sets.map(\.reps) == [8, nil, nil])
-        #expect(performed.sets.map(\.durationSeconds) == [nil, 45, nil])
-        #expect(performed.sets.map { $0.distance?.value } == [nil, nil, 40])
+        // **One assertion where there were three.** A typed measure that equals
+        // `.time` cannot also hold a count, so this says the figure, the measure
+        // and the emptiness of the other two at once — which is what the three
+        // separate reads were only approximating.
+        #expect(performed.sets.map(\.work) == [
+            .repetitions(8),
+            .time(seconds: 45),
+            .distance(Distance(value: 40, unit: .metres)),
+        ])
+    }
+
+    @Test("A set stating two measures is refused, naming both and the set")
+    func aSetMeasuredTwoWaysIsRefused() throws {
+        // **The phone cannot write this** — `PerformedSet.work` clears the other
+        // columns — so a file that says it is corrupt or was hand-edited. Read
+        // around, it is the silent kind of wrong: taking the first of two would
+        // count a hold as reps and inflate every volume total after it, with
+        // nothing in any report saying so. Refusing is the only honest answer.
+        let error = #expect(throws: DocumentRefusal.self) {
+            try decoded("""
+                {"version": 8, "exportedAt": "2023-11-14T22:13:20Z", "catalogVersion": 5,
+                 "performances": [{"exerciseID": "barbell-bench-press",
+                   "occurredAt": "2023-11-14T22:13:20Z",
+                   "sets": [{"setIndex": 0, "reps": 8, "durationSeconds": 45,
+                             "completedAt": "2023-11-14T22:13:20Z"}]}]}
+                """)
+        }
+        let message = try #require(error?.errorDescription)
+        #expect(message.contains("reps"))
+        #expect(message.contains("durationSeconds"))
+        #expect(message.contains("set 1"), "named by its position, not its index")
+        #expect(message.contains("Nothing was taken in"))
+    }
+
+    @Test("All three measures at once is refused the same way")
+    func threeIsNoBetterThanTwo() throws {
+        let error = #expect(throws: DocumentRefusal.self) {
+            try decoded("""
+                {"version": 8, "exportedAt": "2023-11-14T22:13:20Z", "catalogVersion": 5,
+                 "performances": [{"exerciseID": "barbell-bench-press",
+                   "occurredAt": "2023-11-14T22:13:20Z",
+                   "sets": [{"setIndex": 0, "reps": 8, "durationSeconds": 45,
+                             "distance": {"value": 40, "unit": "m"},
+                             "completedAt": "2023-11-14T22:13:20Z"}]}]}
+                """)
+        }
+        #expect(try #require(error?.errorDescription).contains("distance"))
+    }
+
+    @Test("One measure and a load together is not two measures")
+    func aLoadIsNotAMeasure() throws {
+        // A weighted carry states a load *and* a distance, which is one measure
+        // performed against a weight — refusing it would be this rule
+        // misreading what a set is.
+        let read = try decoded("""
+            {"version": 8, "exportedAt": "2023-11-14T22:13:20Z", "catalogVersion": 5,
+             "performances": [{"exerciseID": "barbell-bench-press",
+               "occurredAt": "2023-11-14T22:13:20Z",
+               "sets": [{"setIndex": 0, "load": {"value": 70, "unit": "lb"},
+                         "distance": {"value": 40, "unit": "m"},
+                         "completedAt": "2023-11-14T22:13:20Z"}]}]}
+            """)
+        let set = try #require(read.performances.first?.sets.first)
+        #expect(set.load?.value == 70)
+        #expect(set.work == .distance(Distance(value: 40, unit: .metres)))
     }
 
     @Test("A set ticked without a count says nothing rather than saying none")
@@ -194,7 +254,7 @@ struct TrainingSnapshotTests {
                     setIndex: 0, load: Mass(value: 185, unit: .pounds),
                     completedAt: Self.instant)])
         ]))
-        #expect(try #require(read.performances.first).sets.first?.reps == nil)
+        #expect(try #require(read.performances.first).sets.first?.work?.reps == nil)
     }
 
     @Test("A load keeps the unit it was recorded in, on both sides of the record")
@@ -217,7 +277,7 @@ struct TrainingSnapshotTests {
                 exerciseID: bench, occurredAt: Self.instant,
                 sets: [
                     SnapshotPerformedSet(setIndex: 0, isWarmup: true, completedAt: Self.instant),
-                    SnapshotPerformedSet(setIndex: 1, reps: 5, completedAt: Self.instant),
+                    SnapshotPerformedSet(setIndex: 1, work: .repetitions(5), completedAt: Self.instant),
                 ])
         ]))
         #expect(try #require(read.performances.first).workingSets.count == 1)
