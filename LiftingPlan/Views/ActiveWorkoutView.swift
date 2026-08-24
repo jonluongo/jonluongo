@@ -180,12 +180,8 @@ struct ActiveWorkoutView: View {
             .sheet(isPresented: $showingRest) {
                 RestSheet(
                     session: session, previous: previous, restTimer: restTimer,
-                    onRecord: { slot, load, reps, seconds, distance in
-                        write {
-                            try log.record(
-                                slot, load: load, reps: reps,
-                                durationSeconds: seconds, distance: distance)
-                        }
+                    onRecord: { slot, load, work in
+                        write { try log.record(slot, load: load, work: work) }
                     },
                     onTakeBack: { slot in write { try log.takeBack(slot) } })
             }
@@ -321,12 +317,8 @@ struct ActiveWorkoutView: View {
                 slots: slotsByExercise[exercise.persistentModelID] ?? [],
                 performed: performed(for: exercise),
                 previous: previous[exercise.exerciseID],
-                onRecord: { slot, load, reps, seconds, distance in
-                    write {
-                        try log.record(
-                            slot, load: load, reps: reps,
-                            durationSeconds: seconds, distance: distance)
-                    }
+                onRecord: { slot, load, work in
+                    write { try log.record(slot, load: load, work: work) }
                     showNext(after: slot, in: group)
                 },
                 onTakeBack: { slot in write { try log.takeBack(slot) } },

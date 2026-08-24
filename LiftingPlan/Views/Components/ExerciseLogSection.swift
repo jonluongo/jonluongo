@@ -37,7 +37,7 @@ struct ExerciseLogSection: View {
     /// What he did on this movement last time, for the load field a
     /// prescription may leave blank.
     let previous: SnapshotPerformedExercise?
-    var onRecord: (TrainingSlot, Mass?, Int?, Int?, Distance?) -> Void
+    var onRecord: (TrainingSlot, Mass?, WorkDone) -> Void
     var onTakeBack: (TrainingSlot) -> Void
     /// Opens the sheet he writes his note in. Wired here rather than to the
     /// header's menu, so the control that writes the note sits where the note
@@ -55,9 +55,7 @@ struct ExerciseLogSection: View {
                     slot: slot,
                     prescription: SetRowPrescription(slot: slot, previous: previous),
                     isLocked: isLocked,
-                    onRecord: { load, reps, seconds, distance in
-                        onRecord(slot, load, reps, seconds, distance)
-                    },
+                    onRecord: { load, work in onRecord(slot, load, work) },
                     onTakeBack: { onTakeBack(slot) })
                 .padding(.horizontal, PanelMetrics.edge)
             }

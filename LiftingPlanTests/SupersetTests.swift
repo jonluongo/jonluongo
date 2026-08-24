@@ -230,8 +230,7 @@ struct AddedSetTests {
         _ = exercise
         let log = log(context, session)
         let slot = try #require(SessionOrder.trainingOrder(of: session).first)
-        try log.record(slot, load: Mass(value: 100, unit: .pounds), reps: 5,
-                       durationSeconds: nil, distance: nil as Distance?)
+        try log.record(slot, load: Mass(value: 100, unit: .pounds), work: .repetitions(5))
         let count = SessionOrder.trainingOrder(of: session).count
 
         try log.takeBack(try #require(SessionOrder.trainingOrder(of: session).first))

@@ -38,7 +38,7 @@ struct RestSheet: View {
     var restTimer: RestTimerModel
     /// Records the set, so the session starts the rest that follows it exactly
     /// as the table would.
-    var onRecord: (TrainingSlot, Mass?, Int?, Int?, Distance?) -> Void
+    var onRecord: (TrainingSlot, Mass?, WorkDone) -> Void
     var onTakeBack: (TrainingSlot) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -172,8 +172,8 @@ struct RestSheet: View {
                 // slide out and in is the whole of the answer to *did that
                 // land?* The rest of the session's writes are the table's, and
                 // a table does not move.
-                onRecord: { load, reps, seconds, distance in
-                    onRecord(slot, load, reps, seconds, distance)
+                onRecord: { load, work in
+                    onRecord(slot, load, work)
                     advance(after: slot, ticked: true)
                 },
                 onTakeBack: { onTakeBack(slot) })

@@ -203,8 +203,7 @@ struct SessionProgressTests {
             restTimer: RestTimerModel(), restPreferences: RestPreferences())
         try log.record(
             try #require(SessionOrder.trainingOrder(of: all[1]).first),
-            load: Mass(value: 100, unit: .pounds), reps: 5,
-            durationSeconds: nil, distance: nil as Distance?)
+            load: Mass(value: 100, unit: .pounds), work: .repetitions(5))
 
         #expect(SessionProgress.underway(in: all)?.ordinal == 2)
     }
@@ -223,8 +222,7 @@ struct SessionProgressTests {
 
         for slot in SessionOrder.trainingOrder(of: session) {
             try log.record(
-                slot, load: Mass(value: 100, unit: .pounds), reps: 5,
-                durationSeconds: nil, distance: nil as Distance?)
+                slot, load: Mass(value: 100, unit: .pounds), work: .repetitions(5))
         }
 
         #expect(session.finishedAt == nil, "he never pressed Finish")
@@ -244,8 +242,7 @@ struct SessionProgressTests {
 
         for slot in slots.dropLast() {
             try log.record(
-                slot, load: Mass(value: 100, unit: .pounds), reps: 5,
-                durationSeconds: nil, distance: nil as Distance?)
+                slot, load: Mass(value: 100, unit: .pounds), work: .repetitions(5))
         }
 
         #expect(!SessionProgress.isFullyLogged(session))
@@ -261,8 +258,7 @@ struct SessionProgressTests {
             restTimer: RestTimerModel(), restPreferences: RestPreferences())
         try log.record(
             try #require(SessionOrder.trainingOrder(of: all[0]).first),
-            load: Mass(value: 100, unit: .pounds), reps: 5,
-            durationSeconds: nil, distance: nil as Distance?)
+            load: Mass(value: 100, unit: .pounds), work: .repetitions(5))
         try log.finish()
 
         #expect(SessionProgress.underway(in: all) == nil)

@@ -196,7 +196,7 @@ struct PlanImportTests {
         try SessionLog(
             session: session, context: context, restTimer: RestTimerModel(),
             restPreferences: RestPreferences()
-        ).record(slot, load: Mass(value: 100, unit: .kilograms), reps: 5)
+        ).record(slot, load: Mass(value: 100, unit: .kilograms), work: .repetitions(5))
 
         let error = #expect(throws: PlanImportError.self) {
             try PlanImporter.import(

@@ -30,7 +30,7 @@ struct SetRowView: View {
     /// reopens it.
     let isLocked: Bool
     /// Commits what is in the fields, in the measure the prescription named.
-    var onRecord: (Mass?, Int?, Int?, Distance?) -> Void
+    var onRecord: (Mass?, WorkDone) -> Void
     /// Takes this set back out of the record.
     var onTakeBack: () -> Void
 
@@ -129,13 +129,16 @@ struct SetRowView: View {
         // whatever the marker said, so typing 100 into a row prescribed in
         // kilograms recorded a hundred pounds against it.
         let load = SetEntry.load(from: loadText, in: prescription.loadUnit)
+        // **The measure is the prescription's, and it travels as one value.**
+        // This used to hand four positional optionals across the boundary, three
+        // of them `nil` — correct here, and unenforced everywhere after.
         switch prescription.measure {
         case .repetitions:
-            onRecord(load, SetEntry.reps(from: workText), nil, nil)
+            onRecord(load, .repetitions(SetEntry.reps(from: workText)))
         case .time:
-            onRecord(load, nil, SetEntry.seconds(from: workText), nil)
+            onRecord(load, .time(seconds: SetEntry.seconds(from: workText)))
         case .distance(let unit):
-            onRecord(load, nil, nil, SetEntry.distance(from: workText, in: unit))
+            onRecord(load, .distance(SetEntry.distance(from: workText, in: unit)))
         }
     }
 

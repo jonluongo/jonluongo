@@ -45,12 +45,15 @@ struct SessionLog {
     /// it is saved here rather than left to SwiftData's autosave, which does run
     /// but on no schedule anyone can promise.
     ///
-    /// Which measure is written is decided by what was prescribed, never by what
-    /// was typed: a hold cannot land in the rep column by a user tapping the
-    /// wrong field.
+    /// **Which measure is written is decided by what was prescribed, never by
+    /// what was typed**, and `WorkDone` is what holds anyone to that. This used
+    /// to take `reps`, `durationSeconds` and `distance` as three separate
+    /// optionals and write whatever it was handed — the sentence above was in
+    /// this comment then too, and nothing in the types enforced it. One value
+    /// with three cases cannot state two measures, so a hold cannot land in the
+    /// rep column however a caller is written.
     func record(
-        _ slot: TrainingSlot, load: Mass? = nil, reps: Int? = nil,
-        durationSeconds: Int? = nil, distance: Distance? = nil,
+        _ slot: TrainingSlot, load: Mass? = nil, work: WorkDone,
         at moment: Date = Date()
     ) throws {
         let performance = performedExercise(for: slot.exercise, at: moment)
@@ -61,8 +64,8 @@ struct SessionLog {
         let performed = PerformedSet(
             setIndex: slot.planned?.setIndex ?? (performance.sets ?? []).count,
             isWarmup: slot.isWarmup,
-            load: load, reps: reps, durationSeconds: durationSeconds,
-            distance: distance, completedAt: moment)
+            load: load, reps: work.reps, durationSeconds: work.durationSeconds,
+            distance: work.carried, completedAt: moment)
         performed.planned = slot.planned
         performed.exercise = performance
         context.insert(performed)

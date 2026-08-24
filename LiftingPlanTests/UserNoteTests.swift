@@ -64,7 +64,7 @@ struct UserNoteTests {
         let log = log(context, session)
         let slot = try #require(SessionOrder.trainingOrder(of: session).first)
 
-        try log.record(slot, load: Mass(value: 100, unit: .kilograms), reps: 5)
+        try log.record(slot, load: Mass(value: 100, unit: .kilograms), work: .repetitions(5))
         try log.writeNote("Heavy.", for: exercise)
         try log.writeNote(nil, for: exercise)
 

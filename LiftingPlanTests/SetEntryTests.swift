@@ -156,8 +156,7 @@ struct AddedRowPlaceholderTests {
         let (context, session, exercise) = try session()
         let log = log(context, session)
         let first = try #require(SessionOrder.trainingOrder(of: session).first)
-        try log.record(first, load: Mass(value: 245, unit: .pounds), reps: 3,
-                       durationSeconds: nil, distance: nil as Distance?)
+        try log.record(first, load: Mass(value: 245, unit: .pounds), work: .repetitions(3))
 
         try log.addSet(to: exercise, warmup: false,
                        at: Date().addingTimeInterval(120))
@@ -233,5 +232,93 @@ struct LoadUnitTests {
         // The app's own default, and what an empty field commits.
         let shown = SetRowPrescription(slot: try slot(load: nil), previous: nil)
         #expect(shown.loadUnit == .pounds)
+    }
+}
+
+/// What a set records, in the measure its prescription named.
+///
+/// **The one thing this project says it insists on is data integrity**, and a
+/// hold logged as reps is exactly the corruption `WorkMeasure` was written to
+/// prevent. `SessionLog.record` used to take `reps`, `durationSeconds` and
+/// `distance` as three separate optionals and store whatever it was handed —
+/// while its own doc comment promised the opposite. These assert the promise
+/// against the store, not against the view that happened to be calling it.
+@MainActor
+@Suite("A performed set records one measure")
+struct RecordedMeasureTests {
+
+    /// A store holding one session of one exercise prescribing `target`.
+    private func slot(target: Target) throws -> (TrainingSlot, Session, ModelContext) {
+        let context = try StoreFixture.imported(
+            StoreFixture.plan(sessions: 1, entries: [.exercise(PlanDocumentExercise(
+                exerciseID: StoreFixture.bench, displayName: "",
+                sets: [PlanDocumentSet(target: target)]))]))
+        let session = try #require(try StoreFixture.sessions(in: context).first)
+        return (try #require(SessionOrder.trainingOrder(of: session).first), session, context)
+    }
+
+    private func log(_ session: Session, _ context: ModelContext) -> SessionLog {
+        SessionLog(
+            session: session, context: context, restTimer: RestTimerModel(),
+            restPreferences: RestPreferences())
+    }
+
+    @Test("A hold is written as seconds, and nothing lands in the rep column")
+    func aHoldIsHeld() throws {
+        let (slot, session, context) = try slot(target: .time(low: 45, high: nil))
+        try log(session, context).record(slot, work: .time(seconds: 45))
+
+        let performed = try #require(slot.exercise.session?.performedExercises?.first?.sets?.first)
+        #expect(performed.durationSeconds == 45)
+        #expect(performed.reps == nil, "a hold is not a count")
+        #expect(performed.distance == nil)
+    }
+
+    @Test("A carry is written as a distance, in the unit it was prescribed in")
+    func aCarryIsCarried() throws {
+        let (slot, session, context) = try slot(target: .distance(low: 40, high: nil, unit: .metres))
+        try log(session, context).record(slot, work: .distance(Distance(value: 40, unit: .metres)))
+
+        let performed = try #require(slot.exercise.session?.performedExercises?.first?.sets?.first)
+        #expect(performed.distance?.unit == .metres)
+        #expect(performed.reps == nil, "forty metres is not forty reps")
+        #expect(performed.durationSeconds == nil)
+    }
+
+    @Test("A count is written as reps")
+    func aCountIsCounted() throws {
+        let (slot, session, context) = try slot(target: .repetitions(low: 8, high: nil))
+        try log(session, context).record(slot, work: .repetitions(8))
+
+        let performed = try #require(slot.exercise.session?.performedExercises?.first?.sets?.first)
+        #expect(performed.reps == 8)
+        #expect(performed.durationSeconds == nil)
+        #expect(performed.distance == nil)
+    }
+
+    @Test("A ticked set that said no figure records the tick, not a zero")
+    func blankIsAbsenceNotZero() throws {
+        // He ticked it without saying how many, which is not the same as saying
+        // none — and a zero would be a fact he never stated.
+        let (slot, session, context) = try slot(target: .repetitions(low: 8, high: nil))
+        try log(session, context).record(slot, work: .repetitions(nil))
+
+        let performed = try #require(slot.exercise.session?.performedExercises?.first?.sets?.first)
+        #expect(performed.reps == nil)
+    }
+
+    @Test("Every case of WorkDone fills exactly one field")
+    func oneMeasureEach() {
+        // The fan-out happens in one place and is exhaustive. Asserted over the
+        // cases rather than through the store, so a fourth measure that forgets
+        // to answer here fails as itself.
+        let cases: [WorkDone] = [
+            .repetitions(5), .time(seconds: 45),
+            .distance(Distance(value: 40, unit: .metres)),
+        ]
+        for work in cases {
+            let filled = [work.reps != nil, work.durationSeconds != nil, work.carried != nil]
+            #expect(filled.filter { $0 }.count == 1, "\(work) fills \(filled)")
+        }
     }
 }
