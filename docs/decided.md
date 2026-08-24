@@ -294,8 +294,31 @@ one. Where the bytes sit, measured rather than guessed: `measure` is the
 heaviest key at 4,938 bytes across 273 sets, and it earns that, because it is
 the typed target the reader must never re-guess.
 
-**Neither can be tested further until the quota is cleared, which is Jon's to
-do.** The architectural question waits behind it and is the real one: whether a
+**Resolved 2026-08-24: the quota was cleared and the container still does not
+sync.** With 160 GB free, `brctl status` reports the same
+`needs-sync | blocked-app-uninstalled`, `SYNC DISABLED (app not installed)`,
+`last-sync: never`, and a touched `plan.json` did not upload. Many other iOS
+containers on the Mac carry the identical `appuninstalled` stamp, some having
+synced happily until then — **macOS stops syncing a ubiquity container when the
+owning app is not installed on that Mac**, and no amount of quota changes that.
+The quota was a real blocker and was never this one.
+
+**And it is the wrong problem.** Jon's destination is phone-only — Claude on
+the phone, Superset on the phone — and the Mac was only ever in the loop
+because the MCP server speaks stdio, which a phone cannot launch. The transport
+becomes HTTP to a hosted server and iCloud leaves entirely; see
+`server-spec.md`. **Three fixes were proposed for the Mac's sync and all three
+were wrong**, because they optimised a stepping stone: the lesson is to ask
+what the destination is before repairing the route.
+
+**One fact makes the move cheap, and it was checked rather than assumed.**
+`LiftingKit` and `LiftingMCPKit` import nothing but Foundation and each other —
+every ubiquity call, the `NSMetadataQuery` watcher and the upload-failure
+reporting live in `LiftingPlan/Services/`, the app target. The two things that
+must run on Linux have no Apple dependency at all, which is the layering rule
+paying for itself.
+
+**Superseded — the paragraph below is kept for the reasoning only.** The architectural question waits behind it and is the real one: whether a
 container for an app that exists only on iOS can sync on a Mac that has never
 run it, or whether the transport needs a different mechanism entirely. Nothing
 should be changed on a guess about that.
