@@ -137,7 +137,29 @@ carry it as faithfully as a file did.
    nothing third-party, so the whole tested core stays portable.
 3. ~~Server-side `TrainingDocuments` on a volume.~~ **Done, by already being
    done** — see the table. It is configuration, not code.
-4. **Auth: settled 2026-08-24 by reading the specs rather than choosing.**
+4a. **Auth, resource-server half: built.** `ProtectedResource` publishes RFC 9728
+   metadata and the `WWW-Authenticate` challenge that points at it, served
+   *unauthenticated* because it is how a client learns to get a credential.
+   Both are derived from one value, so the address a client is sent to and the
+   address that answers cannot disagree — there is a test asserting exactly
+   that. **It publishes nothing when no issuer is configured**: a document
+   naming an authorization server that does not answer sends a client into a
+   flow it cannot finish, which is a document promising behaviour the code does
+   not have. `SUPERSET_URL` and `SUPERSET_AUTH_SERVER`, both or neither.
+
+4b. **Auth, the remaining half — and it is Jon's call, not a build task.** The
+   server validates a shared secret today, which is not OAuth. To finish it, an
+   *authorization server* has to exist and this must validate its tokens
+   (audience-checked, per the specification). **Do not write one.** Rolling your
+   own authorization server is exactly what "clean foundation" argues against,
+   and RFC 9728 explicitly allows the issuer to be a separate entity. The
+   decision is *which identity provider* — and once it is named, the work here
+   is token validation against its keys, not an OAuth implementation. Only one
+   scope is published, `training`, because only one is enforced; the
+   read-versus-write split is worth making and gets published when it is
+   checked.
+
+4c. **Superseded — settled 2026-08-24 by reading the specs rather than choosing.**
    The MCP specification makes authorization **OPTIONAL**, and says an
    HTTP-transport server that does it **SHOULD** conform to OAuth 2.1 — server
    as resource server, RFC 9728 protected-resource metadata, PKCE, resource

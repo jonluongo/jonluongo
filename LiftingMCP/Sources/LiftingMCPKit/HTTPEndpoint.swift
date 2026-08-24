@@ -58,10 +58,25 @@ public struct HTTPEndpoint: Sendable {
 
     private let server: MCPServer
     private let authorization: any Authorization
+    private let resource: ProtectedResource?
 
-    public init(server: MCPServer, authorization: any Authorization) {
+    /// - Parameter resource: this server's OAuth identity, or `nil` when no
+    ///   authorization server has been configured.
+    ///
+    ///   **`nil` publishes nothing and promises nothing.** A metadata document
+    ///   naming an issuer that does not answer sends a client into a flow it
+    ///   cannot finish, and the challenge would say *go here* to an address with
+    ///   nothing behind it. That is a document promising behaviour the code does
+    ///   not have — the defect this project has spent a week removing — so the
+    ///   server declines to publish rather than publish a hope. Without one it
+    ///   still demands a credential; it simply does not claim to be doing OAuth.
+    public init(
+        server: MCPServer, authorization: any Authorization,
+        resource: ProtectedResource? = nil
+    ) {
         self.server = server
         self.authorization = authorization
+        self.resource = resource
     }
 
     /// The response to one HTTP request.
@@ -85,13 +100,46 @@ public struct HTTPEndpoint: Sendable {
         let headers = Dictionary(
             headers.map { ($0.key.lowercased(), $0.value) }, uniquingKeysWith: { _, last in last })
 
+        // **Discovery is answered before the credential is asked for**, because
+        // it is how a client learns to get one. Guarding it would be a locked
+        // door with the instructions for opening it locked inside — and it
+        // reveals nothing: the document holds this server's own address and its
+        // issuer's, both of which a client already knows enough to ask for.
+        if let resource, resource.metadataPaths.contains(path) {
+            guard method.uppercased() == "GET" else {
+                return Response(
+                    status: 405, headers: ["allow": "GET", "content-type": "application/json"],
+                    body: Self.transportError("This document is read with GET."))
+            }
+            return Response(
+                status: 200,
+                headers: ["content-type": "application/json",
+                          // A public document that changes only on redeploy.
+                          "cache-control": "public, max-age=3600"],
+                body: (try? resource.metadata.lineEncoded()) ?? "{}")
+        }
+
         guard authorization.permits(headers: headers) else {
-            // **Named as the protocol asks.** A bare 401 tells a client it was
-            // refused and nothing about how to come back.
+            // **Named as the protocol asks.** A bare `Bearer` tells a client it
+            // was refused and nothing about how to come back, so a connector
+            // cannot begin a flow it has no way to discover. This carries the
+            // address of the metadata document and the scope to ask for, which
+            // is what RFC 9728 and the MCP specification require.
+            guard let resource else {
+                // No issuer configured, so there is nowhere to send a client and
+                // saying `Bearer` alone is the whole truth.
+                return Response(
+                    status: 401,
+                    headers: ["www-authenticate": "Bearer", "content-type": "application/json"],
+                    body: Self.transportError("This server needs a credential."))
+            }
             return Response(
                 status: 401,
-                headers: ["www-authenticate": "Bearer", "content-type": "application/json"],
-                body: Self.transportError("This server needs a credential."))
+                headers: ["www-authenticate": resource.challenge,
+                          "content-type": "application/json"],
+                body: Self.transportError(
+                    "This server needs a credential. Read "
+                        + "\(resource.metadataURL.absoluteString) to discover how to get one."))
         }
         guard path == Self.path else {
             return Response(

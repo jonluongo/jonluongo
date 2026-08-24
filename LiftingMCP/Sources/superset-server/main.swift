@@ -131,10 +131,25 @@ guard let secret = environment["SUPERSET_TOKEN"], !secret.isEmpty else {
 let configuration = try ServerConfiguration.resolve(
     arguments: CommandLine.arguments, environment: environment, home: URL.homeDirectory)
 let documents = DocumentFolder(directory: configuration.documentsDirectory)
+// **The OAuth identity, published only when there is an issuer to name.**
+// `SUPERSET_URL` is the address a client actually calls — Fly's
+// `https://<app>.fly.dev/mcp` — and `SUPERSET_AUTH_SERVER` is whoever issues
+// tokens for it. Both or neither: a resource without an issuer has nowhere to
+// send a client, and an issuer without the resource's own canonical URI cannot
+// audience a token to it. Set neither and the server runs on the shared secret
+// and says so, rather than advertising a flow nobody can finish.
+let resource: ProtectedResource? = {
+    guard let site = environment["SUPERSET_URL"].flatMap(URL.init(string:)),
+        let issuer = environment["SUPERSET_AUTH_SERVER"].flatMap(URL.init(string:))
+    else { return nil }
+    return ProtectedResource(resource: site, authorizationServers: [issuer])
+}()
+
 let endpoint = HTTPEndpoint(
     server: MCPServer(runner: ToolRunner(
         documents: documents, catalog: try ExerciseCatalog.bundled())),
-    authorization: SharedSecret(secret: secret))
+    authorization: SharedSecret(secret: secret),
+    resource: resource)
 
 // The port is the platform's to choose: Fly sets `PORT` and routes to it.
 let port = environment["PORT"].flatMap(Int.init) ?? 8080
@@ -151,6 +166,15 @@ let bootstrap = ServerBootstrap(group: group)
     .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
 
 let channel = try bootstrap.bind(host: "0.0.0.0", port: port).wait()
-FileHandle.standardError.write(
-    Data("superset-server listening on \(port), documents at \(configuration.documentsDirectory.path)\n".utf8))
+// Says which mode it came up in, because "it started" is not the same as "it is
+// doing what you think", and the difference here is whether a connector can
+// discover how to authenticate at all.
+let discovery = resource.map { "OAuth discovery at \($0.metadataURL.absoluteString)" }
+    ?? "shared secret only — set SUPERSET_URL and SUPERSET_AUTH_SERVER to publish OAuth discovery"
+FileHandle.standardError.write(Data("""
+    superset-server listening on \(port)
+      documents: \(configuration.documentsDirectory.path)
+      auth:      \(discovery)
+
+    """.utf8))
 try channel.closeFuture.wait()
