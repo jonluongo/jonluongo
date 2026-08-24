@@ -3,12 +3,20 @@
 iOS app that turns casual lifting into progressively harder training. SwiftUI,
 SwiftData with CloudKit sync.
 
-> **A rebuild is in progress on `claude/backend-rebuild`.** This file describes
-> the architecture being built. `docs/rebuild-spec.md` holds the formats and the
-> phase order, `docs/rebuild-inventory.md` the verdict on every file, and
-> `docs/decided.md` the reasoning behind all of it. Read `decided.md` before
-> proposing anything: it records what was tried and killed, and confidently
-> re-proposing a rejected idea is the predictable failure of a long session.
+> **The rebuild is done.** This file describes the architecture that exists: the
+> five tables below are the store, the formats are live, and every phase of
+> `docs/rebuild-spec.md` has landed. That spec and `docs/rebuild-inventory.md`
+> were both written *before* the work and are kept as the record of what was
+> replaced — they are history, not a map, and half the names in them are
+> deliberately of things that no longer exist.
+>
+> **`docs/decided.md` is the one to read before proposing anything.** It records
+> what was tried and killed, and confidently re-proposing a rejected idea is the
+> predictable failure of a long session.
+>
+> **The work lives on `claude/backend-rebuild`, ~480 commits ahead of `main`.**
+> `main` is the application from before the rebuild. Nothing here has been
+> merged.
 
 **The app is two things: a datastore, and the interface an AI trainer works
 through.** Anything that is neither is bloat. That is the filter for every
@@ -76,6 +84,14 @@ taxonomies, `Mass` and `Target`, nor the document formats and the MCP tools:
 ```sh
 swift test --package-path LiftingKit
 swift test --package-path LiftingMCP
+```
+
+**Prose has no compiler, so it gets a script.** Three times in one week a
+document named a type that had been deleted, and once it named live code as
+gone — the direction that gets working code removed. Run it with the suites:
+
+```sh
+python3 scripts/audit-docs.py
 ```
 
 Xcode compiles a package dependency with `-suppress-warnings`, so the standard

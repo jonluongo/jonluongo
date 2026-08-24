@@ -47,8 +47,8 @@ it is waiting for the query to be populated *and* for `DocumentInbox` to have
 imported whatever is in the folder. Without it `sessions.first` is `nil` and the
 screen never opens, which looks exactly like scaffolding that did not compile.
 
-**3. Log a set, when the screen needs one.** `SetSeeding` is gone: a performed
-row exists only when something is ticked, so drive the real service.
+**3. Log a set, when the screen needs one.** A performed row exists only when
+something is ticked — there is nothing to seed — so drive the real service.
 
 ```swift
 let log = SessionLog(session: first, context: ctx,
