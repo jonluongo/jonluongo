@@ -243,6 +243,25 @@ sessions were trained at real loads and finished; backgrounding the app exported
 block 1, *Push*, finished, `barbell-bench-press` at 225 lb × 5. `recent_sessions`
 and `volume_by_muscle` both answered from it.
 
+**The counted-held-or-carried rule was proven end to end on 2026-08-24**, with
+real files through the release binary, which had never been done for anything
+but reps. A plan prescribing a hold (`45s`), a carry (`40m`) and a count
+(`6-8`) was written by the server, imported, trained, and exported. Every
+performed set filled **exactly one** column: the plank `durationSeconds: 45`
+with no `reps` key at all, the carry `distance: {m, 40}`, the press `reps: 8`.
+`exercise_history` reports the hold as seconds with its `"45s"` prescription
+beside it; `volume_by_muscle` keeps the three apart, abdominals showing 45
+seconds *and* 40 metres against `primaryReps: 0`. Nothing anywhere reported a
+hold or a carry as a repetition.
+
+This is the check that closes `WorkDone`: the type makes the illegal state
+unrepresentable, and this says the store, the wire and all three reading tools
+agree with it. **The `exerciseID` / `id` split is not a defect and should not
+be "fixed"** — `list_exercises` and `exercise_history` both say `id`, and
+`write_plan` says `exerciseID` only inside an entry, where the document already
+has an `id` of its own. That is disambiguation, and collapsing it would make
+the plan format ambiguous about which identity a key names.
+
 **Two things that check confirmed rather than found.** The archive writes one
 file per import, in the real folder, on the real path. And a working set carries
 no `isWarmup` key on the wire — the `null` that appears in a *tool's report* is
