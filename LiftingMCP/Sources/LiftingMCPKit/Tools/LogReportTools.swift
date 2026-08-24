@@ -17,6 +17,15 @@ import LiftingKit
 /// and `TrainingSnapshot`. Nothing here writes.
 extension ToolRunner {
 
+    /// How many sessions `recent_sessions` returns when the coach does not say.
+    static let defaultSessionLimit = 10
+
+    /// How many performances of one movement `exercise_history` returns when he
+    /// does not say. Larger than the session default because a performance is
+    /// one movement rather than a whole workout, and progress on a single lift
+    /// is read across many of them.
+    static let defaultHistoryLimit = 20
+
     // MARK: - exercise_history
 
     func exerciseHistory(_ arguments: JSONValue, in snapshot: TrainingSnapshot) -> ToolOutcome {
@@ -33,18 +42,25 @@ extension ToolRunner {
                     + "because history is keyed on exercise identity.")
         }
 
-        let performances = TrainingLog.history(of: id, in: snapshot)
         let prescribed = Self.prescriptionsByCoordinates(in: snapshot, for: id)
+        // **`.last`, and this is the one that would have been got wrong.**
+        // `history(of:in:)` is oldest first, so keeping the head would hand back
+        // the twenty sessions furthest from what he is doing now and hide the
+        // ones he is planning against. This had no limit at all before, which a
+        // lift trained weekly for two years turns into a flood.
+        let bounded = BoundedList(
+            TrainingLog.history(of: id, in: snapshot),
+            limit: arguments["limit"]?.intValue ?? Self.defaultHistoryLimit,
+            keeping: .last)
 
-        return .report([
-            "exerciseID": .string(id.rawValue),
-            "displayName": .string(exercise.displayName),
-            "exportedAt": .date(snapshot.exportedAt),
-            "performanceCount": .integer(performances.count),
-            "performances": .array(performances.map {
-                Self.performance($0, prescribed: prescribed)
-            }),
-        ])
+        var keys = bounded.report(
+            total: "performanceCount", items: "performances",
+            narrowing: "These are the most recent; raise 'limit' for earlier ones.",
+            entry: { Self.performance($0, prescribed: prescribed) })
+        keys["exerciseID"] = .string(id.rawValue)
+        keys["displayName"] = .string(exercise.displayName)
+        keys["exportedAt"] = .date(snapshot.exportedAt)
+        return .report(.object(keys))
     }
 
     /// One session's worth of a movement: when, what was asked, what was done.
@@ -121,14 +137,21 @@ extension ToolRunner {
     // MARK: - recent_sessions
 
     func recentSessions(_ arguments: JSONValue, in snapshot: TrainingSnapshot) -> ToolOutcome {
-        let limit = arguments["limit"]?.intValue ?? 10
-        let sessions = TrainingLog.trained(in: snapshot).prefix(max(1, limit))
+        // **`sessionCount` used to be the truncated count**, so ten-of-ten and
+        // ten-of-two-hundred read the same and the coach could not tell he was
+        // holding a slice. `.first` because `trained(in:)` is newest-first.
+        let bounded = BoundedList(
+            TrainingLog.trained(in: snapshot),
+            limit: arguments["limit"]?.intValue ?? Self.defaultSessionLimit,
+            keeping: .first)
 
-        return .report([
-            "exportedAt": .date(snapshot.exportedAt),
-            "sessionCount": .integer(sessions.count),
-            "sessions": .array(sessions.map(Self.session)),
-        ])
+        var keys = bounded.report(
+            total: "sessionCount", items: "sessions",
+            narrowing: "Raise 'limit' for more, or \(ToolCatalog.exerciseHistory) "
+                + "for one movement across all of them.",
+            entry: Self.session)
+        keys["exportedAt"] = .date(snapshot.exportedAt)
+        return .report(.object(keys))
     }
 
     private static func session(_ record: SessionRecord) -> JSONValue {

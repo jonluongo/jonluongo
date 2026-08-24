@@ -3,6 +3,15 @@ import LiftingKit
 
 extension ToolRunner {
 
+    /// How many movements come back when the coach does not say.
+    ///
+    /// **Stated once, and the schema interpolates it.** The description used to
+    /// carry the number as prose — *"Defaults to 50"* — beside code that applied
+    /// no default at all, which is the same drift that had `write_plan`
+    /// advertising a string where a number was required. A published number the
+    /// code does not honour is worse than none.
+    static let defaultExerciseLimit = 50
+
     /// The catalog, so a plan can be written in IDs the app will accept.
     ///
     /// **It subtracts nothing.** It used to remove what the user avoided,
@@ -29,11 +38,21 @@ extension ToolRunner {
         }
         matches.sort { $0.id.rawValue < $1.id.rawValue }
 
-        return .report([
-            "catalogVersion": .integer(catalog.version),
-            "count": .integer(matches.count),
-            "exercises": .array(matches.map(Self.entry)),
-        ])
+        // **The limit is read here, and it used to be advertised and ignored.**
+        // A coach asking for five got all 412, which is what the argument exists
+        // to prevent. `.first` because the sort above is alphabetical and has no
+        // interesting end — what saves him is narrowing, which the note says.
+        let bounded = BoundedList(
+            matches, limit: arguments["limit"]?.intValue ?? Self.defaultExerciseLimit,
+            keeping: .first)
+
+        var keys = bounded.report(
+            total: "count", items: "exercises",
+            narrowing: "Narrow with 'query', 'muscle', 'equipment' or 'pattern', "
+                + "or raise 'limit'.",
+            entry: Self.entry)
+        keys["catalogVersion"] = .integer(catalog.version)
+        return .report(.object(keys))
     }
 
     private static func entry(_ exercise: Exercise) -> JSONValue {

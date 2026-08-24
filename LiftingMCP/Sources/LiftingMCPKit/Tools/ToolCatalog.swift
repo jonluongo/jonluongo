@@ -73,7 +73,10 @@ public enum ToolCatalog {
                 "Primary muscles to include, e.g. 'chest', 'lats', 'quadriceps'."),
             "equipment": stringOrList(
                 "Equipment to include, e.g. 'barbell', 'dumbbell', 'cable', 'bodyweight'."),
-            "limit": integer("How many entries to return. Defaults to 50."),
+            "limit": integer(
+                "How many entries to return. Defaults to "
+                    + "\(ToolRunner.defaultExerciseLimit); the total that matched is "
+                    + "always reported, so a cut list says so."),
             "includeUnavailable": boolean(
                 "Include exercises the user's equipment, avoided patterns, or "
                     + "avoided exercises rule out. Defaults to false."),
@@ -98,7 +101,14 @@ public enum ToolCatalog {
             stated starting baseline.
             """,
         inputSchema: object(
-            ["id": string("The exercise ID, exactly as list_exercises reported it.")],
+            [
+                "id": string("The exercise ID, exactly as list_exercises reported it."),
+                "limit": integer(
+                    "How many performances to return, **the most recent ones**. "
+                        + "Defaults to \(ToolRunner.defaultHistoryLimit). They are still "
+                        + "listed oldest first, so progress reads left to right; the total "
+                        + "performed is always reported, so a cut list says so."),
+            ],
             required: ["id"]
         )
     )
@@ -118,7 +128,9 @@ public enum ToolCatalog {
             than as the rounds it was performed in.
             """,
         inputSchema: object(
-            ["limit": integer("How many sessions to return. Defaults to 10.")]
+            ["limit": integer(
+                "How many sessions to return, newest first. Defaults to "
+                    + "\(ToolRunner.defaultSessionLimit).")]
         )
     )
 

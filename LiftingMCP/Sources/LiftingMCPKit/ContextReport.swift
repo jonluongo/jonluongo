@@ -73,8 +73,14 @@ struct ContextReport {
             // absent, and planning the next one on top of it would compound it.
             "planRefused": refusal,
             "where": whereHeIs(sessions),
+            // The fourth list, and the only one that was already honest — it
+            // stated the true total beside a short array by hand. It says the
+            // same thing through the same type now, so nothing is left rolling
+            // its own answer to *how much of this am I seeing*.
             "sessionsRecorded": .integer(trained.count),
-            "recent": .array(trained.prefix(Self.carriedSessions).map(Self.summary)),
+            "recent": .array(
+                BoundedList(trained, limit: Self.carriedSessions, keeping: .first)
+                    .shown.map(Self.summary)),
             "note": .string(
                 "This is a summary. \(ToolCatalog.exerciseHistory) reports every performance "
                     + "of one movement with what was prescribed beside it; "
