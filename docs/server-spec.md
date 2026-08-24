@@ -137,7 +137,30 @@ carry it as faithfully as a file did.
    nothing third-party, so the whole tested core stays portable.
 3. ~~Server-side `TrainingDocuments` on a volume.~~ **Done, by already being
    done** — see the table. It is configuration, not code.
-4. **Auth: the interface is settled, the issuer is not.** Every request must
+4. **Auth: settled 2026-08-24 by reading the specs rather than choosing.**
+   The MCP specification makes authorization **OPTIONAL**, and says an
+   HTTP-transport server that does it **SHOULD** conform to OAuth 2.1 — server
+   as resource server, RFC 9728 protected-resource metadata, PKCE, resource
+   indicators. Anthropic's own connector documentation names **OAuth** as the
+   method and mentions no static token or custom header. So the client decides
+   this, not taste: **Claude → server is OAuth 2.1**, minimally implemented and
+   colocated, because for one user the *authorisation* step is trivial while the
+   *protocol* has to be real. **App → server stays the bearer token**, which is
+   not MCP, has one client, and keeps its credential in the keychain.
+   `HTTPEndpoint.Authorization` already lets both live side by side.
+
+   **Blocked on a fact, not a decision.** Anthropic lists custom connectors on
+   *"Claude, Cowork, and Claude Desktop"* and does not mention iOS. That is
+   probably loose wording — connectors set up on claude.ai generally appear in
+   the app — but it is load-bearing for the whole point of this, and building an
+   authorisation server against a client that cannot reach it would repeat the
+   Mac exactly. **Jon can settle it in thirty seconds** by looking for *Add
+   custom connector* in the iOS app's Connectors settings; nothing here should
+   be built until he has.
+
+   *(Superseded: the interface below is still right and still built.)*
+
+4b. **What was already settled and built.** Every request must
    present `Authorization: Bearer <token>`, compared in constant time, and
    **the server exits rather than starting without a secret** — a server that
    comes up open is the failure that looks like success. What *mints* the token
