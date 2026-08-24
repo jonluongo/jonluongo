@@ -249,6 +249,38 @@ no `isWarmup` key on the wire — the `null` that appears in a *tool's report* i
 the report's own shape, not the file's, which holds exactly
 `completedAt, load, reps, setIndex`.
 
+**Amended 2026-08-22: it works on one machine, and it has never crossed to the
+phone.** Everything above is true and none of it is delivery. The plan was
+written to a folder and read back from the same folder, by processes on the same
+Mac — the simulator reaches it through the render harness's local override, and
+the server writes it directly. Whether iCloud carries that folder to the phone
+was never once observed, and today it is proven that it does not: `brctl status`
+reports the container as `blocked-app-uninstalled`, **`last-sync: never`**, with
+`SYNC DISABLED (app not installed)`. There is no LiftingPlan app on the Mac —
+only the MCP server, a plain command-line tool with no iCloud entitlement — so
+`~/Library/Mobile Documents/iCloud~com~jonluongo~LiftingPlan/Documents/` is a
+directory shaped like a ubiquity container that the daemon will not sync. The
+corroboration is in the folder itself: it holds `plan.json` and no
+`snapshot.json`, so nothing has ever arrived from the phone either. Traffic is
+zero in both directions.
+
+**A second, independent blocker was found at the same moment, and it is the
+louder one.** `brctl quota` reports **32,142 bytes remaining in the personal
+account**, and sixteen containers on this Mac are failing with
+`Error uploading asset: Quota exceeded`. A ten-session plan is 93,822 bytes.
+**Compacting the wire format does not rescue this** — the same document with
+whitespace stripped is 31,695 bytes, which is the whole remaining quota — so
+`.prettyPrinted` stays until there is a reason for it to go that is not this
+one. Where the bytes sit, measured rather than guessed: `measure` is the
+heaviest key at 4,938 bytes across 273 sets, and it earns that, because it is
+the typed target the reader must never re-guess.
+
+**Neither can be tested further until the quota is cleared, which is Jon's to
+do.** The architectural question waits behind it and is the real one: whether a
+container for an app that exists only on iOS can sync on a Mac that has never
+run it, or whether the transport needs a different mechanism entirely. Nothing
+should be changed on a guess about that.
+
 **What is still untested is the only part a machine cannot do**: Jon training
 against a plan he asked for, on the phone, over days.
 
