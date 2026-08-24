@@ -53,10 +53,18 @@ extension ToolCatalog {
 
     /// One value or several — Claude writes `"muscle": "chest"` as readily as
     /// `"muscle": ["chest"]`, and both plainly mean the same thing.
-    static func stringOrList(_ description: String) -> JSONValue {
-        [
+    static func stringOrList(_ description: String, oneOf values: [String] = []) -> JSONValue {
+        // **The vocabulary is published, not described.** Left to prose, the
+        // coach filtered by `"quads"` and got `count: 0` — which reads as *no
+        // exercise trains quadriceps* rather than *that is not a word here*.
+        // The values come from the loaded catalog, so a catalog that grows one
+        // publishes it the same day.
+        let leaf: JSONValue = values.isEmpty
+            ? ["type": "string"]
+            : ["type": "string", "enum": .array(values.map { .string($0) })]
+        return [
             "description": .string(description),
-            "anyOf": [["type": "string"], ["type": "array", "items": ["type": "string"]]],
+            "anyOf": [leaf, ["type": "array", "items": leaf]],
         ]
     }
 

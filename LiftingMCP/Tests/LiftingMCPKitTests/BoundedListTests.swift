@@ -122,7 +122,7 @@ struct ToolTruncationTests {
         // The description used to carry *Defaults to 50* beside code that
         // applied no default at all. It interpolates the constant now, so the
         // two cannot drift.
-        let tools = ToolCatalog.definitions
+        let tools = ToolCatalog.definitions(vocabulary: CatalogVocabulary(try ExerciseCatalog.bundled()))
         let listed = try #require(tools.first { $0.name == ToolCatalog.listExercises })
         let described = try #require(
             listed.inputSchema["properties"]?["limit"]?["description"]?.stringValue)
@@ -134,9 +134,76 @@ struct ToolTruncationTests {
     func historyPublishesItsLimit() throws {
         // The mirror of the original defect: code honouring an argument the
         // schema never mentions is just as unusable as the reverse.
-        let tools = ToolCatalog.definitions
+        let tools = ToolCatalog.definitions(vocabulary: CatalogVocabulary(try ExerciseCatalog.bundled()))
         let history = try #require(tools.first { $0.name == ToolCatalog.exerciseHistory })
 
         #expect(history.inputSchema["properties"]?["limit"] != nil)
+    }
+
+    // MARK: - The words the coach may filter by
+
+    @Test("The filter vocabulary is published, and it is the catalog's own")
+    func theVocabularyIsPublished() throws {
+        // Left to prose, `muscle` carried three examples and the coach guessed
+        // the rest. These come from the loaded catalog, so a catalog that grows
+        // a value publishes it the same day and nothing has to be remembered.
+        let catalog = try ExerciseCatalog.bundled()
+        let vocabulary = CatalogVocabulary(catalog)
+        let listed = try #require(
+            ToolCatalog.definitions(vocabulary: vocabulary)
+                .first { $0.name == ToolCatalog.listExercises })
+        let muscle = try #require(listed.inputSchema["properties"]?["muscle"])
+        let allowed = try #require(muscle["anyOf"]?[0]?["enum"]?.arrayValue)
+            .compactMap(\.stringValue)
+
+        #expect(allowed == vocabulary.muscles.map(\.rawValue))
+        #expect(allowed.contains("quadriceps"))
+        #expect(!allowed.contains("quads"), "the catalog's word, not a guess at it")
+    }
+
+    @Test("A list of values is bounded by the same vocabulary as a single one")
+    func bothBranchesAreClosed() throws {
+        // `muscle` takes a string or a list, and a vocabulary published on only
+        // one branch is a vocabulary a client can step around.
+        let listed = try #require(
+            ToolCatalog.definitions(
+                vocabulary: CatalogVocabulary(try ExerciseCatalog.bundled()))
+                .first { $0.name == ToolCatalog.listExercises })
+        let muscle = try #require(listed.inputSchema["properties"]?["muscle"])
+
+        #expect(muscle["anyOf"]?[0]?["enum"] != nil, "the single-value branch")
+        #expect(muscle["anyOf"]?[1]?["items"]?["enum"] != nil, "the list branch")
+    }
+
+    @Test("A word the catalog does not use is refused, not answered with nothing")
+    func anUnknownFilterIsRefused() throws {
+        // **`count: 0` was the silent kind of wrong.** It reads as *no exercise
+        // trains that*, so a coach who typed `quads` narrows, finds nothing, and
+        // plans around a gap that is a spelling mistake.
+        let outcome = try makeRunner(documents: InMemoryDocuments(snapshot: fixtureSnapshot()))
+            .listExercises(["muscle": "quads"])
+
+        guard case .failure(let message) = outcome else {
+            Issue.record("expected a refusal, got \(outcome)")
+            return
+        }
+        #expect(message.contains("quads"))
+        #expect(message.contains("quadriceps"), "the real word is offered")
+        #expect(message.contains("different from nothing training it"))
+    }
+
+    @Test("A known filter that matches nothing is an answer, not a refusal")
+    func anHonestZeroSurvives() throws {
+        // The distinction the refusal exists to draw: a real muscle combined
+        // with a real pattern may genuinely have no exercises, and that is a
+        // fact about the catalog rather than a mistake by the coach.
+        let runner = try makeRunner(documents: InMemoryDocuments(snapshot: fixtureSnapshot()))
+        let outcome = runner.listExercises(["muscle": "quadriceps", "query": "zzzznotathing"])
+
+        guard case .report(let value) = outcome else {
+            Issue.record("expected a report, got \(outcome)")
+            return
+        }
+        #expect(value["count"]?.intValue == 0)
     }
 }

@@ -46,14 +46,33 @@ public enum ToolCatalog {
     public static let writePlan = "write_plan"
     public static let updateNotes = "update_notes"
 
-    public static let definitions: [ToolDefinition] = [
-        listExercisesDefinition, exerciseHistoryDefinition, recentSessionsDefinition,
-        volumeByMuscleDefinition, writePlanDefinition, updateNotesDefinition,
+    /// Every tool, with `list_exercises` advertising the words this catalog
+    /// actually uses.
+    ///
+    /// **A function rather than a constant, because one of these is not
+    /// static.** The filter vocabulary is a fact about the loaded catalog, and a
+    /// hand-written copy of it in a description is a second statement that
+    /// drifts the day `exercises.json` changes. Everything else here is genuinely
+    /// constant and reads the same whatever it is handed.
+    public static func definitions(vocabulary: CatalogVocabulary) -> [ToolDefinition] {
+        [
+            listExercisesDefinition(vocabulary), exerciseHistoryDefinition,
+            recentSessionsDefinition, volumeByMuscleDefinition,
+            writePlanDefinition, updateNotesDefinition,
+        ]
+    }
+
+    /// What this server offers, for saying so when a caller asks for something
+    /// else. Needs no catalog: a name is a name.
+    public static let names = [
+        listExercises, exerciseHistory, recentSessions,
+        volumeByMuscle, writePlan, updateNotes,
     ]
 
     // MARK: - Reading the catalog
 
-    static let listExercisesDefinition = ToolDefinition(
+    static func listExercisesDefinition(_ vocabulary: CatalogVocabulary) -> ToolDefinition {
+        ToolDefinition(
         name: listExercises,
         title: "List exercises",
         description: """
@@ -67,12 +86,15 @@ public enum ToolCatalog {
         inputSchema: object([
             "query": string("Free text matched against names and aliases, e.g. 'bench'."),
             "pattern": stringOrList(
-                "Movement patterns to include, e.g. 'squat', 'hinge', "
-                    + "'horizontal press', 'vertical pull'."),
+                "Movement patterns to include. These are every pattern this catalog uses.",
+                oneOf: vocabulary.patterns.map(\.rawValue)),
             "muscle": stringOrList(
-                "Primary muscles to include, e.g. 'chest', 'lats', 'quadriceps'."),
+                "Muscles to include, primary or secondary. These are every muscle this "
+                    + "catalog names.",
+                oneOf: vocabulary.muscles.map(\.rawValue)),
             "equipment": stringOrList(
-                "Equipment to include, e.g. 'barbell', 'dumbbell', 'cable', 'bodyweight'."),
+                "Equipment to include. These are every kind this catalog uses.",
+                oneOf: vocabulary.equipment.map(\.rawValue)),
             "limit": integer(
                 "How many entries to return. Defaults to "
                     + "\(ToolRunner.defaultExerciseLimit); the total that matched is "
@@ -80,8 +102,8 @@ public enum ToolCatalog {
             "includeUnavailable": boolean(
                 "Include exercises the user's equipment, avoided patterns, or "
                     + "avoided exercises rule out. Defaults to false."),
-        ])
-    )
+        ]))
+    }
 
     // MARK: - Reading the log
 

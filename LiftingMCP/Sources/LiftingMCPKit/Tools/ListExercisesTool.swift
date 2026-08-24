@@ -26,6 +26,24 @@ extension ToolRunner {
         let equipment = arguments["equipment"]?.stringValue.map { EquipmentType(rawValue: $0) }
         let muscle = arguments["muscle"]?.stringValue.map { MuscleGroup(rawValue: $0) }
 
+        // **A word the catalog does not use is refused, not answered with
+        // nothing.** `count: 0` reads as *no exercise trains that*, so a coach
+        // who typed `quads` narrows, finds an empty catalog, and plans around a
+        // gap that is a spelling mistake. The schema publishes these values, but
+        // a schema is advice a client may not enforce; this is the refusal.
+        let vocabulary = CatalogVocabulary(catalog)
+        for (name, given, known) in [
+            ("muscle", muscle?.rawValue, vocabulary.muscles.map(\.rawValue)),
+            ("equipment", equipment?.rawValue, vocabulary.equipment.map(\.rawValue)),
+            ("pattern", pattern?.rawValue, vocabulary.patterns.map(\.rawValue)),
+        ] {
+            guard let given, !known.contains(given) else { continue }
+            return .failure(
+                "'\(given)' is not a \(name) this catalog uses, so nothing could match it "
+                    + "— which is different from nothing training it. The \(name) values are: "
+                    + known.joined(separator: ", ") + ".")
+        }
+
         var filter = ExerciseFilter()
         if let pattern { filter.patterns = [pattern] }
         if let equipment { filter.equipment = [equipment] }

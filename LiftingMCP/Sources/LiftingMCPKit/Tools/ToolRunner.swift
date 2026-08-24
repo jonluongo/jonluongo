@@ -119,7 +119,7 @@ public struct ToolRunner: Sendable {
         default:
             .failure(
                 "There is no tool called '\(name)'. This server offers: "
-                    + ToolCatalog.definitions.map(\.name).joined(separator: ", ") + "."
+                    + ToolCatalog.names.joined(separator: ", ") + "."
             )
         }
     }

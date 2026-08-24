@@ -1,4 +1,5 @@
 import Foundation
+import LiftingKit
 
 /// The JSON-RPC surface of MCP over stdio, as a pure function from one line in
 /// to at most one line out.
@@ -119,7 +120,9 @@ public struct MCPServer: Sendable {
         case "initialize": .success(initialize(params))
         case "ping": .success([:])
         case "tools/list":
-            .success(["tools": .array(ToolCatalog.definitions.map(\.advertised))])
+            .success(["tools": .array(
+                ToolCatalog.definitions(vocabulary: CatalogVocabulary(runner.catalog))
+                    .map(\.advertised))])
         case "tools/call": callTool(params)
         case "resources/list": .success(["resources": [Self.contextResourceDescriptor]])
         case "resources/read": readResource(params)
